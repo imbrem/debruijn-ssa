@@ -228,6 +228,11 @@ def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
   induction r <;> simp [Region.vwk, Nat.liftnWk_id, *]
 
+theorem Region.vwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
 /-- Substitute the variables in a `Region` using `σ` -/
 def Region.vsubst (σ : Subst φ) : Region φ → Region φ
 | br n e => br n (e.subst σ)
@@ -240,6 +245,11 @@ def Region.vsubst (σ : Subst φ) : Region φ → Region φ
 theorem Region.vsubst_id (r : Region φ) : r.vsubst Subst.id = r := by
   induction r <;> simp [Region.vsubst, Subst.lift_id, Subst.liftn_id, *]
 
+theorem Region.vsubst_comp (σ τ : Subst φ) (r : Region φ)
+  : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
+  induction r generalizing σ τ
+  <;> simp [vsubst, Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+
 /-- Rename the labels in a `Region` using `ρ` -/
 def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
 | br n e => br (ρ n) e
@@ -251,6 +261,12 @@ def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
 @[simp]
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by
   induction r <;> simp [Region.lwk, Nat.liftnWk_id, *]
+
+theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
+  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
+
+-- TODO: label-substitution
 
 /-- A control-flow graph with `length` entry-point regions -/
 structure CFG (φ : Type) : Type where
