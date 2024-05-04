@@ -50,7 +50,11 @@ def Ctx (α ε) := List (Ty α × ε)
 def Ctx.var {α ε} [PartialOrder α] [PartialOrder ε] (Γ : Ctx α ε) (n : ℕ) (A : Ty α) (e : ε) : Prop
   := ∃h : n < Γ.length, Γ.get ⟨n, h⟩ ≤ ⟨A, e⟩
 
+instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
+
 def FCtx (α ε) := Σn, Fin n → Ty α × ε
+
+-- TODO: FCtx append
 
 inductive Term.Wf [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε]
   : Ctx α ε → Term φ → Ty α → ε → Prop
@@ -62,9 +66,9 @@ inductive Term.Wf [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε
 
 inductive Term.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε]
   : Ctx α ε → Term φ → Ty α → ε → Type _
-| var {Γ n A e} : Γ.var n A e → WfD Γ (var n) A e
-| op {f : φ} {a e A B} : Φ.fn f A B e → WfD Γ a A e → WfD Γ (op f a) B e
-| pair {a b A B e} : WfD Γ a A e → WfD Γ b B e → WfD Γ (pair a b) (Ty.pair A B) e
+| var : Γ.var n A e → WfD Γ (var n) A e
+| op : Φ.fn f A B e → WfD Γ a A e → WfD Γ (op f a) B e
+| pair : WfD Γ a A e → WfD Γ b B e → WfD Γ (pair a b) (Ty.pair A B) e
 | unit (e) : WfD Γ unit Ty.unit e
 | bool (b e) : WfD Γ (bool b) Ty.bool e
 
@@ -82,13 +86,41 @@ inductive Term.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder �
 
 -- TODO: label contexts; should these just be regular contexts with inverse weakening?
 
--- TODO: terminator typing
+def LCtx (α) := List (Ty α)
 
--- TODO: region typing
+def LCtx.trg {α} [PartialOrder α] (L : LCtx α) (n : ℕ) (A : Ty α) : Prop
+  := ∃h : n < L.length, A ≤ L.get ⟨n, h⟩
 
--- TODO: body typing
+instance : Append (LCtx α) := (inferInstance : Append (List (Ty α)))
 
--- TODO: basic block typing
+def FLCtx (α) := Σn, Fin n → Ty α
+
+-- TODO: FLCtx append
+
+inductive Terminator.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+    : Ctx α ε → Terminator φ → LCtx α → Type _
+  | br : L.trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
+  | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+
+inductive Body.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε]
+    : Ctx α ε → Body φ → Ctx α ε → Type _
+  | nil : WfD Γ nil []
+  | let1 : a.WfD Γ A e → b.WfD (⟨A, e⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, e⟩::Δ)
+  | let2 : a.WfD Γ (Ty.pair A B) e
+    → b.WfD (⟨A, e⟩::⟨B, e⟩::Γ) Δ
+    → (let2 a b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Δ)
+
+structure Block.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+    (Γ : Ctx α ε) (β : Block φ) (L : LCtx α) where
+    defs : Ctx α ε
+    body : β.body.WfD Γ defs
+    terminator : β.terminator.WfD (defs ++ Γ) L
+
+inductive Region.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+    : Ctx α ε → Region φ → LCtx α → Type _
+  | br : L.trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
+  | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  -- TODO: rest
 
 -- TODO: "2D" label contexts
 

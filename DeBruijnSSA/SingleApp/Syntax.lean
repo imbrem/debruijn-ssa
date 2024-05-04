@@ -209,8 +209,8 @@ inductive Terminator (φ : Type) : Type
 
 /-- A basic block body -/
 inductive Body (φ : Type) : Type
-| let1 : Term φ → Term φ → Body φ
-| let2 : Term φ → Term φ → Body φ
+| let1 : Term φ → Body φ → Body φ
+| let2 : Term φ → Body φ → Body φ
 
 /-- A basic-block -/
 structure Block (φ : Type) : Type where
