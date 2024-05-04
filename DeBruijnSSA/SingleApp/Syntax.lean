@@ -332,3 +332,5 @@ structure SCFG (φ : Type) : Type where
   length : Nat
   /-- The number of exits for this CFG -/
   targets : Fin length → SRegion φ
+
+end SingleApp

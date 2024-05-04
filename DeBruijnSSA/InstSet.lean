@@ -70,3 +70,7 @@ class InstSet (φ : Type u) (α : Type v) (ε : Type w) where
   src : φ → α
   trg : φ → α
   effect : φ → ε
+
+def InstSet.fn {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  (f : φ) (A B : α) (e : ε) :=
+  A ≤ Φ.src f ∧ Φ.trg f ≤ B ∧ Φ.effect f ≤ e
