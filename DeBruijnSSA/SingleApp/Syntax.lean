@@ -1,12 +1,6 @@
 import Discretion
 
--- TODO: add liftn 1 lemmas to `Discretion`
-
--- TODO: make lift id, liftnWk id a simp lemma
-
 -- TODO: use abstract higher-ERT type formalism, add to discretion?
-
--- TODO: dependent FinExcept? :(
 
 namespace SingleApp
 
@@ -207,6 +201,31 @@ def Term.subst0 (t : Term α) : Subst α
 def Term.alpha0 (t : Term α) : Subst α
   | 0 => t
   | n => var n
+
+/-- A terminator -/
+inductive Terminator (φ : Type) : Type
+| br : Nat → Term φ → Terminator φ
+| ite : Term φ → Terminator φ → Terminator φ → Terminator φ
+
+/-- A basic block body -/
+inductive Body (φ : Type) : Type
+| let1 : Term φ → Term φ → Body φ
+| let2 : Term φ → Term φ → Body φ
+
+/-- A basic-block -/
+structure Block (φ : Type) : Type where
+  body : Body φ
+  terminator : Terminator φ
+
+/-- A basic block-based single-entry multiple-exit region -/
+inductive BBRegion (φ : Type) : Type
+| cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
+
+/-- A terminator-based single-entry multiple-exit region -/
+inductive TRegion (φ : Type) : Type
+| let1 : Term φ → TRegion φ → TRegion φ
+| let2 : Term φ → TRegion φ → TRegion φ
+| cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
 
 /-- A single-entry multiple-exit region -/
 inductive Region (φ : Type) : Type

@@ -13,7 +13,7 @@ require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
 
 require discretion from git
-  "https://github.com/imbrem/discretion.git"
+  "https://github.com/imbrem/discretion.git" @ "main"
 
 @[default_target]
 lean_lib «DeBruijnSSA» where
