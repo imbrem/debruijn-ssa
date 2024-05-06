@@ -45,9 +45,15 @@ instance : PartialOrder (Ty α) where
   le_trans _ _ _ := Ty.LE.trans
   le_antisymm _ _ := Ty.LE.antisymm
 
--- TODO: Ty.LE is decidable if α is
+theorem Ty.LE.eq [d : DiscreteOrder α] {A B : Ty α} : LE A B → A = B
+  | base h => by rw [d.le_eq _ _ h]
+  | pair h₁ h₂ => by rw [eq h₁, eq h₂]
+  | bool | unit => rfl
 
--- TODO: Ty.LE is a discrete order if α is
+instance [DiscreteOrder α] : DiscreteOrder (Ty α) where
+  le_eq _ _ := Ty.LE.eq
+
+-- TODO: Ty.LE is decidable if ≤ on α is
 
 def Ctx (α ε) := List (Ty α × ε)
 
@@ -61,6 +67,7 @@ def FCtx (α ε) := Σn, Fin n → Ty α × ε
 
 -- TODO: FCtx append
 
+/-- A well-formed term -/
 inductive Term.Wf : Ctx α ε → Term φ → Ty α → ε → Prop
   | var : Γ.Var n ⟨A, e⟩ → Wf Γ (var n) A e
   | op : Φ.Fn f A B e → Wf Γ a A e → Wf Γ (op f a) B e
@@ -68,6 +75,7 @@ inductive Term.Wf : Ctx α ε → Term φ → Ty α → ε → Prop
   | unit (e) : Wf Γ unit Ty.unit e
   | bool (b e) : Wf Γ (bool b) Ty.bool e
 
+/-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α → ε → Type _
   | var : Γ.Var n ⟨A, e⟩ → WfD Γ (var n) A e
   | op : Φ.Fn f A B e → WfD Γ a A e → WfD Γ (op f a) B e
@@ -75,6 +83,7 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α → ε → Type _
   | unit (e) : WfD Γ unit Ty.unit e
   | bool (b e) : WfD Γ (bool b) Ty.bool e
 
+/-- The minimal type for which a term may be well-typed -/
 def Term.min_ty (Γ : Ctx α ε) : Term φ → Ty α
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
   | op f _ => Φ.trg f
