@@ -102,6 +102,10 @@ inductive Terminator.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialO
   | br : L.trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
   | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
 
+-- TODO: weakening
+
+-- TODO: label-weakening
+
 inductive Body.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε]
     : Ctx α ε → Body φ → Ctx α ε → Type _
   | nil : WfD Γ nil []
@@ -110,19 +114,53 @@ inductive Body.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder �
     → b.WfD (⟨A, e⟩::⟨B, e⟩::Γ) Δ
     → (let2 a b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Δ)
 
+-- TODO: weakening
+
 structure Block.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
-    (Γ : Ctx α ε) (β : Block φ) (L : LCtx α) where
-    defs : Ctx α ε
-    body : β.body.WfD Γ defs
-    terminator : β.terminator.WfD (defs ++ Γ) L
+    (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
+    body : β.body.WfD Γ Δ
+    terminator : β.terminator.WfD (Δ ++ Γ) L
+
+-- TODO: weakening
+
+-- TODO: label-weakening
+
+inductive BBRegion.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+    : Ctx α ε → BBRegion φ → LCtx α → Type _
+  | cfg {Δ} : β.WfD Γ Δ K → (∀i : Fin n, (G i).WfD (Δ ++ Γ) K)
+    → L = K.drop n → BBRegion.WfD Γ (cfg β n G) L
+
+-- TODO: weakening
+
+-- TODO: label-weakening
+
+inductive TRegion.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+    : Ctx α ε → TRegion φ → LCtx α → Type _
+  | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
+  | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
+  | cfg : t.WfD Γ K → (∀i : Fin n, (G i).WfD Γ K) → L = K.drop n → WfD Γ (cfg t n G) L
+
+-- TODO: weakening
+
+-- TODO: label-weakening
 
 inductive Region.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
     : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
   | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
-  -- TODO: rest
+  | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
+  | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
+  | cfg : β.WfD Γ K → (∀i : Fin n, (G i).WfD Γ K) → L = K.drop n → WfD Γ (cfg β n G) L
 
--- TODO: "2D" label contexts
+-- TODO: weakening
+
+-- TODO: label-weakening
+
+-- TODO: normalize region to TRegion; type preservation
+
+-- TODO: normalize TRegion to BBRegion; type preservation
+
+-- == SPECULATIVE ==
 
 -- TODO: substitution-terminator typing
 

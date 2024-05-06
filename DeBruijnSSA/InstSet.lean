@@ -28,7 +28,7 @@ class HasRelevance (ε : Type u) [SemilatticeSup ε] where
   isRelevant_of_le : Antitone isRelevant
 
 /--
-A type equippd with an affinity predicate
+A type equipped with an affinity predicate
 -/
 class HasAffinity (ε : Type u) [SemilatticeSup ε] where
   isAffine : ε → Bool

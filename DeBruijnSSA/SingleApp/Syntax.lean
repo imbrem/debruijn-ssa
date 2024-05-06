@@ -212,20 +212,56 @@ inductive Body (φ : Type) : Type
 | let1 : Term φ → Body φ → Body φ
 | let2 : Term φ → Body φ → Body φ
 
+-- TODO: weakening
+
+-- TODO: substitution
+
+-- TODO: label-weakening
+
+-- TODO: label-substitution
+
+-- TODO: variant with a body followed by a weakening
+
 /-- A basic-block -/
 structure Block (φ : Type) : Type where
   body : Body φ
   terminator : Terminator φ
 
+-- TODO: weakening
+
+-- TODO: substitution
+
+-- TODO: label-weakening
+
+-- TODO: label-substitution
+
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
 | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
+
+-- TODO: weakening
+
+-- TODO: substitution
+
+-- TODO: label-weakening
+
+-- TODO: label-substitution
 
 /-- A terminator-based single-entry multiple-exit region -/
 inductive TRegion (φ : Type) : Type
 | let1 : Term φ → TRegion φ → TRegion φ
 | let2 : Term φ → TRegion φ → TRegion φ
 | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
+
+-- TODO: weakening
+
+-- TODO: substitution
+
+-- TODO: label-weakening
+
+-- TODO: label-substitution
+
+-- TODO: normalize TRegion to BBRegion
 
 /-- A single-entry multiple-exit region -/
 inductive Region (φ : Type) : Type
@@ -286,6 +322,10 @@ theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
   induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
 
 -- TODO: label-substitution
+
+-- TODO: normalize Region to TRegion
+
+-- TODO: transitively, normalize Region to BBRegion
 
 /-- A control-flow graph with `length` entry-point regions -/
 structure CFG (φ : Type) : Type where
