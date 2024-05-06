@@ -321,7 +321,7 @@ def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
   | let1 e t => let1 (e.wk ρ) (vwk (Nat.liftWk ρ) t)
   | let2 e t => let2 (e.wk ρ) (vwk (Nat.liftnWk 2 ρ) t)
-  | cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk ρ)
+  | cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
 @[simp]
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
@@ -355,7 +355,7 @@ def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | ite e s t => ite e (lwk ρ s) (lwk ρ t)
   | let1 e t => let1 e (lwk ρ t)
   | let2 e t => let2 e (lwk ρ t)
-  | cfg β n f => cfg (lwk ρ β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
+  | cfg β n f => cfg (lwk (Nat.liftnWk n ρ) β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 @[simp]
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by

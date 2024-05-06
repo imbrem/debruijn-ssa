@@ -125,6 +125,10 @@ structure LCtx.Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
 
 instance : Append (LCtx α) := (inferInstance : Append (List (Ty α)))
 
+def LCtx.take (n : ℕ) (L : LCtx α) : LCtx α := List.take n L
+
+def LCtx.drop (n : ℕ) (L : LCtx α) : LCtx α := List.drop n L
+
 def FLCtx (α) := Σn, Fin n → Ty α
 
 -- TODO: FLCtx append
@@ -138,20 +142,32 @@ structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx 
   terminator : β.terminator.WfD (Δ ++ Γ) L
 
 inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
-  | cfg {Δ} : β.WfD Γ Δ K → (∀i : Fin n, (G i).WfD (Δ ++ Γ) K)
+  | cfg {Δ} (n : ℕ) {G} : β.WfD Γ Δ K → (∀i : Fin n, (G i).WfD (Δ ++ Γ) K)
     → L = K.drop n → BBRegion.WfD Γ (cfg β n G) L
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
   | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
-  | cfg : t.WfD Γ K → (∀i : Fin n, (G i).WfD Γ K) → L = K.drop n → WfD Γ (cfg t n G) L
+  | cfg  (n : ℕ) {G} : t.WfD Γ K → (∀i : Fin n, (G i).WfD Γ K) → L = K.drop n → WfD Γ (cfg t n G) L
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
   | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
   | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
   | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
-  | cfg : β.WfD Γ K → (∀i : Fin n, (G i).WfD Γ K) → L = K.drop n → WfD Γ (cfg β n G) L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfD Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::Γ) (R ++ L)) →
+    WfD Γ (cfg β n G) L
+
+def Region.WfD.src {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := Γ
+
+def Region.WfD.trg {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := L
+
+def Region.WfD.tm {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := r
+
+def Region.WfD.cfg_arity {Γ : Ctx α ε} {β : Region φ} {n G} {L}
+  (_ : (Region.cfg β n G).WfD Γ L) : ℕ := n
 
 -- TODO: normalize region to TRegion; type preservation
 
@@ -240,6 +256,13 @@ theorem LCtx.Wkn_def' (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
 theorem LCtx.Wkn_iff (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔ @List.NWkn (Ty α)ᵒᵈ _ K L ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
+theorem LCtx.Wkn.liftn_append {L K : LCtx α} {ρ : ℕ → ℕ} (R : LCtx α) (h : L.Wkn K ρ)
+  : (R ++ L).Wkn (R ++ K) (Nat.liftnWk R.length ρ) := by
+  rw [LCtx.Wkn_iff]
+  apply List.NWkn.liftn_append
+  rw [<-LCtx.Wkn_iff]
+  exact h
+
 theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
   get := le_trans hK.get (h n hK.length).2
@@ -278,11 +301,17 @@ def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h
   | ite he hs ht => ite (he.wk h) (hs.vwk h) (ht.vwk h)
   | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.lift (le_refl _)))
   | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.liftn₂ (le_refl _) (le_refl _)))
-  | cfg hr hG hL => cfg (hr.vwk h) (λi => (hG i).vwk h) hL
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.lift (le_refl _)))
 
--- TODO: weakening
-
--- TODO: label-weakening
+def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Region φ} (h : L.Wkn K ρ)
+  : WfD Γ r L → WfD Γ (r.lwk ρ) K
+  | br hL ha => br (hL.wk h) ha
+  | ite he hs ht => ite he (hs.lwk h) (ht.lwk h)
+  | let1 ha ht => let1 ha (ht.lwk h)
+  | let2 ha ht => let2 ha (ht.lwk h)
+  | cfg n R hR hβ hG =>
+    have trg_wk : (R ++ L).Wkn (R ++ K) (Nat.liftnWk n ρ) := hR ▸ h.liftn_append R
+    cfg n R hR (hβ.lwk trg_wk) (λi => (hG i).lwk trg_wk)
 
 end Weakening
 
