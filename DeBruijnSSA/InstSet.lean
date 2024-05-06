@@ -1,4 +1,5 @@
 import Mathlib.Order.Monotone.Basic
+import Mathlib.Order.BoundedOrder
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Lattice
 
@@ -10,6 +11,11 @@ class HasPurity (ε : Type u) [SemilatticeSup ε] [Zero ε] where
   sup_isPure : ∀ e e', isPure e → isPure e' → isPure (e ⊔ e')
   isPure_of_le : Antitone isPure
   zero_isPure : isPure 0
+
+theorem bot_isPure {ε} [SemilatticeSup ε] [Zero ε] [Φp : HasPurity ε] [OrderBot ε]
+  : Φp.isPure ⊥ := Φp.isPure_of_le bot_le Φp.zero_isPure
+
+-- If there exists something impure, then ⊤ is impure
 
 /--
 A type equipped with a centrality predicate
@@ -49,6 +55,8 @@ class EffectSet (ε : Type u) [SemilatticeSup ε] [Zero ε]
   isCentral_of_isPure : ∀ e, isPure e ≤ isCentral e
   isRelevant_of_isPure : ∀ e, isPure e ≤ isRelevant e
   isAffine_of_isPure : ∀ e, isPure e ≤ isAffine e
+
+-- TODO: ⊥ is central, relevant, affine
 
 inductive Impurity where
   | none : Impurity
