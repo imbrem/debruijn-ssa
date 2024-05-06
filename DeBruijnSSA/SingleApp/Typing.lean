@@ -53,16 +53,16 @@ structure Ctx.Var (Γ : Ctx α ε) (n : ℕ) (V : Ty α × ε) : Prop where
   length : n < Γ.length
   get : Γ.get ⟨n, length⟩ ≤ V
 
-def Ctx.NWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
+def Ctx.Wkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
   := ∀i, (h : i < Δ.length) → Γ.Var (ρ i) (Δ.get ⟨i, h⟩)
 
-theorem Ctx.NWkn_def (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.NWkn Δ ρ ↔
+theorem Ctx.Wkn_def (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔
   ∀i, (h : i < Δ.length) → Γ.Var (ρ i) (Δ.get ⟨i, h⟩) := Iff.rfl
 
-theorem Ctx.NWkn_def' (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.NWkn Δ ρ ↔
+theorem Ctx.Wkn_def' (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔
   ∀i : Fin Δ.length, Γ.Var (ρ i) (Δ.get i) := ⟨λh ⟨i, hi⟩ => h i hi, λh i hi => h ⟨i, hi⟩⟩
 
-theorem Ctx.NWkn_iff (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.NWkn Δ ρ ↔ List.NWkn Γ Δ ρ
+theorem Ctx.Wkn_iff (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔ List.NWkn Γ Δ ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
 theorem Ctx.Var.wk_res {Γ : Ctx α ε} {n : ℕ} {V V'} (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
@@ -80,7 +80,7 @@ theorem Ctx.Var.wk_eff {Γ : Ctx α ε} {n : ℕ} {A} {e e'} (h : e ≤ e')
 
 theorem Ctx.Var.wk
   {Γ : Ctx α ε} {n : ℕ} {A : Ty α} {e : ε}
-  {Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.NWkn Δ ρ) (hΓ : Δ.Var n ⟨A, e⟩) : Γ.Var (ρ n) ⟨A, e⟩ where
+  {Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (hΓ : Δ.Var n ⟨A, e⟩) : Γ.Var (ρ n) ⟨A, e⟩ where
   length := (h n hΓ.length).1
   get := le_trans (h n hΓ.length).2 hΓ.get
 
@@ -119,7 +119,7 @@ def Term.WfD.wk_eff
 
 /-- Weaken a term derivation -/
 def Term.WfD.wk
-  {Γ : Ctx α ε} {a : Term φ} {A e} {Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.NWkn Δ ρ)
+  {Γ : Ctx α ε} {a : Term φ} {A e} {Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ)
   : WfD Δ a A e → WfD Γ (a.wk ρ) A e
   | var dv => var (dv.wk h)
   | op df de => op df (de.wk h)
@@ -137,21 +137,21 @@ structure LCtx.Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
   length : n < L.length
   get : A ≤ L.get ⟨n, length⟩
 
-def LCtx.NWkn (L K : LCtx α) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
+def LCtx.Wkn (L K : LCtx α) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
   := ∀i, (h : i < L.length) → K.Trg (ρ i) (L.get ⟨i, h⟩)
 
-theorem LCtx.LWkn_def (L K : LCtx α) (ρ : ℕ → ℕ) : L.NWkn K ρ ↔
+theorem LCtx.Wkn_def (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
   ∀i, (h : i < L.length) → K.Trg (ρ i) (L.get ⟨i, h⟩) := Iff.rfl
 
-theorem LCtx.NWkn_def' (L K : LCtx α) (ρ : ℕ → ℕ) : L.NWkn K ρ ↔
+theorem LCtx.Wkn_def' (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
   ∀i : Fin L.length, K.Trg (ρ i) (L.get i) := ⟨λh ⟨i, hi⟩ => h i hi, λh i hi => h ⟨i, hi⟩⟩
 
-theorem LCtx.NWkn_iff (L K : LCtx α) (ρ : ℕ → ℕ) : L.NWkn K ρ ↔ @List.NWkn (Ty α)ᵒᵈ _ K L ρ
+theorem LCtx.Wkn_iff (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔ @List.NWkn (Ty α)ᵒᵈ _ K L ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
 theorem LCtx.Trg.wk
   {L : LCtx α} {n : ℕ} {A : Ty α}
-  {K : LCtx α} {ρ : ℕ → ℕ} (h : L.NWkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
+  {K : LCtx α} {ρ : ℕ → ℕ} (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
   get := le_trans hK.get (h n hK.length).2
 
