@@ -1,4 +1,4 @@
-import Discretion.Discrete
+import Discretion.Wk.Basic
 import DeBruijnSSA.SingleApp.Syntax
 import DeBruijnSSA.InstSet
 
@@ -59,6 +59,12 @@ theorem Ctx.Var.wk_eff
   length := hΓ.length
   get := le_trans hΓ.get (by simp [h])
 
+theorem Ctx.Var.wk
+  {Γ : Ctx α ε} {n : ℕ} {A : Ty α} {e : ε}
+  {Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.NWkn Δ ρ) (hΓ : Δ.Var n A e) : Γ.Var (ρ n) A e where
+  length := (h n hΓ.length).1
+  get := le_trans (h n hΓ.length).2 hΓ.get
+
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 
 def FCtx (α ε) := Σn, Fin n → Ty α × ε
@@ -83,7 +89,7 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α → ε → Type _
 
 -- TODO: Wf ==> ∃WfD
 
-/-- Weaken the effect of a term -/
+/-- Weaken the effect of a term derivation -/
 def Term.WfD.wk_eff
   {Γ : Ctx α ε} {a : Term φ} {A e} (h : e ≤ e') : WfD Γ a A e → WfD Γ a A e'
   | var dv => var (dv.wk_eff h)
@@ -92,15 +98,19 @@ def Term.WfD.wk_eff
   | unit e => unit e'
   | bool b e => bool b e'
 
--- TODO: effect and type weakening
-
--- TODO: Weakening
+/-- Weaken a term derivation -/
+def Term.WfD.wk
+  {Γ : Ctx α ε} {a : Term φ} {A e} {Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.NWkn Δ ρ)
+  : WfD Δ a A e → WfD Γ (a.wk ρ) A e
+  | var dv => var (dv.wk h)
+  | op df de => op df (de.wk h)
+  | pair dl dr => pair (dl.wk h) (dr.wk h)
+  | unit e => unit e
+  | bool b e => bool b e
 
 -- TODO: for a discrete order on α, WfD unique, Wf ==> WfD
 
 -- TODO: FWfD, FWf, associated lore
-
--- TODO: label contexts; should these just be regular contexts with inverse weakening?
 
 def LCtx (α) := List (Ty α)
 
