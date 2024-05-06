@@ -51,7 +51,7 @@ def Ctx (α ε) := List (Ty α × ε)
 
 structure Ctx.Var (Γ : Ctx α ε) (n : ℕ) (A : Ty α) (e : ε) : Prop where
   length : n < Γ.length
-  get : Γ.get ⟨n, h⟩ ≤ ⟨A, e⟩
+  get : Γ.get ⟨n, length⟩ ≤ ⟨A, e⟩
 
 theorem Ctx.Var.wk_eff
   {Γ : Ctx α ε} {n : ℕ} {A : Ty α} {e e' : ε}
@@ -104,8 +104,9 @@ def Term.WfD.wk_eff
 
 def LCtx (α) := List (Ty α)
 
-def LCtx.trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop
-  := ∃h : n < L.length, A ≤ L.get ⟨n, h⟩
+structure LCtx.Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
+  length : n < L.length
+  get : A ≤ L.get ⟨n, length⟩
 
 instance : Append (LCtx α) := (inferInstance : Append (List (Ty α)))
 
@@ -114,7 +115,7 @@ def FLCtx (α) := Σn, Fin n → Ty α
 -- TODO: FLCtx append
 
 inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
-  | br : L.trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
+  | br : L.Trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
   | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
 
 -- TODO: weakening
@@ -157,7 +158,7 @@ inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
 
 inductive Region.WfD [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
     : Ctx α ε → Region φ → LCtx α → Type _
-  | br : L.trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
+  | br : L.Trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
   | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
   | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
   | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
