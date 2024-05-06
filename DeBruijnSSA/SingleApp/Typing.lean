@@ -232,11 +232,13 @@ theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
   get := le_trans hK.get (h n hK.length).2
 
--- TODO: Terminator:
+def Terminator.WfD.vwk {t : Terminator φ} (h : Γ.Wkn Δ ρ) : WfD Δ t L → WfD Γ (t.vwk ρ) L
+  | br hL ha => br hL (ha.wk h)
+  | ite he hs ht => ite (he.wk h) (hs.vwk h) (ht.vwk h)
 
--- TODO: weakening
-
--- TODO: label-weakening
+def Terminator.WfD.lwk {t : Terminator φ} (h : L.Wkn K ρ) : WfD Γ t L → WfD Γ (t.lwk ρ) K
+  | br hL ha => br (hL.wk h) ha
+  | ite he hs ht => ite he (hs.lwk h) (ht.lwk h)
 
 -- TODO: Block:
 

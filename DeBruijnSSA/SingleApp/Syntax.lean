@@ -207,6 +207,49 @@ inductive Terminator (φ : Type) : Type
   | br : Nat → Term φ → Terminator φ
   | ite : Term φ → Terminator φ → Terminator φ → Terminator φ
 
+/-- Rename the variables in a `Terminator` using `ρ` -/
+def Terminator.vwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
+  | br n e => br n (e.wk ρ)
+  | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
+
+@[simp]
+theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
+  induction r <;> simp [Terminator.vwk, Nat.liftnWk_id, *]
+
+theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+/-- Substitute the variables in a `Terminator` using `σ` -/
+def Terminator.vsubst (σ : Subst φ) : Terminator φ → Terminator φ
+  | br n e => br n (e.subst σ)
+  | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
+
+@[simp]
+theorem Terminator.vsubst_id (r : Terminator φ) : r.vsubst Subst.id = r := by
+  induction r <;> simp [Terminator.vsubst, Subst.lift_id, Subst.liftn_id, *]
+
+theorem Terminator.vsubst_comp (σ τ : Subst φ) (r : Terminator φ)
+  : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
+  induction r generalizing σ τ
+  <;> simp [vsubst, Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+
+/-- Rename the labels in a `Region` using `ρ` -/
+def Terminator.lwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
+  | br n e => br (ρ n) e
+  | ite e s t => ite e (lwk ρ s) (lwk ρ t)
+
+@[simp]
+theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
+  induction r <;> simp [Terminator.lwk, Nat.liftnWk_id, *]
+
+theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
+  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
+
+-- TODO: label-substitution
+
 /-- A basic block body -/
 inductive Body (φ : Type) : Type
   | nil : Body φ
