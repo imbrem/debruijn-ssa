@@ -5,10 +5,11 @@ import Mathlib.Order.Lattice
 /--
 A type equipped with a purity predicate
 -/
-class HasPurity (ε : Type u) [SemilatticeSup ε] where
+class HasPurity (ε : Type u) [SemilatticeSup ε] [Zero ε] where
   isPure : ε → Bool
   sup_isPure : ∀ e e', isPure e → isPure e' → isPure (e ⊔ e')
   isPure_of_le : Antitone isPure
+  zero_isPure : isPure 0
 
 /--
 A type equipped with a centrality predicate
@@ -43,7 +44,7 @@ may be arbitrarily shrunk further.
 Note this is essentially just a set equipped with a semilattice-hom to transparency, i.e.
 (central, relevant, affine, pure); this might be nicer to state that way...
 -/
-class EffectSet (ε : Type u) [SemilatticeSup ε]
+class EffectSet (ε : Type u) [SemilatticeSup ε] [Zero ε]
   extends HasPurity ε, HasCentrality ε, HasRelevance ε, HasAffinity ε where
   isCentral_of_isPure : ∀ e, isPure e ≤ isCentral e
   isRelevant_of_isPure : ∀ e, isPure e ≤ isRelevant e
@@ -82,6 +83,7 @@ instance : EffectSet Impurity where
   sup_isRelevant e e' := by cases e <;> cases e' <;> simp
   sup_isAffine e e' := by cases e <;> cases e' <;> simp
   sup_isPure e e' := by cases e <;> cases e' <;> simp
+  zero_isPure := rfl
   isCentral_of_isPure e h := h
   isRelevant_of_isPure e h := h
   isAffine_of_isPure e h := h
