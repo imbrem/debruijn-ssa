@@ -274,6 +274,14 @@ theorem Term.WfD.min_effect_le
   | pair dl dr => sup_le_iff.mpr ⟨dl.min_effect_le, dr.min_effect_le⟩
   | unit _ | bool _ _ => bot_le
 
+def Body.min_defs (Γ : Ctx α ε) : Body φ → Ctx α ε
+  | Body.nil => []
+  | Body.let1 a b => ⟨a.min_ty Γ, a.min_effect Γ⟩ :: b.min_defs (⟨a.min_ty Γ, a.min_effect Γ⟩::Γ)
+  | Body.let2 a b =>
+    ⟨a.min_ty Γ, a.min_effect Γ⟩ ::
+    ⟨a.min_ty Γ, a.min_effect Γ⟩ ::
+    b.min_defs (⟨a.min_ty Γ, a.min_effect Γ⟩::⟨a.min_ty Γ, a.min_effect Γ⟩::Γ)
+
 end Minimal
 
 -- == SPECULATIVE ==
