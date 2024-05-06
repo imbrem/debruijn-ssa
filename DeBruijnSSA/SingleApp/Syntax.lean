@@ -6,19 +6,19 @@ namespace SingleApp
 
 /-- A simple term, consisting of variables, operations, pairs, units, and booleans -/
 inductive Term (φ : Type) where
-| var : ℕ → Term φ
-| op : φ → Term φ → Term φ
-| pair : Term φ → Term φ → Term φ
-| unit : Term φ
-| bool : Bool → Term φ
+  | var : ℕ → Term φ
+  | op : φ → Term φ → Term φ
+  | pair : Term φ → Term φ → Term φ
+  | unit : Term φ
+  | bool : Bool → Term φ
 
 /-- Rename the variables in a `Term` using `ρ` -/
 def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
-| var x => var (ρ x)
-| op f x => op f (wk ρ x)
-| pair x y => pair (wk ρ x) (wk ρ y)
-| unit => unit
-| bool b => bool b
+  | var x => var (ρ x)
+  | op f x => op f (wk ρ x)
+  | pair x y => pair (wk ρ x) (wk ρ y)
+  | unit => unit
+  | bool b => bool b
 
 @[simp]
 theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [wk, *]
@@ -40,8 +40,8 @@ theorem Subst.id_apply (n : ℕ) : @Subst.id φ n = Term.var n := rfl
 
 /-- Lift a substitution under a binder -/
 def Subst.lift (σ : Subst φ) : Subst φ
-| 0 => Term.var 0
-| n + 1 => (σ n).wk Nat.succ
+  | 0 => Term.var 0
+  | n + 1 => (σ n).wk Nat.succ
 
 /-- Lift a substitution under `n` binders -/
 def Subst.liftn (n : ℕ) (σ : Subst φ) : Subst φ
@@ -204,13 +204,13 @@ def Term.alpha0 (t : Term α) : Subst α
 
 /-- A terminator -/
 inductive Terminator (φ : Type) : Type
-| br : Nat → Term φ → Terminator φ
-| ite : Term φ → Terminator φ → Terminator φ → Terminator φ
+  | br : Nat → Term φ → Terminator φ
+  | ite : Term φ → Terminator φ → Terminator φ → Terminator φ
 
 /-- A basic block body -/
 inductive Body (φ : Type) : Type
-| let1 : Term φ → Body φ → Body φ
-| let2 : Term φ → Body φ → Body φ
+  | let1 : Term φ → Body φ → Body φ
+  | let2 : Term φ → Body φ → Body φ
 
 -- TODO: weakening
 
@@ -237,7 +237,7 @@ structure Block (φ : Type) : Type where
 
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
-| cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
+  | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
 -- TODO: weakening
 
@@ -249,9 +249,9 @@ inductive BBRegion (φ : Type) : Type
 
 /-- A terminator-based single-entry multiple-exit region -/
 inductive TRegion (φ : Type) : Type
-| let1 : Term φ → TRegion φ → TRegion φ
-| let2 : Term φ → TRegion φ → TRegion φ
-| cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
+  | let1 : Term φ → TRegion φ → TRegion φ
+  | let2 : Term φ → TRegion φ → TRegion φ
+  | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
 
 -- TODO: weakening
 
@@ -265,19 +265,19 @@ inductive TRegion (φ : Type) : Type
 
 /-- A single-entry multiple-exit region -/
 inductive Region (φ : Type) : Type
-| br : Nat → Term φ → Region φ
-| ite : Term φ → Region φ → Region φ → Region φ
-| let1 : Term φ → Region φ → Region φ
-| let2 : Term φ → Region φ → Region φ
-| cfg (β : Region φ) (n : Nat) : (Fin n → Region φ) → Region φ
+  | br : Nat → Term φ → Region φ
+  | ite : Term φ → Region φ → Region φ → Region φ
+  | let1 : Term φ → Region φ → Region φ
+  | let2 : Term φ → Region φ → Region φ
+  | cfg (β : Region φ) (n : Nat) : (Fin n → Region φ) → Region φ
 
 /-- Rename the variables in a `Region` using `ρ` -/
 def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
-| br n e => br n (e.wk ρ)
-| ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
-| let1 e t => let1 (e.wk ρ) (vwk (Nat.liftWk ρ) t)
-| let2 e t => let2 (e.wk ρ) (vwk (Nat.liftnWk 2 ρ) t)
-| cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk ρ)
+  | br n e => br n (e.wk ρ)
+  | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
+  | let1 e t => let1 (e.wk ρ) (vwk (Nat.liftWk ρ) t)
+  | let2 e t => let2 (e.wk ρ) (vwk (Nat.liftnWk 2 ρ) t)
+  | cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk ρ)
 
 @[simp]
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
@@ -290,11 +290,11 @@ theorem Region.vwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
 
 /-- Substitute the variables in a `Region` using `σ` -/
 def Region.vsubst (σ : Subst φ) : Region φ → Region φ
-| br n e => br n (e.subst σ)
-| ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
-| let1 e t => let1 (e.subst σ) (vsubst σ.lift t)
-| let2 e t => let2 (e.subst σ) (vsubst (σ.liftn 2) t)
-| cfg β n f => cfg (vsubst σ β) n (λ i => (f i).vsubst σ)
+  | br n e => br n (e.subst σ)
+  | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
+  | let1 e t => let1 (e.subst σ) (vsubst σ.lift t)
+  | let2 e t => let2 (e.subst σ) (vsubst (σ.liftn 2) t)
+  | cfg β n f => cfg (vsubst σ β) n (λ i => (f i).vsubst σ)
 
 @[simp]
 theorem Region.vsubst_id (r : Region φ) : r.vsubst Subst.id = r := by
@@ -307,11 +307,11 @@ theorem Region.vsubst_comp (σ τ : Subst φ) (r : Region φ)
 
 /-- Rename the labels in a `Region` using `ρ` -/
 def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
-| br n e => br (ρ n) e
-| ite e s t => ite e (lwk ρ s) (lwk ρ t)
-| let1 e t => let1 e (lwk ρ t)
-| let2 e t => let2 e (lwk ρ t)
-| cfg β n f => cfg (lwk ρ β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
+  | br n e => br (ρ n) e
+  | ite e s t => ite e (lwk ρ s) (lwk ρ t)
+  | let1 e t => let1 e (lwk ρ t)
+  | let2 e t => let2 e (lwk ρ t)
+  | cfg β n f => cfg (lwk ρ β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 @[simp]
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by
@@ -360,11 +360,11 @@ theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
 
 /-- A single-entry multiple-exit region, applying a substitution on jumps -/
 inductive SRegion (φ : Type) : Type
-| br : Nat → Subst φ → SRegion φ
-| ite : Term φ → SRegion φ → SRegion φ → SRegion φ
-| let1 : Term φ → SRegion φ → SRegion φ
-| let2 : Term φ → SRegion φ → SRegion φ
-| cfg (β : SRegion φ) (n : Nat) : (Fin n → SRegion φ) → SRegion φ
+  | br : Nat → Subst φ → SRegion φ
+  | ite : Term φ → SRegion φ → SRegion φ → SRegion φ
+  | let1 : Term φ → SRegion φ → SRegion φ
+  | let2 : Term φ → SRegion φ → SRegion φ
+  | cfg (β : SRegion φ) (n : Nat) : (Fin n → SRegion φ) → SRegion φ
 
 /-- A control-flow graph with `length` entry-point regions -/
 structure SCFG (φ : Type) : Type where

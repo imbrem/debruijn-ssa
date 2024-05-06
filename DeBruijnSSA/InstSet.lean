@@ -93,6 +93,19 @@ class InstSet (φ : Type u) (α : Type v) (ε : Type w) where
   trg : φ → α
   effect : φ → ε
 
-def InstSet.fn {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
-  (f : φ) (A B : α) (e : ε) :=
-  A ≤ Φ.src f ∧ Φ.trg f ≤ B ∧ Φ.effect f ≤ e
+structure InstSet.Fn {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  (f : φ) (A B : α) (e : ε) : Prop where
+  src : A ≤ Φ.src f
+  trg : Φ.trg f ≤ B
+  effect : Φ.effect f ≤ e
+
+theorem InstSet.fn_iff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A B : α} {e : ε} : Φ.Fn f A B e ↔ A ≤ Φ.src f ∧ Φ.trg f ≤ B ∧ Φ.effect f ≤ e := ⟨
+  λ h => ⟨h.src, h.trg, h.effect⟩,
+  λ ⟨hsrc, htrg, heff⟩ => ⟨hsrc, htrg, heff⟩⟩
+
+theorem InstSet.Fn.wk_eff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A B : α} {e e' : ε} (h : e ≤ e') (hf : Φ.Fn f A B e) : Φ.Fn f A B e' where
+  src := hf.src
+  trg := hf.trg
+  effect := le_trans hf.effect h
