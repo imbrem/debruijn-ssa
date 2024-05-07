@@ -98,12 +98,30 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | bool (b e) : WfD Γ (bool b) ⟨Ty.bool, e⟩
 
 /-- The minimal type for which a term may be well-typed -/
-def Term.min_ty (Γ : Ctx α ε) : Term φ → Ty α
+def Term.minTy (Γ : Ctx α ε) : Term φ → Ty α
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
   | op f _ => Φ.trg f
-  | pair a b => Ty.pair (a.min_ty Γ) (b.min_ty Γ)
+  | pair a b => Ty.pair (a.minTy Γ) (b.minTy Γ)
   | unit => Ty.unit
   | bool _ => Ty.bool
+
+theorem Term.WfD.minTy_le {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.minTy Γ ≤ A
+  := match h with
+  | var dv => by simp [minTy, dv.length, dv.get.left]
+  | op df de => df.trg
+  | pair dl dr => Ty.LE.pair dl.minTy_le dr.minTy_le
+  | unit _ | bool _ _ => le_refl _
+
+def Term.WfD.toMinTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨a.minTy Γ, e⟩
+  := match h with
+  | var dv => var (by
+    constructor <;> simp only [minTy, dv.length, ↓reduceDite]
+    exact ⟨le_refl _, dv.get.2⟩
+    )
+  | op df de => op ⟨df.src, le_refl _, df.effect⟩ de
+  | pair dl dr => pair (dl.toMinTy) (dr.toMinTy)
+  | unit e => unit e
+  | bool b e => bool b e
 
 -- TODO: WfD ==> Wf
 
@@ -387,28 +405,28 @@ section Minimal
 
 variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε] [Zero ε]
 
-def Term.min_effect (Γ : Ctx α ε) : Term φ → ε
+def Term.minEffect (Γ : Ctx α ε) : Term φ → ε
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
   | op f _ => Φ.effect f
-  | pair a b => a.min_effect Γ ⊔ b.min_effect Γ
+  | pair a b => a.minEffect Γ ⊔ b.minEffect Γ
   | unit => ⊥
   | bool _ => ⊥
 
-theorem Term.WfD.min_effect_le
-  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.min_effect Γ ≤ e
+theorem Term.WfD.minEffect_le
+  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.minEffect Γ ≤ e
   := match h with
-  | var dv => by simp [min_effect, dv.length, dv.get.right]
+  | var dv => by simp [minEffect, dv.length, dv.get.right]
   | op df de => df.effect
-  | pair dl dr => sup_le_iff.mpr ⟨dl.min_effect_le, dr.min_effect_le⟩
+  | pair dl dr => sup_le_iff.mpr ⟨dl.minEffect_le, dr.minEffect_le⟩
   | unit _ | bool _ _ => bot_le
 
-def Body.min_defs (Γ : Ctx α ε) : Body φ → Ctx α ε
+def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
   | Body.nil => []
-  | Body.let1 a b => ⟨a.min_ty Γ, a.min_effect Γ⟩ :: b.min_defs (⟨a.min_ty Γ, a.min_effect Γ⟩::Γ)
+  | Body.let1 a b => ⟨a.minTy Γ, a.minEffect Γ⟩ :: b.minDefs (⟨a.minTy Γ, a.minEffect Γ⟩::Γ)
   | Body.let2 a b =>
-    ⟨a.min_ty Γ, a.min_effect Γ⟩ ::
-    ⟨a.min_ty Γ, a.min_effect Γ⟩ ::
-    b.min_defs (⟨a.min_ty Γ, a.min_effect Γ⟩::⟨a.min_ty Γ, a.min_effect Γ⟩::Γ)
+    ⟨a.minTy Γ, a.minEffect Γ⟩ ::
+    ⟨a.minTy Γ, a.minEffect Γ⟩ ::
+    b.minDefs (⟨a.minTy Γ, a.minEffect Γ⟩::⟨a.minTy Γ, a.minEffect Γ⟩::Γ)
 
 end Minimal
 
