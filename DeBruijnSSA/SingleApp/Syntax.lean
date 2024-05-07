@@ -261,13 +261,15 @@ def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
   | let1 e t => let1 (e.wk ρ) (t.wk (Nat.liftWk ρ))
   | let2 e t => let2 (e.wk ρ) (t.wk (Nat.liftnWk 2 ρ))
 
--- TODO: weakening
+def Body.subst (σ : Subst φ) : Body φ → Body φ
+  | nil => nil
+  | let1 e t => let1 (e.subst σ) (t.subst σ.lift)
+  | let2 e t => let2 (e.subst σ) (t.subst (σ.liftn 2))
 
--- TODO: substitution
-
--- TODO: label-weakening
-
--- TODO: label-substitution
+def Body.num_defs : Body φ → ℕ
+  | nil => 0
+  | let1 _ t => t.num_defs + 1
+  | let2 _ t => t.num_defs + 2
 
 -- TODO: variant with a body followed by a weakening
 
@@ -276,11 +278,17 @@ structure Block (φ : Type) : Type where
   body : Body φ
   terminator : Terminator φ
 
--- TODO: weakening
+def Block.vwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
+  body := β.body.wk ρ
+  terminator := β.terminator.vwk (Nat.liftnWk β.body.num_defs ρ)
 
--- TODO: substitution
+def Block.subst (σ : Subst φ) (β : Block φ) : Block φ where
+  body := β.body.subst σ
+  terminator := β.terminator.vsubst (σ.liftn β.body.num_defs)
 
--- TODO: label-weakening
+def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
+  body := β.body
+  terminator := β.terminator.lwk ρ
 
 -- TODO: label-substitution
 
@@ -288,11 +296,14 @@ structure Block (φ : Type) : Type where
 inductive BBRegion (φ : Type) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
--- TODO: weakening
+def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
+  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
--- TODO: substitution
+def BBRegion.subst (σ : Subst φ) : BBRegion φ → BBRegion φ
+  | cfg β n f => cfg (β.subst σ) n (λ i => (f i).subst σ.lift)
 
--- TODO: label-weakening
+def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
+  | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 -- TODO: label-substitution
 
@@ -302,11 +313,20 @@ inductive TRegion (φ : Type) : Type
   | let2 : Term φ → TRegion φ → TRegion φ
   | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
 
--- TODO: weakening
+def TRegion.vwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
+  | let1 e t => let1 (e.wk ρ) (t.vwk (Nat.liftWk ρ))
+  | let2 e t => let2 (e.wk ρ) (t.vwk (Nat.liftnWk 2 ρ))
+  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
--- TODO: substitution
+def TRegion.subst (σ : Subst φ) : TRegion φ → TRegion φ
+  | let1 e t => let1 (e.subst σ) (t.subst σ.lift)
+  | let2 e t => let2 (e.subst σ) (t.subst (σ.liftn 2))
+  | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).subst σ.lift)
 
--- TODO: label-weakening
+def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
+  | let1 e t => let1 e (t.lwk ρ)
+  | let2 e t => let2 e (t.lwk ρ)
+  | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 -- TODO: label-substitution
 
@@ -343,7 +363,7 @@ def Region.vsubst (σ : Subst φ) : Region φ → Region φ
   | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
   | let1 e t => let1 (e.subst σ) (vsubst σ.lift t)
   | let2 e t => let2 (e.subst σ) (vsubst (σ.liftn 2) t)
-  | cfg β n f => cfg (vsubst σ β) n (λ i => (f i).vsubst σ)
+  | cfg β n f => cfg (vsubst σ β) n (λ i => (f i).vsubst σ.lift)
 
 @[simp]
 theorem Region.vsubst_id (r : Region φ) : r.vsubst Subst.id = r := by
