@@ -117,6 +117,10 @@ inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
     → b.WfD (⟨A, e⟩::⟨B, e⟩::Γ) Δ
     → (let2 a b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Δ)
 
+theorem Body.WfD.num_defs_eq_length {Γ : Ctx α ε} {b : Body φ} {Δ} (h : b.WfD Γ Δ)
+  : b.num_defs = Δ.length
+  := by induction h <;> simp [num_defs, *]
+
 def LCtx (α) := List (Ty α)
 
 structure LCtx.Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
@@ -205,6 +209,10 @@ theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftnWk 2 ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn₂ hV₁ hV₂)
 
+theorem Ctx.Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
+  : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
+  := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn_append Ξ)
+
 theorem Ctx.Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
   get := le_trans hΓ.get h
@@ -276,11 +284,13 @@ def Terminator.WfD.lwk {t : Terminator φ} (h : L.Wkn K ρ) : WfD Γ t L → WfD
   | br hL ha => br (hL.wk h) ha
   | ite he hs ht => ite he (hs.lwk h) (ht.lwk h)
 
--- TODO: Block:
+def Block.WfD.vwk {β : Block φ} (h : Γ.Wkn Δ ρ) (hβ : WfD Δ β Ξ L) : WfD Γ (β.vwk ρ) Ξ L where
+  body := hβ.body.wk h
+  terminator := hβ.terminator.vwk (hβ.body.num_defs_eq_length ▸ (h.liftn_append Ξ))
 
--- TODO: weakening
-
--- TODO: label-weakening
+def Block.WfD.lwk {β : Block φ} (h : L.Wkn K ρ) (hβ : WfD Γ β Ξ L) : WfD Γ (β.lwk ρ) Ξ K where
+  body := hβ.body
+  terminator := hβ.terminator.lwk h
 
 -- TODO: BBRegion:
 
@@ -293,8 +303,6 @@ def Terminator.WfD.lwk {t : Terminator φ} (h : L.Wkn K ρ) : WfD Γ t L → WfD
 -- TODO: weakening
 
 -- TODO: label-weakening
-
--- TODO: Region:
 
 def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ r L → WfD Γ (r.vwk ρ) L
