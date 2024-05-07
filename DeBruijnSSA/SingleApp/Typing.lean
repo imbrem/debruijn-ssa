@@ -259,6 +259,9 @@ theorem Ctx.Wkn.liftn_append_cons (A Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
   := liftn_append (A::Ξ) h
 
+theorem Ctx.Wkn.id_len_le : Γ.Wkn Δ _root_.id → Δ.length ≤ Γ.length := by
+  rw [Wkn_iff]; apply List.NWkn.id_len_le
+
 theorem Ctx.Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
   get := le_trans hΓ.get h
@@ -310,10 +313,22 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
   | unit e => unit e
   | bool b e => bool b e
 
+def Term.WfD.wk_id {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → WfD Γ a ⟨A, e⟩
+  | var dv => var (dv.wk h)
+  | op df de => op df (de.wk_id h)
+  | pair dl dr => pair (dl.wk_id h) (dr.wk_id h)
+  | unit e => unit e
+  | bool b e => bool b e
+
 def Body.WfD.wk {Γ Δ : Ctx α ε} {ρ} {b : Body φ} (h : Γ.Wkn Δ ρ) : WfD Δ b Ξ → WfD Γ (b.wk ρ) Ξ
   | nil => nil
   | let1 a b => let1 (a.wk h) (b.wk (h.lift (le_refl _)))
   | let2 a b => let2 (a.wk h) (b.wk (h.liftn₂ (le_refl _) (le_refl _)))
+
+def Body.WfD.wk_id {Γ Δ : Ctx α ε} {b : Body φ} (h : Γ.Wkn Δ id) : WfD Δ b Ξ → WfD Γ b Ξ
+  | nil => nil
+  | let1 a b => let1 (a.wk_id h) (b.wk_id (Nat.liftWk_id ▸ h.lift (le_refl _)))
+  | let2 a b => let2 (a.wk_id h) (b.wk_id (Nat.liftnWk_id 2 ▸ h.liftn₂ (le_refl _) (le_refl _)))
 
 variable {L K : LCtx α}
 
@@ -422,11 +437,14 @@ theorem Term.WfD.minEffect_le
 
 def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
   | Body.nil => []
-  | Body.let1 a b => ⟨a.minTy Γ, a.minEffect Γ⟩ :: b.minDefs (⟨a.minTy Γ, a.minEffect Γ⟩::Γ)
+  | Body.let1 a b => ⟨a.minTy Γ, 0⟩ :: b.minDefs (⟨a.minTy Γ, 0⟩::Γ)
   | Body.let2 a b =>
-    ⟨a.minTy Γ, a.minEffect Γ⟩ ::
-    ⟨a.minTy Γ, a.minEffect Γ⟩ ::
-    b.minDefs (⟨a.minTy Γ, a.minEffect Γ⟩::⟨a.minTy Γ, a.minEffect Γ⟩::Γ)
+    ⟨a.minTy Γ, 0⟩ :: ⟨a.minTy Γ, 0⟩ :: b.minDefs (⟨a.minTy Γ, 0⟩::⟨a.minTy Γ, 0⟩::Γ)
+
+-- def Body.WfD.toMinDefs {Γ : Ctx α ε} {b : Body φ} {Δ} : b.WfD Γ Δ → WfD Γ b (b.minDefs Γ)
+--   | Body.WfD.nil => nil
+--   | Body.WfD.let1 a b => let1 a.toMinTy (b.wk_id sorry).toMinDefs
+--   | Body.WfD.let2 a b => let2 a.toMinTy (b.wk_id sorry).toMinDefs
 
 end Minimal
 
