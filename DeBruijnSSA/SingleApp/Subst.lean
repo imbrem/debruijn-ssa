@@ -30,6 +30,10 @@ def Subst.WfD.liftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ) : (σ.liftn Ξ.
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
   | A::Ξ => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append Ξ).slift _
 
+def Subst.WfD.liftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ)
+  : (σ.liftn (Ξ.length + 1)).WfD (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
+  := liftn_append (V::Ξ) hσ
+
 -- TODO: version with nicer defeq?
 def Subst.WfD.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ : σ.WfD Γ Δ)
   : (σ.liftn 2).WfD (V₁::V₂::Γ) (V₁'::V₂'::Δ)
@@ -63,7 +67,10 @@ def Block.WfD.vsubst {b : Block φ} (hσ : σ.WfD Γ Δ) (hb : b.WfD Δ Ξ L) : 
   body := hb.body.subst hσ
   terminator := hb.terminator.vsubst (hb.body.num_defs_eq_length ▸ hσ.liftn_append Ξ)
 
--- TODO: BBRegion
+def BBRegion.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ Δ)
+  : r.WfD Δ L → (r.vsubst σ).WfD Γ L
+  | cfg n R hR hb hG => cfg n R hR (hb.vsubst hσ)
+    (λi => (hG i).vsubst (hb.body.num_defs_eq_length ▸ hσ.liftn_append_cons _ _))
 
 def TRegion.WfD.vsubst {Γ Δ : Ctx α ε} {σ}  {r : TRegion φ} (hσ : σ.WfD Γ Δ)
   : r.WfD Δ L → (r.vsubst σ).WfD Γ L
