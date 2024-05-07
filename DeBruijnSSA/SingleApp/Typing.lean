@@ -71,6 +71,10 @@ structure Ctx.Var (Γ : Ctx α ε) (n : ℕ) (V : Ty α × ε) : Prop where
   length : n < Γ.length
   get : Γ.get ⟨n, length⟩ ≤ V
 
+def Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
+  length := by simp
+  get := h
+
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 
 def FCtx (α ε) := Σn, Fin n → Ty α × ε
@@ -212,9 +216,14 @@ theorem Ctx.Wkn_def' (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔
 theorem Ctx.Wkn_iff (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔ List.NWkn Γ Δ ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
+theorem Ctx.Wkn.id (Γ : Ctx α ε) : Γ.Wkn Γ id := λ_ hi => ⟨hi, le_refl _⟩
+
 theorem Ctx.Wkn.lift {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ ρ)
   : Wkn (V::Γ) (V'::Δ) (Nat.liftWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift hV)
+
+theorem Ctx.Wkn.step {V : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (V::Γ) Δ (Nat.stepWk ρ)
+  := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
 
 theorem Ctx.Wkn.lift₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftWk (Nat.liftWk ρ))

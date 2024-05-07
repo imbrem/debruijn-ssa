@@ -102,12 +102,13 @@ theorem Subst.iterate_lift_id : (n: ℕ) -> Subst.lift^[n] (@id φ) = id
 theorem Subst.liftn_id (n: ℕ): (@id φ).liftn n = id := by
   rw [liftn_eq_iterate_lift_apply, iterate_lift_id]
 
-
 theorem Subst.liftn_add (n m: ℕ) : Subst.liftn (m + n) = (@Subst.liftn α m) ∘ (@Subst.liftn α n)
   := by simp [liftn_eq_iterate_lift, Function.iterate_add]
 
 theorem Subst.liftn_add_apply (n m: ℕ) (σ: Subst α): (σ.liftn n).liftn m = σ.liftn (m + n)
   := by simp [liftn_add]
+
+theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).wk Nat.succ := rfl
 
 /-- Substitute the variables in a `Term` using `σ` -/
 def Term.subst (σ : Subst φ) : Term φ → Term φ
@@ -282,7 +283,7 @@ def Block.vwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body.wk ρ
   terminator := β.terminator.vwk (Nat.liftnWk β.body.num_defs ρ)
 
-def Block.subst (σ : Subst φ) (β : Block φ) : Block φ where
+def Block.vsubst (σ : Subst φ) (β : Block φ) : Block φ where
   body := β.body.subst σ
   terminator := β.terminator.vsubst (σ.liftn β.body.num_defs)
 
@@ -299,8 +300,8 @@ inductive BBRegion (φ : Type) : Type
 def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
 
-def BBRegion.subst (σ : Subst φ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.subst σ) n (λ i => (f i).subst (σ.liftn (β.body.num_defs + 1)))
+def BBRegion.vsubst (σ : Subst φ) : BBRegion φ → BBRegion φ
+  | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).vsubst (σ.liftn (β.body.num_defs + 1)))
 
 def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
@@ -318,10 +319,10 @@ def TRegion.vwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let2 e t => let2 (e.wk ρ) (t.vwk (Nat.liftnWk 2 ρ))
   | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
-def TRegion.subst (σ : Subst φ) : TRegion φ → TRegion φ
-  | let1 e t => let1 (e.subst σ) (t.subst σ.lift)
-  | let2 e t => let2 (e.subst σ) (t.subst (σ.liftn 2))
-  | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).subst σ.lift)
+def TRegion.vsubst (σ : Subst φ) : TRegion φ → TRegion φ
+  | let1 e t => let1 (e.subst σ) (t.vsubst σ.lift)
+  | let2 e t => let2 (e.subst σ) (t.vsubst (σ.liftn 2))
+  | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).vsubst σ.lift)
 
 def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let1 e t => let1 e (t.lwk ρ)
