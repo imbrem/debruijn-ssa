@@ -262,6 +262,14 @@ def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
   | let1 e t => let1 (e.wk ρ) (t.wk (Nat.liftWk ρ))
   | let2 e t => let2 (e.wk ρ) (t.wk (Nat.liftnWk 2 ρ))
 
+@[simp]
+theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [Body.wk, *]
+
+theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
+  : b.wk (σ ∘ τ) = (b.wk τ).wk σ := by
+  induction b generalizing σ τ
+  <;> simp [wk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
 def Body.subst (σ : Subst φ) : Body φ → Body φ
   | nil => nil
   | let1 e t => let1 (e.subst σ) (t.subst σ.lift)
@@ -272,7 +280,61 @@ def Body.num_defs : Body φ → ℕ
   | let1 _ t => t.num_defs + 1
   | let2 _ t => t.num_defs + 2
 
--- TODO: variant with a body followed by a weakening
+-- TODO: stepnwk and friends
+def Body.comp (b b' : Body φ) : Body φ := match b with
+  | nil => b'
+  | let1 a t => let1 a (t.comp (b'.wk Nat.succ))
+  | let2 a t => let2 a (t.comp (b'.wk (λx => x + 2)))
+
+def Body.compn (n : ℕ) (b b' : Body φ) : Body φ := match b with
+  | nil => b'.wk (λx => x + n)
+  | let1 a t => let1 a (t.compn (n + 1) b')
+  | let2 a t => let2 a (t.compn (n + 2) b')
+
+theorem Body.compn_eq_comp_wk (n : ℕ) (b b' : Body φ)
+  : b.compn n b' = b.comp (b'.wk (λx => x + n)) := by
+  induction b generalizing n b' with
+  | nil => rfl
+  | let1 _ _ I =>
+    simp only [compn, I, comp, ← wk_comp]
+    congr
+  | let2 _ _ I =>
+    simp only [compn, I, comp, ← wk_comp]
+    congr
+
+theorem Body.compn_zero_eq_comp (b b' : Body φ) : b.compn 0 b' = b.comp b' := by
+  simp only [compn_eq_comp_wk, add_zero]; congr; exact wk_id _
+
+@[simp]
+theorem Body.compn_nil (b : Body φ) : b.compn n Body.nil = b := by
+  induction b generalizing n <;> simp [compn, wk, *]
+
+theorem Body.nil_compn (b : Body φ) : Body.nil.compn n b = b.wk (λx => x + n) := by
+  induction b generalizing n <;> simp [compn, wk, *]
+
+@[simp]
+theorem Body.comp_nil (b : Body φ) : b.comp Body.nil = b := by
+  induction b <;> simp [comp, wk, *]
+
+@[simp]
+theorem Body.nil_comp (b : Body φ) : Body.nil.comp b = b := rfl
+
+theorem Body.comp_wk (ρ : ℕ → ℕ) (b b' : Body φ) : (b.comp b').wk ρ = (b.wk ρ).comp (b'.wk ρ) := by
+  induction b generalizing ρ b' with
+  | nil => simp [wk]
+  | let1 a b I =>
+    simp only [wk, comp, I, <-wk_comp]
+    congr
+  | let2 a b I =>
+    simp only [wk, comp, I, <-wk_comp]
+    congr
+
+theorem Body.comp_assoc (b b' b'' : Body φ) : (b.comp b').comp b'' = b.comp (b'.comp b'') := by
+  induction b generalizing b' b'' <;> simp [comp, comp_wk, *]
+
+-- TODO: make Body into a monoid this way
+
+-- TODO: variant with a body followed by a weakening (WBody?). This is also a monoid, of course.
 
 /-- A basic-block -/
 structure Block (φ : Type) : Type where
@@ -292,6 +354,18 @@ def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   terminator := β.terminator.lwk ρ
 
 -- TODO: label-substitution (TSubst)
+
+def Terminator.toBlock (t : Terminator φ) : Block φ := ⟨Body.nil, t⟩
+
+theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
+  := rfl
+
+theorem Terminator.toBlock_vsubst (σ : Subst φ) (t : Terminator φ)
+  : (t.vsubst σ).toBlock = t.toBlock.vsubst σ
+  := by simp [toBlock, Block.vsubst, Body.subst, Body.num_defs, Subst.liftn_zero]
+
+theorem Terminator.toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.lwk ρ).toBlock = t.toBlock.lwk ρ
+  := rfl
 
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
