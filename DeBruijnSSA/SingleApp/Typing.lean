@@ -154,7 +154,10 @@ inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
   | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
-  | cfg  (n : ℕ) {G} : t.WfD Γ K → (∀i : Fin n, (G i).WfD Γ K) → L = K.drop n → WfD Γ (cfg t n G) L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfD Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::Γ) (R ++ L)) →
+    WfD Γ (cfg β n G) L
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
@@ -303,13 +306,25 @@ def BBRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : BBRegion φ
   | cfg n R hR hβ hG =>
     cfg n R hR (hβ.vwk h) (λi => (hG i).vwk (hβ.body.num_defs_eq_length ▸h.liftn_append_cons _ _))
 
--- TODO: label-weakening
+def BBRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : BBRegion φ} (h : L.Wkn K ρ)
+  : WfD Γ r L → WfD Γ (r.lwk ρ) K
+  | cfg n R hR hβ hG =>
+    have trg_wk : (R ++ L).Wkn (R ++ K) (Nat.liftnWk n ρ) := hR ▸ h.liftn_append R
+    cfg n R hR (hβ.lwk trg_wk) (λi => (hG i).lwk trg_wk)
 
--- TODO: TRegion:
+def TRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : TRegion φ} (h : Γ.Wkn Δ ρ)
+  : WfD Δ r L → WfD Γ (r.vwk ρ) L
+  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.lift (le_refl _)))
+  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.liftn₂ (le_refl _) (le_refl _)))
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.lift (le_refl _)))
 
--- TODO: weakening
-
--- TODO: label-weakening
+def TRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : TRegion φ} (h : L.Wkn K ρ)
+  : WfD Γ r L → WfD Γ (r.lwk ρ) K
+  | let1 ha ht => let1 ha (ht.lwk h)
+  | let2 ha ht => let2 ha (ht.lwk h)
+  | cfg n R hR hr hG =>
+    have trg_wk : (R ++ L).Wkn (R ++ K) (Nat.liftnWk n ρ) := hR ▸ h.liftn_append R
+    cfg n R hR (hr.lwk trg_wk) (λi => (hG i).lwk trg_wk)
 
 def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ r L → WfD Γ (r.vwk ρ) L
