@@ -280,11 +280,17 @@ def Body.num_defs : Body φ → ℕ
   | let1 _ t => t.num_defs + 1
   | let2 _ t => t.num_defs + 2
 
+theorem Body.wk_num_defs (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
+  induction b generalizing ρ <;> simp [wk, num_defs, *]
+
 -- TODO: stepnwk and friends
 def Body.comp (b b' : Body φ) : Body φ := match b with
   | nil => b'
   | let1 a t => let1 a (t.comp (b'.wk Nat.succ))
   | let2 a t => let2 a (t.comp (b'.wk (λx => x + 2)))
+
+theorem Body.comp_num_defs (b b' : Body φ) : (b.comp b').num_defs = b.num_defs + b'.num_defs := by
+  induction b generalizing b' <;> simp_arith [comp, num_defs, wk_num_defs, *]
 
 def Body.compn (n : ℕ) (b b' : Body φ) : Body φ := match b with
   | nil => b'.wk (λx => x + n)
@@ -334,6 +340,17 @@ theorem Body.comp_assoc (b b' b'' : Body φ) : (b.comp b').comp b'' = b.comp (b'
 
 -- TODO: make Body into a monoid this way
 
+def Body.append (b b' : Body φ) : Body φ := match b with
+  | nil => b'
+  | let1 a t => let1 a (t.append b')
+  | let2 a t => let2 a (t.append b')
+
+-- TODO: relationship between append and comp
+
+-- TODO: define comp as append instead? removes the need for compn...
+
+-- TODO: another issue: now there are _two_ monoid structures on Body
+
 -- TODO: variant with a body followed by a weakening (WBody?). This is also a monoid, of course.
 
 /-- A basic-block -/
@@ -354,6 +371,23 @@ def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   terminator := β.terminator.lwk ρ
 
 -- TODO: label-substitution (TSubst)
+
+def Block.precomp (b : Body φ) (β : Block φ) : Block φ where
+  body := b.comp β.body
+  terminator := β.terminator.vwk (λx => x + b.num_defs)
+
+theorem Block.precomp_comp (b b' : Body φ) (β : Block φ)
+  : β.precomp (b.comp b') = (β.precomp b').precomp b := by
+  simp only [Block.precomp, Body.comp_assoc, <-Terminator.vwk_comp]
+  congr
+  funext x
+  simp_arith [Body.comp_num_defs]
+
+def Block.prepend (b : Body φ) (β : Block φ) : Block φ where
+  body := b.append β.body
+  terminator := β.terminator
+
+-- TODO: make Body have a monoid action on Block
 
 def Terminator.toBlock (t : Terminator φ) : Block φ := ⟨Body.nil, t⟩
 
