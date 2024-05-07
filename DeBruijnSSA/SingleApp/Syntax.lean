@@ -256,6 +256,11 @@ inductive Body (φ : Type) : Type
   | let1 : Term φ → Body φ → Body φ
   | let2 : Term φ → Body φ → Body φ
 
+def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
+  | nil => nil
+  | let1 e t => let1 (e.wk ρ) (t.wk (Nat.liftWk ρ))
+  | let2 e t => let2 (e.wk ρ) (t.wk (Nat.liftnWk 2 ρ))
+
 -- TODO: weakening
 
 -- TODO: substitution

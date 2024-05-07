@@ -238,9 +238,10 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a A e → WfD Γ (a.wk
   | unit e => unit e
   | bool b e => bool b e
 
--- TODO: Body:
-
--- TODO: weakening
+def Body.WfD.wk {Γ Δ : Ctx α ε} {ρ} {b : Body φ} (h : Γ.Wkn Δ ρ) : WfD Δ b Ξ → WfD Γ (b.wk ρ) Ξ
+  | nil => nil
+  | let1 a b => let1 (a.wk h) (b.wk (h.lift (le_refl _)))
+  | let2 a b => let2 (a.wk h) (b.wk (h.liftn₂ (le_refl _) (le_refl _)))
 
 variable {L K : LCtx α}
 
