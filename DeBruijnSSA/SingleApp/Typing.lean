@@ -146,8 +146,10 @@ structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx 
   terminator : β.terminator.WfD (Δ ++ Γ) L
 
 inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
-  | cfg {Δ} (n : ℕ) {G} : β.WfD Γ Δ K → (∀i : Fin n, (G i).WfD (Δ ++ Γ) K)
-    → L = K.drop n → BBRegion.WfD Γ (cfg β n G) L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfD Γ Δ (R ++ L) →
+    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::(Δ ++ Γ)) (R ++ L)) →
+    WfD Γ (cfg β n G) L
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
@@ -212,6 +214,10 @@ theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤
 theorem Ctx.Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn_append Ξ)
+
+theorem Ctx.Wkn.liftn_append_cons (A Ξ) (h : Γ.Wkn Δ ρ)
+  : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
+  := liftn_append (A::Ξ) h
 
 theorem Ctx.Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
@@ -292,9 +298,10 @@ def Block.WfD.lwk {β : Block φ} (h : L.Wkn K ρ) (hβ : WfD Γ β Ξ L) : WfD 
   body := hβ.body
   terminator := hβ.terminator.lwk h
 
--- TODO: BBRegion:
-
--- TODO: weakening
+def BBRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : BBRegion φ} (h : Γ.Wkn Δ ρ)
+  : WfD Δ r L → WfD Γ (r.vwk ρ) L
+  | cfg n R hR hβ hG =>
+    cfg n R hR (hβ.vwk h) (λi => (hG i).vwk (hβ.body.num_defs_eq_length ▸h.liftn_append_cons _ _))
 
 -- TODO: label-weakening
 

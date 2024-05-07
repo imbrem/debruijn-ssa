@@ -248,7 +248,7 @@ theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
   : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
 
--- TODO: label-substitution
+-- TODO: label-substitution (TSubst)
 
 /-- A basic block body -/
 inductive Body (φ : Type) : Type
@@ -290,22 +290,22 @@ def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body
   terminator := β.terminator.lwk ρ
 
--- TODO: label-substitution
+-- TODO: label-substitution (TSubst)
 
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
 def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
+  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
 
 def BBRegion.subst (σ : Subst φ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.subst σ) n (λ i => (f i).subst σ.lift)
+  | cfg β n f => cfg (β.subst σ) n (λ i => (f i).subst (σ.liftn (β.body.num_defs + 1)))
 
 def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
--- TODO: label-substitution
+-- TODO: label-substitution (TSubst)
 
 /-- A terminator-based single-entry multiple-exit region -/
 inductive TRegion (φ : Type) : Type
@@ -328,9 +328,11 @@ def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let2 e t => let2 e (t.lwk ρ)
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
--- TODO: label-substitution
+-- TODO: label-substitution (TSubst)
 
--- TODO: normalize TRegion to BBRegion
+-- TODO: normalize TRegion to BBRegion; commutes with label-substitution
+
+-- TODO: normalize BBRegion to TRegion; commutes with label-substitution
 
 /-- A single-entry multiple-exit region -/
 inductive Region (φ : Type) : Type
@@ -390,11 +392,13 @@ theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
   : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
 
--- TODO: label-substitution
+-- TODO: label-substitution (TSubst, RSubst)
 
--- TODO: normalize Region to TRegion
+-- TODO: normalize Region to TRegion; commutes with label-substitution
 
--- TODO: transitively, normalize Region to BBRegion
+-- TODO: transitively, normalize Region to BBRegion; commutes with label-substitution
+
+-- TODO: normalize TRegion to Region; commutes with label-substiution
 
 /-- A control-flow graph with `length` entry-point regions -/
 structure CFG (φ : Type) : Type where
