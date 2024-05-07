@@ -92,8 +92,10 @@ theorem Subst.liftn_eq_iterate_lift (n: ℕ) : Subst.liftn n = (@Subst.lift φ)^
   funext σ
   rw [liftn_eq_iterate_lift_apply]
 
+@[simp]
 theorem Subst.lift_id : (@id φ).lift = id := by funext n; cases n <;> rfl
 
+@[simp]
 theorem Subst.iterate_lift_id : (n: ℕ) -> Subst.lift^[n] (@id φ) = id
   | 0 => rfl
   | n + 1 => by simp [lift_id, iterate_lift_id n]
@@ -209,13 +211,14 @@ inductive Terminator (φ : Type) : Type
   | ite : Term φ → Terminator φ → Terminator φ → Terminator φ
 
 /-- Rename the variables in a `Terminator` using `ρ` -/
+@[simp]
 def Terminator.vwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
   | br n e => br n (e.wk ρ)
   | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
 
 @[simp]
 theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
-  induction r <;> simp [Terminator.vwk, Nat.liftnWk_id, *]
+  induction r <;> simp [Nat.liftnWk_id, *]
 
 theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
   : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
@@ -223,20 +226,22 @@ theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
   <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 /-- Substitute the variables in a `Terminator` using `σ` -/
+@[simp]
 def Terminator.vsubst (σ : Subst φ) : Terminator φ → Terminator φ
   | br n e => br n (e.subst σ)
   | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
 
 @[simp]
 theorem Terminator.vsubst_id (r : Terminator φ) : r.vsubst Subst.id = r := by
-  induction r <;> simp [Terminator.vsubst, Subst.lift_id, Subst.liftn_id, *]
+  induction r <;> simp [Subst.lift_id, Subst.liftn_id, *]
 
 theorem Terminator.vsubst_comp (σ τ : Subst φ) (r : Terminator φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
-  <;> simp [vsubst, Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+  <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
 /-- Rename the labels in a `Region` using `ρ` -/
+@[simp]
 def Terminator.lwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
   | br n e => br (ρ n) e
   | ite e s t => ite e (lwk ρ s) (lwk ρ t)
@@ -257,6 +262,8 @@ inductive Body (φ : Type) : Type
   | let1 : Term φ → Body φ → Body φ
   | let2 : Term φ → Body φ → Body φ
 
+/-- Weaken a body -/
+@[simp]
 def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
   | nil => nil
   | let1 e t => let1 (e.wk ρ) (t.wk (Nat.liftWk ρ))
@@ -270,11 +277,14 @@ theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
   induction b generalizing σ τ
   <;> simp [wk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
+/-- Substitute the variables in a body -/
 def Body.subst (σ : Subst φ) : Body φ → Body φ
   | nil => nil
   | let1 e t => let1 (e.subst σ) (t.subst σ.lift)
   | let2 e t => let2 (e.subst σ) (t.subst (σ.liftn 2))
 
+/-- The number of variables defined in a body -/
+@[simp]
 def Body.num_defs : Body φ → ℕ
   | nil => 0
   | let1 _ t => t.num_defs + 1
@@ -284,66 +294,73 @@ theorem Body.wk_num_defs (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs =
   induction b generalizing ρ <;> simp [wk, num_defs, *]
 
 -- TODO: stepnwk and friends
-def Body.comp (b b' : Body φ) : Body φ := match b with
-  | nil => b'
-  | let1 a t => let1 a (t.comp (b'.wk Nat.succ))
-  | let2 a t => let2 a (t.comp (b'.wk (λx => x + 2)))
 
-theorem Body.comp_num_defs (b b' : Body φ) : (b.comp b').num_defs = b.num_defs + b'.num_defs := by
-  induction b generalizing b' <;> simp_arith [comp, num_defs, wk_num_defs, *]
-
-def Body.compn (n : ℕ) (b b' : Body φ) : Body φ := match b with
-  | nil => b'.wk (λx => x + n)
-  | let1 a t => let1 a (t.compn (n + 1) b')
-  | let2 a t => let2 a (t.compn (n + 2) b')
-
-theorem Body.compn_eq_comp_wk (n : ℕ) (b b' : Body φ)
-  : b.compn n b' = b.comp (b'.wk (λx => x + n)) := by
-  induction b generalizing n b' with
-  | nil => rfl
-  | let1 _ _ I =>
-    simp only [compn, I, comp, ← wk_comp]
-    congr
-  | let2 _ _ I =>
-    simp only [compn, I, comp, ← wk_comp]
-    congr
-
-theorem Body.compn_zero_eq_comp (b b' : Body φ) : b.compn 0 b' = b.comp b' := by
-  simp only [compn_eq_comp_wk, add_zero]; congr; exact wk_id _
-
-@[simp]
-theorem Body.compn_nil (b : Body φ) : b.compn n Body.nil = b := by
-  induction b generalizing n <;> simp [compn, wk, *]
-
-theorem Body.nil_compn (b : Body φ) : Body.nil.compn n b = b.wk (λx => x + n) := by
-  induction b generalizing n <;> simp [compn, wk, *]
-
-@[simp]
-theorem Body.comp_nil (b : Body φ) : b.comp Body.nil = b := by
-  induction b <;> simp [comp, wk, *]
-
-@[simp]
-theorem Body.nil_comp (b : Body φ) : Body.nil.comp b = b := rfl
-
-theorem Body.comp_wk (ρ : ℕ → ℕ) (b b' : Body φ) : (b.comp b').wk ρ = (b.wk ρ).comp (b'.wk ρ) := by
-  induction b generalizing ρ b' with
-  | nil => simp [wk]
-  | let1 a b I =>
-    simp only [wk, comp, I, <-wk_comp]
-    congr
-  | let2 a b I =>
-    simp only [wk, comp, I, <-wk_comp]
-    congr
-
-theorem Body.comp_assoc (b b' b'' : Body φ) : (b.comp b').comp b'' = b.comp (b'.comp b'') := by
-  induction b generalizing b' b'' <;> simp [comp, comp_wk, *]
-
--- TODO: make Body into a monoid this way
-
+/-- Append two bodies, letting the second use the variables defined in the first -/
 def Body.append (b b' : Body φ) : Body φ := match b with
   | nil => b'
   | let1 a t => let1 a (t.append b')
   | let2 a t => let2 a (t.append b')
+
+theorem Body.append_num_defs (b b' : Body φ)
+  : (b.append b').num_defs = b.num_defs + b'.num_defs := by
+  induction b generalizing b' <;> simp_arith [append, num_defs, *]
+
+@[simp]
+theorem Body.nil_append (b : Body φ) : nil.append b = b := rfl
+
+@[simp]
+theorem Body.append_nil (b : Body φ) : b.append nil = b := by
+  induction b <;> simp [append, *]
+
+theorem Body.append_assoc (b b' b'' : Body φ)
+  : (b.append b').append b'' = b.append (b'.append b'') := by
+  induction b generalizing b' b'' <;> simp [append, *]
+
+theorem Body.wk_append (ρ : ℕ → ℕ) (b b' : Body φ)
+  : (b.append b').wk ρ = (b.wk ρ).append (b'.wk (Nat.liftnWk b.num_defs ρ)) := by
+  induction b generalizing ρ b' with
+  | nil => rfl
+  | _ => simp only [wk, *, append, num_defs, let1.injEq, true_and, Nat.liftnWk_succ]; congr
+
+/-- Append two bodies, weakening the second so that it shares the same inputs as the first -/
+def Body.ltimes (b b' : Body φ) : Body φ := b.append (b'.wk (λn => n + b.num_defs))
+
+theorem Body.ltimes_num_defs (b b' : Body φ) : (b.ltimes b').num_defs = b.num_defs + b'.num_defs
+  := by simp [ltimes, append_num_defs, Body.wk_num_defs]
+
+theorem Body.wk_ltimes (ρ : ℕ → ℕ) (b b' : Body φ)
+  : (b.ltimes b').wk ρ = (b.wk ρ).ltimes (b'.wk ρ) := by
+  simp only [ltimes, wk_append, <-wk_comp]
+  congr
+  funext n
+  simp [Function.comp_apply, Nat.liftnWk, wk_num_defs]
+
+@[simp]
+theorem Body.ltimes_nil (b : Body φ) : b.ltimes nil = b := by simp [ltimes]
+
+@[simp]
+theorem Body.nil_ltimes (b : Body φ) : nil.ltimes b = b :=
+  by simp only [ltimes, num_defs, add_zero, nil_append]; exact b.wk_id
+
+theorem Body.let1_ltimes (a : Term φ) (b b' : Body φ)
+  : (let1 a b).ltimes b' = let1 a (b.ltimes (b'.wk Nat.succ)) := by
+  simp only [ltimes, append, wk_append, <-wk_comp]
+  congr
+  funext n
+  simp_arith
+
+theorem Body.let2_ltimes (a : Term φ) (b b' : Body φ)
+  : (let2 a b).ltimes b' = let2 a (b.ltimes (b'.wk (λn => n + 2))) := by
+  simp only [ltimes, append, wk_append, <-wk_comp]
+  congr
+  funext n
+  simp_arith
+
+theorem Body.ltimes_assoc (b b' b'' : Body φ)
+  : (b.ltimes b').ltimes b'' = b.ltimes (b'.ltimes b'') := by
+  induction b generalizing b' b'' <;> simp [let1_ltimes, let2_ltimes, wk_ltimes, *]
+
+-- TODO: make Body into a monoid this way
 
 -- TODO: relationship between append and comp
 
@@ -353,42 +370,66 @@ def Body.append (b b' : Body φ) : Body φ := match b with
 
 -- TODO: variant with a body followed by a weakening (WBody?). This is also a monoid, of course.
 
+-- TODO: in fact, _this_ variant supports an _rtimes_ operation. Wow!
+
 /-- A basic-block -/
 structure Block (φ : Type) : Type where
+  /-- The body of this basic block, containing the instructions and variable definitions within -/
   body : Body φ
+  /-- The terminator of this basic block, determining where control flow goes to after the body
+  is finished executing -/
   terminator : Terminator φ
 
+/-- Weaken the variables in this basic block -/
 def Block.vwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body.wk ρ
   terminator := β.terminator.vwk (Nat.liftnWk β.body.num_defs ρ)
 
+/-- Substitute the variables in this basic block -/
 def Block.vsubst (σ : Subst φ) (β : Block φ) : Block φ where
   body := β.body.subst σ
   terminator := β.terminator.vsubst (σ.liftn β.body.num_defs)
 
+/-- Weaken the labels in this basic block -/
 def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body
   terminator := β.terminator.lwk ρ
 
 -- TODO: label-substitution (TSubst)
 
-def Block.precomp (b : Body φ) (β : Block φ) : Block φ where
-  body := b.comp β.body
-  terminator := β.terminator.vwk (λx => x + b.num_defs)
-
-theorem Block.precomp_comp (b b' : Body φ) (β : Block φ)
-  : β.precomp (b.comp b') = (β.precomp b').precomp b := by
-  simp only [Block.precomp, Body.comp_assoc, <-Terminator.vwk_comp]
-  congr
-  funext x
-  simp_arith [Body.comp_num_defs]
-
+/-- Prepend a body of instructions to this basic block -/
 def Block.prepend (b : Body φ) (β : Block φ) : Block φ where
   body := b.append β.body
   terminator := β.terminator
 
+theorem Block.prepend_append (b b' : Body φ) (β : Block φ)
+  : β.prepend (b.append b') = (β.prepend b').prepend b := by
+  simp only [Block.prepend, Body.append_assoc]
+
+-- TODO: prepend_vwk
+
+-- TODO: prepend_lwk
+
+/-- Precompose a body of instructions to this basic block, while weakening the block so that
+they share the same inputs -/
+def Block.ltimes (b : Body φ) (β : Block φ) : Block φ where
+  body := b.ltimes β.body
+  terminator := β.terminator.vwk (λx => x + b.num_defs)
+
+theorem Block.ltimes_ltimes (b b' : Body φ) (β : Block φ)
+  : β.ltimes (b.ltimes b') = (β.ltimes b').ltimes b := by
+  simp only [Block.ltimes, Body.ltimes_assoc, <-Terminator.vwk_comp]
+  congr
+  funext x
+  simp_arith [Body.ltimes_num_defs]
+
 -- TODO: make Body have a monoid action on Block
 
+-- TODO: ltimes_vwk
+
+-- TODO: ltimes_lwk
+
+/-- Convert this terminator to a basic block with no instructions -/
 def Terminator.toBlock (t : Terminator φ) : Block φ := ⟨Body.nil, t⟩
 
 theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
@@ -401,20 +442,37 @@ theorem Terminator.toBlock_vsubst (σ : Subst φ) (t : Terminator φ)
 theorem Terminator.toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.lwk ρ).toBlock = t.toBlock.lwk ρ
   := rfl
 
+-- TODO: toBlock_lsubst
+
+-- TODO: toBlock_injective
+
+-- TODO: use as coe instance
+
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
+/-- Weaken the variables in this region -/
 def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
 
+/-- Substitute the variables in this region -/
 def BBRegion.vsubst (σ : Subst φ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).vsubst (σ.liftn (β.body.num_defs + 1)))
 
+/-- Weaken the labels in this region -/
 def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 -- TODO: label-substitution (TSubst)
+
+-- TODO: BBRegion.prepend
+
+-- TODO: BBRegion.ltimes
+
+-- TODO: BBCFG
+
+-- TODO: vwk, vsubst, lwk
 
 /-- A terminator-based single-entry multiple-exit region -/
 inductive TRegion (φ : Type) : Type
@@ -422,22 +480,43 @@ inductive TRegion (φ : Type) : Type
   | let2 : Term φ → TRegion φ → TRegion φ
   | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
 
+/-- Weaken the variables in this region -/
 def TRegion.vwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let1 e t => let1 (e.wk ρ) (t.vwk (Nat.liftWk ρ))
   | let2 e t => let2 (e.wk ρ) (t.vwk (Nat.liftnWk 2 ρ))
   | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
+/-- Substitute the variables in this region -/
 def TRegion.vsubst (σ : Subst φ) : TRegion φ → TRegion φ
   | let1 e t => let1 (e.subst σ) (t.vsubst σ.lift)
   | let2 e t => let2 (e.subst σ) (t.vsubst (σ.liftn 2))
   | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).vsubst σ.lift)
 
+/-- Weaken the labels in this region -/
 def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let1 e t => let1 e (t.lwk ρ)
   | let2 e t => let2 e (t.lwk ρ)
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 -- TODO: label-substitution (TSubst)
+
+-- TODO: TRegion.prepend
+
+-- TODO: TRegion.ltimes
+
+-- TODO: TRegion.body
+
+-- TODO: TRegion.tail
+
+-- TODO: tail.prepend body = id
+
+-- TODO: TCFG
+
+-- TODO: TRegion.tail'
+
+-- TODO: TRegion.terminator
+
+-- TODO: TRegion.cfg
 
 -- TODO: normalize TRegion to BBRegion; commutes with label-substitution
 
@@ -452,6 +531,7 @@ inductive Region (φ : Type) : Type
   | cfg (β : Region φ) (n : Nat) : (Fin n → Region φ) → Region φ
 
 /-- Rename the variables in a `Region` using `ρ` -/
+@[simp]
 def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | br n e => br n (e.wk ρ)
   | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
@@ -469,6 +549,7 @@ theorem Region.vwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
   <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 /-- Substitute the variables in a `Region` using `σ` -/
+@[simp]
 def Region.vsubst (σ : Subst φ) : Region φ → Region φ
   | br n e => br n (e.subst σ)
   | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
@@ -478,14 +559,15 @@ def Region.vsubst (σ : Subst φ) : Region φ → Region φ
 
 @[simp]
 theorem Region.vsubst_id (r : Region φ) : r.vsubst Subst.id = r := by
-  induction r <;> simp [Region.vsubst, Subst.lift_id, Subst.liftn_id, *]
+  induction r <;> simp [*]
 
 theorem Region.vsubst_comp (σ τ : Subst φ) (r : Region φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
-  <;> simp [vsubst, Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+  <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
 /-- Rename the labels in a `Region` using `ρ` -/
+@[simp]
 def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | br n e => br (ρ n) e
   | ite e s t => ite e (lwk ρ s) (lwk ρ t)
@@ -494,20 +576,70 @@ def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | cfg β n f => cfg (lwk (Nat.liftnWk n ρ) β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 @[simp]
-theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by
-  induction r <;> simp [Region.lwk, Nat.liftnWk_id, *]
+theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
 
-theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
-  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
-  induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
+theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ) : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
 
 -- TODO: label-substitution (TSubst, RSubst)
 
--- TODO: normalize Region to TRegion; commutes with label-substitution
+/-- Convert this `Terminator` to a `Region` -/
+@[simp]
+def Terminator.toRegion : Terminator φ → Region φ
+  | Terminator.br n e => Region.br n e
+  | Terminator.ite e s t => Region.ite e s.toRegion t.toRegion
 
--- TODO: transitively, normalize Region to BBRegion; commutes with label-substitution
+theorem Terminator.toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.vwk ρ).toRegion = t.toRegion.vwk ρ := by induction t <;> simp [*]
 
--- TODO: normalize TRegion to Region; commutes with label-substiution
+theorem Terminator.toRegion_vsubst (σ : Subst φ) (t : Terminator φ)
+  : (t.vsubst σ).toRegion = t.toRegion.vsubst σ := by induction t <;> simp [*]
+
+theorem Terminator.toRegion_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.lwk ρ).toRegion = t.toRegion.lwk ρ := by induction t <;> simp [*]
+
+-- TODO: toRegion_injective
+
+-- TODO: use as coe instance
+
+-- TODO: Region.prepend
+
+-- TODO: Region.ltimes
+
+-- TODO: Block.toRegion == terminator.toRegion.prepend body
+
+-- TODO: Block.toRegion_{vwk, vsubst, lwk}
+
+-- TODO: BBRegion.toRegion
+
+-- TODO: BBRegion.toRegion_{vwk, vsubst, lwk}
+
+/-- Convert this `TRegion` to a `Region` -/
+@[simp]
+def TRegion.toRegion : TRegion φ → Region φ
+  | let1 e t => Region.let1 e t.toRegion
+  | let2 e t => Region.let2 e t.toRegion
+  | cfg β n f => Region.cfg β.toRegion n (λ i => (f i).toRegion)
+
+theorem TRegion.toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.vwk ρ).toRegion = t.toRegion.vwk ρ
+  := by induction t generalizing ρ <;> simp [Terminator.toRegion_vwk, *]
+
+theorem TRegion.toRegion_vsubst (σ : Subst φ) (t : TRegion φ)
+  : (t.vsubst σ).toRegion = t.toRegion.vsubst σ
+  := by induction t generalizing σ <;> simp [Terminator.toRegion_vsubst, *]
+
+theorem TRegion.toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.lwk ρ).toRegion = t.toRegion.lwk ρ
+  := by induction t generalizing ρ <;> simp [Terminator.toRegion_lwk, *]
+
+-- TODO: toRegion_injective
+
+-- TODO: use as coe instance
+
+-- TODO: Region.body
+
+-- TODO: Region.tail
+
+-- TODO: tail.ltimes body = id
 
 /-- A control-flow graph with `length` entry-point regions -/
 structure CFG (φ : Type) : Type where
@@ -515,6 +647,8 @@ structure CFG (φ : Type) : Type where
   length : Nat
   /-- The number of exits for this CFG -/
   targets : Fin length → Region φ
+
+-- TODO: ∅ cfg; represent as 0?
 
 /-- Rename the variables in a `CFG` using `ρ` -/
 def CFG.vwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
@@ -524,6 +658,8 @@ def CFG.vwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
 @[simp]
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 
+-- TODO: vwk_comp
+
 /-- Substitute the variables in a `CFG` using `σ` -/
 def CFG.vsubst (σ : Subst φ) (G : CFG φ) : CFG φ where
   length := G.length
@@ -532,6 +668,8 @@ def CFG.vsubst (σ : Subst φ) (G : CFG φ) : CFG φ where
 @[simp]
 theorem CFG.vsubst_id (G : CFG φ) : G.vsubst Subst.id = G := by cases G; simp [vsubst]
 
+-- TODO: vsubst_comp
+
 /-- Rename the labels in a `CFG` using `ρ` -/
 def CFG.lwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
   length := G.length
@@ -539,6 +677,36 @@ def CFG.lwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
 
 @[simp]
 theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
+
+-- TODO: lwk_comp
+
+-- TODO: CFG.vcomp (say Monoid...)
+
+-- TODO: vcomp_assoc, vcomp_nil, nil_vcomp
+
+-- TODO: CFG.{vwk, vsubst, lwk}_vcomp
+
+-- TODO: CFG.hcomp (say AddMonoid...)
+
+-- TODO: hcomp_nil, nil_hcomp, hcomp_assoc
+
+-- TODO: CFG.{vwk, vsubst, lwk}_hcomp
+
+-- TODO: BBCFG.toCFG
+
+-- TODO: TCFG.toCFG
+
+-- TODO: Region.tail'
+
+-- TODO: Region.terminator_region
+
+-- TODO: Region.cfg
+
+-- TODO: normalize Region to TRegion; commutes with label-substitution
+
+-- TODO: transitively, normalize Region to BBRegion; commutes with label-substitution
+
+-- TODO: normalize TRegion to Region; commutes with label-substiution
 
 /-- A single-entry multiple-exit region, applying a substitution on jumps -/
 inductive SRegion (φ : Type) : Type
