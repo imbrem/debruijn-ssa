@@ -6,6 +6,10 @@ namespace SingleApp
 
 section Basic
 
+-- TODO: assert effect for e.g. terminators is pure rather than use 0?
+
+-- Can we even do centrality? Propositional parametrization?
+
 variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
 
 inductive Ty (α : Type u) where
@@ -20,6 +24,12 @@ inductive Ty.LE : Ty α → Ty α → Prop where
   | pair {x₁ x₂ y₁ y₂} : LE x₁ y₁ → LE x₂ y₂ → LE (pair x₁ x₂) (pair y₁ y₂)
   | unit : LE unit unit
   | bool : LE bool bool
+
+theorem Ty.LE.pair_left {A A' B B' : Ty α} (h : LE (Ty.pair A B) (Ty.pair A' B')) : LE A A'
+  := by cases h; assumption
+
+theorem Ty.LE.pair_right {A A' B B' : Ty α} (h : LE (Ty.pair A B) (Ty.pair A' B')) : LE B B'
+  := by cases h; assumption
 
 theorem Ty.LE.refl : ∀{A : Ty α}, LE A A
   | Ty.base x => base (le_refl x)
@@ -76,12 +86,12 @@ inductive Term.Wf : Ctx α ε → Term φ → Ty α → ε → Prop
   | bool (b e) : Wf Γ (bool b) Ty.bool e
 
 /-- A derivation that a term is well-formed -/
-inductive Term.WfD : Ctx α ε → Term φ → Ty α → ε → Type _
-  | var : Γ.Var n ⟨A, e⟩ → WfD Γ (var n) A e
-  | op : Φ.Fn f A B e → WfD Γ a A e → WfD Γ (op f a) B e
-  | pair : WfD Γ a A e → WfD Γ b B e → WfD Γ (pair a b) (Ty.pair A B) e
-  | unit (e) : WfD Γ unit Ty.unit e
-  | bool (b e) : WfD Γ (bool b) Ty.bool e
+inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
+  | var : Γ.Var n V → WfD Γ (var n) V
+  | op : Φ.Fn f A B e → WfD Γ a ⟨A, e⟩ → WfD Γ (op f a) ⟨B, e⟩
+  | pair : WfD Γ a ⟨A, e⟩ → WfD Γ b ⟨B, e⟩ → WfD Γ (pair a b) ⟨(Ty.pair A B), e⟩
+  | unit (e) : WfD Γ unit ⟨Ty.unit, e⟩
+  | bool (b e) : WfD Γ (bool b) ⟨Ty.bool, e⟩
 
 /-- The minimal type for which a term may be well-typed -/
 def Term.min_ty (Γ : Ctx α ε) : Term φ → Ty α
@@ -112,10 +122,10 @@ def Term.min_ty (Γ : Ctx α ε) : Term φ → Ty α
 
 inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
   | nil : WfD Γ nil []
-  | let1 : a.WfD Γ A e → b.WfD (⟨A, e⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, e⟩::Δ)
-  | let2 : a.WfD Γ (Ty.pair A B) e
-    → b.WfD (⟨A, e⟩::⟨B, e⟩::Γ) Δ
-    → (let2 a b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Δ)
+  | let1 : a.WfD Γ ⟨A, e⟩ → b.WfD (⟨A, 0⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, 0⟩::Δ)
+  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩
+    → b.WfD (⟨A, 0⟩::⟨B, 0⟩::Γ) Δ
+    → (let2 a b).WfD Γ (⟨A, 0⟩::⟨B, 0⟩::Δ)
 
 theorem Body.WfD.num_defs_eq_length {Γ : Ctx α ε} {b : Body φ} {Δ} (h : b.WfD Γ Δ)
   : b.num_defs = Δ.length
@@ -138,8 +148,8 @@ def FLCtx (α) := Σn, Fin n → Ty α
 -- TODO: FLCtx append
 
 inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
-  | br : L.Trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
-  | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  | br : L.Trg n A → a.WfD Γ ⟨A, 0⟩ → WfD Γ (br n a) L
+  | ite : e.WfD Γ ⟨Ty.bool, 0⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
 
 structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
@@ -152,18 +162,18 @@ inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
     WfD Γ (cfg β n G) L
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
-  | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, 0⟩::Γ) L → (let1 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, 0⟩::⟨B, 0⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::Γ) (R ++ L)) →
     WfD Γ (cfg β n G) L
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
-  | br : L.Trg n A → a.WfD Γ A 0 → WfD Γ (br n a) L
-  | ite : e.WfD Γ Ty.bool 0 → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
-  | let1 : a.WfD Γ A e → t.WfD (⟨A, e⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ (Ty.pair A B) e → t.WfD (⟨A, e⟩::⟨B, e⟩::Γ) L → (let2 a t).WfD Γ L
+  | br : L.Trg n A → a.WfD Γ ⟨A, 0⟩ → WfD Γ (br n a) L
+  | ite : e.WfD Γ ⟨Ty.bool, 0⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, 0⟩::Γ) L → (let1 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, 0⟩::⟨B, 0⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::Γ) (R ++ L)) →
@@ -240,15 +250,33 @@ theorem Ctx.Var.wk (h : Γ.Wkn Δ ρ) (hΓ : Δ.Var n ⟨A, e⟩) : Γ.Var (ρ n
   get := le_trans (h n hΓ.length).2 hΓ.get
 
 /-- Weaken the effect of a term derivation -/
-def Term.WfD.wk_eff {a : Term φ} {A e} (h : e ≤ e') : WfD Γ a A e → WfD Γ a A e'
+def Term.WfD.wk_eff {a : Term φ} {A e} (h : e ≤ e') : WfD Γ a ⟨A, e⟩ → WfD Γ a ⟨A, e'⟩
   | var dv => var (dv.wk_eff h)
   | op df de => op (df.wk_eff h) (de.wk_eff h)
   | pair dl dr => pair (dl.wk_eff h) (dr.wk_eff h)
   | unit e => unit e'
   | bool b e => bool b e'
 
+/-- Weaken the type of a term derivation -/
+def Term.WfD.wk_ty {a : Term φ} {A e} (h : A ≤ A') (da : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨A', e⟩
+  := match da, A', h with
+  | var dv, _, h => var (dv.wk_ty h)
+  | op df de, _, h => op (df.wk_trg h) de
+  | pair dl dr, Ty.pair A B, h => pair (dl.wk_ty h.pair_left) (dr.wk_ty h.pair_right)
+  | unit e, Ty.unit, h => unit e
+  | bool b e, Ty.bool, h => bool b e
+
+/-- Weaken the result of a term derivation -/
+def Term.WfD.wk_res₂ {a : Term φ} (hA : A ≤ A') (he : e ≤ e') (da : WfD Γ a ⟨A, e⟩)
+  : WfD Γ a ⟨A', e'⟩ := da.wk_eff he |>.wk_ty hA
+
+/-- Weaken the result of a term derivation -/
+def Term.WfD.wk_res {a : Term φ} (h : V ≤ V') (da : WfD Γ a V) : WfD Γ a V'
+  := match V, V', h with
+  | ⟨_, _⟩, ⟨_, _⟩, ⟨hA, he⟩ => da.wk_res₂ hA he
+
 /-- Weaken a term derivation -/
-def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a A e → WfD Γ (a.wk ρ) A e
+def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD Γ (a.wk ρ) ⟨A, e⟩
   | var dv => var (dv.wk h)
   | op df de => op df (de.wk h)
   | pair dl dr => pair (dl.wk h) (dr.wk h)
@@ -351,14 +379,14 @@ section Minimal
 variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε] [Zero ε]
 
 def Term.min_effect (Γ : Ctx α ε) : Term φ → ε
-  | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else 0
+  | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
   | op f _ => Φ.effect f
   | pair a b => a.min_effect Γ ⊔ b.min_effect Γ
   | unit => ⊥
   | bool _ => ⊥
 
 theorem Term.WfD.min_effect_le
-  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a A e) : a.min_effect Γ ≤ e
+  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.min_effect Γ ≤ e
   := match h with
   | var dv => by simp [min_effect, dv.length, dv.get.right]
   | op df de => df.effect

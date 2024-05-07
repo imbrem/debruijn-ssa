@@ -112,6 +112,18 @@ theorem InstSet.fn_iff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [Par
   λ h => ⟨h.src, h.trg, h.effect⟩,
   λ ⟨hsrc, htrg, heff⟩ => ⟨hsrc, htrg, heff⟩⟩
 
+theorem InstSet.Fn.wk_src {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A A' B : α} {e : ε} (h : A' ≤ A) (hf : Φ.Fn f A B e) : Φ.Fn f A' B e where
+  src := le_trans h hf.src
+  trg := hf.trg
+  effect := hf.effect
+
+theorem InstSet.Fn.wk_trg {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A B B' : α} {e : ε} (h : B ≤ B') (hf : Φ.Fn f A B e) : Φ.Fn f A B' e where
+  src := hf.src
+  trg := le_trans hf.trg h
+  effect := hf.effect
+
 theorem InstSet.Fn.wk_eff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
   {f : φ} {A B : α} {e e' : ε} (h : e ≤ e') (hf : Φ.Fn f A B e) : Φ.Fn f A B e' where
   src := hf.src
