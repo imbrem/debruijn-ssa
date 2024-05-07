@@ -270,18 +270,28 @@ def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
   | let2 e t => let2 (e.wk ρ) (t.wk (Nat.liftnWk 2 ρ))
 
 @[simp]
-theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [Body.wk, *]
+theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
 
 theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
   : b.wk (σ ∘ τ) = (b.wk τ).wk σ := by
   induction b generalizing σ τ
-  <;> simp [wk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+  <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 /-- Substitute the variables in a body -/
+@[simp]
 def Body.subst (σ : Subst φ) : Body φ → Body φ
   | nil => nil
   | let1 e t => let1 (e.subst σ) (t.subst σ.lift)
   | let2 e t => let2 (e.subst σ) (t.subst (σ.liftn 2))
+
+@[simp]
+theorem Body.subst_id (b : Body φ) : b.subst Subst.id = b := by
+  induction b <;> simp [Subst.lift_id, Subst.liftn_id, *]
+
+theorem Body.subst_comp (σ τ : Subst φ) (b : Body φ)
+  : b.subst (σ.comp τ) = (b.subst τ).subst σ := by
+  induction b generalizing σ τ
+  <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
 /-- The number of variables defined in a body -/
 @[simp]
@@ -290,8 +300,11 @@ def Body.num_defs : Body φ → ℕ
   | let1 _ t => t.num_defs + 1
   | let2 _ t => t.num_defs + 2
 
-theorem Body.wk_num_defs (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
-  induction b generalizing ρ <;> simp [wk, num_defs, *]
+theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
+  induction b generalizing ρ <;> simp [*]
+
+theorem Body.num_defs_subst (σ : Subst φ) (b : Body φ) : (b.subst σ).num_defs = b.num_defs := by
+  induction b generalizing σ <;> simp [*]
 
 -- TODO: stepnwk and friends
 
@@ -326,14 +339,14 @@ theorem Body.wk_append (ρ : ℕ → ℕ) (b b' : Body φ)
 def Body.ltimes (b b' : Body φ) : Body φ := b.append (b'.wk (λn => n + b.num_defs))
 
 theorem Body.ltimes_num_defs (b b' : Body φ) : (b.ltimes b').num_defs = b.num_defs + b'.num_defs
-  := by simp [ltimes, append_num_defs, Body.wk_num_defs]
+  := by simp [ltimes, append_num_defs, Body.num_defs_wk]
 
 theorem Body.wk_ltimes (ρ : ℕ → ℕ) (b b' : Body φ)
   : (b.ltimes b').wk ρ = (b.wk ρ).ltimes (b'.wk ρ) := by
   simp only [ltimes, wk_append, <-wk_comp]
   congr
   funext n
-  simp [Function.comp_apply, Nat.liftnWk, wk_num_defs]
+  simp [Function.comp_apply, Nat.liftnWk, num_defs_wk]
 
 @[simp]
 theorem Body.ltimes_nil (b : Body φ) : b.ltimes nil = b := by simp [ltimes]
@@ -381,19 +394,41 @@ structure Block (φ : Type) : Type where
   terminator : Terminator φ
 
 /-- Weaken the variables in this basic block -/
+@[simp]
 def Block.vwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body.wk ρ
   terminator := β.terminator.vwk (Nat.liftnWk β.body.num_defs ρ)
 
+@[simp]
+theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
+
+theorem Block.vwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.vwk (σ ∘ τ) = (β.vwk τ).vwk σ
+  := by simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftnWk_comp, *]
+
 /-- Substitute the variables in this basic block -/
+@[simp]
 def Block.vsubst (σ : Subst φ) (β : Block φ) : Block φ where
   body := β.body.subst σ
   terminator := β.terminator.vsubst (σ.liftn β.body.num_defs)
 
+@[simp]
+theorem Block.vsubst_id (β : Block φ) : β.vsubst Subst.id = β := by simp
+
+theorem Block.vsubst_comp (σ τ : Subst φ) (β : Block φ)
+  : β.vsubst (σ.comp τ) = (β.vsubst τ).vsubst σ
+  := by simp [Body.subst_comp, Body.num_defs_subst, Subst.liftn_comp, Terminator.vsubst_comp, *]
+
 /-- Weaken the labels in this basic block -/
+@[simp]
 def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body
   terminator := β.terminator.lwk ρ
+
+@[simp]
+theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
+
+theorem Block.lwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.lwk (σ ∘ τ) = (β.lwk τ).lwk σ
+  := by simp [Terminator.lwk_comp]
 
 -- TODO: label-substitution (TSubst)
 
@@ -444,25 +479,74 @@ theorem Terminator.toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.lwk �
 
 -- TODO: toBlock_lsubst
 
--- TODO: toBlock_injective
+theorem Terminator.toBlock_injective : Function.Injective (@Terminator.toBlock φ) := by
+  intro t₁ t₂ H
+  cases t₁ <;> cases t₂ <;> cases H <;> rfl
 
--- TODO: use as coe instance
+theorem Terminator.toBlock_inj {t₁ t₂ : Terminator φ} : t₁.toBlock = t₂.toBlock ↔ t₁ = t₂ :=
+    Terminator.toBlock_injective.eq_iff
+
+instance : Coe (Terminator φ) (Block φ) := ⟨Terminator.toBlock⟩
+
+theorem Terminator.coe_toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.vwk ρ : Block φ) = (t : Block φ).vwk ρ := rfl
+
+theorem Terminator.coe_toBlock_vsubst (σ : Subst φ) (t : Terminator φ)
+  : (t.vsubst σ : Block φ) = (t : Block φ).vsubst σ := toBlock_vsubst σ t
+
+theorem Terminator.coe_toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.lwk ρ : Block φ) = (t : Block φ).lwk ρ := rfl
+
+theorem Terminator.coe_toBlock_inj {t₁ t₂ : Terminator φ} : (t₁ : Block φ) = t₂ ↔ t₁ = t₂ :=
+    Terminator.toBlock_injective.eq_iff
+
+-- TODO: coe_lsubst
 
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
 /-- Weaken the variables in this region -/
+@[simp]
 def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
 
+@[simp]
+theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
+  induction r; simp [*]
+
+theorem BBRegion.vwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftnWk_comp, *]
+
 /-- Substitute the variables in this region -/
+@[simp]
 def BBRegion.vsubst (σ : Subst φ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).vsubst (σ.liftn (β.body.num_defs + 1)))
 
+@[simp]
+theorem BBRegion.vsubst_id (r : BBRegion φ) : r.vsubst Subst.id = r := by
+  induction r; simp [*]
+
+theorem BBRegion.vsubst_comp (σ τ : Subst φ) (r : BBRegion φ)
+  : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
+  induction r generalizing σ τ
+  simp [Body.subst_comp, Body.num_defs_subst, Subst.liftn_comp, Terminator.vsubst_comp, *]
+
 /-- Weaken the labels in this region -/
+@[simp]
 def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
+
+@[simp]
+theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
+  induction r; simp [*]
+
+theorem BBRegion.lwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
+  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ
+  simp [Body.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
 
 -- TODO: label-substitution (TSubst)
 
@@ -470,9 +554,49 @@ def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
 
 -- TODO: BBRegion.ltimes
 
--- TODO: BBCFG
+/-- A basic-block based control-flow graph with `length` entry-point regions -/
+structure BBCFG (φ : Type) : Type where
+  /-- The number of entry points to this CFG -/
+  length : Nat
+  /-- The number of exits for this CFG -/
+  targets : Fin length → BBRegion φ
 
--- TODO: vwk, vsubst, lwk
+@[simp]
+def BBCFG.vwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).vwk ρ
+
+@[simp]
+theorem BBCFG.vwk_id (cfg : BBCFG φ) : cfg.vwk id = cfg := by
+  cases cfg; simp [*]
+
+theorem BBCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
+  cases cfg; simp [BBRegion.vwk_comp, *]
+
+@[simp]
+def BBCFG.vsubst (σ : Subst φ) (cfg : BBCFG φ) : BBCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).vsubst σ
+
+@[simp]
+theorem BBCFG.vsubst_id (cfg : BBCFG φ) : cfg.vsubst Subst.id = cfg := by
+  cases cfg; simp [*]
+
+theorem BBCFG.vsubst_comp (σ τ : Subst φ) (cfg : BBCFG φ)
+  : cfg.vsubst (σ.comp τ) = (cfg.vsubst τ).vsubst σ := by
+  cases cfg; simp [BBRegion.vsubst_comp, *]
+
+@[simp]
+def BBCFG.lwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).lwk ρ
+
+@[simp]
+theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
+  cases cfg; simp [*]
+
+theorem BBCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
+  cases cfg; simp [BBRegion.lwk_comp, *]
 
 /-- A terminator-based single-entry multiple-exit region -/
 inductive TRegion (φ : Type) : Type
@@ -481,22 +605,52 @@ inductive TRegion (φ : Type) : Type
   | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
 
 /-- Weaken the variables in this region -/
+@[simp]
 def TRegion.vwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let1 e t => let1 (e.wk ρ) (t.vwk (Nat.liftWk ρ))
   | let2 e t => let2 (e.wk ρ) (t.vwk (Nat.liftnWk 2 ρ))
   | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
+@[simp]
+theorem TRegion.vwk_id (r : TRegion φ) : r.vwk id = r := by
+  induction r <;> simp [TRegion.vwk, *]
+
+theorem TRegion.vwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.wk_comp, Terminator.vwk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
 /-- Substitute the variables in this region -/
+@[simp]
 def TRegion.vsubst (σ : Subst φ) : TRegion φ → TRegion φ
   | let1 e t => let1 (e.subst σ) (t.vsubst σ.lift)
   | let2 e t => let2 (e.subst σ) (t.vsubst (σ.liftn 2))
   | cfg β n f => cfg (β.vsubst σ) n (λ i => (f i).vsubst σ.lift)
 
+@[simp]
+theorem TRegion.vsubst_id (r : TRegion φ) : r.vsubst Subst.id = r := by
+  induction r <;> simp [TRegion.vsubst, Subst.lift_id, Subst.liftn_id, *]
+
+theorem TRegion.vsubst_comp (σ τ : Subst φ) (r : TRegion φ)
+  : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.subst_comp, Terminator.vsubst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+
 /-- Weaken the labels in this region -/
+@[simp]
 def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | let1 e t => let1 e (t.lwk ρ)
   | let2 e t => let2 e (t.lwk ρ)
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
+
+@[simp]
+theorem TRegion.lwk_id (r : TRegion φ) : r.lwk id = r := by
+  induction r <;> simp [TRegion.lwk, *]
+
+theorem TRegion.lwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
+  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
 
 -- TODO: label-substitution (TSubst)
 
@@ -510,7 +664,46 @@ def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
 
 -- TODO: tail.prepend body = id
 
--- TODO: TCFG
+/-- A terminator-block based control-flow graph with `length` entry-point regions -/
+structure TCFG (φ : Type) : Type where
+  /-- The number of entry points to this CFG -/
+  length : Nat
+  /-- The number of exits for this CFG -/
+  targets : Fin length → TRegion φ
+
+def TCFG.vwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).vwk ρ
+
+@[simp]
+theorem TCFG.vwk_id (cfg : TCFG φ) : cfg.vwk id = cfg := by
+  cases cfg; simp [TCFG.vwk, *]
+
+theorem TCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
+  cases cfg; simp [TCFG.vwk, TRegion.vwk_comp, *]
+
+def TCFG.vsubst (σ : Subst φ) (cfg : TCFG φ) : TCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).vsubst σ
+
+@[simp]
+theorem TCFG.vsubst_id (cfg : TCFG φ) : cfg.vsubst Subst.id = cfg := by
+  cases cfg; simp [TCFG.vsubst, *]
+
+theorem TCFG.vsubst_comp (σ τ : Subst φ) (cfg : TCFG φ)
+  : cfg.vsubst (σ.comp τ) = (cfg.vsubst τ).vsubst σ := by
+  cases cfg; simp [TCFG.vsubst, TRegion.vsubst_comp, *]
+
+def TCFG.lwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).lwk (Nat.liftnWk cfg.length ρ)
+
+@[simp]
+theorem TCFG.lwk_id (cfg : TCFG φ) : cfg.lwk id = cfg := by
+  cases cfg; simp [TCFG.lwk, *]
+
+theorem TCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
+  cases cfg; simp [TCFG.lwk, TRegion.lwk_comp, Nat.liftnWk_comp, *]
 
 -- TODO: TRegion.tail'
 
@@ -598,9 +791,22 @@ theorem Terminator.toRegion_vsubst (σ : Subst φ) (t : Terminator φ)
 theorem Terminator.toRegion_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.lwk ρ).toRegion = t.toRegion.lwk ρ := by induction t <;> simp [*]
 
--- TODO: toRegion_injective
+theorem Terminator.toRegion_inj {t₁ t₂ : Terminator φ} : t₁.toRegion = t₂.toRegion ↔ t₁ = t₂ := by
+  induction t₁ generalizing t₂ <;> cases t₂ <;> simp [*]
 
--- TODO: use as coe instance
+theorem Terminator.toRegion_injective : Function.Injective (@Terminator.toRegion φ)
+  := λ_ _ h => toRegion_inj.mp h
+
+instance : Coe (Terminator φ) (Region φ) := ⟨Terminator.toRegion⟩
+
+theorem Terminator.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
+
+theorem Terminator.coe_toRegion_vsubst (σ : Subst φ) (t : Terminator φ)
+  : (t.vsubst σ : Region φ) = (t : Region φ).vsubst σ := toRegion_vsubst σ t
+
+theorem Terminator.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.lwk ρ : Region φ) = (t : Region φ).lwk ρ := toRegion_lwk ρ t
 
 -- TODO: Region.prepend
 
@@ -631,9 +837,28 @@ theorem TRegion.toRegion_vsubst (σ : Subst φ) (t : TRegion φ)
 theorem TRegion.toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.lwk ρ).toRegion = t.toRegion.lwk ρ
   := by induction t generalizing ρ <;> simp [Terminator.toRegion_lwk, *]
 
--- TODO: toRegion_injective
+theorem TRegion.toRegion_inj {t₁ t₂ : TRegion φ} : t₁.toRegion = t₂.toRegion ↔ t₁ = t₂ := by
+  induction t₁ generalizing t₂ <;> cases t₂
+  case cfg.cfg =>
+    simp only [toRegion, Region.cfg.injEq, Terminator.toRegion_inj, cfg.injEq, and_congr_right_iff]
+    intro hβ hn
+    cases hβ; cases hn
+    simp only [heq_eq_eq, Function.funext_iff, *]
+  all_goals simp [Terminator.toRegion_inj, *]
 
--- TODO: use as coe instance
+theorem TRegion.toRegion_injective : Function.Injective (@TRegion.toRegion φ)
+  := λ_ _ h => toRegion_inj.mp h
+
+instance : Coe (TRegion φ) (Region φ) := ⟨TRegion.toRegion⟩
+
+theorem TRegion.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ)
+  : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
+
+theorem TRegion.coe_toRegion_vsubst (σ : Subst φ) (t : TRegion φ)
+  : (t.vsubst σ : Region φ) = (t : Region φ).vsubst σ := toRegion_vsubst σ t
+
+theorem TRegion.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ)
+  : (t.lwk ρ : Region φ) = (t : Region φ).lwk ρ := toRegion_lwk ρ t
 
 -- TODO: Region.body
 
@@ -658,7 +883,8 @@ def CFG.vwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
 @[simp]
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 
--- TODO: vwk_comp
+theorem CFG.vwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.vwk (σ ∘ τ) = (G.vwk τ).vwk σ
+  := by cases G; simp only [CFG.vwk, Region.vwk_comp, *]
 
 /-- Substitute the variables in a `CFG` using `σ` -/
 def CFG.vsubst (σ : Subst φ) (G : CFG φ) : CFG φ where
@@ -668,17 +894,19 @@ def CFG.vsubst (σ : Subst φ) (G : CFG φ) : CFG φ where
 @[simp]
 theorem CFG.vsubst_id (G : CFG φ) : G.vsubst Subst.id = G := by cases G; simp [vsubst]
 
--- TODO: vsubst_comp
+theorem CFG.vsubst_comp (σ τ : Subst φ) (G : CFG φ) : G.vsubst (σ.comp τ) = (G.vsubst τ).vsubst σ
+  := by cases G; simp only [CFG.vsubst, Region.vsubst_comp, *]
 
 /-- Rename the labels in a `CFG` using `ρ` -/
 def CFG.lwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
   length := G.length
-  targets := λ i => (G.targets i).lwk ρ
+  targets := λ i => (G.targets i).lwk (Nat.liftnWk G.length ρ)
 
 @[simp]
 theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
 
--- TODO: lwk_comp
+theorem CFG.lwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.lwk (σ ∘ τ) = (G.lwk τ).lwk σ
+  := by cases G; simp only [CFG.lwk, Nat.liftnWk_comp, Region.lwk_comp, *]
 
 -- TODO: CFG.vcomp (say Monoid...)
 
@@ -694,7 +922,11 @@ theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
 
 -- TODO: BBCFG.toCFG
 
--- TODO: TCFG.toCFG
+def TCFG.toCFG (G : TCFG φ) : CFG φ where
+  length := G.length
+  targets := λ i => (G.targets i).toRegion
+
+instance : Coe (TCFG φ) (CFG φ) := ⟨TCFG.toCFG⟩
 
 -- TODO: Region.tail'
 
