@@ -13,6 +13,7 @@ inductive Term (φ : Type) where
   | bool : Bool → Term φ
 
 /-- Rename the variables in a `Term` using `ρ` -/
+@[simp]
 def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
   | var x => var (ρ x)
   | op f x => op f (wk ρ x)
@@ -21,13 +22,13 @@ def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
   | bool b => bool b
 
 @[simp]
-theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [wk, *]
+theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [*]
 
 theorem Term.wk_id' : (t : Term φ) -> t.wk (λx => x) = t
   := Term.wk_id
 
 theorem Term.wk_comp (σ : ℕ → ℕ) (ρ : ℕ → ℕ) (t : Term φ)
-  : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [wk, *]
+  : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [*]
 
 /-- A substitution mapping variables to terms -/
 def Subst (φ : Type) := ℕ → Term φ
@@ -113,6 +114,7 @@ theorem Subst.liftn_add_apply (n m: ℕ) (σ: Subst α): (σ.liftn n).liftn m = 
 theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).wk Nat.succ := rfl
 
 /-- Substitute the variables in a `Term` using `σ` -/
+@[simp]
 def Term.subst (σ : Subst φ) : Term φ → Term φ
 | var x => σ x
 | op f x => op f (subst σ x)
@@ -121,8 +123,7 @@ def Term.subst (σ : Subst φ) : Term φ → Term φ
 | bool b => bool b
 
 @[simp]
-theorem Term.subst_id (t : Term φ) : t.subst Subst.id = t
-  := by induction t <;> simp [subst, *]
+theorem Term.subst_id (t : Term φ) : t.subst Subst.id = t := by induction t <;> simp [*]
 
 /-- Create a substitution from a variable renaming -/
 def Subst.fromWk (ρ : ℕ -> ℕ): Subst φ := Term.var ∘ ρ
@@ -142,7 +143,7 @@ theorem Subst.fromWk_liftn (n ρ) : (@fromWk φ ρ).liftn n = fromWk (Nat.liftnW
   rw [liftn_eq_iterate_lift, Nat.liftnWk_eq_iterate_liftWk, fromWk_iterate_lift]
 
 theorem Term.subst_wk (ρ : ℕ -> ℕ) (t : Term φ) : t.subst (Subst.fromWk ρ) = t.wk ρ := by
-  induction t <;> simp [Term.subst, Term.wk, Subst.fromWk_liftn, *]
+  induction t <;> simp [Subst.fromWk_liftn, *]
 
 theorem Term.subst_liftn (n : ℕ) (σ : Subst α) (t : Term α)
     : (t.wk (Nat.liftnWk n Nat.succ)).subst (σ.liftn (n + 1))
@@ -153,7 +154,7 @@ theorem Term.subst_liftn (n : ℕ) (σ : Subst α) (t : Term α)
     simp only [wk, subst, Nat.liftnWk, Subst.liftn]
     split
     . split
-      . simp [wk, Nat.liftnWk, *]
+      . simp [Nat.liftnWk, *]
       . rename_i H C; exact (C (Nat.le_step H)).elim
     . rename_i C
       simp_arith only [ite_false, <-wk_comp]
@@ -162,7 +163,7 @@ theorem Term.subst_liftn (n : ℕ) (σ : Subst α) (t : Term α)
         funext v
         simp_arith [Function.comp_apply, Zero.zero, Nat.liftnWk]
       . simp [Nat.succ_add, Nat.succ_sub_succ, Nat.add_sub_assoc]
-  | _ => simp [subst, wk, *]
+  | _ => simp [*]
 
 theorem Term.subst_iterate_lift (n : ℕ) (σ : Subst α) (t : Term α)
   : (t.wk (Nat.liftWk^[n] Nat.succ)).subst (Subst.lift^[n + 1] σ)
@@ -196,6 +197,7 @@ theorem Term.subst_comp (σ τ : Subst α) (t : Term α) : t.subst (σ.comp τ) 
   := by induction t <;> simp only [subst, Subst.liftn_comp, Subst.comp, *]
 
 /-- Substitute a term for the smallest variable, bumping the rest downwards -/
+@[simp]
 def Term.subst0 (t : Term α) : Subst α
   | 0 => t
   | n + 1 => var n
@@ -253,6 +255,184 @@ theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
 theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
   : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
+
+/-- A substitution mapping labels to terminators -/
+def TSubst (φ : Type) := ℕ → Terminator φ
+
+/-- The identity substitution, which maps labels to themselves -/
+def TSubst.id : TSubst φ := λn => Terminator.br n (Term.var 0)
+
+theorem TSubst.id_apply (n : ℕ) : @TSubst.id φ n = Terminator.br n (Term.var 0) := rfl
+
+/-- Lift a substitution under a label binder -/
+def TSubst.lift (σ : TSubst φ) : TSubst φ
+  | 0 => Terminator.br 0 (Term.var 0)
+  | n + 1 => (σ n).lwk Nat.succ
+
+/-- Lift a substitution under `n` label binders -/
+def TSubst.liftn (n : ℕ) (σ : TSubst φ) : TSubst φ
+  := λm => if m < n then Terminator.br m (Term.var 0) else (σ (m - n)).lwk (λv => v + n)
+
+theorem TSubst.liftn_zero (σ : TSubst φ) : σ.liftn 0 = σ := by
+  funext n
+  simp only [liftn]
+  split
+  . rename_i H; cases H
+  . exact (σ n).lwk_id
+
+theorem TSubst.liftn_one (σ : TSubst φ) : σ.liftn 1 = σ.lift := by funext m; cases m <;> rfl
+
+theorem TSubst.liftn_succ (n) (σ: TSubst φ) : σ.liftn n.succ = (σ.liftn n).lift := by
+  induction n with
+  | zero => rw [σ.liftn_one, σ.liftn_zero]
+  | succ n I => -- TODO: I'm sure this can be made _much_ cleaner...
+    funext m
+    rw [I]
+    simp only [lift]
+    split
+    . rfl
+    . simp only [liftn]
+      split
+      . split
+        . rfl
+        . split
+          . rfl
+          . rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
+      . split
+        . rename_i H; simp_arith at H
+        . split
+          . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
+          . simp only [<-Terminator.lwk_comp]
+            apply congr
+            apply congrArg
+            funext v
+            simp_arith
+            simp_arith
+
+theorem TSubst.liftn_eq_iterate_lift_apply (n: ℕ) (σ: TSubst φ) : σ.liftn n = (TSubst.lift^[n] σ) := by
+  induction n with
+  | zero => exact σ.liftn_zero
+  | succ n => simp only [Function.iterate_succ_apply', TSubst.liftn_succ, *]
+
+theorem TSubst.liftn_eq_iterate_lift (n: ℕ) : TSubst.liftn n = (@TSubst.lift φ)^[n] := by
+  funext σ
+  rw [liftn_eq_iterate_lift_apply]
+
+@[simp]
+theorem TSubst.lift_id : (@id φ).lift = id := by funext n; cases n <;> rfl
+
+@[simp]
+theorem TSubst.iterate_lift_id : (n: ℕ) -> TSubst.lift^[n] (@id φ) = id
+  | 0 => rfl
+  | n + 1 => by simp [lift_id, iterate_lift_id n]
+
+@[simp]
+theorem TSubst.liftn_id (n: ℕ): (@id φ).liftn n = id := by
+  rw [liftn_eq_iterate_lift_apply, iterate_lift_id]
+
+theorem TSubst.liftn_add (n m: ℕ) : TSubst.liftn (m + n) = (@TSubst.liftn α m) ∘ (@TSubst.liftn α n)
+  := by simp [liftn_eq_iterate_lift, Function.iterate_add]
+
+theorem TSubst.liftn_add_apply (n m: ℕ) (σ: TSubst α): (σ.liftn n).liftn m = σ.liftn (m + n)
+  := by simp [liftn_add]
+
+theorem TSubst.lift_succ (σ : TSubst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk Nat.succ := rfl
+
+/-- Substitute the labels in a `Terminator` using `σ` -/
+@[simp]
+def Terminator.lsubst (σ : TSubst φ) : Terminator φ → Terminator φ
+  | Terminator.br n e => (σ n).vsubst e.subst0
+  | Terminator.ite e s t => Terminator.ite e (lsubst σ s) (lsubst σ t)
+
+@[simp]
+theorem Terminator.lsubst_id (t : Terminator φ) : t.lsubst TSubst.id = t
+  := by induction t <;> simp [*]
+
+-- TODO: create substitutions from variable renamings...
+
+/-- Create a substitution from a label renaming -/
+def TSubst.fromLwk (ρ : ℕ -> ℕ): TSubst φ := λn => Terminator.br (ρ n) (Term.var 0)
+
+@[simp]
+theorem TSubst.fromLwk_apply (ρ : ℕ -> ℕ) (n : ℕ)
+  : (@fromLwk φ ρ) n = Terminator.br (ρ n) (Term.var 0) := rfl
+
+theorem TSubst.fromLwk_lift (ρ) : (@fromLwk φ ρ).lift = fromLwk (Nat.liftWk ρ) := by
+  funext n; cases n <;> rfl
+
+theorem TSubst.fromLwk_iterate_lift (n : ℕ) (ρ)
+  : TSubst.lift^[n] (@fromLwk φ ρ) = fromLwk (Nat.liftWk^[n] ρ)
+  := by induction n generalizing ρ <;> simp [fromLwk_lift, *]
+
+theorem TSubst.fromLwk_liftn (n ρ) : (@fromLwk φ ρ).liftn n = fromLwk (Nat.liftnWk n ρ) := by
+  rw [liftn_eq_iterate_lift, Nat.liftnWk_eq_iterate_liftWk, fromLwk_iterate_lift]
+
+theorem TSubst.subst_lwk (ρ : ℕ -> ℕ) (t : Terminator φ)
+  : t.lsubst (TSubst.fromLwk ρ) = t.lwk ρ := by
+  induction t <;> simp [Terminator.lsubst, Terminator.lwk, Term.subst_wk, *]
+
+theorem Terminator.lsubst_liftn (n : ℕ) (σ : TSubst α) (t : Terminator α)
+    : (t.lwk (Nat.liftnWk n Nat.succ)).lsubst (σ.liftn (n + 1))
+      = (t.lsubst (σ.liftn n)).lwk (Nat.liftnWk n Nat.succ)
+  := by induction t with
+  | br ℓ e =>
+    simp only [lwk, lsubst, Nat.liftnWk, TSubst.liftn]
+    split
+    . split
+      . simp [lwk, Nat.liftnWk, *]
+      . rename_i H C; exact (C (Nat.le_step H)).elim
+    . rename_i C
+      simp_arith only [ite_false]
+      rw [Nat.succ_eq_add_one]
+      have h : ℓ - n + 1 + n - (n + 1) = ℓ - n := by
+        rw [Nat.add_assoc, Nat.add_comm 1 n, Nat.add_sub_cancel]
+      rw [h]
+      -- TODO: factor out as lemma
+      generalize σ (ℓ - n) = t'
+      induction t' with
+      | br ℓ' e' => simp_arith [Nat.liftnWk]
+      | _ => simp [*]
+  | _ => simp [*]
+
+theorem Terminator.lsubst_iterate_lift (n : ℕ) (σ : TSubst α) (t : Terminator α)
+  : (t.lwk (Nat.liftWk^[n] Nat.succ)).lsubst (TSubst.lift^[n + 1] σ)
+    = (t.lsubst (TSubst.lift^[n] σ)).lwk (Nat.liftWk^[n] Nat.succ)
+  := by simp only [<-TSubst.liftn_eq_iterate_lift, <-Nat.liftnWk_eq_iterate_liftWk, lsubst_liftn]
+
+theorem Terminator.lsubst_lift (t : Terminator α) (σ : TSubst α)
+  : (t.lwk Nat.succ).lsubst (σ.lift) = (t.lsubst σ).lwk Nat.succ := t.lsubst_iterate_lift 0 σ
+
+/-- Compose two label-substitutions to yield another -/
+def TSubst.comp (σ τ : TSubst α): TSubst α
+  | n => (τ n).lsubst σ -- TODO: this is _wrong_! or is lsubst wrong?
+
+theorem TSubst.lift_comp (σ τ : TSubst α) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
+  funext n
+  cases n with
+  | zero => rfl
+  | succ n => simp [lift, comp, Terminator.lsubst_lift]
+
+theorem TSubst.iterate_lift_comp
+  : (n : ℕ) -> ∀σ τ : TSubst α, TSubst.lift^[n] (σ.comp τ)
+    = (TSubst.lift^[n] σ).comp (TSubst.lift^[n] τ)
+  | 0, σ, τ => rfl
+  | n + 1, σ, τ => by simp [TSubst.lift_comp, iterate_lift_comp n]
+
+theorem TSubst.liftn_comp (n : ℕ) (σ τ : TSubst α)
+  : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
+  := by rw [liftn_eq_iterate_lift, iterate_lift_comp]
+
+-- theorem Terminator.lsubst_comp (σ τ : TSubst α) (t : Terminator α)
+--   : t.lsubst (σ.comp τ) = (t.lsubst τ).lsubst σ
+--   := by induction t with
+--   | br ℓ e =>
+--     simp only [lsubst, TSubst.comp]
+--     -- TODO: factor out as lemma
+--     generalize τ ℓ = t'
+--     induction t' with
+--     | br ℓ' e' => sorry
+--     | _ => simp [*]
+--   | _ => simp only [lsubst, TSubst.liftn_comp, TSubst.comp, *]
 
 -- TODO: label-substitution (TSubst)
 
