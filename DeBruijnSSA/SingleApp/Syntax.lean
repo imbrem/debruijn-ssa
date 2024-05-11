@@ -1,5 +1,6 @@
 import Discretion
 import Discretion.Wk.Multiset
+import Mathlib.Algebra.BigOperators.Basic
 
 -- TODO: use abstract higher-ERT type formalism, add to discretion?
 
@@ -729,6 +730,22 @@ structure Block (φ : Type) : Type where
   is finished executing -/
   terminator : Terminator φ
 
+/-- The free variables in this basic block -/
+@[simp]
+def Block.vfv (β : Block φ) : Multiset ℕ := β.body.fv + β.terminator.vfv.liftnFv β.body.num_defs
+
+/-- The highest free variable in this basic block, plus one -/
+@[simp]
+def Block.vfvi (β : Block φ) : ℕ := Nat.max β.body.fvi (β.terminator.vfvi - β.body.num_defs)
+
+/-- The free labels in this basic block -/
+@[simp]
+def Block.lfv (β : Block φ) : Multiset ℕ := β.terminator.lfv
+
+/-- The highest free label in this basic block, plus one -/
+@[simp]
+def Block.lfvi (β : Block φ) : ℕ := β.terminator.lfvi
+
 /-- Weaken the variables in this basic block -/
 @[simp]
 def Block.vwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
@@ -740,6 +757,12 @@ theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
 
 theorem Block.vwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.vwk (σ ∘ τ) = (β.vwk τ).vwk σ
   := by simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftnWk_comp, *]
+
+theorem Block.vfv_vwk (ρ : ℕ → ℕ) (β : Block φ) : (β.vwk ρ).vfv = β.vfv.map ρ := by
+  simp [Terminator.vfv_vwk, Body.fv_wk, Body.num_defs_wk]
+
+theorem Block.lfv_vwk (ρ : ℕ → ℕ) (β : Block φ) : (β.vwk ρ).lfv = β.lfv := by
+  simp [Terminator.lfv_vwk]
 
 /-- Substitute the variables in this basic block -/
 @[simp]
@@ -765,6 +788,12 @@ theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
 
 theorem Block.lwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.lwk (σ ∘ τ) = (β.lwk τ).lwk σ
   := by simp [Terminator.lwk_comp]
+
+theorem Block.vfv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).vfv = β.vfv := by
+  simp [Terminator.vfv_lwk]
+
+theorem Block.lfv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).lfv = β.lfv.map ρ := by
+  simp [Terminator.lfv_lwk]
 
 -- TODO: label-substitution (TSubst)
 
@@ -842,10 +871,20 @@ theorem Terminator.coe_toBlock_inj {t₁ t₂ : Terminator φ} : (t₁ : Block �
 inductive BBRegion (φ : Type) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
+/-- The free variables in this region -/
+@[simp]
+def BBRegion.vfv : BBRegion φ → Multiset ℕ
+  | cfg β _ f => β.vfv + Finset.sum Finset.univ (λi => (f i).vfv.liftFv)
+
+/-- The free label variables in this region -/
+@[simp]
+def BBRegion.lfv : BBRegion φ → Multiset ℕ
+  | cfg β n f => β.lfv.liftnFv n + Finset.sum Finset.univ (λi => (f i).lfv.liftnFv n)
+
 /-- Weaken the variables in this region -/
 @[simp]
 def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
+  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
 @[simp]
 theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
@@ -854,7 +893,14 @@ theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
 theorem BBRegion.vwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
   : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
   induction r generalizing σ τ
-  simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftnWk_comp, *]
+  simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+theorem BBRegion.vfv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).vfv = r.vfv.map ρ := by
+  induction r generalizing ρ
+  simp [Body.fv_wk, Body.num_defs_wk, Terminator.vfv_vwk, Nat.liftnWk_succ',Multiset.map_finsum, *]
+
+theorem BBRegion.lfv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).lfv = r.lfv := by
+  induction r generalizing ρ; simp [Terminator.lfv_vwk, *]
 
 /-- Substitute the variables in this region -/
 @[simp]
@@ -883,6 +929,12 @@ theorem BBRegion.lwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
   : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ
   simp [Body.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
+
+theorem BBRegion.vfv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).vfv = r.vfv := by
+  induction r generalizing ρ; simp [Terminator.vfv_lwk, *]
+
+theorem BBRegion.lfv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).lfv = r.lfv.map ρ := by
+  induction r generalizing ρ; simp [Terminator.lfv_lwk, Multiset.map_finsum, *]
 
 -- TODO: label-substitution (TSubst)
 
