@@ -1,4 +1,5 @@
 import Discretion
+import Discretion.Wk.Multiset
 
 -- TODO: use abstract higher-ERT type formalism, add to discretion?
 
@@ -562,6 +563,20 @@ inductive Body (φ : Type) : Type
   | let1 : Term φ → Body φ → Body φ
   | let2 : Term φ → Body φ → Body φ
 
+/-- The free variables in this body -/
+@[simp]
+def Body.fv : Body φ → Multiset ℕ
+  | nil => 0
+  | let1 e t => e.fv + t.fv.liftFv
+  | let2 e t => e.fv + t.fv.liftnFv 2
+
+/-- The highest free variable in this body, plus one -/
+@[simp]
+def Body.fvi : Body φ → ℕ
+  | nil => 0
+  | let1 e t => Nat.max e.fvi (t.fvi - 1)
+  | let2 e t => Nat.max e.fvi (t.fvi - 2)
+
 /-- Weaken a body -/
 @[simp]
 def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
@@ -576,6 +591,10 @@ theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
   : b.wk (σ ∘ τ) = (b.wk τ).wk σ := by
   induction b generalizing σ τ
   <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+theorem Body.fv_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).fv = b.fv.map ρ := by
+  induction b generalizing ρ <;>
+  simp [Term.fv_wk, *]
 
 /-- Substitute the variables in a body -/
 @[simp]
@@ -614,6 +633,10 @@ def Body.append (b b' : Body φ) : Body φ := match b with
   | let1 a t => let1 a (t.append b')
   | let2 a t => let2 a (t.append b')
 
+theorem Body.fv_append (b b' : Body φ) : (b.append b').fv = b.fv + b'.fv.liftnFv b.num_defs := by
+  induction b generalizing b'
+  <;> simp [append, fv, <-Multiset.liftnFv_add, add_assoc, Nat.add_comm, *]
+
 theorem Body.append_num_defs (b b' : Body φ)
   : (b.append b').num_defs = b.num_defs + b'.num_defs := by
   induction b generalizing b' <;> simp_arith [append, num_defs, *]
@@ -637,6 +660,19 @@ theorem Body.wk_append (ρ : ℕ → ℕ) (b b' : Body φ)
 
 /-- Append two bodies, weakening the second so that it shares the same inputs as the first -/
 def Body.ltimes (b b' : Body φ) : Body φ := b.append (b'.wk (λn => n + b.num_defs))
+
+theorem Body.fv_ltimes (b b' : Body φ) : (b.ltimes b').fv = b.fv + b'.fv := by
+  rw [ltimes, fv_append, fv_wk]
+  congr
+  -- TODO: factor out as theorem in `Discretion`
+  generalize b'.fv = s
+  generalize b.num_defs = n
+  open Multiset in
+  ext i
+  simp only [liftnFv, ge_iff_le, count_map, filter_filter, <-countP_eq_card_filter, countP_map]
+  congr
+  ext a
+  simp
 
 theorem Body.ltimes_num_defs (b b' : Body φ) : (b.ltimes b').num_defs = b.num_defs + b'.num_defs
   := by simp [ltimes, append_num_defs, Body.num_defs_wk]

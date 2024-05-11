@@ -1,4 +1,4 @@
-import Discretion.Wk.Basic
+import Discretion.Wk.List
 import DeBruijnSSA.SingleApp.Syntax
 import DeBruijnSSA.InstSet
 
