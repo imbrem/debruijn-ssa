@@ -196,16 +196,42 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst α)
 theorem Term.subst_comp (σ τ : Subst α) (t : Term α) : t.subst (σ.comp τ) = (t.subst τ).subst σ
   := by induction t <;> simp only [subst, Subst.liftn_comp, Subst.comp, *]
 
+@[simp]
+theorem Subst.comp_id (σ : Subst α) : σ.comp Subst.id = σ := by funext n; rfl
+
+@[simp]
+theorem Subst.id_comp (σ : Subst α) : Subst.id.comp σ = σ := by funext n; simp [comp]
+
+theorem Subst.comp_assoc (σ τ ρ : Subst α) : (σ.comp τ).comp ρ = σ.comp (τ.comp ρ) := by
+  funext n
+  simp only [comp, Function.comp_apply, Term.subst_comp]
+
 /-- Substitute a term for the smallest variable, bumping the rest downwards -/
 @[simp]
 def Term.subst0 (t : Term α) : Subst α
   | 0 => t
   | n + 1 => var n
 
+@[simp]
+theorem Term.wk_succ_comp_subst0 (e : Term α) : e.subst0.comp (Subst.fromWk Nat.succ) = Subst.id
+  := by funext n; cases n <;> rfl
+
+@[simp]
+theorem Term.wk_succ_subst_subst0 (e s : Term α) : (e.wk Nat.succ).subst s.subst0 = e := by
+  rw [<-subst_wk, <-subst_comp, wk_succ_comp_subst0, subst_id]
+
 /-- Substitute a term for the smallest variable, leaving the rest unchanged -/
 def Term.alpha0 (t : Term α) : Subst α
   | 0 => t
   | n => var n
+
+@[simp]
+theorem Term.wk_lift_succ_comp_subst0 (e : Term α)
+  : e.subst0.comp (Subst.fromWk (Nat.liftWk Nat.succ)) = e.alpha0
+  := by funext n; cases n <;> rfl
+
+@[simp]
+theorem Term.alpha0_var0 : (var 0).alpha0 = @Subst.id φ := by funext n; cases n <;> rfl
 
 /-- A terminator -/
 inductive Terminator (φ : Type) : Type
@@ -241,6 +267,15 @@ theorem Terminator.vsubst_comp (σ τ : Subst φ) (r : Terminator φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+
+theorem Terminator.vsubst_wk (ρ : ℕ -> ℕ) (r : Terminator φ)
+  : r.vsubst (Subst.fromWk ρ) = r.vwk ρ := by
+  induction r <;> simp [Term.subst_wk, Subst.fromWk_liftn, *]
+
+@[simp]
+theorem Terminator.vwk_succ_vsubst_subst0 (t : Terminator φ) (s : Term φ)
+  : (t.vwk Nat.succ).vsubst s.subst0 = t := by
+  rw [<-vsubst_wk, <-vsubst_comp, Term.wk_succ_comp_subst0, vsubst_id]
 
 /-- Rename the labels in a `Region` using `ρ` -/
 @[simp]
@@ -367,7 +402,7 @@ theorem TSubst.fromLwk_iterate_lift (n : ℕ) (ρ)
 theorem TSubst.fromLwk_liftn (n ρ) : (@fromLwk φ ρ).liftn n = fromLwk (Nat.liftnWk n ρ) := by
   rw [liftn_eq_iterate_lift, Nat.liftnWk_eq_iterate_liftWk, fromLwk_iterate_lift]
 
-theorem TSubst.subst_lwk (ρ : ℕ -> ℕ) (t : Terminator φ)
+theorem Terminator.lsubst_lwk (ρ : ℕ -> ℕ) (t : Terminator φ)
   : t.lsubst (TSubst.fromLwk ρ) = t.lwk ρ := by
   induction t <;> simp [Terminator.lsubst, Terminator.lwk, Term.subst_wk, *]
 
@@ -404,13 +439,53 @@ theorem Terminator.lsubst_lift (t : Terminator α) (σ : TSubst α)
 
 /-- Compose two label-substitutions to yield another -/
 def TSubst.comp (σ τ : TSubst α): TSubst α
-  | n => (τ n).lsubst σ -- TODO: this is _wrong_! or is lsubst wrong?
+  | n => (τ n).lsubst (Terminator.vwk (Nat.liftWk Nat.succ) ∘ σ)
+
+@[simp]
+theorem TSubst.comp_id (σ : TSubst α) : σ.comp TSubst.id = σ := by
+  funext n
+  simp only [comp, Terminator.lsubst, Function.comp_apply]
+  rw [<-Terminator.vsubst_wk, <-Terminator.vsubst_comp]
+  simp
+
+theorem TSubst.id_comp (σ : TSubst α) : TSubst.id.comp σ = σ := by
+  funext n;
+  simp only [comp]
+  generalize σ n = t
+  induction t <;> simp [*]
+
+theorem Terminator.lsubst_comp (σ τ : TSubst α) (t : Terminator α)
+  : t.lsubst (σ.comp τ) = (t.lsubst τ).lsubst σ
+  := by induction t with
+  | br ℓ e =>
+    simp only [lsubst, TSubst.comp]
+    -- TODO: factor out as lemma
+    generalize τ ℓ = t'
+    induction t' with
+    | br ℓ' e' =>
+      simp only [lsubst, <-vsubst_comp, <-vsubst_wk, Function.comp_apply]
+      congr
+      -- TODO: factor out as lemma
+      funext n
+      cases n <;> rfl
+    | _ => simp [*]
+  | _ => simp only [lsubst, TSubst.comp, *]
 
 theorem TSubst.lift_comp (σ τ : TSubst α) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   funext n
   cases n with
   | zero => rfl
-  | succ n => simp [lift, comp, Terminator.lsubst_lift]
+  | succ n =>
+    simp only [lift, comp, <-Terminator.lsubst_lwk, <-Terminator.lsubst_comp]
+    congr
+    funext n
+    simp only [
+      comp, lift, Function.comp_apply, Terminator.lsubst, Nat.succ_eq_add_one,
+      <-Terminator.vsubst_wk, <-Terminator.vsubst_comp
+    ]
+    rw [<-Subst.comp_assoc, Term.wk_lift_succ_comp_subst0, Term.alpha0_var0, Subst.id_comp]
+    generalize σ n = t
+    induction t <;> simp [*]
 
 theorem TSubst.iterate_lift_comp
   : (n : ℕ) -> ∀σ τ : TSubst α, TSubst.lift^[n] (σ.comp τ)
@@ -421,20 +496,6 @@ theorem TSubst.iterate_lift_comp
 theorem TSubst.liftn_comp (n : ℕ) (σ τ : TSubst α)
   : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
   := by rw [liftn_eq_iterate_lift, iterate_lift_comp]
-
--- theorem Terminator.lsubst_comp (σ τ : TSubst α) (t : Terminator α)
---   : t.lsubst (σ.comp τ) = (t.lsubst τ).lsubst σ
---   := by induction t with
---   | br ℓ e =>
---     simp only [lsubst, TSubst.comp]
---     -- TODO: factor out as lemma
---     generalize τ ℓ = t'
---     induction t' with
---     | br ℓ' e' => sorry
---     | _ => simp [*]
---   | _ => simp only [lsubst, TSubst.liftn_comp, TSubst.comp, *]
-
--- TODO: label-substitution (TSubst)
 
 /-- A basic block body -/
 inductive Body (φ : Type) : Type
