@@ -12,6 +12,25 @@ inductive Term (φ : Type) where
   | unit : Term φ
   | bool : Bool → Term φ
 
+/-- Get the set of free variables of a term as a multiset (to allow counting occurences) -/
+@[simp]
+def Term.fv : Term φ → Multiset ℕ
+  | var x => {x}
+  | op _ x => x.fv
+  | pair x y => x.fv + y.fv
+  | _ => 0
+
+/-- Get the index of the highest free variable in this term, plus one -/
+@[simp]
+def Term.fvi : Term φ → ℕ
+  | var x => x + 1
+  | op _ x => x.fvi
+  | pair x y => Nat.max x.fvi y.fvi
+  | _ => 0
+
+theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
+  induction t <;> simp [*]
+
 /-- Rename the variables in a `Term` using `ρ` -/
 @[simp]
 def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
@@ -29,6 +48,9 @@ theorem Term.wk_id' : (t : Term φ) -> t.wk (λx => x) = t
 
 theorem Term.wk_comp (σ : ℕ → ℕ) (ρ : ℕ → ℕ) (t : Term φ)
   : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [*]
+
+theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ := by
+  induction t <;> simp [*]
 
 /-- A substitution mapping variables to terms -/
 def Subst (φ : Type) := ℕ → Term φ
@@ -238,6 +260,30 @@ inductive Terminator (φ : Type) : Type
   | br : Nat → Term φ → Terminator φ
   | ite : Term φ → Terminator φ → Terminator φ → Terminator φ
 
+/-- The free variables of this terminator -/
+@[simp]
+def Terminator.vfv : Terminator φ → Multiset ℕ
+  | br _ e => e.fv
+  | ite e s t => e.fv + s.vfv + t.vfv
+
+/-- The highest free variable in this terminator, plus one -/
+@[simp]
+def Terminator.vfvi : Terminator φ → ℕ
+  | br _ e => e.fvi
+  | ite e s t => Nat.max e.fvi (Nat.max s.vfvi t.vfvi)
+
+/-- The free labels of this terminator -/
+@[simp]
+def Terminator.lfv : Terminator φ → Multiset ℕ
+  | br n _ => {n}
+  | ite _ s t => s.lfv + t.lfv
+
+/-- The highest free label in this terminator, plus one -/
+@[simp]
+def Terminator.lfvi : Terminator φ → ℕ
+  | br n _ => n + 1
+  | ite _ s t => Nat.max s.lfvi t.lfvi
+
 /-- Rename the variables in a `Terminator` using `ρ` -/
 @[simp]
 def Terminator.vwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
@@ -253,6 +299,12 @@ theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
   induction r generalizing σ τ
   <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
+theorem Terminator.vfv_vwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.vwk ρ).vfv = r.vfv.map ρ := by
+  induction r <;> simp [*, Term.fv_wk]
+
+theorem Terminator.lfv_vwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.vwk ρ).lfv = r.lfv := by
+  induction r <;> simp [*]
+
 /-- Substitute the variables in a `Terminator` using `σ` -/
 @[simp]
 def Terminator.vsubst (σ : Subst φ) : Terminator φ → Terminator φ
@@ -267,6 +319,9 @@ theorem Terminator.vsubst_comp (σ τ : Subst φ) (r : Terminator φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
+
+theorem Terminator.lfv_vsubst (σ : Subst φ) (r : Terminator φ) : (r.vsubst σ).lfv = r.lfv := by
+  induction r <;> simp [*]
 
 theorem Terminator.vsubst_wk (ρ : ℕ -> ℕ) (r : Terminator φ)
   : r.vsubst (Subst.fromWk ρ) = r.vwk ρ := by
@@ -290,6 +345,12 @@ theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
 theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
   : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
+
+theorem Terminator.vfv_lwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.lwk ρ).vfv = r.vfv := by
+  induction r <;> simp [*]
+
+theorem Terminator.lfv_lwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.lwk ρ).lfv = r.lfv.map ρ := by
+  induction r <;> simp [*]
 
 /-- A substitution mapping labels to terminators -/
 def TSubst (φ : Type) := ℕ → Terminator φ
@@ -382,8 +443,6 @@ def Terminator.lsubst (σ : TSubst φ) : Terminator φ → Terminator φ
 @[simp]
 theorem Terminator.lsubst_id (t : Terminator φ) : t.lsubst TSubst.id = t
   := by induction t <;> simp [*]
-
--- TODO: create substitutions from variable renamings...
 
 /-- Create a substitution from a label renaming -/
 def TSubst.fromLwk (ρ : ℕ -> ℕ): TSubst φ := λn => Terminator.br (ρ n) (Term.var 0)
