@@ -240,6 +240,10 @@ theorem Ctx.Wkn.lift {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ ρ)
   : Wkn (V::Γ) (V'::Δ) (Nat.liftWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift hV)
 
+theorem Ctx.Wkn.lift_id {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ _root_.id)
+  : Wkn (V::Γ) (V'::Δ) _root_.id
+  := Nat.liftWk_id ▸ h.lift hV
+
 theorem Ctx.Wkn.step {V : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (V::Γ) Δ (Nat.stepWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
 
@@ -358,6 +362,10 @@ theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
 def Terminator.WfD.vwk {t : Terminator φ} (h : Γ.Wkn Δ ρ) : WfD Δ t L → WfD Γ (t.vwk ρ) L
   | br hL ha => br hL (ha.wk h)
   | ite he hs ht => ite (he.wk h) (hs.vwk h) (ht.vwk h)
+
+def Terminator.WfD.vwk_id {t : Terminator φ} (h : Γ.Wkn Δ id) : WfD Δ t L → WfD Γ t L
+  | br hL ha => br hL (ha.wk_id h)
+  | ite he hs ht => ite (he.wk_id h) (hs.vwk_id h) (ht.vwk_id h)
 
 def Terminator.WfD.lwk {t : Terminator φ} (h : L.Wkn K ρ) : WfD Γ t L → WfD Γ (t.lwk ρ) K
   | br hL ha => br (hL.wk h) ha

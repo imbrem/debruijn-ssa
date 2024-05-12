@@ -52,6 +52,9 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
   | unit e => unit e
   | bool b e => bool b e
 
+def Term.WfD.subst0 {a : Term φ} (ha : a.WfD Δ V) : a.subst0.WfD Δ (V::Δ)
+  := λi => i.cases ha (λi => Term.WfD.var ⟨by simp, by simp⟩)
+
 def Body.WfD.subst {Γ Δ : Ctx α ε} {σ} {b : Body φ} (hσ : σ.WfD Γ Δ)
   : b.WfD Δ V → (b.subst σ).WfD Γ V
   | nil => nil
@@ -91,8 +94,23 @@ end Subst
 section TSubst
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
   {Γ Δ : Ctx α ε} {σ : TSubst φ}
+
+def TSubst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : TSubst φ) : Type _
+  := ∀i : Fin L.length, (σ i).WfD (⟨L.get i, ⊥⟩::Γ) K
+
+def LCtx.Trg.subst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
+  := (hσ ⟨n, h.length⟩).vwk_id ((Ctx.Wkn.id Γ).lift_id (by simp [h.get]))
+
+def LCtx.Trg.subst0
+  {a : Term φ} (hσ : σ.WfD Γ L K) (h : L.Trg n A) (ha : a.WfD Γ ⟨A, ⊥⟩)
+  : ((σ n).vsubst a.subst0).WfD Γ K
+  := (h.subst hσ).vsubst ha.subst0
+
+def Terminator.WfD.lsubst {t : Terminator φ} (hσ : σ.WfD Γ L K) : t.WfD Γ L → (t.lsubst σ).WfD Γ K
+  | br hL ha => hL.subst0 hσ ha
+  | ite he hs ht => ite he (hs.lsubst hσ) (ht.lsubst hσ)
 
 end TSubst
 
