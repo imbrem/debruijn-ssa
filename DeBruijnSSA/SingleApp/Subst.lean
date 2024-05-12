@@ -88,4 +88,12 @@ def Region.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : Region φ} (hσ : σ.WfD Γ 
 
 end Subst
 
+section TSubst
+
+variable
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+  {Γ Δ : Ctx α ε} {σ : TSubst φ}
+
+end TSubst
+
 end SingleApp

@@ -874,7 +874,7 @@ inductive BBRegion (φ : Type) : Type
 /-- The free variables in this region -/
 @[simp]
 def BBRegion.vfv : BBRegion φ → Multiset ℕ
-  | cfg β _ f => β.vfv + Finset.sum Finset.univ (λi => (f i).vfv.liftFv)
+  | cfg β _ f => β.vfv + Finset.sum Finset.univ (λi => (f i).vfv.liftnFv (β.body.num_defs + 1))
 
 /-- The free label variables in this region -/
 @[simp]
@@ -884,7 +884,7 @@ def BBRegion.lfv : BBRegion φ → Multiset ℕ
 /-- Weaken the variables in this region -/
 @[simp]
 def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
+  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
 
 @[simp]
 theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
@@ -897,7 +897,16 @@ theorem BBRegion.vwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
 
 theorem BBRegion.vfv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).vfv = r.vfv.map ρ := by
   induction r generalizing ρ
-  simp [Body.fv_wk, Body.num_defs_wk, Terminator.vfv_vwk, Nat.liftnWk_succ',Multiset.map_finsum, *]
+  simp only [vfv, Block.vfv, Block.vwk, Body.fv_wk, Body.num_defs_wk, Terminator.vfv_vwk,
+    Multiset.liftnFv_map_liftnWk, Nat.liftnWk_succ', Function.comp_apply, Multiset.map_add,
+    Multiset.map_finsum, add_right_inj, *]
+  congr
+  funext i
+  rw [
+    Multiset.liftnFv_succ,
+    Multiset.liftFv_map_liftWk,
+    Multiset.liftnFv_map_liftnWk,
+    Multiset.liftnFv_succ]
 
 theorem BBRegion.lfv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).lfv = r.lfv := by
   induction r generalizing ρ; simp [Terminator.lfv_vwk, *]
