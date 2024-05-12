@@ -6,14 +6,11 @@ import Mathlib.Order.Lattice
 /--
 A type equipped with a purity predicate
 -/
-class HasPurity (ε : Type u) [SemilatticeSup ε] [Zero ε] where
+class HasPurity (ε : Type u) [SemilatticeSup ε] [Bot ε] where
   isPure : ε → Bool
   sup_isPure : ∀ e e', isPure e → isPure e' → isPure (e ⊔ e')
   isPure_of_le : Antitone isPure
-  zero_isPure : isPure 0
-
-theorem bot_isPure {ε} [SemilatticeSup ε] [Zero ε] [Φp : HasPurity ε] [OrderBot ε]
-  : Φp.isPure ⊥ := Φp.isPure_of_le bot_le Φp.zero_isPure
+  bot_isPure : isPure ⊥
 
 -- If there exists something impure, then ⊤ is impure
 
@@ -50,7 +47,7 @@ may be arbitrarily shrunk further.
 Note this is essentially just a set equipped with a semilattice-hom to transparency, i.e.
 (central, relevant, affine, pure); this might be nicer to state that way...
 -/
-class EffectSet (ε : Type u) [SemilatticeSup ε] [Zero ε]
+class EffectSet (ε : Type u) [SemilatticeSup ε] [Bot ε]
   extends HasPurity ε, HasCentrality ε, HasRelevance ε, HasAffinity ε where
   isCentral_of_isPure : ∀ e, isPure e ≤ isCentral e
   isRelevant_of_isPure : ∀ e, isPure e ≤ isRelevant e
@@ -78,6 +75,12 @@ instance : LinearOrder Impurity where
   decidableLE x y := decidable_of_iff (x = y ∨ x = Impurity.none) Iff.rfl
   decidableEq := inferInstance
 
+instance : Bot Impurity where
+  bot := Impurity.none
+
+instance : Top Impurity where
+  top := Impurity.impure
+
 instance : EffectSet Impurity where
   isPure := λ | Impurity.none => true | _ => false
   isCentral := λ | Impurity.none => true | _ => false
@@ -91,7 +94,7 @@ instance : EffectSet Impurity where
   sup_isRelevant e e' := by cases e <;> cases e' <;> simp
   sup_isAffine e e' := by cases e <;> cases e' <;> simp
   sup_isPure e e' := by cases e <;> cases e' <;> simp
-  zero_isPure := rfl
+  bot_isPure := rfl
   isCentral_of_isPure e h := h
   isRelevant_of_isPure e h := h
   isAffine_of_isPure e h := h

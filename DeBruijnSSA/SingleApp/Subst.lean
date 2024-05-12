@@ -5,7 +5,7 @@ namespace SingleApp
 section Subst
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε} {σ : Subst φ}
 
 def Subst.WfD (Γ Δ : Ctx α ε) (σ : Subst φ) : Type _
@@ -91,7 +91,7 @@ end Subst
 section TSubst
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε} {σ : TSubst φ}
 
 end TSubst

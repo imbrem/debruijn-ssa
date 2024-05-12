@@ -10,7 +10,7 @@ section Basic
 
 -- Can we even do centrality? Propositional parametrization?
 
-variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
 
 inductive Ty (α : Type u) where
   | base : α → Ty α
@@ -144,10 +144,10 @@ def Term.WfD.toMinTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e�
 
 inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
   | nil : WfD Γ nil []
-  | let1 : a.WfD Γ ⟨A, e⟩ → b.WfD (⟨A, 0⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, 0⟩::Δ)
+  | let1 : a.WfD Γ ⟨A, e⟩ → b.WfD (⟨A, ⊥⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, ⊥⟩::Δ)
   | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩
-    → b.WfD (⟨A, 0⟩::⟨B, 0⟩::Γ) Δ
-    → (let2 a b).WfD Γ (⟨A, 0⟩::⟨B, 0⟩::Δ)
+    → b.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
+    → (let2 a b).WfD Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
 
 theorem Body.WfD.num_defs_eq_length {Γ : Ctx α ε} {b : Body φ} {Δ} (h : b.WfD Γ Δ)
   : b.num_defs = Δ.length
@@ -170,8 +170,8 @@ def FLCtx (α) := Σn, Fin n → Ty α
 -- TODO: FLCtx append
 
 inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
-  | br : L.Trg n A → a.WfD Γ ⟨A, 0⟩ → WfD Γ (br n a) L
-  | ite : e.WfD Γ ⟨Ty.bool, 0⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
+  | ite : e.WfD Γ ⟨Ty.bool, ⊥⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
 
 structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
@@ -180,25 +180,25 @@ structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx 
 inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ Δ (R ++ L) →
-    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::(Δ ++ Γ)) (R ++ L)) →
+    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
     WfD Γ (cfg β n G) L
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
-  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, 0⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, 0⟩::⟨B, 0⟩::Γ) L → (let2 a t).WfD Γ L
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
-    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::Γ) (R ++ L)) →
+    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
     WfD Γ (cfg β n G) L
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
-  | br : L.Trg n A → a.WfD Γ ⟨A, 0⟩ → WfD Γ (br n a) L
-  | ite : e.WfD Γ ⟨Ty.bool, 0⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
-  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, 0⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, 0⟩::⟨B, 0⟩::Γ) L → (let2 a t).WfD Γ L
+  | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
+  | ite : e.WfD Γ ⟨Ty.bool, ⊥⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
-    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), 0⟩::Γ) (R ++ L)) →
+    (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
     WfD Γ (cfg β n G) L
 
 def Region.WfD.src {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := Γ
@@ -219,7 +219,7 @@ end Basic
 section Weakening
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Zero ε]
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} -- {a b : Term φ} {A B : Ty α} {e e' : ε}
 
 def Ctx.Wkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
@@ -418,7 +418,7 @@ end Weakening
 
 section Minimal
 
-variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε] [Zero ε]
+variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
 def Term.minEffect (Γ : Ctx α ε) : Term φ → ε
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
@@ -437,9 +437,9 @@ theorem Term.WfD.minEffect_le
 
 def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
   | Body.nil => []
-  | Body.let1 a b => ⟨a.minTy Γ, 0⟩ :: b.minDefs (⟨a.minTy Γ, 0⟩::Γ)
+  | Body.let1 a b => ⟨a.minTy Γ, ⊥⟩ :: b.minDefs (⟨a.minTy Γ, ⊥⟩::Γ)
   | Body.let2 a b =>
-    ⟨a.minTy Γ, 0⟩ :: ⟨a.minTy Γ, 0⟩ :: b.minDefs (⟨a.minTy Γ, 0⟩::⟨a.minTy Γ, 0⟩::Γ)
+    ⟨a.minTy Γ, ⊥⟩ :: ⟨a.minTy Γ, ⊥⟩ :: b.minDefs (⟨a.minTy Γ, ⊥⟩::⟨a.minTy Γ, ⊥⟩::Γ)
 
 -- def Body.WfD.toMinDefs {Γ : Ctx α ε} {b : Body φ} {Δ} : b.WfD Γ Δ → WfD Γ b (b.minDefs Γ)
 --   | Body.WfD.nil => nil
