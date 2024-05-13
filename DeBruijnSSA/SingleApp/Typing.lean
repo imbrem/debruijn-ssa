@@ -211,6 +211,13 @@ inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
     → b.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
     → (let2 a b).WfD Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
 
+inductive Body.Wf : Ctx α ε → Body φ → Ctx α ε → Type _
+  | nil : Wf Γ nil []
+  | let1 : a.Wf Γ ⟨A, e⟩ → b.Wf (⟨A, ⊥⟩::Γ) Δ → (let1 a b).Wf Γ (⟨A, ⊥⟩::Δ)
+  | let2 : a.Wf Γ ⟨(Ty.pair A B), e⟩
+    → b.Wf (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
+    → (let2 a b).Wf Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
+
 theorem Body.WfD.num_defs_eq_length {Γ : Ctx α ε} {b : Body φ} {Δ} (h : b.WfD Γ Δ)
   : b.num_defs = Δ.length
   := by induction h <;> simp [num_defs, *]
