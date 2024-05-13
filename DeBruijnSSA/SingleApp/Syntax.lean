@@ -436,6 +436,16 @@ theorem TSubst.liftn_add_apply (n m: ℕ) (σ: TSubst α): (σ.liftn n).liftn m 
 
 theorem TSubst.lift_succ (σ : TSubst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk Nat.succ := rfl
 
+/-- Lift a substitution under a variable binder -/
+def TSubst.vlift (σ : TSubst φ) : TSubst φ
+  := Terminator.vwk Nat.succ ∘ σ
+
+/-- Lift a substitution under `n` variable binders -/
+def TSubst.vliftn (n : ℕ) (σ : TSubst φ) : TSubst φ
+  := Terminator.vwk (λi => i + n) ∘ σ
+
+-- TODO: vlift lemmas
+
 /-- Substitute the labels in a `Terminator` using `σ` -/
 @[simp]
 def Terminator.lsubst (σ : TSubst φ) : Terminator φ → Terminator φ
@@ -795,7 +805,9 @@ theorem Block.vfv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).vfv = β.
 theorem Block.lfv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).lfv = β.lfv.map ρ := by
   simp [Terminator.lfv_lwk]
 
--- TODO: label-substitution (TSubst)
+def Block.lsubst (σ : TSubst φ) (β : Block φ) : Block φ where
+  body := β.body
+  terminator := β.terminator.lsubst (σ.vliftn β.body.num_defs)
 
 /-- Prepend a body of instructions to this basic block -/
 def Block.prepend (b : Body φ) (β : Block φ) : Block φ where
@@ -945,7 +957,9 @@ theorem BBRegion.vfv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).vfv =
 theorem BBRegion.lfv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).lfv = r.lfv.map ρ := by
   induction r generalizing ρ; simp [Terminator.lfv_lwk, Multiset.map_finsum, *]
 
--- TODO: label-substitution (TSubst)
+def BBRegion.lsubst (σ : TSubst φ) : BBRegion φ → BBRegion φ
+  | cfg β n f => cfg (β.lsubst (σ.liftn n)) n
+    (λ i => (f i).lsubst ((σ.liftn n).vliftn β.body.num_defs))
 
 -- TODO: BBRegion.prepend
 
@@ -994,6 +1008,10 @@ theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
 
 theorem BBCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
   cases cfg; simp [BBRegion.lwk_comp, *]
+
+def BBCFG.lsubst (σ : TSubst φ) (cfg : BBCFG φ) : BBCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).lsubst σ
 
 /-- A terminator-based single-entry multiple-exit region -/
 inductive TRegion (φ : Type) : Type
@@ -1049,7 +1067,10 @@ theorem TRegion.lwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
   induction r generalizing σ τ
   <;> simp [Term.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
 
--- TODO: label-substitution (TSubst)
+def TRegion.lsubst (σ : TSubst φ) : TRegion φ → TRegion φ
+  | let1 e t => let1 e (t.lsubst σ.vlift)
+  | let2 e t => let2 e (t.lsubst (σ.vliftn 2))
+  | cfg β n f => cfg (β.lsubst (σ.liftn n)) n (λ i => (f i).lsubst (σ.liftn n))
 
 -- TODO: TRegion.prepend
 
@@ -1101,6 +1122,10 @@ theorem TCFG.lwk_id (cfg : TCFG φ) : cfg.lwk id = cfg := by
 
 theorem TCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
   cases cfg; simp [TCFG.lwk, TRegion.lwk_comp, Nat.liftnWk_comp, *]
+
+def TCFG.lsubst (σ : TSubst φ) (cfg : TCFG φ) : TCFG φ where
+  length := cfg.length
+  targets := λi => (cfg.targets i).lsubst σ
 
 -- TODO: TRegion.tail'
 
