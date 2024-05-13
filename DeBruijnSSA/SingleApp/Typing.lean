@@ -82,12 +82,66 @@ def FCtx (α ε) := Σn, Fin n → Ty α × ε
 -- TODO: FCtx append
 
 /-- A well-formed term -/
-inductive Term.Wf : Ctx α ε → Term φ → Ty α → ε → Prop
-  | var : Γ.Var n ⟨A, e⟩ → Wf Γ (var n) A e
-  | op : Φ.Fn f A B e → Wf Γ a A e → Wf Γ (op f a) B e
-  | pair : Wf Γ a A e → Wf Γ b B e → Wf Γ (pair a b) (Ty.pair A B) e
-  | unit (e) : Wf Γ unit Ty.unit e
-  | bool (b e) : Wf Γ (bool b) Ty.bool e
+inductive Term.Wf : Ctx α ε → Term φ → Ty α × ε → Prop
+  | var : Γ.Var n V → Wf Γ (var n) V
+  | op : Φ.Fn f A B e → Wf Γ a ⟨A, e⟩ → Wf Γ (op f a) ⟨B, e⟩
+  | pair : Wf Γ a ⟨A, e⟩ → Wf Γ b ⟨B, e⟩ → Wf Γ (pair a b) ⟨(Ty.pair A B), e⟩
+  | unit (e) : Wf Γ unit ⟨Ty.unit, e⟩
+  | bool (b e) : Wf Γ (bool b) ⟨Ty.bool, e⟩
+
+theorem Term.Wf.to_var {Γ : Ctx α ε} {n V} (h : Wf Γ (@Term.var φ n) V)
+  : Γ.Var n V := by cases h; assumption
+
+theorem Term.Wf.to_fn' {Γ : Ctx α ε} {a : Term φ}
+  (h : Wf Γ (Term.op f a) V)
+  (hA : A ≤ Φ.src f)
+  (hB : V.1 ≤ B)
+  (he : V.2 ≤ e)
+  : Φ.Fn f A B e := by cases h with | op hf => exact ⟨hA, hf.trg.trans hB, hf.effect.trans he⟩
+
+theorem Term.Wf.to_fn {Γ : Ctx α ε} {a : Term φ} (h : Wf Γ (Term.op f a) V)
+  : Φ.Fn f (Φ.src f) V.1 V.2 := h.to_fn' (le_refl _) (le_refl _) (le_refl _)
+
+theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV : V ≤ V') : Wf Γ a V'
+  := by induction h generalizing V' with
+  | var dv =>
+    constructor
+    exact ⟨dv.length, dv.get.trans hV⟩
+  | op hf _ I =>
+    cases V'
+    constructor
+    exact ⟨hf.src, hf.trg.trans hV.left, hf.effect.trans hV.right⟩
+    exact I ⟨le_refl _, hV.right⟩
+  | pair _ _ Il Ir =>
+    cases V'
+    cases hV.left
+    constructor
+    exact Il ⟨by assumption, hV.right⟩
+    exact Ir ⟨by assumption, hV.right⟩
+  | unit =>
+    cases V'
+    cases hV.left
+    constructor
+  | bool b e =>
+    cases V'
+    cases hV.left
+    constructor
+
+theorem Term.Wf.to_op' {Γ : Ctx α ε} {a : Term φ}
+  (h : Wf Γ (Term.op f a) V)
+  (hV : ⟨Φ.src f, V.2⟩ ≤ V')
+  : Wf Γ a V' := by cases h with | op hf ha => exact ha.wk_res ⟨hf.src.trans hV.left, hV.right⟩
+
+theorem Term.Wf.to_op {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ (Term.op f a) V)
+  : Wf Γ a ⟨Φ.src f, V.2⟩ := h.to_op' (le_refl _)
+
+theorem Term.Wf.to_left {Γ : Ctx α ε} {a b : Term φ}
+  (h : Wf Γ (Term.pair a b) ⟨Ty.pair A B, e⟩)
+  : Wf Γ a ⟨A, e⟩ := by cases h with | pair ha _ => exact ha
+
+theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
+  (h : Wf Γ (Term.pair a b) ⟨Ty.pair A B, e⟩)
+  : Wf Γ b ⟨B, e⟩ := by cases h with | pair _ hb => exact hb
 
 /-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
@@ -97,29 +151,37 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | unit (e) : WfD Γ unit ⟨Ty.unit, e⟩
   | bool (b e) : WfD Γ (bool b) ⟨Ty.bool, e⟩
 
-/-- The minimal type for which a term may be well-typed -/
-def Term.minTy (Γ : Ctx α ε) : Term φ → Ty α
+theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf Γ a V
+  := match h with
+  | var dv => Wf.var dv
+  | op df de => Wf.op df de.toWf
+  | pair dl dr => Wf.pair dl.toWf dr.toWf
+  | unit e => Wf.unit e
+  | bool b e => Wf.bool b e
+
+/-- Infer the type of a term; pun with infimum -/
+def Term.infTy (Γ : Ctx α ε) : Term φ → Ty α
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
   | op f _ => Φ.trg f
-  | pair a b => Ty.pair (a.minTy Γ) (b.minTy Γ)
+  | pair a b => Ty.pair (a.infTy Γ) (b.infTy Γ)
   | unit => Ty.unit
   | bool _ => Ty.bool
 
-theorem Term.WfD.minTy_le {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.minTy Γ ≤ A
+theorem Term.WfD.infTy_le {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infTy Γ ≤ A
   := match h with
-  | var dv => by simp [minTy, dv.length, dv.get.left]
+  | var dv => by simp [infTy, dv.length, dv.get.left]
   | op df de => df.trg
-  | pair dl dr => Ty.LE.pair dl.minTy_le dr.minTy_le
+  | pair dl dr => Ty.LE.pair dl.infTy_le dr.infTy_le
   | unit _ | bool _ _ => le_refl _
 
-def Term.WfD.toMinTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨a.minTy Γ, e⟩
+def Term.WfD.toInfTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨a.infTy Γ, e⟩
   := match h with
   | var dv => var (by
-    constructor <;> simp only [minTy, dv.length, ↓reduceDite]
+    constructor <;> simp only [infTy, dv.length, ↓reduceDite]
     exact ⟨le_refl _, dv.get.2⟩
     )
   | op df de => op ⟨df.src, le_refl _, df.effect⟩ de
-  | pair dl dr => pair (dl.toMinTy) (dr.toMinTy)
+  | pair dl dr => pair (dl.toInfTy) (dr.toInfTy)
   | unit e => unit e
   | bool b e => bool b e
 
@@ -127,14 +189,14 @@ def Term.WfD.toMinTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e�
 
 -- TODO: Wf ==> ∃WfD
 
--- def Term.Wf.toWFD
---   {Γ : Ctx α ε} {a : Term φ} {A e} (h : Wf Γ a A e) : WfD Γ a A e
---   := match a with
---   | Term.var n => WfD.var sorry
---   | Term.op f a => WfD.op sorry sorry
---   | Term.pair a b => WfD.pair sorry sorry
---   | Term.unit => sorry
---   | Term.bool b => sorry
+def Term.Wf.toWfD
+  {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : WfD Γ a V
+  := match a, V, h with
+  | Term.var _, _, h => WfD.var h.to_var
+  | Term.op _ _, _, h => WfD.op h.to_fn h.to_op.toWfD
+  | Term.pair _ _, ⟨Ty.pair _ _, _⟩, h => WfD.pair h.to_left.toWfD h.to_right.toWfD
+  | Term.unit, ⟨Ty.unit, _⟩, _ => WfD.unit _
+  | Term.bool _, ⟨Ty.bool, _⟩, _ => WfD.bool _ _
 
 -- TODO: for a discrete order on α, WfD unique, Wf ==> WfD
 
@@ -478,14 +540,14 @@ theorem Term.WfD.minEffect_le
 
 def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
   | Body.nil => []
-  | Body.let1 a b => ⟨a.minTy Γ, ⊥⟩ :: b.minDefs (⟨a.minTy Γ, ⊥⟩::Γ)
+  | Body.let1 a b => ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::Γ)
   | Body.let2 a b =>
-    ⟨a.minTy Γ, ⊥⟩ :: ⟨a.minTy Γ, ⊥⟩ :: b.minDefs (⟨a.minTy Γ, ⊥⟩::⟨a.minTy Γ, ⊥⟩::Γ)
+    ⟨a.infTy Γ, ⊥⟩ :: ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::⟨a.infTy Γ, ⊥⟩::Γ)
 
 -- def Body.WfD.toMinDefs {Γ : Ctx α ε} {b : Body φ} {Δ} : b.WfD Γ Δ → WfD Γ b (b.minDefs Γ)
 --   | Body.WfD.nil => nil
---   | Body.WfD.let1 a b => let1 a.toMinTy (b.wk_id sorry).toMinDefs
---   | Body.WfD.let2 a b => let2 a.toMinTy (b.wk_id sorry).toMinDefs
+--   | Body.WfD.let1 a b => let1 a.toInfTy (b.wk_id sorry).toMinDefs
+--   | Body.WfD.let2 a b => let2 a.toInfTy (b.wk_id sorry).toMinDefs
 
 end Minimal
 
