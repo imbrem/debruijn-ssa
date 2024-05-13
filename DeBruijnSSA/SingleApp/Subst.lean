@@ -102,7 +102,16 @@ def TSubst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : TSubst φ) : Type _
 
 -- TODO: lift lemmas
 
--- TODO: vlift lemmas
+def TSubst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
+  := λi => (hσ i).vwk ((Ctx.Wkn.id Γ).step.slift _)
+
+def TSubst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn Ξ.length).WfD (Ξ ++ Γ) L K
+  := λi => (hσ i).vwk (((Ctx.Wkn.id Γ).stepn_append Ξ).slift _)
+
+def TSubst.WfD.vliftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn n).WfD (Ξ ++ Γ) L K
+  := λi => (hσ i).vwk (((Ctx.Wkn.id Γ).stepn_append' hn).slift _)
 
 def LCtx.Trg.subst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
   := (hσ ⟨n, h.length⟩).vwk_id ((Ctx.Wkn.id Γ).lift_id (by simp [h.get]))
@@ -116,10 +125,10 @@ def Terminator.WfD.lsubst {t : Terminator φ} (hσ : σ.WfD Γ L K) : t.WfD Γ L
   | br hL ha => hL.subst0 hσ ha
   | ite he hs ht => ite he (hs.lsubst hσ) (ht.lsubst hσ)
 
--- def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) : (b.lsubst σ).WfD Γ Ξ K
---   where
---   body := hb.body
---   terminator := hb.terminator.lsubst sorry
+def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) : (b.lsubst σ).WfD Γ Ξ K
+  where
+  body := hb.body
+  terminator := hb.terminator.lsubst (hσ.vliftn_append' hb.body.num_defs_eq_length)
 
 end TSubst
 

@@ -438,11 +438,11 @@ theorem TSubst.lift_succ (σ : TSubst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).l
 
 /-- Lift a substitution under a variable binder -/
 def TSubst.vlift (σ : TSubst φ) : TSubst φ
-  := Terminator.vwk Nat.succ ∘ σ
+  := Terminator.vwk (Nat.liftWk Nat.succ) ∘ σ
 
 /-- Lift a substitution under `n` variable binders -/
 def TSubst.vliftn (n : ℕ) (σ : TSubst φ) : TSubst φ
-  := Terminator.vwk (λi => i + n) ∘ σ
+  := Terminator.vwk (Nat.liftWk (λi => i + n)) ∘ σ
 
 -- TODO: vlift lemmas
 

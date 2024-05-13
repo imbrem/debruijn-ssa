@@ -240,6 +240,10 @@ theorem Ctx.Wkn.lift {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ ρ)
   : Wkn (V::Γ) (V'::Δ) (Nat.liftWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift hV)
 
+theorem Ctx.Wkn.slift (V : Ty α × ε) (h : Γ.Wkn Δ ρ)
+  : Wkn (V::Γ) (V::Δ) (Nat.liftWk ρ)
+  := h.lift (le_refl V)
+
 theorem Ctx.Wkn.lift_id {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ _root_.id)
   : Wkn (V::Γ) (V'::Δ) _root_.id
   := Nat.liftWk_id ▸ h.lift hV
@@ -251,17 +255,41 @@ theorem Ctx.Wkn.lift₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ 
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftWk (Nat.liftWk ρ))
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift₂ hV₁ hV₂)
 
+theorem Ctx.Wkn.slift₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ ρ)
+  : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) (Nat.liftWk (Nat.liftWk ρ))
+  := h.lift₂ (le_refl _) (le_refl _)
+
 theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftnWk 2 ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn₂ hV₁ hV₂)
+
+theorem Ctx.Wkn.sliftn₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ ρ)
+  : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) (Nat.liftnWk 2 ρ)
+  := h.liftn₂ (le_refl _) (le_refl _)
 
 theorem Ctx.Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn_append Ξ)
 
+theorem Ctx.Wkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
+  : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
+  := hn ▸ liftn_append Ξ h
+
 theorem Ctx.Wkn.liftn_append_cons (A Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
   := liftn_append (A::Ξ) h
+
+theorem Ctx.Wkn.liftn_append_cons' (A) {Ξ} (hn : n = Ξ.length + 1) (h : Γ.Wkn Δ ρ)
+  : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk n ρ)
+  := hn ▸ liftn_append_cons A Ξ h
+
+theorem Ctx.Wkn.stepn_append (Ξ) (h : Γ.Wkn Δ ρ)
+  : Wkn (Ξ ++ Γ) Δ (Nat.stepnWk Ξ.length ρ)
+  := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).stepn_append Ξ)
+
+theorem Ctx.Wkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
+  : Wkn (Ξ ++ Γ) Δ (Nat.stepnWk n ρ)
+  := hn ▸ stepn_append Ξ h
 
 theorem Ctx.Wkn.id_len_le : Γ.Wkn Δ _root_.id → Δ.length ≤ Γ.length := by
   rw [Wkn_iff]; apply List.NWkn.id_len_le
@@ -326,13 +354,13 @@ def Term.WfD.wk_id {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → Wf
 
 def Body.WfD.wk {Γ Δ : Ctx α ε} {ρ} {b : Body φ} (h : Γ.Wkn Δ ρ) : WfD Δ b Ξ → WfD Γ (b.wk ρ) Ξ
   | nil => nil
-  | let1 a b => let1 (a.wk h) (b.wk (h.lift (le_refl _)))
-  | let2 a b => let2 (a.wk h) (b.wk (h.liftn₂ (le_refl _) (le_refl _)))
+  | let1 a b => let1 (a.wk h) (b.wk (h.slift _))
+  | let2 a b => let2 (a.wk h) (b.wk (h.sliftn₂ _ _))
 
 def Body.WfD.wk_id {Γ Δ : Ctx α ε} {b : Body φ} (h : Γ.Wkn Δ id) : WfD Δ b Ξ → WfD Γ b Ξ
   | nil => nil
-  | let1 a b => let1 (a.wk_id h) (b.wk_id (Nat.liftWk_id ▸ h.lift (le_refl _)))
-  | let2 a b => let2 (a.wk_id h) (b.wk_id (Nat.liftnWk_id 2 ▸ h.liftn₂ (le_refl _) (le_refl _)))
+  | let1 a b => let1 (a.wk_id h) (b.wk_id (Nat.liftWk_id ▸ h.slift _))
+  | let2 a b => let2 (a.wk_id h) (b.wk_id (Nat.liftnWk_id 2 ▸ h.sliftn₂ _ _))
 
 variable {L K : LCtx α}
 
