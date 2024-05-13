@@ -100,7 +100,10 @@ variable
 def TSubst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : TSubst φ) : Type _
   := ∀i : Fin L.length, (σ i).WfD (⟨L.get i, ⊥⟩::Γ) K
 
--- TODO: lift lemmas
+def TSubst.WfD.lift (h : A ≤ A') (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A'::K)
+  := λi => i.cases
+    (Terminator.WfD.br ⟨by simp, h⟩ (Term.WfD.var (Ctx.Var.head (le_refl _) _))) -- TODO: factor
+    (λi => (hσ i).lwk (LCtx.Wkn.id _).step)
 
 def TSubst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
   := λi => (hσ i).vwk ((Ctx.Wkn.id Γ).step.slift _)
@@ -129,6 +132,10 @@ def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) :
   where
   body := hb.body
   terminator := hb.terminator.lsubst (hσ.vliftn_append' hb.body.num_defs_eq_length)
+
+-- def BBRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ L K)
+--   : r.WfD Γ L → (r.lsubst σ).WfD Γ K
+--   | cfg n R hR hb hG => cfg n R hR (hb.lsubst sorry) (λi => (hG i).lsubst sorry)
 
 end TSubst
 

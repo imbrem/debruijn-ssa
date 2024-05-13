@@ -367,6 +367,8 @@ variable {L K : LCtx α}
 def LCtx.Wkn (L K : LCtx α) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
   := ∀i, (h : i < L.length) → K.Trg (ρ i) (L.get ⟨i, h⟩)
 
+theorem LCtx.Wkn.id (L : LCtx α) : L.Wkn L id := λ_ hi => ⟨hi, le_refl _⟩
+
 theorem LCtx.Wkn_def (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
   ∀i, (h : i < L.length) → K.Trg (ρ i) (L.get ⟨i, h⟩) := Iff.rfl
 
@@ -375,6 +377,9 @@ theorem LCtx.Wkn_def' (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
 
 theorem LCtx.Wkn_iff (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔ @List.NWkn (Ty α)ᵒᵈ _ K L ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
+
+theorem LCtx.Wkn.step {A : Ty α} (h : L.Wkn K ρ) : Wkn L (A::K) (Nat.stepWk ρ)
+  := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
 
 theorem LCtx.Wkn.liftn_append {L K : LCtx α} {ρ : ℕ → ℕ} (R : LCtx α) (h : L.Wkn K ρ)
   : (R ++ L).Wkn (R ++ K) (Nat.liftnWk R.length ρ) := by
