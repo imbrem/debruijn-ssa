@@ -164,6 +164,32 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | unit (e) : WfD Γ unit ⟨Ty.unit, e⟩
   | bool (b e) : WfD Γ (bool b) ⟨Ty.bool, e⟩
 
+def Term.WfD.cast_term {Γ : Ctx α ε} {a a' : Term φ} {V} (h : WfD Γ a V) (ha : a = a') : WfD Γ a' V
+  := ha ▸ h
+
+def Term.WfD.cast_src {Γ Γ' : Ctx α ε} {a : Term φ} {V} (h : Γ = Γ') (d : WfD Γ a V)
+  : WfD Γ' a V := h ▸ d
+
+def Term.WfD.cast_trg {Γ : Ctx α ε} {a : Term φ} {V V'} (d : WfD Γ a V) (h : V = V')
+  : WfD Γ a V' := h ▸ d
+
+theorem Term.WfD.cast_term_cast_src {Γ Γ' : Ctx α ε} {a a' : Term φ} {V}
+  (h : Γ = Γ') (d : WfD Γ a V) (ha : a = a')
+  : (d.cast_src h).cast_term ha = (d.cast_term ha).cast_src h
+  := by cases h; cases ha; rfl
+
+theorem Term.WfD.cast_term_cast_trg {Γ : Ctx α ε} {a a' : Term φ} {V V'}
+  (d : WfD Γ a V) (ha : a = a') (h : V = V')
+  : (d.cast_trg h).cast_term ha = (d.cast_term ha).cast_trg h
+  := by cases ha; cases h; rfl
+
+theorem Term.WfD.cast_src_cast_trg {Γ Γ' : Ctx α ε} {a : Term φ} {V V'}
+  (h : Γ = Γ') (d : WfD Γ a V) (h' : V = V')
+  : (d.cast_trg h').cast_src h = (d.cast_src h).cast_trg h'
+  := by cases h; cases h'; rfl
+
+-- TODO: weakenings should commute, too...
+
 theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf Γ a V
   := match h with
   | var dv => Wf.var dv
@@ -237,6 +263,9 @@ def Body.WfD.cast_src {Γ Γ' : Ctx α ε} {b : Body φ} {Δ} (h : Γ = Γ') (d 
 
 def Body.WfD.cast_trg {Γ : Ctx α ε} {b : Body φ} {Δ Δ'} (d : b.WfD Γ Δ) (h : Δ = Δ')
   : b.WfD Γ Δ' := h ▸ d
+
+def Body.WfD.cast_body {Γ : Ctx α ε} {b b' : Body φ} {Δ} (h : b.WfD Γ Δ) (hb : b = b')
+  : b'.WfD Γ Δ := hb ▸ h
 
 inductive Body.Wf : Ctx α ε → Body φ → Ctx α ε → Prop
   | nil : Wf Γ nil []
