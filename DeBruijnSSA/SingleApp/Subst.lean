@@ -105,6 +105,15 @@ def TSubst.WfD.lift (h : A ≤ A') (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L)
     (Terminator.WfD.br ⟨by simp, h⟩ (Term.WfD.var (Ctx.Var.head (le_refl _) _))) -- TODO: factor
     (λi => (hσ i).lwk (LCtx.Wkn.id _).step)
 
+def TSubst.WfD.slift (A) (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A::K)
+  := hσ.lift (le_refl A)
+
+def TSubst.WfD.liftn_append (J : LCtx α) (hσ : σ.WfD Γ L K)
+  : (σ.liftn J.length).WfD Γ (J ++ L) (J ++ K)
+  := match J with
+  | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
+  | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift _
+
 def TSubst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
   := λi => (hσ i).vwk ((Ctx.Wkn.id Γ).step.slift _)
 
