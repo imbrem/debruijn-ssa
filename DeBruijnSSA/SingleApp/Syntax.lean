@@ -4,6 +4,8 @@ import Mathlib.Algebra.BigOperators.Basic
 
 -- TODO: use abstract higher-ERT type formalism, add to discretion?
 
+-- TODO: splat file?
+
 namespace SingleApp
 
 /-- A simple term, consisting of variables, operations, pairs, units, and booleans -/
@@ -55,7 +57,7 @@ theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ
   induction t <;> simp [*]
 
 /-- A substitution mapping variables to terms -/
-def Subst (φ : Type) := ℕ → Term φ
+def Subst (φ : Type) := ℕ → Term φ -- TODO: Term.Subst?
 
 /-- The identity substitution, which simply maps variables to themselves -/
 def Subst.id : Subst φ := Term.var
@@ -1207,7 +1209,110 @@ theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp 
 theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ) : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
 
--- TODO: label-substitution (TSubst, RSubst)
+/-- A substitution mapping labels to regions -/
+def RSubst (φ : Type) := ℕ → Region φ -- TODO: Region.Subst?
+
+/-- The identity substitution, which maps labels to themselves -/
+def RSubst.id : RSubst φ := λn => Region.br n (Term.var 0)
+
+theorem RSubst.id_apply (n : ℕ) : @RSubst.id φ n = Region.br n (Term.var 0) := rfl
+
+/-- Lift a substitution under a label binder -/
+def RSubst.lift (σ : RSubst φ) : RSubst φ
+  | 0 => Region.br 0 (Term.var 0)
+  | n + 1 => (σ n).lwk Nat.succ
+
+/-- Lift a substitution under `n` label binders -/
+def RSubst.liftn (n : ℕ) (σ : RSubst φ) : RSubst φ
+  := λm => if m < n then Region.br m (Term.var 0) else (σ (m - n)).lwk (λv => v + n)
+
+theorem RSubst.liftn_zero (σ : RSubst φ) : σ.liftn 0 = σ := by
+  funext n
+  simp only [liftn]
+  split
+  . rename_i H; cases H
+  . exact (σ n).lwk_id
+
+theorem RSubst.liftn_one (σ : RSubst φ) : σ.liftn 1 = σ.lift := by funext m; cases m <;> rfl
+
+theorem RSubst.liftn_succ (n) (σ: RSubst φ) : σ.liftn n.succ = (σ.liftn n).lift := by
+  induction n with
+  | zero => rw [σ.liftn_one, σ.liftn_zero]
+  | succ n I => -- TODO: I'm sure this can be made _much_ cleaner...
+    funext m
+    rw [I]
+    simp only [lift]
+    split
+    . rfl
+    . simp only [liftn]
+      split
+      . split
+        . rfl
+        . split
+          . rfl
+          . rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
+      . split
+        . rename_i H; simp_arith at H
+        . split
+          . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
+          . simp only [<-Region.lwk_comp]
+            apply congr
+            apply congrArg
+            funext v
+            simp_arith
+            simp_arith
+
+theorem RSubst.liftn_eq_iterate_lift_apply (n: ℕ) (σ: RSubst φ) : σ.liftn n = (RSubst.lift^[n] σ) := by
+  induction n with
+  | zero => exact σ.liftn_zero
+  | succ n => simp only [Function.iterate_succ_apply', RSubst.liftn_succ, *]
+
+theorem RSubst.liftn_eq_iterate_lift (n: ℕ) : RSubst.liftn n = (@RSubst.lift φ)^[n] := by
+  funext σ
+  rw [liftn_eq_iterate_lift_apply]
+
+@[simp]
+theorem RSubst.lift_id : (@id φ).lift = id := by funext n; cases n <;> rfl
+
+@[simp]
+theorem RSubst.iterate_lift_id : (n: ℕ) -> RSubst.lift^[n] (@id φ) = id
+  | 0 => rfl
+  | n + 1 => by simp [lift_id, iterate_lift_id n]
+
+@[simp]
+theorem RSubst.liftn_id (n: ℕ): (@id φ).liftn n = id := by
+  rw [liftn_eq_iterate_lift_apply, iterate_lift_id]
+
+theorem RSubst.liftn_add (n m: ℕ) : RSubst.liftn (m + n) = (@RSubst.liftn α m) ∘ (@RSubst.liftn α n)
+  := by simp [liftn_eq_iterate_lift, Function.iterate_add]
+
+theorem RSubst.liftn_add_apply (n m: ℕ) (σ: RSubst α): (σ.liftn n).liftn m = σ.liftn (m + n)
+  := by simp [liftn_add]
+
+theorem RSubst.lift_succ (σ : RSubst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk Nat.succ := rfl
+
+/-- Lift a substitution under a variable binder -/
+def RSubst.vlift (σ : RSubst φ) : RSubst φ
+  := Region.vwk (Nat.liftWk Nat.succ) ∘ σ
+
+/-- Lift a substitution under `n` variable binders -/
+def RSubst.vliftn (n : ℕ) (σ : RSubst φ) : RSubst φ
+  := Region.vwk (Nat.liftWk (λi => i + n)) ∘ σ
+
+/-- Substitute the labels in a `Region` using `σ` -/
+@[simp]
+def Region.lsubst (σ : RSubst φ) : Region φ → Region φ
+  | br n e => (σ n).vsubst e.subst0
+  | ite e s t => ite e (lsubst σ s) (lsubst σ t)
+  | let1 e t => let1 e (lsubst σ.vlift t)
+  | let2 e t => let2 e (lsubst (σ.vliftn 2) t)
+  | cfg β n f => cfg (lsubst (σ.liftn n) β) n (λ i => lsubst (σ.liftn n) (f i))
+
+-- TODO: lsubst_id, lsubst_comp
+
+/-- Compose two label-substitutions to yield another -/
+def RSubst.comp (σ τ : RSubst α): RSubst α
+  | n => (τ n).lsubst (Region.vwk (Nat.liftWk Nat.succ) ∘ σ)
 
 /-- Convert this `Terminator` to a `Region` -/
 @[simp]
@@ -1240,6 +1345,35 @@ theorem Terminator.coe_toRegion_vsubst (σ : Subst φ) (t : Terminator φ)
 
 theorem Terminator.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.lwk ρ : Region φ) = (t : Region φ).lwk ρ := toRegion_lwk ρ t
+
+def TSubst.toRegion (σ : TSubst φ) : RSubst φ := λn => σ n -- TODO: Terminator.Subst?
+
+theorem TSubst.toRegion_lift (σ : TSubst φ) : σ.lift.toRegion = σ.toRegion.lift := by
+  funext n; simp only [RSubst.lift, toRegion, lift]; split <;> simp [Terminator.toRegion_lwk]
+
+theorem TSubst.toRegion_liftn (n : ℕ) (σ : TSubst φ) : (σ.liftn n).toRegion = σ.toRegion.liftn n :=
+  by funext m; simp only [RSubst.liftn, toRegion, liftn]; split <;> simp [Terminator.toRegion_lwk]
+
+theorem TSubst.toRegion_vlift (σ : TSubst φ) : σ.vlift.toRegion = σ.toRegion.vlift := by
+  funext n; simp [RSubst.vlift, toRegion, vlift, Terminator.toRegion_vwk]
+
+theorem TSubst.toRegion_vliftn (n : ℕ) (σ : TSubst φ)
+  : (σ.vliftn n).toRegion = σ.toRegion.vliftn n :=
+  by funext m; simp [RSubst.vliftn, toRegion, vliftn, Terminator.toRegion_vwk]
+
+instance : Coe (TSubst φ) (RSubst φ) := ⟨TSubst.toRegion⟩
+
+theorem TSubst.coe_lift (σ : TSubst φ) : (σ.lift : RSubst φ) = (σ : RSubst φ).lift
+  := σ.toRegion_lift
+
+theorem TSubst.coe_liftn (n : ℕ) (σ : TSubst φ) : (σ.liftn n : RSubst φ) = (σ : RSubst φ).liftn n
+  := σ.toRegion_liftn n
+
+theorem TSubst.coe_vlift (σ : TSubst φ) : (σ.vlift : RSubst φ) = (σ : RSubst φ).vlift
+  := σ.toRegion_vlift
+
+theorem TSubst.coe_vliftn (n : ℕ) (σ : TSubst φ) : (σ.vliftn n : RSubst φ) = (σ : RSubst φ).vliftn n
+  := σ.toRegion_vliftn n
 
 -- TODO: Region.prepend
 
