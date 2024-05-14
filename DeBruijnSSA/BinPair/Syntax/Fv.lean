@@ -3,6 +3,8 @@ import Discretion.Wk.Multiset
 import DeBruijnSSA.BinPair.Syntax.Definitions
 import Discretion.Wk.Multiset
 
+import DeBruijnSSA.BinPair.Syntax.Subst
+
 namespace BinPair
 
 /-! ### Free variables and labels
@@ -198,6 +200,14 @@ def CFG.fv (cfg : CFG φ) : Multiset ℕ := Finset.sum Finset.univ (λi => (cfg.
 def CFG.fl (cfg : CFG φ) : Multiset ℕ := Finset.sum Finset.univ (λi => (cfg.targets i).fl)
 
 end Definitions
+
+/-! ### Lemmas about substitution -/
+section Subst
+
+theorem Terminator.fl_vsubst (σ : Term.Subst φ) (r : Terminator φ) : (r.vsubst σ).fl = r.fl := by
+  induction r <;> simp [*]
+
+end Subst
 
 end BinPair
 

@@ -88,7 +88,17 @@ def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
 /-- Coerce a terminator into a block -/
 def Terminator.toBlock (t : Terminator φ) : Block φ := ⟨Body.nil, t⟩
 
+theorem Terminator.toBlock_injective : Function.Injective (@Terminator.toBlock φ) := by
+  intro t₁ t₂ H
+  cases t₁ <;> cases t₂ <;> cases H <;> rfl
+
+theorem Terminator.toBlock_inj {t₁ t₂ : Terminator φ} : t₁.toBlock = t₂.toBlock ↔ t₁ = t₂ :=
+    Terminator.toBlock_injective.eq_iff
+
 instance coeTerminatorToBlock : Coe (Terminator φ) (Block φ) := ⟨Terminator.toBlock⟩
+
+theorem Terminator.coe_toBlock_inj {t₁ t₂ : Terminator φ} : (t₁ : Block φ) = t₂ ↔ t₁ = t₂ :=
+    Terminator.toBlock_injective.eq_iff
 
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
@@ -177,6 +187,12 @@ def Terminator.toRegion : Terminator φ → Region φ
   | Terminator.br n e => Region.br n e
   | Terminator.ite e s t => Region.ite e s.toRegion t.toRegion
 
+theorem Terminator.toRegion_inj {t₁ t₂ : Terminator φ} : t₁.toRegion = t₂.toRegion ↔ t₁ = t₂ := by
+  induction t₁ generalizing t₂ <;> cases t₂ <;> simp [*]
+
+theorem Terminator.toRegion_injective : Function.Injective (@Terminator.toRegion φ)
+  := λ_ _ h => toRegion_inj.mp h
+
 instance coeTerminatorToRegion : Coe (Terminator φ) (Region φ) := ⟨Terminator.toRegion⟩
 
 /-- Convert this `TRegion` to a `Region` -/
@@ -185,6 +201,18 @@ def TRegion.toRegion : TRegion φ → Region φ
   | let1 e t => Region.let1 e t.toRegion
   | let2 e t => Region.let2 e t.toRegion
   | cfg β n f => Region.cfg β.toRegion n (λ i => (f i).toRegion)
+
+theorem TRegion.toRegion_inj {t₁ t₂ : TRegion φ} : t₁.toRegion = t₂.toRegion ↔ t₁ = t₂ := by
+  induction t₁ generalizing t₂ <;> cases t₂
+  case cfg.cfg =>
+    simp only [toRegion, Region.cfg.injEq, Terminator.toRegion_inj, cfg.injEq, and_congr_right_iff]
+    intro hβ hn
+    cases hβ; cases hn
+    simp only [heq_eq_eq, Function.funext_iff, *]
+  all_goals simp [Terminator.toRegion_inj, *]
+
+theorem TRegion.toRegion_injective : Function.Injective (@TRegion.toRegion φ)
+  := λ_ _ h => toRegion_inj.mp h
 
 instance coeTRegionToRegion : Coe (TRegion φ) (Region φ) := ⟨TRegion.toRegion⟩
 
@@ -243,29 +271,6 @@ theorem Term.wk_comp (σ : ℕ → ℕ) (ρ : ℕ → ℕ) (t : Term φ)
   : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [*]
 
 @[simp]
-theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
-  induction r <;> simp [Nat.liftnWk_id, *]
-
-@[simp]
-theorem Terminator.vwk_id' : (r : Terminator φ) → r.vwk (λx => x) = r := vwk_id
-
-theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
-  induction r generalizing σ τ
-  <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
-
-@[simp]
-theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
-  induction r <;> simp [Nat.liftnWk_id, *]
-
-@[simp]
-theorem Terminator.lwk_id' : (t : Terminator φ) → t.lwk (λx => x) = t := lwk_id
-
-theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (t : Terminator φ)
-  : t.lwk (σ ∘ τ) = (t.lwk τ).lwk σ := by
-  induction t generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
-
-@[simp]
 theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
 
 @[simp]
@@ -279,6 +284,53 @@ theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
 @[simp]
 theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
   induction b generalizing ρ <;> simp [*]
+
+@[simp]
+theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
+  induction r <;> simp [Nat.liftnWk_id, *]
+
+@[simp]
+theorem Terminator.vwk_id' : (r : Terminator φ) → r.vwk (λx => x) = r := vwk_id
+
+theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
+  := rfl
+
+theorem Terminator.coe_toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.vwk ρ : Block φ) = (t : Block φ).vwk ρ := rfl
+
+theorem Terminator.toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.vwk ρ).toRegion = t.toRegion.vwk ρ := by induction t <;> simp [*]
+
+theorem Terminator.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
+
+theorem Terminator.toRegion_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.lwk ρ).toRegion = t.toRegion.lwk ρ := by induction t <;> simp [*]
+
+theorem Terminator.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.lwk ρ : Region φ) = (t : Region φ).lwk ρ := toRegion_lwk ρ t
+
+@[simp]
+theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
+  induction r <;> simp [Nat.liftnWk_id, *]
+
+@[simp]
+theorem Terminator.lwk_id' : (t : Terminator φ) → t.lwk (λx => x) = t := lwk_id
+
+theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (t : Terminator φ)
+  : t.lwk (σ ∘ τ) = (t.lwk τ).lwk σ := by
+  induction t generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
+
+theorem Terminator.toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.lwk ρ).toBlock = t.toBlock.lwk ρ
+  := rfl
+
+theorem Terminator.coe_toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ)
+  : (t.lwk ρ : Block φ) = (t : Block φ).lwk ρ := rfl
 
 @[simp]
 theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
@@ -354,6 +406,12 @@ theorem TRegion.vwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
   induction r generalizing σ τ
   <;> simp [Term.wk_comp, Terminator.vwk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
+theorem TRegion.toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.vwk ρ).toRegion = t.toRegion.vwk ρ
+  := by induction t generalizing ρ <;> simp [Terminator.toRegion_vwk, *]
+
+theorem TRegion.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ)
+  : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
+
 @[simp]
 theorem TRegion.lwk_id (r : TRegion φ) : r.lwk id = r := by
   induction r <;> simp [TRegion.lwk, *]
@@ -366,6 +424,12 @@ theorem TRegion.lwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
   induction r generalizing σ τ
   <;> simp [Term.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
 
+theorem TRegion.toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.lwk ρ).toRegion = t.toRegion.lwk ρ
+  := by induction t generalizing ρ <;> simp [Terminator.toRegion_lwk, *]
+
+theorem TRegion.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ)
+  : (t.lwk ρ : Region φ) = (t : Region φ).lwk ρ := toRegion_lwk ρ t
+
 @[simp]
 theorem TCFG.vwk_id (cfg : TCFG φ) : cfg.vwk id = cfg := by
   cases cfg; simp [*]
@@ -375,6 +439,16 @@ theorem TCFG.vwk_id' : (cfg : TCFG φ) → cfg.vwk (λx => x) = cfg := vwk_id
 
 theorem TCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
   cases cfg; simp [TRegion.vwk_comp, *]
+
+@[simp]
+theorem TCFG.lwk_id (cfg : TCFG φ) : cfg.lwk id = cfg := by
+  cases cfg; simp [TCFG.lwk, *]
+
+@[simp]
+theorem TCFG.lwk_id' : (cfg : TCFG φ) → cfg.lwk (λx => x) = cfg := lwk_id
+
+theorem TCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
+  cases cfg; simp [TCFG.lwk, TRegion.lwk_comp, Nat.liftnWk_comp, *]
 
 @[simp]
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
@@ -416,8 +490,6 @@ theorem CFG.lwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.lwk (σ ∘ τ) = (G
   := by cases G; simp only [CFG.lwk, Nat.liftnWk_comp, Region.lwk_comp, *]
 
 end Weakening
-
-end BinPair
 
 /-
 CLEANUP CORNER:
