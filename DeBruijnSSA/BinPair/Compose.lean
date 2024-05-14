@@ -1,6 +1,6 @@
-import DeBruijnSSA.SingleApp.Typing
+import DeBruijnSSA.BinPair.Typing
 
-namespace SingleApp
+namespace BinPair
 
 section Body
 
@@ -46,4 +46,4 @@ def Block.WfD.ltimes {Γ Δ Ξ : Ctx α ε} {b : Body φ} {β : Block φ}
 
 -- TODO: ltimes_ltimes w/ cast_trg
 
-end Body
+end BinPair

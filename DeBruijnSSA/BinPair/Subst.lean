@@ -1,6 +1,6 @@
-import DeBruijnSSA.SingleApp.Typing
+import DeBruijnSSA.BinPair.Typing
 
-namespace SingleApp
+namespace BinPair
 
 section Subst
 
@@ -154,4 +154,4 @@ def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) :
 
 end TSubst
 
-end SingleApp
+end BinPair

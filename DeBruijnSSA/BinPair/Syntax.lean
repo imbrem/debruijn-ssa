@@ -6,7 +6,7 @@ import Mathlib.Algebra.BigOperators.Basic
 
 -- TODO: splat file?
 
-namespace SingleApp
+namespace BinPair
 
 /-- A simple term, consisting of variables, operations, pairs, units, and booleans -/
 inductive Term (φ : Type) where
@@ -1522,4 +1522,4 @@ structure SCFG (φ : Type) : Type where
   /-- The number of exits for this CFG -/
   targets : Fin length → SRegion φ
 
-end SingleApp
+end BinPair

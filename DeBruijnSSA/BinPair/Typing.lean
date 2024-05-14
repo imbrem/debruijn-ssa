@@ -1,8 +1,8 @@
 import Discretion.Wk.List
-import DeBruijnSSA.SingleApp.Syntax
+import DeBruijnSSA.BinPair.Syntax
 import DeBruijnSSA.InstSet
 
-namespace SingleApp
+namespace BinPair
 
 section Basic
 
@@ -696,4 +696,4 @@ end Minimal
 -- TODO: 3 address code via var-only substitution; everything trivially SSA with preserved vars
 -- via id-substitution.
 
-end SingleApp
+end BinPair
