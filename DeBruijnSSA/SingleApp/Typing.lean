@@ -67,6 +67,8 @@ instance [DiscreteOrder α] : DiscreteOrder (Ty α) where
 
 def Ctx (α ε) := List (Ty α × ε)
 
+def Ctx.reverse (Γ : Ctx α ε) : Ctx α ε := List.reverse Γ
+
 structure Ctx.Var (Γ : Ctx α ε) (n : ℕ) (V : Ty α × ε) : Prop where
   length : n < Γ.length
   get : Γ.get ⟨n, length⟩ ≤ V
@@ -217,14 +219,20 @@ inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
   | let1 : a.WfD Γ ⟨A, e⟩ → b.WfD (⟨A, ⊥⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, ⊥⟩::Δ)
   | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩
     → b.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
-    → (let2 a b).WfD Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
+    → (let2 a b).WfD Γ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ)
+
+def Body.WfD.cast_src {Γ Γ' : Ctx α ε} {b : Body φ} {Δ} (h : Γ = Γ') (d : b.WfD Γ Δ)
+  : b.WfD Γ' Δ := h ▸ d
+
+def Body.WfD.cast_trg {Γ : Ctx α ε} {b : Body φ} {Δ Δ'} (d : b.WfD Γ Δ) (h : Δ = Δ')
+  : b.WfD Γ Δ' := h ▸ d
 
 inductive Body.Wf : Ctx α ε → Body φ → Ctx α ε → Prop
   | nil : Wf Γ nil []
   | let1 : a.Wf Γ ⟨A, e⟩ → b.Wf (⟨A, ⊥⟩::Γ) Δ → (let1 a b).Wf Γ (⟨A, ⊥⟩::Δ)
   | let2 : a.Wf Γ ⟨(Ty.pair A B), e⟩
     → b.Wf (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
-    → (let2 a b).Wf Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
+    → (let2 a b).Wf Γ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ)
 
 theorem Body.Wf.eq_nil_of_empty_trg {Γ : Ctx α ε} {b : Body φ} (h : Wf Γ b []) : b = Body.nil
   := by cases h; rfl
@@ -281,10 +289,10 @@ theorem Body.Wf.trg_tail_nonempty_of_let2 {Γ : Ctx α ε} {a : Term φ} {b} {Δ
   (h : Wf Γ (Body.let2 a b) Δ) : Δ.tail ≠ []
   := by cases h; simp
 
-theorem Body.Wf.of_let2_tail {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
-  (h : Wf Γ (Body.let2 a b) Δ)
-  : b.Wf ((Δ.head h.trg_nonempty_of_let2)::(Δ.tail.head h.trg_tail_nonempty_of_let2)::Γ) Δ.tail.tail
-  := by cases h; assumption
+-- theorem Body.Wf.of_let2_tail {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+--   (h : Wf Γ (Body.let2 a b) Δ)
+--   : b.Wf ((Δ.head h.trg_nonempty_of_let2)::(Δ.tail.head h.trg_tail_nonempty_of_let2)::Γ) Δ.tail.tail
+--   := by cases h; assumption
 
 theorem Body.WfD.num_defs_eq_length {Γ : Ctx α ε} {b : Body φ} {Δ} (h : b.WfD Γ Δ)
   : b.num_defs = Δ.length
