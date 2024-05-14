@@ -37,4 +37,13 @@ def Block.WfD.prepend {Γ Δ Ξ : Ctx α ε} {b : Body φ} {β : Block φ}
     exact Ctx.Wkn.id _
   )
 
+-- TODO: prepend_append w/ cast_trg
+
+def Block.WfD.ltimes {Γ Δ Ξ : Ctx α ε} {b : Body φ} {β : Block φ}
+  (db : b.WfD Γ Δ) (dβ : β.WfD Γ Ξ L) : (β.ltimes b).WfD Γ (Δ ++ Ξ) L
+  := (dβ.vwk ((Ctx.Wkn.id _).stepn_append'
+    (by rw [db.num_defs_eq_length, Ctx.length_reverse]))).prepend db
+
+-- TODO: ltimes_ltimes w/ cast_trg
+
 end Body

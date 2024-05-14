@@ -670,7 +670,7 @@ theorem Body.wk_append (ρ : ℕ → ℕ) (b b' : Body φ)
   | _ => simp only [wk, *, append, num_defs, let1.injEq, true_and, Nat.liftnWk_succ]; congr
 
 /-- Append two bodies, weakening the second so that it shares the same inputs as the first -/
-def Body.ltimes (b b' : Body φ) : Body φ := b.append (b'.wk (λn => n + b.num_defs))
+def Body.ltimes (b b' : Body φ) : Body φ := b.append (b'.wk (· + b.num_defs))
 
 theorem Body.fv_ltimes (b b' : Body φ) : (b.ltimes b').fv = b.fv + b'.fv := by
   rw [ltimes, fv_append, fv_wk]
@@ -814,26 +814,37 @@ def Block.prepend (b : Body φ) (β : Block φ) : Block φ where
   body := b.append β.body
   terminator := β.terminator
 
+theorem Block.prepend_nil (β : Block φ) : β.prepend Body.nil = β := rfl
+
 theorem Block.prepend_append (b b' : Body φ) (β : Block φ)
   : β.prepend (b.append b') = (β.prepend b').prepend b := by
   simp only [Block.prepend, Body.append_assoc]
+
+-- TODO: prepend_nil, pretty trivial
 
 -- TODO: prepend_vwk
 
 -- TODO: prepend_lwk
 
+-- TODO: rename to rtimes?
+
 /-- Precompose a body of instructions to this basic block, while weakening the block so that
 they share the same inputs -/
-def Block.ltimes (b : Body φ) (β : Block φ) : Block φ where
-  body := b.ltimes β.body
-  terminator := β.terminator.vwk (λx => x + b.num_defs)
+def Block.ltimes (b : Body φ) (β : Block φ) : Block φ
+  := (β.vwk (· + b.num_defs)).prepend b
+  -- body := b.ltimes β.body
+  -- terminator := β.terminator.vwk (β.body.num_defs.liftnWk (· + b.num_defs))
 
-theorem Block.ltimes_ltimes (b b' : Body φ) (β : Block φ)
-  : β.ltimes (b.ltimes b') = (β.ltimes b').ltimes b := by
-  simp only [Block.ltimes, Body.ltimes_assoc, <-Terminator.vwk_comp]
-  congr
-  funext x
-  simp_arith [Body.ltimes_num_defs]
+theorem Block.ltimes_nil : (β : Block φ) → β.ltimes Body.nil = β
+  | ⟨body, terminator⟩ => by
+    simp only [ltimes, prepend, vwk, Body.num_defs, add_zero, Body.nil_append, mk.injEq]
+    exact ⟨Body.wk_id _, Nat.liftnWk_id body.num_defs ▸ Terminator.vwk_id _⟩
+
+-- theorem Block.ltimes_ltimes (b b' : Body φ) (β : Block φ)
+--   : β.ltimes (b.ltimes b') = (β.ltimes b').ltimes b := by
+--   simp only [ltimes_eq_append_wk, Body.ltimes]
+--   rw [prepend_append]
+--   sorry -- TODO: by prepend_vwk
 
 -- TODO: make Body have a monoid action on Block
 
