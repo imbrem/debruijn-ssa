@@ -1,44 +1,14 @@
 import Discretion
 import Discretion.Wk.Multiset
 import Mathlib.Algebra.BigOperators.Basic
-import DeBruijnSSA.BinPair.Syntax.Basic
+import DeBruijnSSA.BinPair.Syntax.Definitions
+import DeBruijnSSA.BinPair.Syntax.Fv
 
 -- TODO: use abstract higher-ERT type formalism, add to discretion?
 
 -- TODO: splat file?
 
 namespace BinPair
-
-/-- Get the set of free variables of a term as a multiset (to allow counting occurences) -/
-@[simp]
-def Term.fv : Term φ → Multiset ℕ
-  | var x => {x}
-  | op _ x => x.fv
-  | pair x y => x.fv + y.fv
-  | _ => 0
-
-/-- Get the index of the highest free variable in this term, plus one -/
-@[simp]
-def Term.fvi : Term φ → ℕ
-  | var x => x + 1
-  | op _ x => x.fvi
-  | pair x y => Nat.max x.fvi y.fvi
-  | _ => 0
-
-theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
-  induction t <;> simp [*]
-
-@[simp]
-theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [*]
-
-theorem Term.wk_id' : (t : Term φ) -> t.wk (λx => x) = t
-  := Term.wk_id
-
-theorem Term.wk_comp (σ : ℕ → ℕ) (ρ : ℕ → ℕ) (t : Term φ)
-  : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [*]
-
-theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ := by
-  induction t <;> simp [*]
 
 /-- A substitution mapping variables to terms -/
 def Subst (φ : Type) := ℕ → Term φ -- TODO: Term.Subst?
@@ -243,45 +213,6 @@ theorem Term.wk_lift_succ_comp_subst0 (e : Term α)
 @[simp]
 theorem Term.alpha0_var0 : (var 0).alpha0 = @Subst.id φ := by funext n; cases n <;> rfl
 
-/-- The free variables of this terminator -/
-@[simp]
-def Terminator.vfv : Terminator φ → Multiset ℕ
-  | br _ e => e.fv
-  | ite e s t => e.fv + s.vfv + t.vfv
-
-/-- The highest free variable in this terminator, plus one -/
-@[simp]
-def Terminator.vfvi : Terminator φ → ℕ
-  | br _ e => e.fvi
-  | ite e s t => Nat.max e.fvi (Nat.max s.vfvi t.vfvi)
-
-/-- The free labels of this terminator -/
-@[simp]
-def Terminator.lfv : Terminator φ → Multiset ℕ
-  | br n _ => {n}
-  | ite _ s t => s.lfv + t.lfv
-
-/-- The highest free label in this terminator, plus one -/
-@[simp]
-def Terminator.lfvi : Terminator φ → ℕ
-  | br n _ => n + 1
-  | ite _ s t => Nat.max s.lfvi t.lfvi
-
-@[simp]
-theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
-  induction r <;> simp [Nat.liftnWk_id, *]
-
-theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
-  induction r generalizing σ τ
-  <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
-
-theorem Terminator.vfv_vwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.vwk ρ).vfv = r.vfv.map ρ := by
-  induction r <;> simp [*, Term.fv_wk]
-
-theorem Terminator.lfv_vwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.vwk ρ).lfv = r.lfv := by
-  induction r <;> simp [*]
-
 /-- Substitute the variables in a `Terminator` using `σ` -/
 @[simp]
 def Terminator.vsubst (σ : Subst φ) : Terminator φ → Terminator φ
@@ -297,7 +228,7 @@ theorem Terminator.vsubst_comp (σ τ : Subst φ) (r : Terminator φ)
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
-theorem Terminator.lfv_vsubst (σ : Subst φ) (r : Terminator φ) : (r.vsubst σ).lfv = r.lfv := by
+theorem Terminator.fl_vsubst (σ : Subst φ) (r : Terminator φ) : (r.vsubst σ).fl = r.fl := by
   induction r <;> simp [*]
 
 theorem Terminator.vsubst_wk (ρ : ℕ -> ℕ) (r : Terminator φ)
@@ -308,20 +239,6 @@ theorem Terminator.vsubst_wk (ρ : ℕ -> ℕ) (r : Terminator φ)
 theorem Terminator.vwk_succ_vsubst_subst0 (t : Terminator φ) (s : Term φ)
   : (t.vwk Nat.succ).vsubst s.subst0 = t := by
   rw [<-vsubst_wk, <-vsubst_comp, Term.wk_succ_comp_subst0, vsubst_id]
-
-@[simp]
-theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
-  induction r <;> simp [Terminator.lwk, Nat.liftnWk_id, *]
-
-theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
-  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
-  induction r generalizing σ τ <;> simp [lwk, Nat.liftnWk_comp, *]
-
-theorem Terminator.vfv_lwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.lwk ρ).vfv = r.vfv := by
-  induction r <;> simp [*]
-
-theorem Terminator.lfv_lwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.lwk ρ).lfv = r.lfv.map ρ := by
-  induction r <;> simp [*]
 
 /-- A substitution mapping labels to terminators -/
 def TSubst (φ : Type) := ℕ → Terminator φ
@@ -537,32 +454,6 @@ theorem TSubst.liftn_comp (n : ℕ) (σ τ : TSubst α)
   : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
   := by rw [liftn_eq_iterate_lift, iterate_lift_comp]
 
-/-- The free variables in this body -/
-@[simp]
-def Body.fv : Body φ → Multiset ℕ
-  | nil => 0
-  | let1 e t => e.fv + t.fv.liftFv
-  | let2 e t => e.fv + t.fv.liftnFv 2
-
-/-- The highest free variable in this body, plus one -/
-@[simp]
-def Body.fvi : Body φ → ℕ
-  | nil => 0
-  | let1 e t => Nat.max e.fvi (t.fvi - 1)
-  | let2 e t => Nat.max e.fvi (t.fvi - 2)
-
-@[simp]
-theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
-
-theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
-  : b.wk (σ ∘ τ) = (b.wk τ).wk σ := by
-  induction b generalizing σ τ
-  <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
-
-theorem Body.fv_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).fv = b.fv.map ρ := by
-  induction b generalizing ρ <;>
-  simp [Term.fv_wk, *]
-
 /-- Substitute the variables in a body -/
 @[simp]
 def Body.subst (σ : Subst φ) : Body φ → Body φ
@@ -579,10 +470,7 @@ theorem Body.subst_comp (σ τ : Subst φ) (b : Body φ)
   induction b generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
-
-theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
-  induction b generalizing ρ <;> simp [*]
-
+@[simp]
 theorem Body.num_defs_subst (σ : Subst φ) (b : Body φ) : (b.subst σ).num_defs = b.num_defs := by
   induction b generalizing σ <;> simp [*]
 
@@ -682,34 +570,6 @@ theorem Body.ltimes_assoc (b b' b'' : Body φ)
 
 -- TODO: in fact, _this_ variant supports an _rtimes_ operation. Wow!
 
-/-- The free variables in this basic block -/
-@[simp]
-def Block.vfv (β : Block φ) : Multiset ℕ := β.body.fv + β.terminator.vfv.liftnFv β.body.num_defs
-
-/-- The highest free variable in this basic block, plus one -/
-@[simp]
-def Block.vfvi (β : Block φ) : ℕ := Nat.max β.body.fvi (β.terminator.vfvi - β.body.num_defs)
-
-/-- The free labels in this basic block -/
-@[simp]
-def Block.lfv (β : Block φ) : Multiset ℕ := β.terminator.lfv
-
-/-- The highest free label in this basic block, plus one -/
-@[simp]
-def Block.lfvi (β : Block φ) : ℕ := β.terminator.lfvi
-
-@[simp]
-theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
-
-theorem Block.vwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.vwk (σ ∘ τ) = (β.vwk τ).vwk σ
-  := by simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftnWk_comp, *]
-
-theorem Block.vfv_vwk (ρ : ℕ → ℕ) (β : Block φ) : (β.vwk ρ).vfv = β.vfv.map ρ := by
-  simp [Terminator.vfv_vwk, Body.fv_wk, Body.num_defs_wk]
-
-theorem Block.lfv_vwk (ρ : ℕ → ℕ) (β : Block φ) : (β.vwk ρ).lfv = β.lfv := by
-  simp [Terminator.lfv_vwk]
-
 /-- Substitute the variables in this basic block -/
 @[simp]
 def Block.vsubst (σ : Subst φ) (β : Block φ) : Block φ where
@@ -723,17 +583,11 @@ theorem Block.vsubst_comp (σ τ : Subst φ) (β : Block φ)
   : β.vsubst (σ.comp τ) = (β.vsubst τ).vsubst σ
   := by simp [Body.subst_comp, Body.num_defs_subst, Subst.liftn_comp, Terminator.vsubst_comp, *]
 
-@[simp]
-theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
+theorem Block.fv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).fv = β.fv := by
+  simp [Terminator.fv_lwk]
 
-theorem Block.lwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.lwk (σ ∘ τ) = (β.lwk τ).lwk σ
-  := by simp [Terminator.lwk_comp]
-
-theorem Block.vfv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).vfv = β.vfv := by
-  simp [Terminator.vfv_lwk]
-
-theorem Block.lfv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).lfv = β.lfv.map ρ := by
-  simp [Terminator.lfv_lwk]
+theorem Block.fl_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).fl = β.fl.map ρ := by
+  simp [Terminator.fl_lwk]
 
 def Block.lsubst (σ : TSubst φ) (β : Block φ) : Block φ where
   body := β.body
@@ -783,7 +637,6 @@ theorem Block.ltimes_nil : (β : Block φ) → β.ltimes Body.nil = β
 -- TODO: ltimes_lwk
 
 /-- Convert this terminator to a basic block with no instructions -/
-def Terminator.toBlock (t : Terminator φ) : Block φ := ⟨Body.nil, t⟩
 
 theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
   := rfl
@@ -804,8 +657,6 @@ theorem Terminator.toBlock_injective : Function.Injective (@Terminator.toBlock �
 theorem Terminator.toBlock_inj {t₁ t₂ : Terminator φ} : t₁.toBlock = t₂.toBlock ↔ t₁ = t₂ :=
     Terminator.toBlock_injective.eq_iff
 
-instance : Coe (Terminator φ) (Block φ) := ⟨Terminator.toBlock⟩
-
 theorem Terminator.coe_toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.vwk ρ : Block φ) = (t : Block φ).vwk ρ := rfl
 
@@ -819,41 +670,6 @@ theorem Terminator.coe_toBlock_inj {t₁ t₂ : Terminator φ} : (t₁ : Block �
     Terminator.toBlock_injective.eq_iff
 
 -- TODO: coe_lsubst
-/-- The free variables in this region -/
-@[simp]
-def BBRegion.vfv : BBRegion φ → Multiset ℕ
-  | cfg β _ f => β.vfv + Finset.sum Finset.univ (λi => (f i).vfv.liftnFv (β.body.num_defs + 1))
-
-/-- The free label variables in this region -/
-@[simp]
-def BBRegion.lfv : BBRegion φ → Multiset ℕ
-  | cfg β n f => β.lfv.liftnFv n + Finset.sum Finset.univ (λi => (f i).lfv.liftnFv n)
-
-@[simp]
-theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
-  induction r; simp [*]
-
-theorem BBRegion.vwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
-  induction r generalizing σ τ
-  simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
-
-theorem BBRegion.vfv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).vfv = r.vfv.map ρ := by
-  induction r generalizing ρ
-  simp only [vfv, Block.vfv, Block.vwk, Body.fv_wk, Body.num_defs_wk, Terminator.vfv_vwk,
-    Multiset.liftnFv_map_liftnWk, Nat.liftnWk_succ', Function.comp_apply, Multiset.map_add,
-    Multiset.map_finsum, add_right_inj, *]
-  congr
-  funext i
-  rw [
-    Multiset.liftnFv_succ,
-    Multiset.liftFv_map_liftWk,
-    Multiset.liftnFv_map_liftnWk,
-    Multiset.liftnFv_succ]
-
-theorem BBRegion.lfv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).lfv = r.lfv := by
-  induction r generalizing ρ; simp [Terminator.lfv_vwk, *]
-
 /-- Substitute the variables in this region -/
 @[simp]
 def BBRegion.vsubst (σ : Subst φ) : BBRegion φ → BBRegion φ
@@ -868,21 +684,6 @@ theorem BBRegion.vsubst_comp (σ τ : Subst φ) (r : BBRegion φ)
   induction r generalizing σ τ
   simp [Body.subst_comp, Body.num_defs_subst, Subst.liftn_comp, Terminator.vsubst_comp, *]
 
-@[simp]
-theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
-  induction r; simp [*]
-
-theorem BBRegion.lwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
-  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
-  induction r generalizing σ τ
-  simp [Body.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
-
-theorem BBRegion.vfv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).vfv = r.vfv := by
-  induction r generalizing ρ; simp [Terminator.vfv_lwk, *]
-
-theorem BBRegion.lfv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).lfv = r.lfv.map ρ := by
-  induction r generalizing ρ; simp [Terminator.lfv_lwk, Multiset.map_finsum, *]
-
 def BBRegion.lsubst (σ : TSubst φ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lsubst (σ.liftn n)) n
     (λ i => (f i).lsubst ((σ.liftn n).vliftn β.body.num_defs))
@@ -890,12 +691,6 @@ def BBRegion.lsubst (σ : TSubst φ) : BBRegion φ → BBRegion φ
 -- TODO: BBRegion.prepend
 
 -- TODO: BBRegion.ltimes
-@[simp]
-theorem BBCFG.vwk_id (cfg : BBCFG φ) : cfg.vwk id = cfg := by
-  cases cfg; simp [*]
-
-theorem BBCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
-  cases cfg; simp [BBRegion.vwk_comp, *]
 
 @[simp]
 def BBCFG.vsubst (σ : Subst φ) (cfg : BBCFG φ) : BBCFG φ where
@@ -910,25 +705,9 @@ theorem BBCFG.vsubst_comp (σ τ : Subst φ) (cfg : BBCFG φ)
   : cfg.vsubst (σ.comp τ) = (cfg.vsubst τ).vsubst σ := by
   cases cfg; simp [BBRegion.vsubst_comp, *]
 
-@[simp]
-theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
-  cases cfg; simp [*]
-
-theorem BBCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
-  cases cfg; simp [BBRegion.lwk_comp, *]
-
 def BBCFG.lsubst (σ : TSubst φ) (cfg : BBCFG φ) : BBCFG φ where
   length := cfg.length
   targets := λi => (cfg.targets i).lsubst σ
-
-@[simp]
-theorem TRegion.vwk_id (r : TRegion φ) : r.vwk id = r := by
-  induction r <;> simp [TRegion.vwk, *]
-
-theorem TRegion.vwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
-  induction r generalizing σ τ
-  <;> simp [Term.wk_comp, Terminator.vwk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 /-- Substitute the variables in this region -/
 @[simp]
@@ -946,15 +725,6 @@ theorem TRegion.vsubst_comp (σ τ : Subst φ) (r : TRegion φ)
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Terminator.vsubst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
-@[simp]
-theorem TRegion.lwk_id (r : TRegion φ) : r.lwk id = r := by
-  induction r <;> simp [TRegion.lwk, *]
-
-theorem TRegion.lwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
-  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
-  induction r generalizing σ τ
-  <;> simp [Term.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
-
 def TRegion.lsubst (σ : TSubst φ) : TRegion φ → TRegion φ
   | let1 e t => let1 e (t.lsubst σ.vlift)
   | let2 e t => let2 e (t.lsubst (σ.vliftn 2))
@@ -969,14 +739,6 @@ def TRegion.lsubst (σ : TSubst φ) : TRegion φ → TRegion φ
 -- TODO: TRegion.tail
 
 -- TODO: tail.prepend body = id
-
-@[simp]
-theorem TCFG.vwk_id (cfg : TCFG φ) : cfg.vwk id = cfg := by
-  cases cfg; simp [TCFG.vwk, *]
-
-theorem TCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
-  cases cfg; simp [TCFG.vwk, TRegion.vwk_comp, *]
-
 def TCFG.vsubst (σ : Subst φ) (cfg : TCFG φ) : TCFG φ where
   length := cfg.length
   targets := λi => (cfg.targets i).vsubst σ
@@ -1010,17 +772,6 @@ def TCFG.lsubst (σ : TSubst φ) (cfg : TCFG φ) : TCFG φ where
 
 -- TODO: normalize BBRegion to TRegion; commutes with label-substitution
 
-
-
-@[simp]
-theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
-  induction r <;> simp [Region.vwk, Nat.liftnWk_id, *]
-
-theorem Region.vwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
-  induction r generalizing σ τ
-  <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
-
 /-- Substitute the variables in a `Region` using `σ` -/
 @[simp]
 def Region.vsubst (σ : Subst φ) : Region φ → Region φ
@@ -1038,12 +789,6 @@ theorem Region.vsubst_comp (σ τ : Subst φ) (r : Region φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
-
-@[simp]
-theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
-
-theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ) : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
-  induction r generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
 
 /-- A substitution mapping labels to regions -/
 def RSubst (φ : Type) := ℕ → Region φ -- TODO: Region.Subst?
@@ -1150,12 +895,6 @@ def Region.lsubst (σ : RSubst φ) : Region φ → Region φ
 def RSubst.comp (σ τ : RSubst α): RSubst α
   | n => (τ n).lsubst (Region.vwk (Nat.liftWk Nat.succ) ∘ σ)
 
-/-- Convert this `Terminator` to a `Region` -/
-@[simp]
-def Terminator.toRegion : Terminator φ → Region φ
-  | Terminator.br n e => Region.br n e
-  | Terminator.ite e s t => Region.ite e s.toRegion t.toRegion
-
 theorem Terminator.toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.vwk ρ).toRegion = t.toRegion.vwk ρ := by induction t <;> simp [*]
 
@@ -1170,8 +909,6 @@ theorem Terminator.toRegion_inj {t₁ t₂ : Terminator φ} : t₁.toRegion = t�
 
 theorem Terminator.toRegion_injective : Function.Injective (@Terminator.toRegion φ)
   := λ_ _ h => toRegion_inj.mp h
-
-instance : Coe (Terminator φ) (Region φ) := ⟨Terminator.toRegion⟩
 
 theorem Terminator.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
@@ -1223,13 +960,6 @@ theorem TSubst.coe_vliftn (n : ℕ) (σ : TSubst φ) : (σ.vliftn n : RSubst φ)
 
 -- TODO: BBRegion.toRegion_{vwk, vsubst, lwk}
 
-/-- Convert this `TRegion` to a `Region` -/
-@[simp]
-def TRegion.toRegion : TRegion φ → Region φ
-  | let1 e t => Region.let1 e t.toRegion
-  | let2 e t => Region.let2 e t.toRegion
-  | cfg β n f => Region.cfg β.toRegion n (λ i => (f i).toRegion)
-
 theorem TRegion.toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.vwk ρ).toRegion = t.toRegion.vwk ρ
   := by induction t generalizing ρ <;> simp [Terminator.toRegion_vwk, *]
 
@@ -1252,8 +982,6 @@ theorem TRegion.toRegion_inj {t₁ t₂ : TRegion φ} : t₁.toRegion = t₂.toR
 theorem TRegion.toRegion_injective : Function.Injective (@TRegion.toRegion φ)
   := λ_ _ h => toRegion_inj.mp h
 
-instance : Coe (TRegion φ) (Region φ) := ⟨TRegion.toRegion⟩
-
 theorem TRegion.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ)
   : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
 
@@ -1268,11 +996,6 @@ theorem TRegion.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ)
 -- TODO: Region.tail
 
 -- TODO: tail.ltimes body = id
-@[simp]
-theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
-
-theorem CFG.vwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.vwk (σ ∘ τ) = (G.vwk τ).vwk σ
-  := by cases G; simp only [CFG.vwk, Region.vwk_comp, *]
 
 /-- Substitute the variables in a `CFG` using `σ` -/
 def CFG.vsubst (σ : Subst φ) (G : CFG φ) : CFG φ where
@@ -1284,12 +1007,6 @@ theorem CFG.vsubst_id (G : CFG φ) : G.vsubst Subst.id = G := by cases G; simp [
 
 theorem CFG.vsubst_comp (σ τ : Subst φ) (G : CFG φ) : G.vsubst (σ.comp τ) = (G.vsubst τ).vsubst σ
   := by cases G; simp only [CFG.vsubst, Region.vsubst_comp, *]
-
-@[simp]
-theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
-
-theorem CFG.lwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.lwk (σ ∘ τ) = (G.lwk τ).lwk σ
-  := by cases G; simp only [CFG.lwk, Nat.liftnWk_comp, Region.lwk_comp, *]
 
 -- TODO: CFG.vcomp (say Monoid...)
 

@@ -4,8 +4,8 @@ namespace BinPair
 
 /-! ### Basic syntax definitions
 
-Weakenings are given immediately after each definition to give an idea of how the de-Bruijn indices
-are supposed to be interpreted
+Free variables and simple coercions are given immediately after each definition to give an idea of how
+the de-Bruijn indices are supposed to be interpreted.
  -/
 section Definitions
 
@@ -85,6 +85,11 @@ def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
   body := β.body
   terminator := β.terminator.lwk ρ
 
+/-- Coerce a terminator into a block -/
+def Terminator.toBlock (t : Terminator φ) : Block φ := ⟨Body.nil, t⟩
+
+instance coeTerminatorToBlock : Coe (Terminator φ) (Block φ) := ⟨Terminator.toBlock⟩
+
 /-- A basic block-based single-entry multiple-exit region -/
 inductive BBRegion (φ : Type) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
@@ -106,11 +111,13 @@ structure BBCFG (φ : Type) : Type where
   /-- The number of exits for this CFG -/
   targets : Fin length → BBRegion φ
 
+/-- Rename the variables in a `BBCFG` using `ρ` -/
 @[simp]
 def BBCFG.vwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
   length := cfg.length
   targets := λi => (cfg.targets i).vwk ρ
 
+/-- Rename the labels in a `BBCFG` using `ρ` -/
 @[simp]
 def BBCFG.lwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
   length := cfg.length
@@ -144,11 +151,13 @@ structure TCFG (φ : Type) : Type where
   targets : Fin length → TRegion φ
 
 /-- Rename the variables referenced in a `TCFG` using `ρ` -/
+@[simp]
 def TCFG.vwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
   length := cfg.length
   targets := λi => (cfg.targets i).vwk ρ
 
 /-- Rename the labels referenced in a `TRegion` using `ρ` -/
+@[simp]
 def TCFG.lwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
   length := cfg.length
   targets := λi => (cfg.targets i).lwk (Nat.liftnWk cfg.length ρ)
@@ -161,6 +170,23 @@ inductive Region (φ : Type) : Type
   | let1 : Term φ → Region φ → Region φ
   | let2 : Term φ → Region φ → Region φ
   | cfg (β : Region φ) (n : Nat) : (Fin n → Region φ) → Region φ
+
+/-- Convert this `Terminator` to a `Region` -/
+@[simp]
+def Terminator.toRegion : Terminator φ → Region φ
+  | Terminator.br n e => Region.br n e
+  | Terminator.ite e s t => Region.ite e s.toRegion t.toRegion
+
+instance coeTerminatorToRegion : Coe (Terminator φ) (Region φ) := ⟨Terminator.toRegion⟩
+
+/-- Convert this `TRegion` to a `Region` -/
+@[simp]
+def TRegion.toRegion : TRegion φ → Region φ
+  | let1 e t => Region.let1 e t.toRegion
+  | let2 e t => Region.let2 e t.toRegion
+  | cfg β n f => Region.cfg β.toRegion n (λ i => (f i).toRegion)
+
+instance coeTRegionToRegion : Coe (TRegion φ) (Region φ) := ⟨TRegion.toRegion⟩
 
 /-- Rename the variables in a `Region` using `ρ` -/
 @[simp]
@@ -190,18 +216,213 @@ structure CFG (φ : Type) : Type where
 -- TODO: ∅ cfg; represent as 0?
 
 /-- Rename the variables in a `CFG` using `ρ` -/
+@[simp]
 def CFG.vwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
   length := G.length
   targets := λ i => (G.targets i).vwk ρ
 
 /-- Rename the labels in a `CFG` using `ρ` -/
+@[simp]
 def CFG.lwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
   length := G.length
   targets := λ i => (G.targets i).lwk (Nat.liftnWk G.length ρ)
 
 end Definitions
 
+/-! ### Lemmas about weakening
+ -/
+section Weakening
+
+@[simp]
+theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [*]
+
+@[simp]
+theorem Term.wk_id' : (t : Term φ) -> t.wk (λx => x) = t := wk_id
+
+theorem Term.wk_comp (σ : ℕ → ℕ) (ρ : ℕ → ℕ) (t : Term φ)
+  : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [*]
+
+@[simp]
+theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
+  induction r <;> simp [Nat.liftnWk_id, *]
+
+@[simp]
+theorem Terminator.vwk_id' : (r : Terminator φ) → r.vwk (λx => x) = r := vwk_id
+
+theorem Terminator.vwk_comp (σ τ : ℕ → ℕ) (r : Terminator φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
+  induction r <;> simp [Nat.liftnWk_id, *]
+
+@[simp]
+theorem Terminator.lwk_id' : (t : Terminator φ) → t.lwk (λx => x) = t := lwk_id
+
+theorem Terminator.lwk_comp (σ τ : ℕ → ℕ) (t : Terminator φ)
+  : t.lwk (σ ∘ τ) = (t.lwk τ).lwk σ := by
+  induction t generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
+
+@[simp]
+theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
+
+@[simp]
+theorem Body.wk_id' : (b : Body φ) → b.wk (λx => x) = b := wk_id
+
+theorem Body.wk_comp (σ τ : ℕ → ℕ) (b : Body φ)
+  : b.wk (σ ∘ τ) = (b.wk τ).wk σ := by
+  induction b generalizing σ τ
+  <;> simp [Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
+  induction b generalizing ρ <;> simp [*]
+
+@[simp]
+theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
+
+@[simp]
+theorem Block.vwk_id' : (β : Block φ) → β.vwk (λx => x) = β := vwk_id
+
+theorem Block.vwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.vwk (σ ∘ τ) = (β.vwk τ).vwk σ
+  := by simp [Body.wk_comp, Terminator.vwk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
+
+@[simp]
+theorem Block.lwk_id' : (β : Block φ) → β.lwk (λx => x) = β := lwk_id
+
+theorem Block.lwk_comp (σ τ : ℕ → ℕ) (β : Block φ) : β.lwk (σ ∘ τ) = (β.lwk τ).lwk σ
+  := by simp [Terminator.lwk_comp]
+
+@[simp]
+theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
+  induction r; simp [*]
+
+@[simp]
+theorem BBRegion.vwk_id' : (r : BBRegion φ) → r.vwk (λx => x) = r := vwk_id
+
+theorem BBRegion.vwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  simp [Body.wk_comp, Terminator.vwk_comp, Body.num_defs_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
+  induction r; simp [*]
+
+@[simp]
+theorem BBRegion.lwk_id' : (r : BBRegion φ) → r.lwk (λx => x) = r := lwk_id
+
+theorem BBRegion.lwk_comp (σ τ : ℕ → ℕ) (r : BBRegion φ)
+  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ
+  simp [Body.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem BBCFG.vwk_id (cfg : BBCFG φ) : cfg.vwk id = cfg := by
+  cases cfg; simp [*]
+
+@[simp]
+theorem BBCFG.vwk_id' : (cfg : BBCFG φ) → cfg.vwk (λx => x) = cfg := vwk_id
+
+theorem BBCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
+  cases cfg; simp [BBRegion.vwk_comp, *]
+
+@[simp]
+theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
+  cases cfg; simp [*]
+
+@[simp]
+theorem BBCFG.lwk_id' : (cfg : BBCFG φ) → cfg.lwk (λx => x) = cfg := lwk_id
+
+theorem BBCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
+  cases cfg; simp [BBRegion.lwk_comp, *]
+
+@[simp]
+theorem TRegion.vwk_id (r : TRegion φ) : r.vwk id = r := by
+  induction r <;> simp [TRegion.vwk, *]
+
+@[simp]
+theorem TRegion.vwk_id' : (r : TRegion φ) → r.vwk (λx => x) = r := vwk_id
+
+theorem TRegion.vwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.wk_comp, Terminator.vwk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem TRegion.lwk_id (r : TRegion φ) : r.lwk id = r := by
+  induction r <;> simp [TRegion.lwk, *]
+
+@[simp]
+theorem TRegion.lwk_id' : (r : TRegion φ) → r.lwk (λx => x) = r := lwk_id
+
+theorem TRegion.lwk_comp (σ τ : ℕ → ℕ) (r : TRegion φ)
+  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ
+  <;> simp [Term.wk_comp, Terminator.lwk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem TCFG.vwk_id (cfg : TCFG φ) : cfg.vwk id = cfg := by
+  cases cfg; simp [*]
+
+@[simp]
+theorem TCFG.vwk_id' : (cfg : TCFG φ) → cfg.vwk (λx => x) = cfg := vwk_id
+
+theorem TCFG.vwk_comp (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
+  cases cfg; simp [TRegion.vwk_comp, *]
+
+@[simp]
+theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
+  induction r <;> simp [Region.vwk, Nat.liftnWk_id, *]
+
+@[simp]
+theorem Region.vwk_id' : (r : Region φ) → r.vwk (λx => x) = r := vwk_id
+
+theorem Region.vwk_comp (σ τ : ℕ → ℕ) (r : Region φ)
+  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  induction r generalizing σ τ
+  <;> simp [vwk, Term.wk_comp, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+@[simp]
+theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
+
+@[simp]
+theorem Region.lwk_id' : (r : Region φ) → r.lwk (λx => x) = r := lwk_id
+
+theorem Region.lwk_comp (σ τ : ℕ → ℕ) (r : Region φ) : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  induction r generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
+
+@[simp]
+theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
+
+@[simp]
+theorem CFG.vwk_id' : (G : CFG φ) → G.vwk (λx => x) = G := vwk_id
+
+theorem CFG.vwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.vwk (σ ∘ τ) = (G.vwk τ).vwk σ
+  := by cases G; simp only [CFG.vwk, Region.vwk_comp, *]
+
+@[simp]
+theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
+
+@[simp]
+theorem CFG.lwk_id' : (G : CFG φ) → G.lwk (λx => x) = G := lwk_id
+
+theorem CFG.lwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.lwk (σ ∘ τ) = (G.lwk τ).lwk σ
+  := by cases G; simp only [CFG.lwk, Nat.liftnWk_comp, Region.lwk_comp, *]
+
+end Weakening
+
 end BinPair
+
+/-
+CLEANUP CORNER:
+- Coercion naming
+-/
 
 /-
 SPECULATION CORNER:
