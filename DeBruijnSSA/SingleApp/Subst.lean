@@ -30,6 +30,10 @@ def Subst.WfD.liftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ) : (σ.liftn Ξ.
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
   | A::Ξ => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append Ξ).slift _
 
+def Subst.WfD.liftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ Δ)
+  : (σ.liftn n).WfD (Ξ ++ Γ) (Ξ ++ Δ)
+  := hn ▸ hσ.liftn_append Ξ
+
 def Subst.WfD.liftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ)
   : (σ.liftn (Ξ.length + 1)).WfD (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
   := liftn_append (V::Ξ) hσ
@@ -68,7 +72,8 @@ def Terminator.WfD.vsubst {t : Terminator φ} (hσ : σ.WfD Γ Δ) : t.WfD Δ V 
 def Block.WfD.vsubst {b : Block φ} (hσ : σ.WfD Γ Δ) (hb : b.WfD Δ Ξ L) : (b.vsubst σ).WfD Γ Ξ L
   where
   body := hb.body.subst hσ
-  terminator := hb.terminator.vsubst (hb.body.num_defs_eq_length ▸ hσ.liftn_append Ξ)
+  terminator := hb.terminator.vsubst (hσ.liftn_append'
+    (by rw [hb.body.num_defs_eq_length, Ctx.reverse, List.length_reverse]))
 
 def BBRegion.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ Δ)
   : r.WfD Δ L → (r.vsubst σ).WfD Γ L
@@ -140,7 +145,8 @@ def Terminator.WfD.lsubst {t : Terminator φ} (hσ : σ.WfD Γ L K) : t.WfD Γ L
 def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) : (b.lsubst σ).WfD Γ Ξ K
   where
   body := hb.body
-  terminator := hb.terminator.lsubst (hσ.vliftn_append' hb.body.num_defs_eq_length)
+  terminator := hb.terminator.lsubst (hσ.vliftn_append'
+    (by rw [hb.body.num_defs_eq_length, Ctx.reverse, List.length_reverse]))
 
 -- def BBRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ L K)
 --   : r.WfD Γ L → (r.lsubst σ).WfD Γ K

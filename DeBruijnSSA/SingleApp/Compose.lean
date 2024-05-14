@@ -24,8 +24,17 @@ def Body.WfD.append {Γ Δ Ξ : Ctx α ε} {b b' : Body φ}
 def Body.WfD.ltimes {Γ Δ Ξ : Ctx α ε} {b b' : Body φ}
   (db : b.WfD Γ Δ) (db' : b'.WfD Γ Ξ) : (b.ltimes b').WfD Γ (Δ ++ Ξ)
   := db.append (db'.wk ((Ctx.Wkn.id _).stepn_append'
-    (by rw [db.num_defs_eq_length, Ctx.reverse, List.length_reverse])))
+    (by rw [db.num_defs_eq_length, Ctx.length_reverse])))
 
 -- TODO: ltimes_assoc w/ cast_trg
+
+def Block.WfD.prepend {Γ Δ Ξ : Ctx α ε} {b : Body φ} {β : Block φ}
+  (db : b.WfD Γ Δ) (dβ : β.WfD (Δ.reverse ++ Γ) Ξ L) : (β.prepend b).WfD Γ (Δ ++ Ξ) L
+  where
+  body := db.append dβ.body
+  terminator := dβ.terminator.vwk_id (by
+    rw [Ctx.reverse_append, Ctx.append_assoc]
+    exact Ctx.Wkn.id _
+  )
 
 end Body

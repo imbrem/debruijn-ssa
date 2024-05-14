@@ -79,6 +79,17 @@ def Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
 
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 
+-- TODO: HAppend of Ctx and List?
+
+theorem Ctx.append_assoc : (Γ Δ Ξ : Ctx α ε) → Γ ++ Δ ++ Ξ = Γ ++ (Δ ++ Ξ)
+  := List.append_assoc
+
+theorem Ctx.reverse_append : (Γ Δ : Ctx α ε) → (Γ ++ Δ).reverse = Δ.reverse ++ Γ.reverse
+  := List.reverse_append
+
+theorem Ctx.length_reverse : (Γ : Ctx α ε) → Γ.reverse.length = Γ.length
+  := List.length_reverse
+
 def FCtx (α ε) := Σn, Fin n → Ty α × ε
 
 -- TODO: FCtx append
@@ -326,7 +337,7 @@ inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
 
 structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
-  terminator : β.terminator.WfD (Δ ++ Γ) L
+  terminator : β.terminator.WfD (Δ.reverse ++ Γ) L
 
 inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
   | cfg (n) {G} (R : LCtx α) :
@@ -557,7 +568,8 @@ def Terminator.WfD.lwk {t : Terminator φ} (h : L.Wkn K ρ) : WfD Γ t L → WfD
 
 def Block.WfD.vwk {β : Block φ} (h : Γ.Wkn Δ ρ) (hβ : WfD Δ β Ξ L) : WfD Γ (β.vwk ρ) Ξ L where
   body := hβ.body.wk h
-  terminator := hβ.terminator.vwk (hβ.body.num_defs_eq_length ▸ (h.liftn_append Ξ))
+  terminator := hβ.terminator.vwk
+    (hβ.body.num_defs_eq_length ▸ (h.liftn_append' (by simp [Ctx.reverse])))
 
 def Block.WfD.lwk {β : Block φ} (h : L.Wkn K ρ) (hβ : WfD Γ β Ξ L) : WfD Γ (β.lwk ρ) Ξ K where
   body := hβ.body
