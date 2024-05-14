@@ -185,6 +185,14 @@ def Term.WfD.toInfTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e�
   | unit e => unit e
   | bool b e => bool b e
 
+/-- Infer the effect of a term; pun with infimum -/
+def Term.infEffect [Sup ε] (Γ : Ctx α ε) : Term φ → ε
+  | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
+  | op f _ => Φ.effect f
+  | pair a b => a.infEffect Γ ⊔ b.infEffect Γ
+  | unit => ⊥
+  | bool _ => ⊥
+
 -- TODO: WfD ==> Wf
 
 -- TODO: Wf ==> ∃WfD
@@ -198,11 +206,11 @@ def Term.Wf.toWfD
   | Term.unit, ⟨Ty.unit, _⟩, _ => WfD.unit _
   | Term.bool _, ⟨Ty.bool, _⟩, _ => WfD.bool _ _
 
--- TODO: for a discrete order on α, WfD unique, Wf ==> WfD
+theorem Term.wf_iff_wfD
+  {Γ : Ctx α ε} {a : Term φ} {V} : Wf Γ a V ↔ Nonempty (WfD Γ a V)
+  := ⟨Nonempty.intro ∘ Wf.toWfD, λ⟨h⟩ => h.toWf⟩
 
--- TODO: FWfD, FWf, associated lore
-
--- TODO: propositional variants for below...
+-- TODO: for a discrete order on α, WfD unique
 
 inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
   | nil : WfD Γ nil []
@@ -211,16 +219,82 @@ inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
     → b.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
     → (let2 a b).WfD Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
 
-inductive Body.Wf : Ctx α ε → Body φ → Ctx α ε → Type _
+inductive Body.Wf : Ctx α ε → Body φ → Ctx α ε → Prop
   | nil : Wf Γ nil []
   | let1 : a.Wf Γ ⟨A, e⟩ → b.Wf (⟨A, ⊥⟩::Γ) Δ → (let1 a b).Wf Γ (⟨A, ⊥⟩::Δ)
   | let2 : a.Wf Γ ⟨(Ty.pair A B), e⟩
     → b.Wf (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
     → (let2 a b).Wf Γ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ)
 
+theorem Body.Wf.eq_nil_of_empty_trg {Γ : Ctx α ε} {b : Body φ} (h : Wf Γ b []) : b = Body.nil
+  := by cases h; rfl
+
+theorem Body.Wf.empty_trg {Γ : Ctx α ε} (h : Wf Γ (@Body.nil φ) Δ) : Δ = []
+  := by cases h; rfl
+
+theorem Body.Wf.empty_trg_iff {Γ : Ctx α ε} {b : Body φ} (h : Wf Γ b Δ)
+  : b = Body.nil ↔ Δ = []
+  := by constructor <;> intro h' <;> cases h' <;> cases h <;> rfl
+
+theorem Body.Wf.exists_of_let1_binding {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let1 a b) Δ) : ∃V, a.Wf Γ V
+  := by cases h; exact ⟨_, by assumption⟩
+
+theorem Body.Wf.exists_trg_of_let1 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let1 a b) Δ) : ∃A Δ', Δ = ⟨A, ⊥⟩::Δ'
+  := by cases h; exact ⟨_, _, rfl⟩
+
+theorem Body.Wf.len_ge_one_of_let1 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let1 a b) Δ) : 1 ≤ Δ.length
+  := by cases h; simp
+
+theorem Body.Wf.trg_nonempty_of_let1 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let1 a b) Δ) : Δ ≠ []
+  := by cases h; simp
+
+theorem Body.Wf.head_eq_of_let1 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let1 a b) Δ)
+  : Δ.head h.trg_nonempty_of_let1 = ⟨(Δ.head h.trg_nonempty_of_let1).1, ⊥⟩
+  := by cases h; simp
+
+theorem Body.Wf.of_let1_tail {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let1 a b) Δ) : b.Wf ((Δ.head h.trg_nonempty_of_let1)::Γ) Δ.tail
+  := by cases h; assumption
+
+theorem Body.Wf.exists_of_let2_binding {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let2 a b) Δ) : ∃A B e, a.Wf Γ ⟨Ty.pair A B, e⟩
+  := by cases h; exact ⟨_, _, _, by assumption⟩
+
+theorem Body.Wf.exists_trg_of_let2 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let2 a b) Δ) : ∃A B Δ', Δ = ⟨A, ⊥⟩::⟨B, ⊥⟩::Δ'
+  := by cases h; exact ⟨_, _, _, rfl⟩
+
+theorem Body.Wf.len_ge_two_of_let2 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let2 a b) Δ) : 2 ≤ Δ.length
+  := by cases h; simp
+
+theorem Body.Wf.trg_nonempty_of_let2 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let2 a b) Δ) : Δ ≠ []
+  := by cases h; simp
+
+theorem Body.Wf.trg_tail_nonempty_of_let2 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let2 a b) Δ) : Δ.tail ≠ []
+  := by cases h; simp
+
+theorem Body.Wf.of_let2_tail {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
+  (h : Wf Γ (Body.let2 a b) Δ)
+  : b.Wf ((Δ.head h.trg_nonempty_of_let2)::(Δ.tail.head h.trg_tail_nonempty_of_let2)::Γ) Δ.tail.tail
+  := by cases h; assumption
+
 theorem Body.WfD.num_defs_eq_length {Γ : Ctx α ε} {b : Body φ} {Δ} (h : b.WfD Γ Δ)
   : b.num_defs = Δ.length
   := by induction h <;> simp [num_defs, *]
+
+theorem Body.WfD.toWf {Γ : Ctx α ε} {b : Body φ} {Δ} (h : WfD Γ b Δ) : Wf Γ b Δ
+  := match h with
+  | Body.WfD.nil => Wf.nil
+  | Body.WfD.let1 a b => Wf.let1 a.toWf b.toWf
+  | Body.WfD.let2 a b => Wf.let2 a.toWf b.toWf
 
 def LCtx (α) := List (Ty α)
 
@@ -530,17 +604,10 @@ section Minimal
 
 variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
-def Term.minEffect (Γ : Ctx α ε) : Term φ → ε
-  | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
-  | op f _ => Φ.effect f
-  | pair a b => a.minEffect Γ ⊔ b.minEffect Γ
-  | unit => ⊥
-  | bool _ => ⊥
-
 theorem Term.WfD.minEffect_le
-  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.minEffect Γ ≤ e
+  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infEffect Γ ≤ e
   := match h with
-  | var dv => by simp [minEffect, dv.length, dv.get.right]
+  | var dv => by simp [infEffect, dv.length, dv.get.right]
   | op df de => df.effect
   | pair dl dr => sup_le_iff.mpr ⟨dl.minEffect_le, dr.minEffect_le⟩
   | unit _ | bool _ _ => bot_le
@@ -551,6 +618,13 @@ def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
   | Body.let2 a b =>
     ⟨a.infTy Γ, ⊥⟩ :: ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::⟨a.infTy Γ, ⊥⟩::Γ)
 
+-- TODO: ...
+-- def Body.Wf.toWfD {Γ : Ctx α ε} {b : Body φ} {Δ} (h : Wf Γ b Δ) : WfD Γ b Δ
+--   := match b, Δ, h with
+--   | Body.nil, [], _ => WfD.nil
+--   | Body.let1 a b, ⟨A, e⟩::Δ, _ => sorry--WfD.let1 sorry sorry
+--   | Body.let2 a b, ⟨A, e⟩::⟨B, e'⟩::Δ, _ => sorry
+
 -- def Body.WfD.toMinDefs {Γ : Ctx α ε} {b : Body φ} {Δ} : b.WfD Γ Δ → WfD Γ b (b.minDefs Γ)
 --   | Body.WfD.nil => nil
 --   | Body.WfD.let1 a b => let1 a.toInfTy (b.wk_id sorry).toMinDefs
@@ -559,6 +633,10 @@ def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
 end Minimal
 
 -- == SPECULATIVE ==
+
+-- TODO: FWfD, FWf, associated lore
+
+-- TODO: propositional variants for below...
 
 -- TODO: substitution-terminator typing
 
