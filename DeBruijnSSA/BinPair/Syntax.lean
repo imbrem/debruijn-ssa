@@ -1,20 +1,13 @@
 import Discretion
 import Discretion.Wk.Multiset
 import Mathlib.Algebra.BigOperators.Basic
+import DeBruijnSSA.BinPair.Syntax.Basic
 
 -- TODO: use abstract higher-ERT type formalism, add to discretion?
 
 -- TODO: splat file?
 
 namespace BinPair
-
-/-- A simple term, consisting of variables, operations, pairs, units, and booleans -/
-inductive Term (φ : Type) where
-  | var : ℕ → Term φ
-  | op : φ → Term φ → Term φ
-  | pair : Term φ → Term φ → Term φ
-  | unit : Term φ
-  | bool : Bool → Term φ
 
 /-- Get the set of free variables of a term as a multiset (to allow counting occurences) -/
 @[simp]
@@ -34,15 +27,6 @@ def Term.fvi : Term φ → ℕ
 
 theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
   induction t <;> simp [*]
-
-/-- Rename the variables in a `Term` using `ρ` -/
-@[simp]
-def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
-  | var x => var (ρ x)
-  | op f x => op f (wk ρ x)
-  | pair x y => pair (wk ρ x) (wk ρ y)
-  | unit => unit
-  | bool b => bool b
 
 @[simp]
 theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [*]
@@ -259,11 +243,6 @@ theorem Term.wk_lift_succ_comp_subst0 (e : Term α)
 @[simp]
 theorem Term.alpha0_var0 : (var 0).alpha0 = @Subst.id φ := by funext n; cases n <;> rfl
 
-/-- A terminator -/
-inductive Terminator (φ : Type) : Type
-  | br : Nat → Term φ → Terminator φ
-  | ite : Term φ → Terminator φ → Terminator φ → Terminator φ
-
 /-- The free variables of this terminator -/
 @[simp]
 def Terminator.vfv : Terminator φ → Multiset ℕ
@@ -287,12 +266,6 @@ def Terminator.lfv : Terminator φ → Multiset ℕ
 def Terminator.lfvi : Terminator φ → ℕ
   | br n _ => n + 1
   | ite _ s t => Nat.max s.lfvi t.lfvi
-
-/-- Rename the variables in a `Terminator` using `ρ` -/
-@[simp]
-def Terminator.vwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
-  | br n e => br n (e.wk ρ)
-  | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
 
 @[simp]
 theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
@@ -335,12 +308,6 @@ theorem Terminator.vsubst_wk (ρ : ℕ -> ℕ) (r : Terminator φ)
 theorem Terminator.vwk_succ_vsubst_subst0 (t : Terminator φ) (s : Term φ)
   : (t.vwk Nat.succ).vsubst s.subst0 = t := by
   rw [<-vsubst_wk, <-vsubst_comp, Term.wk_succ_comp_subst0, vsubst_id]
-
-/-- Rename the labels in a `Region` using `ρ` -/
-@[simp]
-def Terminator.lwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
-  | br n e => br (ρ n) e
-  | ite e s t => ite e (lwk ρ s) (lwk ρ t)
 
 @[simp]
 theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
@@ -570,12 +537,6 @@ theorem TSubst.liftn_comp (n : ℕ) (σ τ : TSubst α)
   : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
   := by rw [liftn_eq_iterate_lift, iterate_lift_comp]
 
-/-- A basic block body -/
-inductive Body (φ : Type) : Type
-  | nil : Body φ
-  | let1 : Term φ → Body φ → Body φ
-  | let2 : Term φ → Body φ → Body φ
-
 /-- The free variables in this body -/
 @[simp]
 def Body.fv : Body φ → Multiset ℕ
@@ -589,13 +550,6 @@ def Body.fvi : Body φ → ℕ
   | nil => 0
   | let1 e t => Nat.max e.fvi (t.fvi - 1)
   | let2 e t => Nat.max e.fvi (t.fvi - 2)
-
-/-- Weaken a body -/
-@[simp]
-def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
-  | nil => nil
-  | let1 e t => let1 (e.wk ρ) (t.wk (Nat.liftWk ρ))
-  | let2 e t => let2 (e.wk ρ) (t.wk (Nat.liftnWk 2 ρ))
 
 @[simp]
 theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
@@ -625,12 +579,6 @@ theorem Body.subst_comp (σ τ : Subst φ) (b : Body φ)
   induction b generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
-/-- The number of variables defined in a body -/
-@[simp]
-def Body.num_defs : Body φ → ℕ
-  | nil => 0
-  | let1 _ t => t.num_defs + 1
-  | let2 _ t => t.num_defs + 2
 
 theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
   induction b generalizing ρ <;> simp [*]
@@ -734,14 +682,6 @@ theorem Body.ltimes_assoc (b b' b'' : Body φ)
 
 -- TODO: in fact, _this_ variant supports an _rtimes_ operation. Wow!
 
-/-- A basic-block -/
-structure Block (φ : Type) : Type where
-  /-- The body of this basic block, containing the instructions and variable definitions within -/
-  body : Body φ
-  /-- The terminator of this basic block, determining where control flow goes to after the body
-  is finished executing -/
-  terminator : Terminator φ
-
 /-- The free variables in this basic block -/
 @[simp]
 def Block.vfv (β : Block φ) : Multiset ℕ := β.body.fv + β.terminator.vfv.liftnFv β.body.num_defs
@@ -757,12 +697,6 @@ def Block.lfv (β : Block φ) : Multiset ℕ := β.terminator.lfv
 /-- The highest free label in this basic block, plus one -/
 @[simp]
 def Block.lfvi (β : Block φ) : ℕ := β.terminator.lfvi
-
-/-- Weaken the variables in this basic block -/
-@[simp]
-def Block.vwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
-  body := β.body.wk ρ
-  terminator := β.terminator.vwk (Nat.liftnWk β.body.num_defs ρ)
 
 @[simp]
 theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
@@ -788,12 +722,6 @@ theorem Block.vsubst_id (β : Block φ) : β.vsubst Subst.id = β := by simp
 theorem Block.vsubst_comp (σ τ : Subst φ) (β : Block φ)
   : β.vsubst (σ.comp τ) = (β.vsubst τ).vsubst σ
   := by simp [Body.subst_comp, Body.num_defs_subst, Subst.liftn_comp, Terminator.vsubst_comp, *]
-
-/-- Weaken the labels in this basic block -/
-@[simp]
-def Block.lwk (ρ : ℕ → ℕ) (β : Block φ) : Block φ where
-  body := β.body
-  terminator := β.terminator.lwk ρ
 
 @[simp]
 theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
@@ -891,11 +819,6 @@ theorem Terminator.coe_toBlock_inj {t₁ t₂ : Terminator φ} : (t₁ : Block �
     Terminator.toBlock_injective.eq_iff
 
 -- TODO: coe_lsubst
-
-/-- A basic block-based single-entry multiple-exit region -/
-inductive BBRegion (φ : Type) : Type
-  | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
-
 /-- The free variables in this region -/
 @[simp]
 def BBRegion.vfv : BBRegion φ → Multiset ℕ
@@ -905,11 +828,6 @@ def BBRegion.vfv : BBRegion φ → Multiset ℕ
 @[simp]
 def BBRegion.lfv : BBRegion φ → Multiset ℕ
   | cfg β n f => β.lfv.liftnFv n + Finset.sum Finset.univ (λi => (f i).lfv.liftnFv n)
-
-/-- Weaken the variables in this region -/
-@[simp]
-def BBRegion.vwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftnWk (β.body.num_defs + 1) ρ))
 
 @[simp]
 theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
@@ -950,11 +868,6 @@ theorem BBRegion.vsubst_comp (σ τ : Subst φ) (r : BBRegion φ)
   induction r generalizing σ τ
   simp [Body.subst_comp, Body.num_defs_subst, Subst.liftn_comp, Terminator.vsubst_comp, *]
 
-/-- Weaken the labels in this region -/
-@[simp]
-def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
-  | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
-
 @[simp]
 theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
   induction r; simp [*]
@@ -977,19 +890,6 @@ def BBRegion.lsubst (σ : TSubst φ) : BBRegion φ → BBRegion φ
 -- TODO: BBRegion.prepend
 
 -- TODO: BBRegion.ltimes
-
-/-- A basic-block based control-flow graph with `length` entry-point regions -/
-structure BBCFG (φ : Type) : Type where
-  /-- The number of entry points to this CFG -/
-  length : Nat
-  /-- The number of exits for this CFG -/
-  targets : Fin length → BBRegion φ
-
-@[simp]
-def BBCFG.vwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
-  length := cfg.length
-  targets := λi => (cfg.targets i).vwk ρ
-
 @[simp]
 theorem BBCFG.vwk_id (cfg : BBCFG φ) : cfg.vwk id = cfg := by
   cases cfg; simp [*]
@@ -1011,11 +911,6 @@ theorem BBCFG.vsubst_comp (σ τ : Subst φ) (cfg : BBCFG φ)
   cases cfg; simp [BBRegion.vsubst_comp, *]
 
 @[simp]
-def BBCFG.lwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
-  length := cfg.length
-  targets := λi => (cfg.targets i).lwk ρ
-
-@[simp]
 theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
   cases cfg; simp [*]
 
@@ -1025,19 +920,6 @@ theorem BBCFG.lwk_comp (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.lwk (σ ∘ 
 def BBCFG.lsubst (σ : TSubst φ) (cfg : BBCFG φ) : BBCFG φ where
   length := cfg.length
   targets := λi => (cfg.targets i).lsubst σ
-
-/-- A terminator-based single-entry multiple-exit region -/
-inductive TRegion (φ : Type) : Type
-  | let1 : Term φ → TRegion φ → TRegion φ
-  | let2 : Term φ → TRegion φ → TRegion φ
-  | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
-
-/-- Weaken the variables in this region -/
-@[simp]
-def TRegion.vwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
-  | let1 e t => let1 (e.wk ρ) (t.vwk (Nat.liftWk ρ))
-  | let2 e t => let2 (e.wk ρ) (t.vwk (Nat.liftnWk 2 ρ))
-  | cfg β n f => cfg (β.vwk ρ) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
 @[simp]
 theorem TRegion.vwk_id (r : TRegion φ) : r.vwk id = r := by
@@ -1064,13 +946,6 @@ theorem TRegion.vsubst_comp (σ τ : Subst φ) (r : TRegion φ)
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Terminator.vsubst_comp, Subst.lift_comp, Subst.liftn_comp, *]
 
-/-- Weaken the labels in this region -/
-@[simp]
-def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
-  | let1 e t => let1 e (t.lwk ρ)
-  | let2 e t => let2 e (t.lwk ρ)
-  | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
-
 @[simp]
 theorem TRegion.lwk_id (r : TRegion φ) : r.lwk id = r := by
   induction r <;> simp [TRegion.lwk, *]
@@ -1095,17 +970,6 @@ def TRegion.lsubst (σ : TSubst φ) : TRegion φ → TRegion φ
 
 -- TODO: tail.prepend body = id
 
-/-- A terminator-block based control-flow graph with `length` entry-point regions -/
-structure TCFG (φ : Type) : Type where
-  /-- The number of entry points to this CFG -/
-  length : Nat
-  /-- The number of exits for this CFG -/
-  targets : Fin length → TRegion φ
-
-def TCFG.vwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
-  length := cfg.length
-  targets := λi => (cfg.targets i).vwk ρ
-
 @[simp]
 theorem TCFG.vwk_id (cfg : TCFG φ) : cfg.vwk id = cfg := by
   cases cfg; simp [TCFG.vwk, *]
@@ -1124,10 +988,6 @@ theorem TCFG.vsubst_id (cfg : TCFG φ) : cfg.vsubst Subst.id = cfg := by
 theorem TCFG.vsubst_comp (σ τ : Subst φ) (cfg : TCFG φ)
   : cfg.vsubst (σ.comp τ) = (cfg.vsubst τ).vsubst σ := by
   cases cfg; simp [TCFG.vsubst, TRegion.vsubst_comp, *]
-
-def TCFG.lwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
-  length := cfg.length
-  targets := λi => (cfg.targets i).lwk (Nat.liftnWk cfg.length ρ)
 
 @[simp]
 theorem TCFG.lwk_id (cfg : TCFG φ) : cfg.lwk id = cfg := by
@@ -1150,22 +1010,7 @@ def TCFG.lsubst (σ : TSubst φ) (cfg : TCFG φ) : TCFG φ where
 
 -- TODO: normalize BBRegion to TRegion; commutes with label-substitution
 
-/-- A single-entry multiple-exit region -/
-inductive Region (φ : Type) : Type
-  | br : Nat → Term φ → Region φ
-  | ite : Term φ → Region φ → Region φ → Region φ
-  | let1 : Term φ → Region φ → Region φ
-  | let2 : Term φ → Region φ → Region φ
-  | cfg (β : Region φ) (n : Nat) : (Fin n → Region φ) → Region φ
 
-/-- Rename the variables in a `Region` using `ρ` -/
-@[simp]
-def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
-  | br n e => br n (e.wk ρ)
-  | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
-  | let1 e t => let1 (e.wk ρ) (vwk (Nat.liftWk ρ) t)
-  | let2 e t => let2 (e.wk ρ) (vwk (Nat.liftnWk 2 ρ) t)
-  | cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
 @[simp]
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
@@ -1193,15 +1038,6 @@ theorem Region.vsubst_comp (σ τ : Subst φ) (r : Region φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Subst.lift_comp, Subst.liftn_comp, *]
-
-/-- Rename the labels in a `Region` using `ρ` -/
-@[simp]
-def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
-  | br n e => br (ρ n) e
-  | ite e s t => ite e (lwk ρ s) (lwk ρ t)
-  | let1 e t => let1 e (lwk ρ t)
-  | let2 e t => let2 e (lwk ρ t)
-  | cfg β n f => cfg (lwk (Nat.liftnWk n ρ) β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 @[simp]
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
@@ -1432,21 +1268,6 @@ theorem TRegion.coe_toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ)
 -- TODO: Region.tail
 
 -- TODO: tail.ltimes body = id
-
-/-- A control-flow graph with `length` entry-point regions -/
-structure CFG (φ : Type) : Type where
-  /-- The number of entry points to this CFG -/
-  length : Nat
-  /-- The number of exits for this CFG -/
-  targets : Fin length → Region φ
-
--- TODO: ∅ cfg; represent as 0?
-
-/-- Rename the variables in a `CFG` using `ρ` -/
-def CFG.vwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
-  length := G.length
-  targets := λ i => (G.targets i).vwk ρ
-
 @[simp]
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 
@@ -1463,11 +1284,6 @@ theorem CFG.vsubst_id (G : CFG φ) : G.vsubst Subst.id = G := by cases G; simp [
 
 theorem CFG.vsubst_comp (σ τ : Subst φ) (G : CFG φ) : G.vsubst (σ.comp τ) = (G.vsubst τ).vsubst σ
   := by cases G; simp only [CFG.vsubst, Region.vsubst_comp, *]
-
-/-- Rename the labels in a `CFG` using `ρ` -/
-def CFG.lwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
-  length := G.length
-  targets := λ i => (G.targets i).lwk (Nat.liftnWk G.length ρ)
 
 @[simp]
 theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]

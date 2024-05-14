@@ -38,6 +38,9 @@ class HasAffinity (ε : Type u) [SemilatticeSup ε] where
   sup_isAffine : ∀ e e', isAffine e → isAffine e' → isAffine (e ⊔ e')
   isAffine_of_le : Antitone isAffine
 
+-- TODO: a type is _intuitionistic_ if it is relevant and affine; a type is always central
+-- ... no... no we are not doing braided or other nonsense here, where a type may not be central...
+
 /--
 A type which can be interpreted as an effect, which may be _central_, _relevant_, or _affine_
 
