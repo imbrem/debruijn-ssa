@@ -413,12 +413,397 @@ def TCFG.toBBCFG : TCFG φ ≃ BBCFG φ := BBCFG.toTCFG.symm
 
 -- TODO: intercoercions?
 
-/-- Convert a terminator CFG to a plain CFG -/
-def TCFG.toCFG (G : TCFG φ) : CFG φ where
-  length := G.length
-  targets := λ i => (G.targets i).toRegion
+/-- Precompose a body of instructions to this region -/
+@[simp]
+def Region.prepend (b : Body φ) (r : Region φ) : Region φ := match b with
+  | Body.nil => r
+  | Body.let1 a b => (r.prepend b).let1 a
+  | Body.let2 a b => (r.prepend b).let2 a
 
-instance : Coe (TCFG φ) (CFG φ) := ⟨TCFG.toCFG⟩
+theorem Region.prepend_nil (r : TRegion φ) : r.prepend Body.nil = r := rfl
+
+theorem Region.prepend_let1 (a : Term φ) (b : Body φ) (r : Region φ)
+  : r.prepend (Body.let1 a b) = (r.prepend b).let1 a := rfl
+
+theorem Region.prepend_let2 (a : Term φ) (b : Body φ) (r : Region φ)
+  : r.prepend (Body.let2 a b) = (r.prepend b).let2 a := rfl
+
+/-- Convert a BBRegion to a generalized region -/
+def BBRegion.toRegion : BBRegion φ → Region φ
+  | cfg ⟨b, t⟩ n G => (Region.cfg t n (λi => (G i).toRegion)).prepend b
+
+/-- Construct an if-then-else of two BBRegions in the most trivial way possible -/
+def BBRegion.cfg_ite (e : Term φ) (s t : BBRegion φ) : BBRegion φ
+  := cfg
+    ⟨Body.nil, Terminator.ite e (Terminator.br 0 Term.unit) (Terminator.br 1 Term.unit)⟩
+    2 (λ| 0 => (s.lwk (· + 2)).vwk Nat.succ | 1 => (t.lwk (· + 2)).vwk Nat.succ)
+
+/-- Construct an if-then-else of two BBRegions such that the images of terminators sum to the image
+  of a terminator -/
+def BBRegion.ite (e : Term φ) (s t : BBRegion φ) : BBRegion φ :=
+  match s, t with
+  | cfg ⟨Body.nil, s⟩ sn sG, cfg ⟨Body.nil, t⟩ tn tG
+    => cfg ⟨Body.nil,
+      (s.lwk (sn.liftnWk (· + tn))).ite e (t.lwk (· + sn))⟩ (sn + tn) (Fin.addCases
+      (BBRegion.lwk (sn.liftnWk (· + tn)) ∘ sG)
+      (BBRegion.lwk (· + sn) ∘ tG))
+  | s, t => s.cfg_ite e t
+
+instance appendBBCFG : Append (BBCFG φ) := ⟨λG G' => {
+  length := G.length + G'.length,
+  targets := Fin.addCases G.targets G'.targets
+}⟩
+
+/-- Take the left-sum of two control-flow graphs: the left graph can call into the right, but not
+  vice-versa -/
+def BBCFG.lsum (G G' : BBCFG φ) : BBCFG φ := G ++ (G'.lwk (· + G.length))
+
+/-- Take the right-sum of two control-flow graphs: the right graph can call into the left, but not
+  vice-versa -/
+def BBCFG.rsum (G G' : BBCFG φ) : BBCFG φ := (G.lwk (G.length.liftnWk (· + G'.length))) ++ G'
+
+/-- Take the disjoint sum of two control-flow graphs: neither graph is allowed to call into the
+  other -/
+def BBCFG.sum (G G' : BBCFG φ) : BBCFG φ
+  := (G.lwk (G.length.liftnWk (· + G'.length))) ++ (G'.lwk (· + G.length))
+
+theorem BBCFG.rsum_lwk_eq_sum (G G' : BBCFG φ) : G.rsum (G'.lwk (· + G.length)) = G.sum G' := rfl
+
+theorem BBCFG.lsum_lwk_eq_sum (G G' : BBCFG φ)
+  : (G.lwk (G.length.liftnWk (· + G'.length))).lsum G' = G.sum G' := rfl
+
+instance addBBCFG : Add (BBCFG φ) := ⟨BBCFG.sum⟩
+
+/-- Attach a CFG to some of the outputs of a BBRegion, processing them recursively -/
+def BBRegion.append_cfg (r : BBRegion φ) (G' : BBCFG φ) : BBRegion φ := match r with
+  | cfg β n G => cfg β (n + G'.length) (Fin.addCases G (BBRegion.lwk (· + n) ∘ G'.targets))
+
+def BBRegion.num_defs : BBRegion φ → ℕ
+  | cfg β _ _ => β.body.num_defs
+
+def BBRegion.ltimes_cfg (r : BBRegion φ) (G' : BBCFG φ) : BBRegion φ
+  := r.append_cfg (G'.lwk (· + r.num_defs))
+
+-- NOTE: rsum does not really make semantic sense
+
+/-- Attach a CFG to a BBRegion which is totally disjoint.
+
+Semantically, this is a no-op, and so is useful to define dead-code elimination
+-/
+def BBRegion.sum_cfg (r : BBRegion φ) (G' : BBCFG φ) : BBRegion φ := match r with
+  | cfg β n G => cfg (β.lwk (n.liftnWk (· + G'.length))) (n + G'.length) (Fin.addCases
+    (BBRegion.lwk (n.liftnWk (· + G'.length)) ∘ G)
+    (BBRegion.lwk (· + n) ∘ G'.targets))
+
+/-- Normalize a region to a BBRegion -/
+def Region.toBBRegion : Region φ → BBRegion φ
+  | br ℓ e => BBRegion.cfg ⟨Body.nil, Terminator.br ℓ e⟩ 0 Fin.elim0
+  | let1 a r => BBRegion.let1 a r.toBBRegion
+  | let2 a r => BBRegion.let2 a r.toBBRegion
+  | ite e s t => BBRegion.ite e s.toBBRegion t.toBBRegion
+  | cfg r n G => r.toBBRegion.ltimes_cfg ⟨n, λi => (G i).toBBRegion⟩
+
+@[simp]
+def Body.isNil : Body φ → Bool
+  | nil => true
+  | _ => false
+
+def Block.isTerminator (b : Block φ) : Bool := b.body.isNil
+
+def Block.IsTerminator (b : Block φ) : Prop := b.body = Body.nil
+
+@[simp]
+def BBRegion.isTerminator : BBRegion φ → Bool
+  | cfg β n _ => β.isTerminator ∧ n = 0
+
+inductive BBRegion.IsTerminator : BBRegion φ → Prop
+  | br ℓ e : IsTerminator (BBRegion.cfg ⟨Body.nil, Terminator.br ℓ e⟩ 0 Fin.elim0)
+
+@[simp]
+def Terminator.toBlock_is_terminator
+  (t : Terminator φ) : t.toBlock.IsTerminator := by constructor
+
+def TRegion.isTerminator : TRegion φ → Bool
+  | cfg _ n _ => n = 0
+  | _ => false
+
+inductive TRegion.IsTerminator : TRegion φ → Prop
+  | cfg t G : IsTerminator (TRegion.cfg t 0 G)
+
+def Region.isTerminator : Region φ → Bool
+  | br _ _ => true
+  | ite _ s t => s.isTerminator ∧ t.isTerminator
+  | _ => false
+
+inductive Region.IsTerminator : Region φ → Prop
+  | br ℓ e : IsTerminator (br ℓ e)
+  | ite e s t : IsTerminator s → IsTerminator t → IsTerminator (ite e s t)
+
+@[simp]
+def Terminator.toRegion_is_terminator
+  (t : Terminator φ) : t.toRegion.IsTerminator := by induction t <;> constructor <;> assumption
+
+def Region.toTerminator (k : ℕ) : Region φ → Terminator φ
+  | br ℓ e => Terminator.br ℓ e
+  | ite e s t => Terminator.ite e (s.toTerminator k) (t.toTerminator k)
+  | let1 _ r => (r.toTerminator k).lwk (· - 1)
+  | let2 _ r => (r.toTerminator k).lwk (· - 2)
+  | cfg r n G =>
+    let r' := r.toTerminator n;
+    let σG := λi => if h : i < n
+      then (G ⟨i, h⟩).toTerminator k
+      else Terminator.br (i - n) (Term.var 0);
+    Terminator.lwk (· - n) (Nat.rec r' (λ_ r => r.lsubst σG) k)
+
+def TRegion.toTerminator (k : ℕ) : TRegion φ → Terminator φ
+  | let1 _ r => (r.toTerminator k).lwk (· - 1)
+  | let2 _ r => (r.toTerminator k).lwk (· - 2)
+  | cfg r n G =>
+    let σG := λi => if h : i < n
+      then (G ⟨i, h⟩).toTerminator k
+      else Terminator.br (i - n) (Term.var 0);
+    Terminator.lwk (· - n) (Nat.rec r (λ_ r => r.lsubst σG) k)
+
+theorem Region.IsTerminator.eq_coe (k : ℕ) {r : Region φ} (h : r.IsTerminator)
+  : r = r.toTerminator k := by induction h with
+  | br _ _ => rfl
+  | ite _ _ _ _ _ Is It => rw [toTerminator, Terminator.toRegion, <-Is, <-It]
+
+theorem Terminator.toTerminator_toRegion (k : ℕ) (r : Terminator φ)
+  : r.toRegion.toTerminator k = r := by induction r with
+  | br _ _ => rfl
+  | ite _ _ _ => simp [Region.toTerminator, toRegion, *]
+
+theorem TRegion.IsTerminator.eq_cfg (k : ℕ) {r : TRegion φ} (h : r.IsTerminator)
+  : r = TRegion.cfg (r.toTerminator k) 0 Fin.elim0 := by cases h with
+  | cfg r _ =>
+    simp only [toTerminator, tsub_zero, not_lt_zero', ↓reduceDite, Terminator.lwk_id',
+    cfg.injEq, heq_eq_eq, true_and]
+    constructor
+    . simp only [Terminator.lsubst_id']
+      induction k with
+      | zero => rfl
+      | succ k I => rw [<-I]
+    . funext i; exact i.elim0
+
+def Region.isBlock : Region φ → Bool
+  | br _ _ => true
+  | ite _ s t => s.isTerminator ∧ t.isTerminator
+  | let1 _ r => r.isBlock
+  | let2 _ r => r.isBlock
+  | cfg _ _ _ => false
+
+inductive Region.IsBlock : Region φ → Prop
+  | br ℓ e : IsBlock (br ℓ e)
+  | ite e s t : IsBlock s → IsBlock t → IsBlock (ite e s t)
+  | let1 a r : IsBlock r → IsBlock (let1 a r)
+  | let2 a r : IsBlock r → IsBlock (let2 a r)
+
+theorem Region.IsTerminator.is_block {r : Region φ} (h : r.IsTerminator) : r.IsBlock := by
+  induction h <;> constructor <;> assumption
+
+def Region.isTRegion : Region φ → Bool
+  | let1 _ r => r.isTRegion
+  | let2 _ r => r.isTRegion
+  | cfg r _ G => r.isTerminator ∧ ∀i, (G i).isTRegion
+  | _ => false
+
+inductive Region.IsTRegion : Region φ → Prop
+  | let1 a r : IsTRegion r → IsTRegion (let1 a r)
+  | let2 a r : IsTRegion r → IsTRegion (let2 a r)
+  | cfg r n G : IsTerminator r → (∀i : Fin n, IsTRegion (G i)) → IsTRegion (cfg r n G)
+
+def TRegion.cfg_ite (e : Term φ) (s t : TRegion φ) : TRegion φ
+  := TRegion.cfg (Terminator.ite e (Terminator.br 0 Term.unit) (Terminator.br 1 Term.unit)) 2
+    (λ| 0 => (s.lwk (· + 2)).vwk Nat.succ | 1 => (t.lwk (· + 2)).vwk Nat.succ)
+
+def TRegion.ite (e : Term φ) (s t : TRegion φ) : TRegion φ :=
+  match s, t with
+  | cfg s sn sG, cfg t tn tG => cfg ((s.lwk (sn.liftnWk (· + tn))).ite e (t.lwk (· + sn)))
+    (sn + tn) (Fin.addCases
+      (TRegion.lwk (sn.liftnWk (· + tn)) ∘ sG)
+      (TRegion.lwk (· + sn) ∘ tG))
+  | s, t => s.cfg_ite e t
+
+/-- Attach a CFG to some of the outputs of a `TRegion`, processing them recursively -/
+def TRegion.append_cfg (r : TRegion φ) (G' : TCFG φ) : TRegion φ := match r with
+  | let1 a r => (r.append_cfg G').let1 a
+  | let2 a r => (r.append_cfg G').let2 a
+  | cfg t n G => cfg t (n + G'.length) (Fin.addCases G (TRegion.lwk (· + n) ∘ G'.targets))
+
+@[simp]
+def TRegion.num_defs : TRegion φ → ℕ
+  | let1 _ r => r.num_defs + 1
+  | let2 _ r => r.num_defs + 2
+  | cfg _ _ _ => 0
+
+def TRegion.ltimes_cfg (r : TRegion φ) (G' : TCFG φ) : TRegion φ
+  := r.append_cfg (G'.lwk (· + r.num_defs))
+
+def Region.toTRegion : Region φ → TRegion φ
+  | br ℓ e => TRegion.cfg (Terminator.br ℓ e) 0 Fin.elim0
+  | ite e s t => TRegion.ite e s.toTRegion t.toTRegion
+  | let1 a r => r.toTRegion.let1 a
+  | let2 a r => r.toTRegion.let2 a
+  | cfg r n G => r.toTRegion.ltimes_cfg ⟨n, λi => (G i).toTRegion⟩
+
+def Region.append_cfg (r : Region φ) (G' : CFG φ) : Region φ := match r with
+  | let1 a r => (r.append_cfg G').let1 a
+  | let2 a r => (r.append_cfg G').let2 a
+  | cfg r n G => cfg r (n + G'.length) (Fin.addCases G (Region.lwk (· + n) ∘ G'.targets))
+  | r => cfg r G'.length G'.targets
+
+def Region.append_cfg' (r : Region φ) (G' : CFG φ) : Region φ := match r with
+  | let1 a r => (r.append_cfg' G').let1 a
+  | let2 a r => (r.append_cfg' G').let2 a
+  | r => cfg r G'.length G'.targets
+
+theorem TRegion.coe_toRegion_append_cfg (r : TRegion φ) (G' : TCFG φ)
+  : (r : Region φ).append_cfg G' = r.append_cfg G' := by
+  induction r with
+  | cfg =>
+    simp only [toRegion, Region.append_cfg, TCFG.toCFG, Region.cfg.injEq, heq_eq_eq, true_and]
+    funext i
+    simp only [Fin.addCases]
+    split
+    . rfl
+    . simp only [Function.comp_apply, eq_rec_constant, TRegion.toRegion_lwk]
+  | _ => simp [Region.append_cfg, *]
+
+@[simp]
+def Region.num_defs : Region φ → ℕ
+  | let1 _ r => r.num_defs + 1
+  | let2 _ r => r.num_defs + 2
+  | _ => 0
+
+@[simp]
+theorem TRegion.num_defs_coe_toRegion (r : TRegion φ) : (r : Region φ).num_defs = r.num_defs := by
+  induction r <;> simp [*]
+
+def Region.ltimes_cfg (r : Region φ) (G' : CFG φ) : Region φ
+  := r.append_cfg (G'.lwk (· + r.num_defs))
+
+def Region.ltimes_cfg' (r : Region φ) (G' : CFG φ) : Region φ
+  := r.append_cfg' (G'.lwk (· + r.num_defs))
+
+theorem TRegion.coe_toRegion_ltimes_cfg (r : TRegion φ) (G' : TCFG φ)
+  : (r : Region φ).ltimes_cfg G' = r.ltimes_cfg G' := by
+  rw [ltimes_cfg, <-coe_toRegion_append_cfg, Region.ltimes_cfg]
+  simp [TRegion.toRegion_lwk] -- TODO: this should probably be a simp lemma?
+
+theorem Region.IsTerminator.append_eq_cfg {r : Region φ} (h : r.IsTerminator) (G : CFG φ)
+  : r.append_cfg G = cfg r G.length G.targets := by cases h <;> rfl
+
+theorem Region.IsTerminator.num_defs_eq_zero {r : Region φ} (h : r.IsTerminator)
+  : r.num_defs = 0 := by cases h <;> rfl
+
+theorem Region.IsTerminator.ltimes_eq_cfg {r : Region φ} (h : r.IsTerminator) (G : CFG φ)
+    : r.ltimes_cfg G = cfg r G.length G.targets := by
+  rw [ltimes_cfg, h.append_eq_cfg, h.num_defs_eq_zero]
+  simp
+
+theorem TRegion.IsTerminator.ite {s t : TRegion φ}
+  (e : Term φ) (h1 : s.IsTerminator) (h2 : t.IsTerminator)
+  : (TRegion.ite e s t).IsTerminator := by
+  cases h1; cases h2
+  constructor
+
+theorem Region.IsTerminator.toTRegion {r : Region φ} (h : r.IsTerminator)
+  : r.toTRegion.IsTerminator := by
+  induction h with
+  | br _ _ => constructor
+  | ite _ s t _ _ I1 I2 => rw [Region.toTRegion]; apply TRegion.IsTerminator.ite <;> assumption
+
+theorem Region.cfg_cast_eq (r : Region φ) (n n' : ℕ) (G : Fin n → Region φ) (h : n' = n)
+  : cfg r n G = cfg r n' (G ∘ Fin.cast h) := by cases h; rfl
+
+theorem Terminator.toRegion_lsubst (σ : Subst φ) (t : Terminator φ)
+  : (t.lsubst σ).toRegion = t.toRegion.lsubst σ := by
+  induction t with
+  | br => simp only [lsubst, Region.lsubst]; rw [toRegion_vsubst]; rfl
+  | _ => simp [toRegion, Terminator.lsubst, toRegion, Subst.liftn, *]
+
+theorem TRegion.toRegion_toTerminator (r : TRegion φ) (k : ℕ)
+  : r.toRegion.toTerminator k = r.toTerminator k := by
+  induction r with
+  | let1 _ r I => simp [toTerminator, Region.toTerminator, I]
+  | let2 _ r I => simp [toTerminator, Region.toTerminator, I]
+  | cfg r n G I =>
+    simp only [Region.toTerminator, toTerminator]
+    congr
+    rw [r.toTerminator_toRegion]
+    funext _ r
+    congr
+    funext i
+    split
+    . rw [I]
+    . rfl
+
+theorem Region.IsTerminator.toTRegion_eq_cfg (k : ℕ) {r : Region φ} (h : r.IsTerminator)
+  : r.toTRegion = TRegion.cfg (r.toTerminator k) 0 Fin.elim0 := by
+  induction h with
+  | br _ _ => rfl
+  | ite _ _ _ _ _ Is It =>
+    simp only [Region.toTRegion, TRegion.ite, Is, It]
+    congr
+    simp
+    simp
+    funext i; exact i.elim0
+
+theorem Region.IsTRegion.eq_toTRegion {r : Region φ} (h : r.IsTRegion) : r = r.toTRegion := by
+  induction h with
+  | let1 a r _ I => rw [toTRegion, TRegion.toRegion, <-I]
+  | let2 a r _ I => rw [toTRegion, TRegion.toRegion, <-I]
+  | cfg r n G hr _ I =>
+    rw [toTRegion, <-TRegion.coe_toRegion_ltimes_cfg, <-hr.ltimes_eq_cfg ⟨n, G⟩]
+    simp only
+    rw [hr.toTRegion_eq_cfg 0]
+    simp [TRegion.toRegion, ltimes_cfg, append_cfg]
+    -- TODO: factor this out, flip eq_coe, etc...
+    induction hr with
+    | br =>
+      simp only [num_defs, append_cfg, add_zero, Nat.liftnWk_id', lwk_id, Terminator.toRegion,
+        Fin.addCases, not_lt_zero', ↓reduceDite, Nat.add_zero, Function.comp_apply, lwk_id',
+        eq_rec_constant]
+      rw [Region.cfg_cast_eq _ (0 + n) n _ (by simp)]
+      congr
+      funext i
+      simp [Fin.subNat, <-I]
+    | ite _ _ _ hs ht =>
+      simp only [append_cfg, num_defs, Nat.add_zero, add_zero, Nat.liftnWk_id', lwk_id,
+        Terminator.toRegion, <- hs.eq_coe, <- ht.eq_coe, Fin.addCases, not_lt_zero', ↓reduceDite,
+        Function.comp_apply, lwk_id', eq_rec_constant, zero_add, true_and]
+      rw [Region.cfg_cast_eq _ (0 + n) n _ (by simp)]
+      congr
+      funext i
+      simp [Fin.subNat, <-I]
+
+-- TODO: change TRegion.ite, etc to something else since it's not _really_ ite under coe...
+
+@[simp]
+theorem TRegion.toRegion_is_tRegion (r : TRegion φ) : r.toRegion.IsTRegion := by
+  induction r <;> constructor <;> simp [*]
+
+theorem Region.IsBlock.not_tRegion {r : Region φ} (h : r.IsBlock) : ¬r.IsTRegion := by
+  induction h <;> intro h' <;> cases h' <;> contradiction
+
+theorem Region.IsTerminator.not_tRegion {r : Region φ} (h : r.IsTerminator) : ¬r.IsTRegion
+  := h.is_block.not_tRegion
+
+theorem Region.IsBlock.prepend {r : Region φ} (b : Body φ) (h : r.IsBlock) : (r.prepend b).IsBlock
+  := by induction b <;> repeat first | assumption | constructor
+
+-- TODO: this is an iff
+theorem Region.IsTRegion.prepend {r : Region φ} (b : Body φ) (h : r.IsTRegion)
+  : (r.prepend b).IsTRegion := by induction b <;> repeat first | assumption | constructor
+
+@[simp]
+theorem BBRegion.toRegion_is_tRegion (r : BBRegion φ) : r.toRegion.IsTRegion := by
+  induction r with
+  | cfg β n G I =>
+    rw [toRegion]
+    apply Region.IsTRegion.prepend
+    constructor <;> simp [I]
 
 -- TODO: Region.tail'
 

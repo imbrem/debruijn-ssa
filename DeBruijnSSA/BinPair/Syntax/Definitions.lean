@@ -243,6 +243,13 @@ structure CFG (φ : Type) : Type where
 
 -- TODO: ∅ cfg; represent as 0?
 
+/-- Convert a terminator CFG to a plain CFG -/
+def TCFG.toCFG (G : TCFG φ) : CFG φ where
+  length := G.length
+  targets := λ i => (G.targets i).toRegion
+
+instance : Coe (TCFG φ) (CFG φ) := ⟨λ G => ⟨G.length, λi => G.targets i⟩⟩
+
 /-- Rename the variables in a `CFG` using `ρ` -/
 @[simp]
 def CFG.vwk (ρ : ℕ → ℕ) (G : CFG φ) : CFG φ where
@@ -488,6 +495,18 @@ theorem CFG.lwk_id' : (G : CFG φ) → G.lwk (λx => x) = G := lwk_id
 
 theorem CFG.lwk_comp (σ τ : ℕ → ℕ) (G : CFG φ) : G.lwk (σ ∘ τ) = (G.lwk τ).lwk σ
   := by cases G; simp only [CFG.lwk, Nat.liftnWk_comp, Region.lwk_comp, *]
+
+theorem TCFG.toCFG_vwk (ρ : ℕ → ℕ) (G : TCFG φ) : (G.vwk ρ).toCFG = G.toCFG.vwk ρ
+  := by cases G; simp [toCFG, TRegion.toRegion_vwk]
+
+theorem TCFG.coe_toCFG_vwk (ρ : ℕ → ℕ) (G : TCFG φ)
+  : (G.vwk ρ : CFG φ) = (G : CFG φ).vwk ρ := toCFG_vwk ρ G
+
+theorem TCFG.toCFG_lwk (ρ : ℕ → ℕ) (G : TCFG φ) : (G.lwk ρ).toCFG = G.toCFG.lwk ρ
+  := by cases G; simp [toCFG, TRegion.toRegion_lwk]
+
+theorem TCFG.coe_toCFG_lwk (ρ : ℕ → ℕ) (G : TCFG φ)
+  : (G.lwk ρ : CFG φ) = (G : CFG φ).lwk ρ := toCFG_lwk ρ G
 
 end Weakening
 

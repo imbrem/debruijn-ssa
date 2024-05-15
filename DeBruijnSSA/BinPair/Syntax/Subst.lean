@@ -463,6 +463,9 @@ def lsubst (σ : Subst φ) : Terminator φ → Terminator φ
 theorem lsubst_id (t : Terminator φ) : t.lsubst Subst.id = t
   := by induction t <;> simp [*]
 
+@[simp]
+theorem lsubst_id' (t : Terminator φ) : t.lsubst (λi => Terminator.br i (Term.var 0)) = t
+  := t.lsubst_id
 
 /-- Create a substitution from a label renaming -/
 def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Terminator.br (ρ n) (Term.var 0)
