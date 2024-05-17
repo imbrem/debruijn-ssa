@@ -1,6 +1,6 @@
 import Discretion.Wk.Fun
 
-namespace BinPair
+namespace BinSyntax
 
 /-! ### Basic syntax definitions
 

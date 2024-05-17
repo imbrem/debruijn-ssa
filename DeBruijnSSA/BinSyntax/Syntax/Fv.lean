@@ -1,11 +1,11 @@
 import Discretion.Wk.Fun
 import Discretion.Wk.Multiset
-import DeBruijnSSA.BinPair.Syntax.Definitions
+import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import Discretion.Wk.Multiset
 
-import DeBruijnSSA.BinPair.Syntax.Subst
+import DeBruijnSSA.BinSyntax.Syntax.Subst
 
-namespace BinPair
+namespace BinSyntax
 
 /-! ### Free variables and labels
 
@@ -100,6 +100,9 @@ def Block.fv (β : Block φ) : Multiset ℕ := β.body.fv + β.terminator.fv.lif
 theorem Block.fv_vwk (ρ : ℕ → ℕ) (β : Block φ) : (β.vwk ρ).fv = β.fv.map ρ := by
   simp [Terminator.fv_vwk, Body.fv_wk, Body.num_defs_wk]
 
+theorem Block.fv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).fv = β.fv := by
+  simp [Terminator.fv_lwk]
+
 /-- The highest free variable in this basic block, plus one -/
 @[simp]
 def Block.fvi (β : Block φ) : ℕ := Nat.max β.body.fvi (β.terminator.fvi - β.body.num_defs)
@@ -110,6 +113,9 @@ def Block.fl (β : Block φ) : Multiset ℕ := β.terminator.fl
 
 theorem Block.fl_vwk (ρ : ℕ → ℕ) (β : Block φ) : (β.vwk ρ).fl = β.fl := by
   simp [Terminator.fl_vwk]
+
+theorem Block.fl_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).fl = β.fl.map ρ := by
+  simp [Terminator.fl_lwk]
 
 /-- The highest free label in this basic block, plus one -/
 @[simp]
@@ -213,7 +219,7 @@ theorem Terminator.fl_vsubst (σ : Term.Subst φ) (r : Terminator φ) : (r.vsubs
 
 end Subst
 
-end BinPair
+end BinSyntax
 
 /-
 TODO CORNER:

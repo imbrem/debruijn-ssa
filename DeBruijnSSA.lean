@@ -1,3 +1,3 @@
-import DeBruijnSSA.BinPair.Syntax
-import DeBruijnSSA.BinPair.Typing
-import DeBruijnSSA.BinPair.Subst
+import DeBruijnSSA.BinSyntax.Syntax
+import DeBruijnSSA.BinSyntax.Typing
+import DeBruijnSSA.BinSyntax.Subst

@@ -1,6 +1,7 @@
-import DeBruijnSSA.BinPair.Typing
+import DeBruijnSSA.BinSyntax.Syntax.Compose
+import DeBruijnSSA.BinSyntax.Typing
 
-namespace BinPair
+namespace BinSyntax
 
 section Body
 
@@ -48,4 +49,4 @@ def Block.WfD.ltimes {Γ Δ Ξ : Ctx α ε} {b : Body φ} {β : Block φ}
 
 end Body
 
-end BinPair
+end BinSyntax

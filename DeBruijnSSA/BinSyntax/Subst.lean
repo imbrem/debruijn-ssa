@@ -1,6 +1,7 @@
-import DeBruijnSSA.BinPair.Typing
+import DeBruijnSSA.BinSyntax.Typing
+import DeBruijnSSA.BinSyntax.Syntax.Subst
 
-namespace BinPair
+namespace BinSyntax
 
 section Subst
 
@@ -157,4 +158,4 @@ def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) :
 
 end TerminatorSubst
 
-end BinPair
+end BinSyntax

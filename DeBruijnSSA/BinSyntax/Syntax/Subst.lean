@@ -2,9 +2,9 @@ import Discretion.Wk.Fun
 import Discretion.Wk.Multiset
 import Discretion.Wk.Multiset
 
-import DeBruijnSSA.BinPair.Syntax.Definitions
+import DeBruijnSSA.BinSyntax.Syntax.Definitions
 
-namespace BinPair
+namespace BinSyntax
 
 /-! ### Term substitutions
  -/
@@ -742,4 +742,4 @@ def CFG.lsubst (σ : Region.Subst φ) (G : CFG φ) : CFG φ where
   length := G.length
   targets := λ i => (G.targets i).lsubst σ
 
-end BinPair
+end BinSyntax
