@@ -58,7 +58,7 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
         . rename_i H; simp_arith at H
         . split
           . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [<-Term.wk_comp]
+          . simp only [<-Term.wk_wk]
             apply congr
             apply congrArg
             funext v
@@ -142,7 +142,7 @@ theorem subst_liftn (n : ℕ) (σ : Subst φ) (t : Term φ)
       . simp [Nat.liftnWk, *]
       . rename_i H C; exact (C (Nat.le_step H)).elim
     . rename_i C
-      simp_arith only [ite_false, <-wk_comp]
+      simp_arith only [ite_false, <-wk_wk]
       apply congr
       . apply congrArg
         funext v
@@ -419,7 +419,7 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
         . rename_i H; simp_arith at H
         . split
           . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [<-Terminator.lwk_comp]
+          . simp only [<-Terminator.lwk_lwk]
             apply congr
             apply congrArg
             funext v
@@ -469,7 +469,7 @@ theorem Subst.vlift_lift_comm (σ : Subst σ) : σ.lift.vlift = σ.vlift.lift :=
   funext n
   cases n with
   | zero => rfl
-  | succ n => simp [Subst.vlift, lift]; sorry
+  | succ n => simp [Subst.vlift, lift, vwk_lwk]
 
 theorem Subst.vlift_lift_comp_comm : Subst.vlift ∘ (@Subst.lift φ) = Subst.lift ∘ Subst.vlift
   := funext Subst.vlift_lift_comm
@@ -541,7 +541,7 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Terminator φ)
       rw [Nat.succ_eq_add_one]
       have h : ℓ - n + 1 + n - (n + 1) = ℓ - n := by
         rw [Nat.add_assoc, Nat.add_comm 1 n, Nat.add_sub_cancel]
-      rw [h, Terminator.vsubst_lwk_comm, <-lwk_comp]
+      rw [h, Terminator.vsubst_lwk_comm, <-lwk_lwk]
       congr
       funext n
       simp_arith [Nat.liftnWk]
@@ -575,7 +575,7 @@ theorem Subst.vlift_comp_liftWk_stepn (σ : Subst φ) (n)
     simp only [vlift, <-Function.comp.assoc]
     apply congrArg₂
     funext i
-    simp only [Function.comp_apply, ←vwk_comp]
+    simp only [Function.comp_apply, <-vwk_vwk]
     apply congrArg₂
     funext i
     simp only [Function.comp_apply, Nat.liftWk]
@@ -717,7 +717,7 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
         . rename_i H; simp_arith at H
         . split
           . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [<-Region.lwk_comp]
+          . simp only [<-Region.lwk_lwk]
             apply congr
             apply congrArg
             funext v
