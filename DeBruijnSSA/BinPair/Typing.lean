@@ -14,40 +14,46 @@ variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε
 
 inductive Ty (α : Type u) where
   | base : α → Ty α
-  | pair : Ty α → Ty α → Ty α
+  | prod : Ty α → Ty α → Ty α
+  | coprod : Ty α → Ty α → Ty α
   | unit : Ty α
-  | bool : Ty α
   deriving Repr, DecidableEq
 
 inductive Ty.LE : Ty α → Ty α → Prop where
   | base {x y} : x ≤ y → LE (base x) (base y)
-  | pair {x₁ x₂ y₁ y₂} : LE x₁ y₁ → LE x₂ y₂ → LE (pair x₁ x₂) (pair y₁ y₂)
+  | prod {x₁ x₂ y₁ y₂} : LE x₁ y₁ → LE x₂ y₂ → LE (prod x₁ x₂) (prod y₁ y₂)
+  | coprod {x₁ x₂ y₁ y₂} : LE x₁ y₁ → LE x₂ y₂ → LE (coprod x₁ x₂) (coprod y₁ y₂)
   | unit : LE unit unit
-  | bool : LE bool bool
 
-theorem Ty.LE.pair_left {A A' B B' : Ty α} (h : LE (Ty.pair A B) (Ty.pair A' B')) : LE A A'
+theorem Ty.LE.prod_left {A A' B B' : Ty α} (h : LE (Ty.prod A B) (Ty.prod A' B')) : LE A A'
   := by cases h; assumption
 
-theorem Ty.LE.pair_right {A A' B B' : Ty α} (h : LE (Ty.pair A B) (Ty.pair A' B')) : LE B B'
+theorem Ty.LE.prod_right {A A' B B' : Ty α} (h : LE (Ty.prod A B) (Ty.prod A' B')) : LE B B'
+  := by cases h; assumption
+
+theorem Ty.LE.coprod_left {A A' B B' : Ty α} (h : LE (Ty.coprod A B) (Ty.coprod A' B')) : LE A A'
+  := by cases h; assumption
+
+theorem Ty.LE.coprod_right {A A' B B' : Ty α} (h : LE (Ty.coprod A B) (Ty.coprod A' B')) : LE B B'
   := by cases h; assumption
 
 theorem Ty.LE.refl : ∀{A : Ty α}, LE A A
   | Ty.base x => base (le_refl x)
-  | Ty.pair _ _ => pair refl refl
+  | Ty.prod _ _ => prod refl refl
+  | Ty.coprod _ _ => coprod refl refl
   | Ty.unit => unit
-  | Ty.bool => bool
 
 theorem Ty.LE.trans : ∀{A B C : Ty α}, LE A B → LE B C → LE A C
   | _, _, _, base h, base h' => base (le_trans h h')
-  | _, _, _, pair h₁ h₂, pair h₁' h₂' => pair (h₁.trans h₁') (h₂.trans h₂')
+  | _, _, _, prod h₁ h₂, prod h₁' h₂' => prod (h₁.trans h₁') (h₂.trans h₂')
+  | _, _, _, coprod h₁ h₂, coprod h₁' h₂' => coprod (h₁.trans h₁') (h₂.trans h₂')
   | _, _, _, unit, unit => unit
-  | _, _, _, bool, bool => bool
 
 theorem Ty.LE.antisymm : ∀{A B : Ty α}, LE A B → LE B A → A = B
   | _, _, base h, base h' => by rw [le_antisymm h h']
-  | _, _, pair h₁ h₂, pair h₁' h₂' => by rw [Ty.LE.antisymm h₁ h₁', Ty.LE.antisymm h₂ h₂']
+  | _, _, prod h₁ h₂, prod h₁' h₂' => by rw [Ty.LE.antisymm h₁ h₁', Ty.LE.antisymm h₂ h₂']
+  | _, _, coprod h₁ h₂, coprod h₁' h₂' => by rw [Ty.LE.antisymm h₁ h₁', Ty.LE.antisymm h₂ h₂']
   | _, _, unit, unit => rfl
-  | _, _, bool, bool => rfl
 
 instance : PartialOrder (Ty α) where
   le := Ty.LE
@@ -57,8 +63,9 @@ instance : PartialOrder (Ty α) where
 
 theorem Ty.LE.eq [d : DiscreteOrder α] {A B : Ty α} : LE A B → A = B
   | base h => by rw [d.le_eq _ _ h]
-  | pair h₁ h₂ => by rw [eq h₁, eq h₂]
-  | bool | unit => rfl
+  | prod h₁ h₂ => by rw [eq h₁, eq h₂]
+  | coprod h₁ h₂ => by rw [eq h₁, eq h₂]
+  | unit => rfl
 
 instance [DiscreteOrder α] : DiscreteOrder (Ty α) where
   le_eq _ _ := Ty.LE.eq
@@ -98,9 +105,10 @@ def FCtx (α ε) := Σn, Fin n → Ty α × ε
 inductive Term.Wf : Ctx α ε → Term φ → Ty α × ε → Prop
   | var : Γ.Var n V → Wf Γ (var n) V
   | op : Φ.Fn f A B e → Wf Γ a ⟨A, e⟩ → Wf Γ (op f a) ⟨B, e⟩
-  | pair : Wf Γ a ⟨A, e⟩ → Wf Γ b ⟨B, e⟩ → Wf Γ (pair a b) ⟨(Ty.pair A B), e⟩
+  | pair : Wf Γ a ⟨A, e⟩ → Wf Γ b ⟨B, e⟩ → Wf Γ (pair a b) ⟨(Ty.prod A B), e⟩
+  | inl : Wf Γ a ⟨A, e⟩ → Wf Γ (inl a) ⟨(Ty.coprod A B), e⟩
+  | inr : Wf Γ b ⟨B, e⟩ → Wf Γ (inr b) ⟨(Ty.coprod A B), e⟩
   | unit (e) : Wf Γ unit ⟨Ty.unit, e⟩
-  | bool (b e) : Wf Γ (bool b) ⟨Ty.bool, e⟩
 
 theorem Term.Wf.to_var {Γ : Ctx α ε} {n V} (h : Wf Γ (@Term.var φ n) V)
   : Γ.Var n V := by cases h; assumption
@@ -131,11 +139,17 @@ theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV
     constructor
     exact Il ⟨by assumption, hV.right⟩
     exact Ir ⟨by assumption, hV.right⟩
-  | unit =>
+  | inl _ I =>
     cases V'
     cases hV.left
     constructor
-  | bool b e =>
+    exact I ⟨by assumption, hV.right⟩
+  | inr _ I =>
+    cases V'
+    cases hV.left
+    constructor
+    exact I ⟨by assumption, hV.right⟩
+  | unit =>
     cases V'
     cases hV.left
     constructor
@@ -149,20 +163,21 @@ theorem Term.Wf.to_op {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ (Term.op f a
   : Wf Γ a ⟨Φ.src f, V.2⟩ := h.to_op' (le_refl _)
 
 theorem Term.Wf.to_left {Γ : Ctx α ε} {a b : Term φ}
-  (h : Wf Γ (Term.pair a b) ⟨Ty.pair A B, e⟩)
+  (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
   : Wf Γ a ⟨A, e⟩ := by cases h with | pair ha _ => exact ha
 
 theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
-  (h : Wf Γ (Term.pair a b) ⟨Ty.pair A B, e⟩)
+  (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
   : Wf Γ b ⟨B, e⟩ := by cases h with | pair _ hb => exact hb
 
 /-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | var : Γ.Var n V → WfD Γ (var n) V
   | op : Φ.Fn f A B e → WfD Γ a ⟨A, e⟩ → WfD Γ (op f a) ⟨B, e⟩
-  | pair : WfD Γ a ⟨A, e⟩ → WfD Γ b ⟨B, e⟩ → WfD Γ (pair a b) ⟨(Ty.pair A B), e⟩
+  | pair : WfD Γ a ⟨A, e⟩ → WfD Γ b ⟨B, e⟩ → WfD Γ (pair a b) ⟨(Ty.prod A B), e⟩
+  | inl : WfD Γ a ⟨A, e⟩ → WfD Γ (inl a) ⟨(Ty.coprod A B), e⟩
+  | inr : WfD Γ b ⟨B, e⟩ → WfD Γ (inr b) ⟨(Ty.coprod A B), e⟩
   | unit (e) : WfD Γ unit ⟨Ty.unit, e⟩
-  | bool (b e) : WfD Γ (bool b) ⟨Ty.bool, e⟩
 
 def Term.WfD.cast_term {Γ : Ctx α ε} {a a' : Term φ} {V} (h : WfD Γ a V) (ha : a = a') : WfD Γ a' V
   := ha ▸ h
@@ -195,66 +210,70 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
   | var dv => Wf.var dv
   | op df de => Wf.op df de.toWf
   | pair dl dr => Wf.pair dl.toWf dr.toWf
+  | inl dl => Wf.inl dl.toWf
+  | inr dr => Wf.inr dr.toWf
   | unit e => Wf.unit e
-  | bool b e => Wf.bool b e
 
-/-- Infer the type of a term; pun with infimum -/
-def Term.infTy (Γ : Ctx α ε) : Term φ → Ty α
-  | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
-  | op f _ => Φ.trg f
-  | pair a b => Ty.pair (a.infTy Γ) (b.infTy Γ)
-  | unit => Ty.unit
-  | bool _ => Ty.bool
+-- /-- Infer the type of a term; pun with infimum -/
+-- def Term.infTy (Γ : Ctx α ε) : Term φ → Ty α
+--   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
+--   | op f _ => Φ.trg f
+--   | pair a b => Ty.prod (a.infTy Γ) (b.infTy Γ)
+--   | inl a => Ty.coprod (a.infTy Γ) Ty.unit
+--   | inr b => Ty.coprod Ty.unit (b.infTy Γ)
+--   | unit => Ty.unit
 
-theorem Term.WfD.infTy_le {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infTy Γ ≤ A
-  := match h with
-  | var dv => by simp [infTy, dv.length, dv.get.left]
-  | op df de => df.trg
-  | pair dl dr => Ty.LE.pair dl.infTy_le dr.infTy_le
-  | unit _ | bool _ _ => le_refl _
+-- theorem Term.WfD.infTy_le {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infTy Γ ≤ A
+--   := match h with
+--   | var dv => by simp [infTy, dv.length, dv.get.left]
+--   | op df de => df.trg
+--   | prod dl dr => Ty.LE.prod dl.infTy_le dr.infTy_le
+--   | unit _ | bool _ _ => le_refl _
 
-def Term.WfD.toInfTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨a.infTy Γ, e⟩
-  := match h with
-  | var dv => var (by
-    constructor <;> simp only [infTy, dv.length, ↓reduceDite]
-    exact ⟨le_refl _, dv.get.2⟩
-    )
-  | op df de => op ⟨df.src, le_refl _, df.effect⟩ de
-  | pair dl dr => pair (dl.toInfTy) (dr.toInfTy)
-  | unit e => unit e
-  | bool b e => bool b e
+-- def Term.WfD.toInfTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨a.infTy Γ, e⟩
+--   := match h with
+--   | var dv => var (by
+--     constructor <;> simp only [infTy, dv.length, ↓reduceDite]
+--     exact ⟨le_refl _, dv.get.2⟩
+--     )
+--   | op df de => op ⟨df.src, le_refl _, df.effect⟩ de
+--   | prod dl dr => prod (dl.toInfTy) (dr.toInfTy)
+--   | unit e => unit e
+--   | bool b e => bool b e
 
 /-- Infer the effect of a term; pun with infimum -/
 def Term.infEffect [Sup ε] (Γ : Ctx α ε) : Term φ → ε
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
   | op f _ => Φ.effect f
   | pair a b => a.infEffect Γ ⊔ b.infEffect Γ
+  | inl a => a.infEffect Γ
+  | inr b => b.infEffect Γ
   | unit => ⊥
-  | bool _ => ⊥
 
 -- TODO: WfD ==> Wf
 
 -- TODO: Wf ==> ∃WfD
 
-def Term.Wf.toWfD
-  {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : WfD Γ a V
-  := match a, V, h with
-  | Term.var _, _, h => WfD.var h.to_var
-  | Term.op _ _, _, h => WfD.op h.to_fn h.to_op.toWfD
-  | Term.pair _ _, ⟨Ty.pair _ _, _⟩, h => WfD.pair h.to_left.toWfD h.to_right.toWfD
-  | Term.unit, ⟨Ty.unit, _⟩, _ => WfD.unit _
-  | Term.bool _, ⟨Ty.bool, _⟩, _ => WfD.bool _ _
+-- def Term.Wf.toWfD
+--   {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : WfD Γ a V
+--   := match a, V, h with
+--   | Term.var _, _, h => WfD.var h.to_var
+--   | Term.op _ _, _, h => WfD.op h.to_fn h.to_op.toWfD
+--   | Term.pair _ _, ⟨Ty.prod _ _, _⟩, h => WfD.pair h.to_left.toWfD h.to_right.toWfD
+--   | Term.inl _, _, h => WfD.inl h.to_left.toWfD
+--   | Term.inr _, _, h => WfD.inr h.to_right.toWfD
+--   | Term.unit, ⟨Ty.unit, _⟩, _ => WfD.unit _
 
-theorem Term.wf_iff_wfD
-  {Γ : Ctx α ε} {a : Term φ} {V} : Wf Γ a V ↔ Nonempty (WfD Γ a V)
-  := ⟨Nonempty.intro ∘ Wf.toWfD, λ⟨h⟩ => h.toWf⟩
+-- theorem Term.wf_iff_wfD
+--   {Γ : Ctx α ε} {a : Term φ} {V} : Wf Γ a V ↔ Nonempty (WfD Γ a V)
+--   := ⟨Nonempty.intro ∘ Wf.toWfD, λ⟨h⟩ => h.toWf⟩
 
 -- TODO: for a discrete order on α, WfD unique
 
 inductive Body.WfD : Ctx α ε → Body φ → Ctx α ε → Type _
   | nil : WfD Γ nil []
   | let1 : a.WfD Γ ⟨A, e⟩ → b.WfD (⟨A, ⊥⟩::Γ) Δ → (let1 a b).WfD Γ (⟨A, ⊥⟩::Δ)
-  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩
     → b.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
     → (let2 a b).WfD Γ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ)
 
@@ -270,7 +289,7 @@ def Body.WfD.cast_body {Γ : Ctx α ε} {b b' : Body φ} {Δ} (h : b.WfD Γ Δ) 
 inductive Body.Wf : Ctx α ε → Body φ → Ctx α ε → Prop
   | nil : Wf Γ nil []
   | let1 : a.Wf Γ ⟨A, e⟩ → b.Wf (⟨A, ⊥⟩::Γ) Δ → (let1 a b).Wf Γ (⟨A, ⊥⟩::Δ)
-  | let2 : a.Wf Γ ⟨(Ty.pair A B), e⟩
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩
     → b.Wf (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) Δ
     → (let2 a b).Wf Γ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ)
 
@@ -310,7 +329,7 @@ theorem Body.Wf.of_let1_tail {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
   := by cases h; assumption
 
 theorem Body.Wf.exists_of_let2_binding {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
-  (h : Wf Γ (Body.let2 a b) Δ) : ∃A B e, a.Wf Γ ⟨Ty.pair A B, e⟩
+  (h : Wf Γ (Body.let2 a b) Δ) : ∃A B e, a.Wf Γ ⟨Ty.prod A B, e⟩
   := by cases h; exact ⟨_, _, _, by assumption⟩
 
 theorem Body.Wf.exists_trg_of_let2 {Γ : Ctx α ε} {a : Term φ} {b} {Δ}
@@ -362,7 +381,10 @@ def FLCtx (α) := Σn, Fin n → Ty α
 
 inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
-  | ite : e.WfD Γ ⟨Ty.bool, ⊥⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  | case : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩
+    → s.WfD (⟨A, ⊥⟩::Γ) L
+    → t.WfD (⟨B, ⊥⟩::Γ) L
+    → WfD Γ (case e s t) L
 
 structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
@@ -376,7 +398,7 @@ inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
@@ -384,9 +406,12 @@ inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
-  | ite : e.WfD Γ ⟨Ty.bool, ⊥⟩ → s.WfD Γ L → t.WfD Γ L → WfD Γ (ite e s t) L
+  | case : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩
+    → s.WfD (⟨A, ⊥⟩::Γ) L
+    → t.WfD (⟨B, ⊥⟩::Γ) L
+    → WfD Γ (case e s t) L
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.pair A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
@@ -438,6 +463,10 @@ theorem Ctx.Wkn.slift (V : Ty α × ε) (h : Γ.Wkn Δ ρ)
 theorem Ctx.Wkn.lift_id {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ _root_.id)
   : Wkn (V::Γ) (V'::Δ) _root_.id
   := Nat.liftWk_id ▸ h.lift hV
+
+theorem Ctx.Wkn.slift_id (V : Ty α × ε) (h : Γ.Wkn Δ _root_.id)
+  : Wkn (V::Γ) (V::Δ) _root_.id
+  := h.lift_id (le_refl _)
 
 theorem Ctx.Wkn.step {V : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (V::Γ) Δ (Nat.stepWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
@@ -507,17 +536,19 @@ def Term.WfD.wk_eff {a : Term φ} {A e} (h : e ≤ e') : WfD Γ a ⟨A, e⟩ →
   | var dv => var (dv.wk_eff h)
   | op df de => op (df.wk_eff h) (de.wk_eff h)
   | pair dl dr => pair (dl.wk_eff h) (dr.wk_eff h)
+  | inl dl => inl (dl.wk_eff h)
+  | inr dr => inr (dr.wk_eff h)
   | unit e => unit e'
-  | bool b e => bool b e'
 
 /-- Weaken the type of a term derivation -/
 def Term.WfD.wk_ty {a : Term φ} {A e} (h : A ≤ A') (da : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨A', e⟩
   := match da, A', h with
   | var dv, _, h => var (dv.wk_ty h)
   | op df de, _, h => op (df.wk_trg h) de
-  | pair dl dr, Ty.pair A B, h => pair (dl.wk_ty h.pair_left) (dr.wk_ty h.pair_right)
+  | pair dl dr, Ty.prod A B, h => pair (dl.wk_ty h.prod_left) (dr.wk_ty h.prod_right)
+  | inl dl, Ty.coprod A B, h => inl (dl.wk_ty h.coprod_left)
+  | inr dr, Ty.coprod A B, h => inr (dr.wk_ty h.coprod_right)
   | unit e, Ty.unit, h => unit e
-  | bool b e, Ty.bool, h => bool b e
 
 /-- Weaken the result of a term derivation -/
 def Term.WfD.wk_res₂ {a : Term φ} (hA : A ≤ A') (he : e ≤ e') (da : WfD Γ a ⟨A, e⟩)
@@ -533,15 +564,17 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
   | var dv => var (dv.wk h)
   | op df de => op df (de.wk h)
   | pair dl dr => pair (dl.wk h) (dr.wk h)
+  | inl dl => inl (dl.wk h)
+  | inr dr => inr (dr.wk h)
   | unit e => unit e
-  | bool b e => bool b e
 
 def Term.WfD.wk_id {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → WfD Γ a ⟨A, e⟩
   | var dv => var (dv.wk h)
   | op df de => op df (de.wk_id h)
   | pair dl dr => pair (dl.wk_id h) (dr.wk_id h)
+  | inl dl => inl (dl.wk_id h)
+  | inr dr => inr (dr.wk_id h)
   | unit e => unit e
-  | bool b e => bool b e
 
 def Body.WfD.wk {Γ Δ : Ctx α ε} {ρ} {b : Body φ} (h : Γ.Wkn Δ ρ) : WfD Δ b Ξ → WfD Γ (b.wk ρ) Ξ
   | nil => nil
@@ -583,17 +616,20 @@ theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
   get := le_trans hK.get (h n hK.length).2
 
-def Terminator.WfD.vwk {t : Terminator φ} (h : Γ.Wkn Δ ρ) : WfD Δ t L → WfD Γ (t.vwk ρ) L
+def Terminator.WfD.vwk {Γ Δ : Ctx α ε} {ρ} {t : Terminator φ} (h : Γ.Wkn Δ ρ)
+  : WfD Δ t L → WfD Γ (t.vwk ρ) L
   | br hL ha => br hL (ha.wk h)
-  | ite he hs ht => ite (he.wk h) (hs.vwk h) (ht.vwk h)
+  | case he hs ht => case (he.wk h) (hs.vwk (h.slift _)) (ht.vwk (h.slift _))
 
-def Terminator.WfD.vwk_id {t : Terminator φ} (h : Γ.Wkn Δ id) : WfD Δ t L → WfD Γ t L
+def Terminator.WfD.vwk_id {Γ Δ : Ctx α ε} {t : Terminator φ} (h : Γ.Wkn Δ id)
+  : WfD Δ t L → WfD Γ t L
   | br hL ha => br hL (ha.wk_id h)
-  | ite he hs ht => ite (he.wk_id h) (hs.vwk_id h) (ht.vwk_id h)
+  | case he hs ht => case (he.wk_id h) (hs.vwk_id (h.slift_id _)) (ht.vwk_id (h.slift_id _))
 
-def Terminator.WfD.lwk {t : Terminator φ} (h : L.Wkn K ρ) : WfD Γ t L → WfD Γ (t.lwk ρ) K
+def Terminator.WfD.lwk {Γ : Ctx α ε} {t : Terminator φ} (h : L.Wkn K ρ)
+  : WfD Γ t L → WfD Γ (t.lwk ρ) K
   | br hL ha => br (hL.wk h) ha
-  | ite he hs ht => ite he (hs.lwk h) (ht.lwk h)
+  | case he hs ht => case he (hs.lwk h) (ht.lwk h)
 
 def Block.WfD.vwk {β : Block φ} (h : Γ.Wkn Δ ρ) (hβ : WfD Δ β Ξ L) : WfD Γ (β.vwk ρ) Ξ L where
   body := hβ.body.wk h
@@ -632,15 +668,15 @@ def TRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : TRe
 def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ r L → WfD Γ (r.vwk ρ) L
   | br hL ha => br hL (ha.wk h)
-  | ite he hs ht => ite (he.wk h) (hs.vwk h) (ht.vwk h)
-  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.lift (le_refl _)))
-  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.liftn₂ (le_refl _) (le_refl _)))
-  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.lift (le_refl _)))
+  | case he hs ht => case (he.wk h) (hs.vwk (h.slift _)) (ht.vwk (h.slift _))
+  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.slift _))
+  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.sliftn₂ _ _))
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.slift _))
 
 def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Region φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K
   | br hL ha => br (hL.wk h) ha
-  | ite he hs ht => ite he (hs.lwk h) (ht.lwk h)
+  | case he hs ht => case he (hs.lwk h) (ht.lwk h)
   | let1 ha ht => let1 ha (ht.lwk h)
   | let2 ha ht => let2 ha (ht.lwk h)
   | cfg n R hR hβ hG =>
@@ -659,13 +695,15 @@ theorem Term.WfD.minEffect_le
   | var dv => by simp [infEffect, dv.length, dv.get.right]
   | op df de => df.effect
   | pair dl dr => sup_le_iff.mpr ⟨dl.minEffect_le, dr.minEffect_le⟩
-  | unit _ | bool _ _ => bot_le
+  | inl dl => dl.minEffect_le
+  | inr dr => dr.minEffect_le
+  | unit _ => bot_le
 
-def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
-  | Body.nil => []
-  | Body.let1 a b => ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::Γ)
-  | Body.let2 a b =>
-    ⟨a.infTy Γ, ⊥⟩ :: ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::⟨a.infTy Γ, ⊥⟩::Γ)
+-- def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
+--   | Body.nil => []
+--   | Body.let1 a b => ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::Γ)
+--   | Body.let2 a b =>
+--     ⟨a.infTy Γ, ⊥⟩ :: ⟨a.infTy Γ, ⊥⟩ :: b.minDefs (⟨a.infTy Γ, ⊥⟩::⟨a.infTy Γ, ⊥⟩::Γ)
 
 -- TODO: ...
 -- def Body.Wf.toWfD {Γ : Ctx α ε} {b : Body φ} {Δ} (h : Wf Γ b Δ) : WfD Γ b Δ

@@ -53,8 +53,9 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
   | var h => Ctx.Var.subst hσ h
   | op df de => op df (de.subst hσ)
   | pair dl dr => pair (dl.subst hσ) (dr.subst hσ)
+  | inl d => inl (d.subst hσ)
+  | inr d => inr (d.subst hσ)
   | unit e => unit e
-  | bool b e => bool b e
 
 def Term.WfD.subst0 {a : Term φ} (ha : a.WfD Δ V) : a.subst0.WfD Δ (V::Δ)
   := λi => i.cases ha (λi => Term.WfD.var ⟨by simp, by simp⟩)
@@ -65,9 +66,10 @@ def Body.WfD.subst {Γ Δ : Ctx α ε} {σ} {b : Body φ} (hσ : σ.WfD Γ Δ)
   | let1 da dt => let1 (da.subst hσ) (dt.subst (hσ.slift _))
   | let2 da dt => let2 (da.subst hσ) (dt.subst (hσ.sliftn₂ _ _))
 
-def Terminator.WfD.vsubst {t : Terminator φ} (hσ : σ.WfD Γ Δ) : t.WfD Δ V → (t.vsubst σ).WfD Γ V
+def Terminator.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {t : Terminator φ} (hσ : σ.WfD Γ Δ)
+  : t.WfD Δ V → (t.vsubst σ).WfD Γ V
   | br hL ha => br hL (ha.subst hσ)
-  | ite he hs ht => ite (he.subst hσ) (hs.vsubst hσ) (ht.vsubst hσ)
+  | case he hs ht => case (he.subst hσ) (hs.vsubst (hσ.slift _)) (ht.vsubst (hσ.slift _))
 
 def Block.WfD.vsubst {b : Block φ} (hσ : σ.WfD Γ Δ) (hb : b.WfD Δ Ξ L) : (b.vsubst σ).WfD Γ Ξ L
   where
@@ -89,7 +91,7 @@ def TRegion.WfD.vsubst {Γ Δ : Ctx α ε} {σ}  {r : TRegion φ} (hσ : σ.WfD 
 def Region.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : Region φ} (hσ : σ.WfD Γ Δ)
   : r.WfD Δ L → (r.vsubst σ).WfD Γ L
   | br hL ha => br hL (ha.subst hσ)
-  | ite he hs ht => ite (he.subst hσ) (hs.vsubst hσ) (ht.vsubst hσ)
+  | case he hs ht => case (he.subst hσ) (hs.vsubst (hσ.slift _)) (ht.vsubst (hσ.slift _))
   | let1 da dt => let1 (da.subst hσ) (dt.vsubst (hσ.slift _))
   | let2 da dt => let2 (da.subst hσ) (dt.vsubst (hσ.sliftn₂ _ _))
   | cfg n R hR hr hG => cfg n R hR (hr.vsubst hσ) (λi => (hG i).vsubst (hσ.slift _))
@@ -138,9 +140,10 @@ def LCtx.Trg.subst0
   : ((σ n).vsubst a.subst0).WfD Γ K
   := (h.subst hσ).vsubst ha.subst0
 
-def Terminator.WfD.lsubst {t : Terminator φ} (hσ : σ.WfD Γ L K) : t.WfD Γ L → (t.lsubst σ).WfD Γ K
+def Terminator.WfD.lsubst {Γ : Ctx α ε} {σ} {t : Terminator φ} (hσ : σ.WfD Γ L K)
+  : t.WfD Γ L → (t.lsubst σ).WfD Γ K
   | br hL ha => hL.subst0 hσ ha
-  | ite he hs ht => ite he (hs.lsubst hσ) (ht.lsubst hσ)
+  | case he hs ht => case he (hs.lsubst (hσ.vlift _)) (ht.lsubst (hσ.vlift _))
 
 def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) : (b.lsubst σ).WfD Γ Ξ K
   where

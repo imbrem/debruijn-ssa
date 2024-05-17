@@ -100,7 +100,8 @@ def subst (σ : Subst φ) : Term φ → Term φ
 | op f x => op f (subst σ x)
 | pair x y => pair (subst σ x) (subst σ y)
 | unit => unit
-| bool b => bool b
+| inl a => inl (subst σ a)
+| inr a => inr (subst σ a)
 
 @[simp]
 theorem subst_id (t : Term φ) : t.subst Subst.id = t := by induction t <;> simp [*]
@@ -240,7 +241,7 @@ theorem Body.num_defs_subst (σ : Term.Subst φ) (b : Body φ)
 @[simp]
 def Terminator.vsubst (σ : Term.Subst φ) : Terminator φ → Terminator φ
   | br n e => br n (e.subst σ)
-  | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
+  | case e s t => case (e.subst σ) (vsubst σ.lift s) (vsubst σ.lift t)
 
 @[simp]
 theorem Terminator.vsubst_id (r : Terminator φ) : r.vsubst Term.Subst.id = r := by
@@ -253,7 +254,8 @@ theorem Terminator.vsubst_comp (σ τ : Term.Subst φ) (r : Terminator φ)
 
 theorem Terminator.vsubst_wk (ρ : ℕ -> ℕ) (r : Terminator φ)
   : r.vsubst (Term.Subst.fromWk ρ) = r.vwk ρ := by
-  induction r <;> simp [Term.subst_wk, Term.Subst.fromWk_liftn, *]
+  induction r generalizing ρ
+  <;> simp [Term.subst_wk, Term.Subst.fromWk_liftn, Term.Subst.fromWk_lift, *]
 
 @[simp]
 theorem Terminator.vwk_succ_vsubst_subst0 (t : Terminator φ) (s : Term φ)
@@ -334,7 +336,7 @@ theorem TCFG.vsubst_comp (σ τ : Term.Subst φ) (cfg : TCFG φ)
 @[simp]
 def Region.vsubst (σ : Term.Subst φ) : Region φ → Region φ
   | br n e => br n (e.subst σ)
-  | ite e s t => ite (e.subst σ) (vsubst σ s) (vsubst σ t)
+  | case e s t => case (e.subst σ) (vsubst σ.lift s) (vsubst σ.lift t)
   | let1 e t => let1 (e.subst σ) (vsubst σ.lift t)
   | let2 e t => let2 (e.subst σ) (vsubst (σ.liftn 2) t)
   | cfg β n f => cfg (vsubst σ β) n (λ i => (f i).vsubst σ.lift)
@@ -449,6 +451,13 @@ theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk
 def Subst.vlift (σ : Subst φ) : Subst φ
   := Terminator.vwk (Nat.liftWk Nat.succ) ∘ σ
 
+@[simp]
+theorem Subst.vlift_id : (@id φ).vlift = id := by funext v; cases v <;> rfl
+
+-- TODO: vliftn is iterate vlift
+
+-- TODO: vliftn id is id
+
 /-- Lift a substitution under `n` variable binders -/
 def Subst.vliftn (n : ℕ) (σ : Subst φ) : Subst φ
   := Terminator.vwk (Nat.liftWk (λi => i + n)) ∘ σ
@@ -457,7 +466,7 @@ def Subst.vliftn (n : ℕ) (σ : Subst φ) : Subst φ
 @[simp]
 def lsubst (σ : Subst φ) : Terminator φ → Terminator φ
   | Terminator.br n e => (σ n).vsubst e.subst0
-  | Terminator.ite e s t => Terminator.ite e (lsubst σ s) (lsubst σ t)
+  | Terminator.case e s t => Terminator.case e (lsubst σ.vlift s) (lsubst σ.vlift t)
 
 @[simp]
 theorem lsubst_id (t : Terminator φ) : t.lsubst Subst.id = t
@@ -469,6 +478,10 @@ theorem lsubst_id' (t : Terminator φ) : t.lsubst (λi => Terminator.br i (Term.
 
 /-- Create a substitution from a label renaming -/
 def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Terminator.br (ρ n) (Term.var 0)
+
+@[simp]
+theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := by
+  funext n; cases n <;> rfl
 
 @[simp]
 theorem Subst.fromLwk_apply (ρ : ℕ -> ℕ) (n : ℕ)
@@ -486,7 +499,7 @@ theorem Subst.fromLwk_liftn (n ρ) : (@fromLwk φ ρ).liftn n = fromLwk (Nat.lif
 
 theorem lsubst_lwk (ρ : ℕ -> ℕ) (t : Terminator φ)
   : t.lsubst (Subst.fromLwk ρ) = t.lwk ρ := by
-  induction t <;> simp [Terminator.lsubst, Terminator.lwk, Term.subst_wk, *]
+  induction t generalizing ρ <;> simp [Terminator.lsubst, Terminator.lwk, Term.subst_wk, *]
 
 theorem lsubst_liftn (n : ℕ) (σ : Subst α) (t : Terminator α)
     : (t.lwk (Nat.liftnWk n Nat.succ)).lsubst (σ.liftn (n + 1))
@@ -506,10 +519,11 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst α) (t : Terminator α)
       rw [h]
       -- TODO: factor out as lemma
       generalize σ (ℓ - n) = t'
+      stop
       induction t' with
       | br ℓ' e' => simp_arith [Nat.liftnWk]
       | _ => simp [*]
-  | _ => simp [*]
+  | _ => sorry--simp [*]
 
 theorem lsubst_iterate_lift (n : ℕ) (σ : Subst α) (t : Terminator α)
   : (t.lwk (Nat.liftWk^[n] Nat.succ)).lsubst (Subst.lift^[n + 1] σ)
@@ -530,11 +544,8 @@ theorem Subst.comp_id (σ : Subst α) : σ.comp Subst.id = σ := by
   rw [<-Terminator.vsubst_wk, <-Terminator.vsubst_comp]
   simp
 
-theorem Subst.id_comp (σ : Subst α) : Subst.id.comp σ = σ := by
-  funext n;
-  simp only [comp]
-  generalize σ n = t
-  induction t <;> simp [*]
+@[simp]
+theorem Subst.id_comp (σ : Subst α) : Subst.id.comp σ = σ := by funext n; exact lsubst_id (σ n)
 
 theorem lsubst_comp (σ τ : Subst α) (t : Terminator α)
   : t.lsubst (σ.comp τ) = (t.lsubst τ).lsubst σ
@@ -550,14 +561,15 @@ theorem lsubst_comp (σ τ : Subst α) (t : Terminator α)
       -- TODO: factor out as lemma
       funext n
       cases n <;> rfl
-    | _ => simp [*]
-  | _ => simp only [lsubst, Subst.comp, *]
+    | _ => sorry--simp [*]
+  | _ => sorry--simp only [lsubst, Subst.comp, *]
 
 theorem Subst.lift_comp (σ τ : Subst α) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   funext n
   cases n with
   | zero => rfl
   | succ n =>
+    stop
     simp only [lift, comp, <-Terminator.lsubst_lwk, <-Terminator.lsubst_comp]
     congr
     funext n
@@ -700,15 +712,21 @@ theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk
 def Subst.vlift (σ : Subst φ) : Subst φ
   := Region.vwk (Nat.liftWk Nat.succ) ∘ σ
 
+theorem Subst.vlift_id : (@id φ).vlift = id := by funext v; cases v <;> rfl
+
 /-- Lift a substitution under `n` variable binders -/
 def Subst.vliftn (n : ℕ) (σ : Subst φ) : Subst φ
   := Region.vwk (Nat.liftWk (λi => i + n)) ∘ σ
+
+-- TODO: vliftn is iterate vlift
+
+-- TODO: vliftn id is id
 
 /-- Substitute the labels in a `Region` using `σ` -/
 @[simp]
 def lsubst (σ : Subst φ) : Region φ → Region φ
   | br n e => (σ n).vsubst e.subst0
-  | ite e s t => ite e (lsubst σ s) (lsubst σ t)
+  | case e s t => case e (lsubst σ.vlift s) (lsubst σ.vlift t)
   | let1 e t => let1 e (lsubst σ.vlift t)
   | let2 e t => let2 e (lsubst (σ.vliftn 2) t)
   | cfg β n f => cfg (lsubst (σ.liftn n) β) n (λ i => lsubst (σ.liftn n) (f i))
@@ -725,8 +743,3 @@ def CFG.lsubst (σ : Region.Subst φ) (G : CFG φ) : CFG φ where
   targets := λ i => (G.targets i).lsubst σ
 
 end BinPair
-
-/-
-TODO CORNER:
-- vlift lemmas
--/

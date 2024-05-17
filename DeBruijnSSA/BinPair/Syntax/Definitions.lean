@@ -15,7 +15,8 @@ inductive Term (φ : Type) where
   | op : φ → Term φ → Term φ
   | pair : Term φ → Term φ → Term φ
   | unit : Term φ
-  | bool : Bool → Term φ
+  | inl : Term φ → Term φ
+  | inr : Term φ → Term φ
 
 /-- Rename the variables in a `Term` using `ρ` -/
 @[simp]
@@ -24,7 +25,8 @@ def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
   | op f e => op f (wk ρ e)
   | pair l r => pair (wk ρ l) (wk ρ r)
   | unit => unit
-  | bool b => bool b
+  | inl a => inl (wk ρ a)
+  | inr a => inr (wk ρ a)
 
 /-- A basic block body, which consists of a sequence of variable definitions -/
 inductive Body (φ : Type) : Type
@@ -51,19 +53,19 @@ to one of two sub-terminators.
  -/
 inductive Terminator (φ : Type) : Type
   | br : Nat → Term φ → Terminator φ
-  | ite : Term φ → Terminator φ → Terminator φ → Terminator φ
+  | case : Term φ → Terminator φ → Terminator φ → Terminator φ
 
 /-- Rename the variables referenced in a `Terminator` using `ρ` -/
 @[simp]
 def Terminator.vwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
   | br n e => br n (e.wk ρ)
-  | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
+  | case e s t => case (e.wk ρ) (vwk (Nat.liftWk ρ) s) (vwk (Nat.liftWk ρ) t)
 
 /-- Rename the labels in a `Region` using `ρ` -/
 @[simp]
 def Terminator.lwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
   | br n e => br (ρ n) e
-  | ite e s t => ite e (lwk ρ s) (lwk ρ t)
+  | case e s t => case e (lwk ρ s) (lwk ρ t)
 
 /-- A basic block, which consists of a sequence of instructions followed by a terminator -/
 structure Block (φ : Type) : Type where
@@ -176,7 +178,7 @@ def TCFG.lwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
   form](https://en.wikipedia.org/wiki/A-normal_form) -/
 inductive Region (φ : Type) : Type
   | br : Nat → Term φ → Region φ
-  | ite : Term φ → Region φ → Region φ → Region φ
+  | case : Term φ → Region φ → Region φ → Region φ
   | let1 : Term φ → Region φ → Region φ
   | let2 : Term φ → Region φ → Region φ
   | cfg (β : Region φ) (n : Nat) : (Fin n → Region φ) → Region φ
@@ -185,7 +187,7 @@ inductive Region (φ : Type) : Type
 @[simp]
 def Terminator.toRegion : Terminator φ → Region φ
   | Terminator.br n e => Region.br n e
-  | Terminator.ite e s t => Region.ite e s.toRegion t.toRegion
+  | Terminator.case e s t => Region.case e s.toRegion t.toRegion
 
 theorem Terminator.toRegion_inj {t₁ t₂ : Terminator φ} : t₁.toRegion = t₂.toRegion ↔ t₁ = t₂ := by
   induction t₁ generalizing t₂ <;> cases t₂ <;> simp [*]
@@ -220,7 +222,7 @@ instance coeTRegionToRegion : Coe (TRegion φ) (Region φ) := ⟨TRegion.toRegio
 @[simp]
 def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | br n e => br n (e.wk ρ)
-  | ite e s t => ite (e.wk ρ) (vwk ρ s) (vwk ρ t)
+  | case e s t => case (e.wk ρ) (vwk (Nat.liftWk ρ) s) (vwk (Nat.liftWk ρ) t)
   | let1 e t => let1 (e.wk ρ) (vwk (Nat.liftWk ρ) t)
   | let2 e t => let2 (e.wk ρ) (vwk (Nat.liftnWk 2 ρ) t)
   | cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk (Nat.liftWk ρ))
@@ -229,7 +231,7 @@ def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
 @[simp]
 def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | br n e => br (ρ n) e
-  | ite e s t => ite e (lwk ρ s) (lwk ρ t)
+  | case e s t => case e (lwk ρ s) (lwk ρ t)
   | let1 e t => let1 e (lwk ρ t)
   | let2 e t => let2 e (lwk ρ t)
   | cfg β n f => cfg (lwk (Nat.liftnWk n ρ) β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
@@ -311,7 +313,7 @@ theorem Terminator.coe_toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.vwk ρ : Block φ) = (t : Block φ).vwk ρ := rfl
 
 theorem Terminator.toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
-  : (t.vwk ρ).toRegion = t.toRegion.vwk ρ := by induction t <;> simp [*]
+  : (t.vwk ρ).toRegion = t.toRegion.vwk ρ := by induction t generalizing ρ <;> simp [*]
 
 theorem Terminator.coe_toRegion_vwk (ρ : ℕ → ℕ) (t : Terminator φ)
   : (t.vwk ρ : Region φ) = (t : Region φ).vwk ρ := toRegion_vwk ρ t
