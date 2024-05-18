@@ -24,6 +24,12 @@ def Subst.lift (σ : Subst φ) : Subst φ
   | 0 => Term.var 0
   | n + 1 => (σ n).wk Nat.succ
 
+@[simp]
+theorem Subst.lift_zero (σ : Subst φ) : σ.lift 0 = Term.var 0 := rfl
+
+@[simp]
+theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).wk Nat.succ := rfl
+
 /-- Lift a substitution under `n` binders -/
 def Subst.liftn (n : ℕ) (σ : Subst φ) : Subst φ
   := λm => if m < n then Term.var m else (σ (m - n)).wk (λv => v + n)
@@ -94,8 +100,6 @@ theorem Subst.liftn_add (n m: ℕ) : Subst.liftn (m + n) = (@Subst.liftn α m) �
 
 theorem Subst.liftn_add_apply (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
   := by simp [liftn_add]
-
-theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).wk Nat.succ := rfl
 
 /-- Substitute the free variables in a `Term` using `σ` -/
 @[simp]
@@ -192,10 +196,15 @@ theorem Subst.comp_assoc (σ τ ρ : Subst φ) : (σ.comp τ).comp ρ = σ.comp 
   simp only [comp, Function.comp_apply, subst_comp]
 
 /-- Substitute a term for the smallest variable, bumping the rest downwards -/
-@[simp]
 def subst0 (t : Term φ) : Subst φ
   | 0 => t
   | n + 1 => var n
+
+@[simp]
+theorem subst0_zero (t : Term φ) : subst0 t 0 = t := rfl
+
+@[simp]
+theorem subst0_succ (t : Term φ) (n : ℕ) : subst0 t (n + 1) = var n := rfl
 
 @[simp]
 theorem wk_succ_comp_subst0 (e : Term φ) : e.subst0.comp (Subst.fromWk Nat.succ) = Subst.id
@@ -205,18 +214,70 @@ theorem wk_succ_comp_subst0 (e : Term φ) : e.subst0.comp (Subst.fromWk Nat.succ
 theorem wk_succ_subst_subst0 (e s : Term φ) : (e.wk Nat.succ).subst s.subst0 = e := by
   rw [<-subst_wk, <-subst_comp, wk_succ_comp_subst0, subst_id]
 
-/-- Substitute a term for the smallest variable, leaving the rest unchanged -/
-def alpha0 (t : Term φ) : Subst φ
-  | 0 => t
-  | n => var n
+/-- Substitute a term for the `n`th variable, bumping those above it downwards -/
+def substn (n : ℕ) (t : Term φ) : Subst φ := λm =>
+  if m < n then var m else if m = n then t else var (m - 1)
+
+theorem substn_zero (t : Term φ) : substn 0 t = subst0 t := by
+  funext n; cases n <;> rfl
+
+theorem substn_succ (n : ℕ) (t : Term φ)
+  : substn (n + 1) (t.wk Nat.succ) = (substn n t).lift := by
+  funext m
+  cases m with
+  | zero => simp [substn]
+  | succ m =>
+    simp only [substn, add_lt_add_iff_right, add_left_inj, add_tsub_cancel_right, Subst.lift]
+    split
+    case inl => rfl
+    case inr h =>
+      split
+      case inl => rfl
+      case inr h' =>
+        simp only [wk, Nat.succ_eq_add_one, var.injEq]
+        rw [Nat.sub_add_cancel]
+        exact Nat.succ_le_of_lt $ Nat.lt_of_le_of_lt
+          (Nat.zero_le n)
+          (Nat.lt_of_le_of_ne (Nat.le_of_not_lt h) (Ne.symm h'))
 
 @[simp]
-theorem wk_lift_succ_comp_subst0 (e : Term φ)
-  : e.subst0.comp (Subst.fromWk (Nat.liftWk Nat.succ)) = e.alpha0
+theorem substn_n (n : ℕ) (t : Term φ) : substn n t n = t := by simp [substn]
+
+theorem liftn_subst0 (n : ℕ) (t : Term φ) : t.subst0.liftn n = (t.wk (· + n)).substn n := by
+  induction n with
+  | zero => simp [substn_zero]
+  | succ n I =>
+    rw [Subst.liftn_succ, I]
+    have h : (· + (n + 1)) = Nat.succ ∘ (· + n) := by funext m; simp_arith
+    rw [h, Term.wk_wk, substn_succ]
+
+/-- Substitute a term for the `n`th variable, leaving the rest unchanged -/
+def alpha (n : ℕ) (t : Term φ) : Subst φ := Function.update Subst.id n t
+
+@[simp]
+theorem wk1_comp_subst0 (e : Term φ)
+  : e.subst0.comp (Subst.fromWk (Nat.wkn 1)) = e.alpha 0
   := by funext n; cases n <;> rfl
 
 @[simp]
-theorem alpha0_var0 : (var 0).alpha0 = @Subst.id φ := by funext n; cases n <;> rfl
+theorem wkn_comp_substn_succ (n : ℕ) (e : Term φ)
+  : (e.substn n).comp (Subst.fromWk (Nat.wkn (n + 1))) = e.alpha n := by
+  funext i
+  simp only [Subst.comp, subst, substn, Nat.wkn, alpha, Function.update, eq_rec_constant,
+    Subst.id_apply, dite_eq_ite, Nat.lt_succ_iff]
+  split
+  case inl h =>
+    split
+    case inl h' => simp [Nat.ne_of_lt h']
+    case inr h' => simp [Nat.le_antisymm h (Nat.le_of_not_lt h')]
+  case inr h =>
+    have c : ¬(i + 1 < n) := λc => h (Nat.le_of_lt (Nat.lt_trans (by simp) c))
+    have c' : i + 1 ≠ n := λc => by cases c; simp at h
+    have c'' : i ≠ n := λc => h (Nat.le_of_eq c)
+    simp [c, c', c'']
+
+@[simp]
+theorem alpha_var : (var n).alpha n = @Subst.id φ := by funext n; simp [alpha, Subst.id]
 
 end Term
 
@@ -557,7 +618,7 @@ theorem lsubst_lift (t : Terminator φ) (σ : Subst φ)
 
 /-- Compose two label-substitutions to yield another -/
 def Subst.comp (σ τ : Subst φ): Subst φ
-  | n => (τ n).lsubst (Terminator.vwk (Nat.liftWk Nat.succ) ∘ σ)
+  | n => (τ n).lsubst (Terminator.vwk (Nat.wkn 1) ∘ σ)
 
 @[simp]
 theorem Subst.comp_id (σ : Subst φ) : σ.comp Subst.id = σ := by
@@ -583,22 +644,26 @@ theorem Subst.vlift_comp_liftWk_stepn (σ : Subst φ) (n)
     rfl
     rfl
 
-theorem Subst.vlift_comp_liftWk_step (σ : Subst φ)
+theorem Subst.vlift_comp_liftWk_succ (σ : Subst φ)
   : vlift (vwk (Nat.liftWk Nat.succ) ∘ σ) = vwk (Nat.liftWk Nat.succ) ∘ σ.vlift
   := vlift_comp_liftWk_stepn σ 1
+
+theorem Subst.vlift_comp_wk1 (σ : Subst φ)
+  : vlift (vwk (Nat.wkn 1) ∘ σ) = vwk (Nat.wkn 1) ∘ σ.vlift
+  := Nat.wkn_one ▸ vlift_comp_liftWk_succ σ
 
 theorem Subst.vlift_comp (σ τ : Subst φ) : (σ.comp τ).vlift = σ.vlift.comp τ.vlift := by
   funext n
   simp only [vlift, Function.comp_apply, comp]
   generalize τ n = t
   induction t generalizing σ with
-  | br ℓ e => simp; sorry
+  | br ℓ e => simp [vlift_comp_liftWk_succ]; sorry
   | case e s t Is It => stop
     rw [lsubst, vwk, vlift_comp_liftWk_step, Is]
     sorry
 
 theorem vsubst_subst0_lsubst_wk1 (t : Terminator φ) (e : Term φ) (σ : Subst φ)
-  : (t.lsubst (vwk (Nat.liftWk Nat.succ) ∘ σ)).vsubst e.subst0
+  : (t.lsubst (vwk (Nat.wkn 1) ∘ σ)).vsubst e.subst0
   = (t.vsubst e.subst0).lsubst σ
   := sorry
 
