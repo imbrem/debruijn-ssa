@@ -775,31 +775,43 @@ theorem vsubst_subst0_lsubst_vlift (t : Terminator φ) (e : Term φ) (σ : Subst
   simp only [Term.substn_zero, Subst.vliftn_zero, Subst.vliftn_one, Nat.zero_add] at h
   exact h
 
+theorem vsubst_substn_vwk (t : Terminator φ) (e : Term φ) (ρ n)
+  : (t.vsubst (e.substn n)).vwk (Nat.liftnWk n ρ)
+  = (t.vwk (Nat.liftnWk (n + 1) ρ)).vsubst ((e.wk (Nat.liftnWk n ρ)).substn n)
+  := by induction t generalizing e ρ n with
+  | br ℓ e' => simp only [vwk, vsubst, Term.subst_substn_wk]
+  | _ => simp [
+    <-Nat.liftnWk_succ_apply',
+    <-Term.substn_succ, Term.subst_substn_wk,
+    <-Term.wk_wk, Nat.liftnWk_comp_succ, *]
+
+theorem vsubst_subst0_vwk (t : Terminator φ) (e : Term φ) (ρ)
+  : (t.vsubst e.subst0).vwk ρ = (t.vwk (Nat.liftWk ρ)).vsubst (e.wk ρ).subst0 := by
+  have h := vsubst_substn_vwk t e ρ 0
+  simp [Nat.liftnWk_one, Nat.liftnWk_zero, Term.substn_zero] at h
+  exact h
+
+theorem vwk_lsubst (σ ρ) (t : Terminator φ)
+  : (t.lsubst σ).vwk ρ = (t.vwk ρ).lsubst (vwk (Nat.liftWk ρ) ∘ σ)
+  := by induction t generalizing σ ρ with
+  | br ℓ e => simp [vsubst_subst0_vwk]
+  | _ =>
+    simp only [vwk, lsubst, *]
+    congr <;> simp only [
+      Subst.vlift, <-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ
+    ]
+
 theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
   : (σ.comp τ).vliftn n = (σ.vliftn n).comp (τ.vliftn n)
   := by
   funext m
-  rw [vliftn]
-  simp only [Function.comp_apply, comp]
-  sorry
-  -- simp only [vliftn, Function.comp_apply, comp]
-  -- generalize τ m = t
-  -- induction t generalizing σ n with
-  -- | br ℓ e => sorry
-  -- | case e s t Is It =>
-  --   rw [lsubst, vwk]
-  --   sorry
+  simp only [Function.comp_apply, comp, vlift, vliftn, Function.comp_apply]
+  generalize τ m = t
+  rw [vwk_lsubst]
+  simp only [<-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
 
-theorem Subst.vlift_comp (σ τ : Subst φ) : (σ.comp τ).vlift = σ.vlift.comp τ.vlift := by
-  funext n
-  rw [vlift]
-  simp only [Function.comp_apply, comp]
-  generalize τ n = t
-  induction t generalizing σ with
-  | br ℓ e => simp [vlift_comp_liftWk_succ]; sorry
-  | case e s t Is It => stop
-    rw [lsubst, vwk, vlift_comp_liftWk_step, Is]
-    sorry
+theorem Subst.vlift_comp (σ τ : Subst φ) : (σ.comp τ).vlift = σ.vlift.comp τ.vlift
+  := σ.vliftn_comp 1 τ
 
 theorem lsubst_comp (σ τ : Subst φ) (t : Terminator φ)
   : t.lsubst (σ.comp τ) = (t.lsubst τ).lsubst σ
@@ -812,20 +824,20 @@ theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ
   cases n with
   | zero => rfl
   | succ n =>
-    stop
     simp only [lift, comp, <-Terminator.lsubst_lwk, <-Terminator.lsubst_comp]
     congr
     funext n
     simp only [
       comp, lift, Function.comp_apply, Terminator.lsubst, Nat.succ_eq_add_one,
-      <-Terminator.vsubst_wk, <-Terminator.vsubst_comp]
+      <-Terminator.vsubst_wk, <-Terminator.vsubst_comp, vlift]
     rw [
       <-Term.Subst.comp_assoc,
-      Term.wk_lift_succ_comp_subst0,
-      Term.alpha0_var0,
+      Term.liftWk_succ_comp_subst0,
+      Term.alpha_var,
       Term.Subst.id_comp]
     generalize σ n = t
     induction t <;> simp [*]
+    sorry
 
 theorem Subst.iterate_lift_comp
   : (n : ℕ) -> ∀σ τ : Subst φ, Subst.lift^[n] (σ.comp τ)
