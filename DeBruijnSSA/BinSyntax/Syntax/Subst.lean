@@ -494,6 +494,28 @@ theorem Region.vsubst_comp (σ τ : Term.Subst φ) (r : Region φ)
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Term.Subst.lift_comp, Term.Subst.liftn_comp, *]
 
+theorem Region.ext_vsubst (σ τ : Term.Subst φ)
+  (h : ∀t : Region φ, t.vsubst σ = t.vsubst τ) : ∀n, σ n = τ n
+  := λn => by
+    have h' := h (br 0 (Term.var n))
+    simp at h'
+    exact h'
+
+-- i.e. vsubst is a faithful functor
+theorem Region.vsubst_injective : Function.Injective (@Region.vsubst φ)
+  := λσ τ h => funext (λn => Region.ext_vsubst σ τ (λ_ => h ▸ rfl) n)
+
+theorem Region.vsubst_wk (ρ : ℕ -> ℕ) (r : Region φ)
+  : r.vsubst (Term.Subst.fromWk ρ) = r.vwk ρ := by
+  induction r generalizing ρ
+  <;> simp [Term.subst_wk, Term.Subst.fromWk_liftn, Term.Subst.fromWk_lift, *]
+
+theorem Region.vsubst_fromWk (ρ : ℕ -> ℕ)
+  : vsubst (Term.Subst.fromWk ρ) = @vwk φ ρ := funext (vsubst_wk ρ)
+
+theorem Region.vsubst_lwk_comm (σ : Term.Subst φ) (ρ : ℕ -> ℕ) (r : Region φ)
+  : (r.vsubst σ).lwk ρ = (r.lwk ρ).vsubst σ := by induction r generalizing σ <;> simp [*]; sorry
+
 /-- Substitute the free variables in a `CFG` using `σ` -/
 def CFG.vsubst (σ : Term.Subst φ) (G : CFG φ) : CFG φ where
   length := G.length
@@ -648,9 +670,12 @@ theorem Subst.vliftn_eq_iterate_vlift (n: ℕ) : Subst.vliftn n = (@Subst.vlift 
 theorem Subst.vliftn_succ' (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = σ.vlift.vliftn i
   := by simp [vliftn_eq_iterate_vlift]
 
--- TODO: vliftn is iterate vlift
+theorem Subst.iterate_vlift_id : (n: ℕ) -> Subst.vlift^[n] (@id φ) = id
+  | 0 => rfl
+  | n + 1 => by simp [Subst.vlift_id, iterate_vlift_id n]
 
--- TODO: vliftn id is id
+theorem Subst.vliftn_id (n: ℕ): (@id φ).vliftn n = id := by
+  rw [vliftn_eq_iterate_vlift_apply, iterate_vlift_id]
 
 /-- Substitute the labels in a `Terminator` using `σ` -/
 @[simp]
@@ -673,6 +698,15 @@ theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ
 
 @[simp]
 theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := rfl
+
+@[simp]
+theorem Subst.fromLwk_iterate_vlift (n : ℕ) (ρ)
+  : Subst.vlift^[n] (@fromLwk φ ρ) = fromLwk ρ
+  := by induction n <;> simp [fromLwk_vlift, *]
+
+@[simp]
+theorem Subst.fromLwk_vliftn (n ρ) : (@fromLwk φ ρ).vliftn n = fromLwk ρ := by
+  rw [vliftn_eq_iterate_vlift, fromLwk_iterate_vlift]
 
 @[simp]
 theorem Subst.fromLwk_apply (ρ : ℕ -> ℕ) (n : ℕ)
@@ -966,15 +1000,62 @@ theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk
 def Subst.vlift (σ : Subst φ) : Subst φ
   := Region.vwk (Nat.liftWk Nat.succ) ∘ σ
 
+@[simp]
 theorem Subst.vlift_id : (@id φ).vlift = id := by funext v; cases v <;> rfl
+
+theorem Subst.vlift_lift_comm (σ : Subst σ) : σ.lift.vlift = σ.vlift.lift := by
+  funext n
+  cases n with
+  | zero => rfl
+  | succ n => simp [Subst.vlift, lift, vwk_lwk]
+
+theorem Subst.vlift_lift_comp_comm : Subst.vlift ∘ (@Subst.lift φ) = Subst.lift ∘ Subst.vlift
+  := funext Subst.vlift_lift_comm
+
+theorem Subst.vlift_liftn_comm (n : ℕ) (σ : Subst σ) : (σ.liftn n).vlift = σ.vlift.liftn n := by
+  induction n generalizing σ with
+  | zero => simp
+  | succ _ I => rw [liftn_succ, vlift_lift_comm, I, liftn_succ]
 
 /-- Lift a substitution under `n` variable binders -/
 def Subst.vliftn (n : ℕ) (σ : Subst φ) : Subst φ
   := Region.vwk (Nat.liftWk (λi => i + n)) ∘ σ
 
--- TODO: vliftn is iterate vlift
+@[simp]
+theorem Subst.vliftn_zero (σ : Subst φ) : σ.vliftn 0 = σ := by
+  funext n
+  simp [vliftn]
 
--- TODO: vliftn id is id
+theorem Subst.vliftn_one (σ : Subst φ) : σ.vliftn 1 = σ.vlift := by
+  funext n
+  simp [vliftn, vlift]
+
+theorem Subst.vliftn_succ (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = (σ.vliftn i).vlift := by
+  funext ℓ
+  simp only [vliftn, Function.comp_apply, vlift, ←vwk_vwk]
+  congr
+  funext n
+  cases n <;> rfl
+
+theorem Subst.vliftn_eq_iterate_vlift_apply (n: ℕ) (σ: Subst φ) : σ.vliftn n = (Subst.vlift^[n] σ)
+  := by induction n with
+  | zero => exact σ.vliftn_zero
+  | succ n => simp only [Function.iterate_succ_apply', Subst.vliftn_succ, *]
+
+theorem Subst.vliftn_eq_iterate_vlift (n: ℕ) : Subst.vliftn n = (@Subst.vlift φ)^[n] := by
+  funext σ
+  rw [vliftn_eq_iterate_vlift_apply]
+
+theorem Subst.vliftn_succ' (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = σ.vlift.vliftn i
+  := by simp [vliftn_eq_iterate_vlift]
+
+theorem Subst.iterate_vlift_id : (n: ℕ) -> Subst.vlift^[n] (@id φ) = id
+  | 0 => rfl
+  | n + 1 => by simp [Subst.vlift_id, iterate_vlift_id n]
+
+@[simp]
+theorem Subst.vliftn_id (n: ℕ): (@id φ).vliftn n = id := by
+  rw [vliftn_eq_iterate_vlift_apply, iterate_vlift_id]
 
 /-- Substitute the labels in a `Region` using `σ` -/
 @[simp]
@@ -984,6 +1065,78 @@ def lsubst (σ : Subst φ) : Region φ → Region φ
   | let1 e t => let1 e (lsubst σ.vlift t)
   | let2 e t => let2 e (lsubst (σ.vliftn 2) t)
   | cfg β n f => cfg (lsubst (σ.liftn n) β) n (λ i => lsubst (σ.liftn n) (f i))
+
+@[simp]
+theorem lsubst_id (t : Region φ) : t.lsubst Subst.id = t
+  := by induction t <;> simp [*]
+
+@[simp]
+theorem lsubst_id' (t : Region φ) : t.lsubst (λi => Region.br i (Term.var 0)) = t
+  := t.lsubst_id
+
+/-- Create a substitution from a label renaming -/
+def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Region.br (ρ n) (Term.var 0)
+
+theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ = @fromLwk φ σ := rfl
+
+@[simp]
+theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := rfl
+
+@[simp]
+theorem Subst.fromLwk_iterate_vlift (n : ℕ) (ρ)
+  : Subst.vlift^[n] (@fromLwk φ ρ) = fromLwk ρ
+  := by induction n <;> simp [fromLwk_vlift, *]
+
+@[simp]
+theorem Subst.fromLwk_vliftn (n ρ) : (@fromLwk φ ρ).vliftn n = fromLwk ρ := by
+  rw [vliftn_eq_iterate_vlift, fromLwk_iterate_vlift]
+
+@[simp]
+theorem Subst.fromLwk_apply (ρ : ℕ -> ℕ) (n : ℕ)
+  : (@fromLwk φ ρ) n = Region.br (ρ n) (Term.var 0) := rfl
+
+theorem Subst.fromLwk_lift (ρ) : (@fromLwk φ ρ).lift = fromLwk (Nat.liftWk ρ) := by
+  funext n; cases n <;> rfl
+
+theorem Subst.fromLwk_iterate_lift (n : ℕ) (ρ)
+  : Subst.lift^[n] (@fromLwk φ ρ) = fromLwk (Nat.liftWk^[n] ρ)
+  := by induction n generalizing ρ <;> simp [fromLwk_lift, *]
+
+theorem Subst.fromLwk_liftn (n ρ) : (@fromLwk φ ρ).liftn n = fromLwk (Nat.liftnWk n ρ) := by
+  rw [liftn_eq_iterate_lift, Nat.liftnWk_eq_iterate_liftWk, fromLwk_iterate_lift]
+
+theorem lsubst_lwk (ρ : ℕ -> ℕ) (t : Region φ)
+  : t.lsubst (Subst.fromLwk ρ) = t.lwk ρ := by
+  induction t generalizing ρ <;> simp [Region.lsubst, Region.lwk, Term.subst_wk, *]; sorry
+
+theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Region φ)
+    : (t.lwk (Nat.liftnWk n Nat.succ)).lsubst (σ.liftn (n + 1))
+      = (t.lsubst (σ.liftn n)).lwk (Nat.liftnWk n Nat.succ)
+  := by induction t generalizing σ n with
+  | br ℓ e =>
+    simp only [lwk, lsubst, Nat.liftnWk, Subst.liftn]
+    split
+    . split
+      . simp [lwk, Nat.liftnWk, *]
+      . rename_i H C; exact (C (Nat.le_step H)).elim
+    . rename_i C
+      simp_arith only [ite_false]
+      rw [Nat.succ_eq_add_one]
+      have h : ℓ - n + 1 + n - (n + 1) = ℓ - n := by
+        rw [Nat.add_assoc, Nat.add_comm 1 n, Nat.add_sub_cancel]
+      rw [h, Region.vsubst_lwk_comm, <-lwk_lwk]
+      congr
+      funext n
+      simp_arith [Nat.liftnWk]
+  | _ => simp [Subst.vlift_liftn_comm, *] <;> sorry
+
+theorem lsubst_iterate_lift (n : ℕ) (σ : Subst φ) (t : Region φ)
+  : (t.lwk (Nat.liftWk^[n] Nat.succ)).lsubst (Subst.lift^[n + 1] σ)
+    = (t.lsubst (Subst.lift^[n] σ)).lwk (Nat.liftWk^[n] Nat.succ)
+  := by simp only [<-Subst.liftn_eq_iterate_lift, <-Nat.liftnWk_eq_iterate_liftWk, lsubst_liftn]
+
+theorem lsubst_lift (t : Region φ) (σ : Subst φ)
+  : (t.lwk Nat.succ).lsubst (σ.lift) = (t.lsubst σ).lwk Nat.succ := t.lsubst_iterate_lift 0 σ
 
 /-- Compose two label-substitutions to yield another -/
 def Subst.comp (σ τ : Subst φ): Subst φ

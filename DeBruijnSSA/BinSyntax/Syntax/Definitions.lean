@@ -492,6 +492,15 @@ theorem Region.lwk_id' : (r : Region φ) → r.lwk (λx => x) = r := lwk_id
 theorem Region.lwk_lwk (σ τ : ℕ → ℕ) (r : Region φ) : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
   induction r generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
 
+theorem Region.lwk_vwk (t : Region φ) : (t.vwk ρ).lwk σ = (t.lwk σ).vwk ρ := by
+  induction t generalizing ρ σ <;> simp [*]
+
+theorem Region.vwk_lwk (t : Region φ) : (t.lwk σ).vwk ρ = (t.vwk ρ).lwk σ := t.lwk_vwk.symm
+
+theorem Region.lwk_comp_vwk : @lwk φ ρ ∘ vwk σ = vwk σ ∘ lwk ρ := funext Region.lwk_vwk
+
+theorem Region.vwk_comp_lwk : @vwk φ σ ∘ lwk ρ = lwk ρ ∘ vwk σ := funext Region.vwk_lwk
+
 @[simp]
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 
