@@ -819,35 +819,37 @@ theorem lsubst_comp (σ τ : Subst φ) (t : Terminator φ)
   | br ℓ e => simp only [lsubst, Subst.comp, vsubst_subst0_lsubst_vlift]
   | case e s t Is It => simp only [lsubst, Subst.comp, Subst.vlift_comp, *]
 
-theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
-  funext n
-  cases n with
-  | zero => rfl
-  | succ n =>
-    simp only [lift, comp, <-Terminator.lsubst_lwk, <-Terminator.lsubst_comp]
-    congr
-    funext n
-    simp only [
-      comp, lift, Function.comp_apply, Terminator.lsubst, Nat.succ_eq_add_one,
-      <-Terminator.vsubst_wk, <-Terminator.vsubst_comp, vlift]
-    rw [
-      <-Term.Subst.comp_assoc,
-      Term.liftWk_succ_comp_subst0,
-      Term.alpha_var,
-      Term.Subst.id_comp]
-    generalize σ n = t
-    induction t <;> simp [*]
+theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
+  := by
+  funext k
+  simp only [liftn, comp]
+  split
+  case inl h => simp [liftn, vlift, h]
+  case inr h =>
     sorry
 
-theorem Subst.iterate_lift_comp
-  : (n : ℕ) -> ∀σ τ : Subst φ, Subst.lift^[n] (σ.comp τ)
-    = (Subst.lift^[n] σ).comp (Subst.lift^[n] τ)
-  | 0, σ, τ => rfl
-  | n + 1, σ, τ => by simp [Subst.lift_comp, iterate_lift_comp n]
-
-theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ)
-  : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
-  := by rw [liftn_eq_iterate_lift, iterate_lift_comp]
+theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
+  have h := Subst.liftn_comp 1 σ τ
+  simp only [Subst.liftn_one] at h
+  exact h
+  -- funext n
+  -- cases n with
+  -- | zero => rfl
+  -- | succ n =>
+  --   simp only [lift, comp, <-Terminator.lsubst_lwk, <-Terminator.lsubst_comp]
+  --   congr
+  --   funext n
+  --   simp only [
+  --     comp, lift, Function.comp_apply, Terminator.lsubst, Nat.succ_eq_add_one,
+  --     <-Terminator.vsubst_wk, <-Terminator.vsubst_comp, vlift]
+  --   rw [
+  --     <-Term.Subst.comp_assoc,
+  --     Term.liftWk_succ_comp_subst0,
+  --     Term.alpha_var,
+  --     Term.Subst.id_comp]
+  --   generalize σ n = t
+  --   induction t <;> simp [*]
+  --   sorry
 
 end Terminator
 
