@@ -223,6 +223,8 @@ theorem subst0_comp_wk (s : Term φ)
   : (Subst.fromWk ρ).comp (subst0 s) = (s.wk ρ).subst0.comp (Subst.fromWk (Nat.liftWk ρ))
   := by funext n; cases n <;> simp [Subst.comp, subst_wk]
 
+theorem subst0_var0 : @subst0 φ (var 0) = Subst.fromWk Nat.pred := by funext n; cases n <;> rfl
+
 @[simp]
 theorem wk_succ_comp_subst0 (e : Term φ) : e.subst0.comp (Subst.fromWk Nat.succ) = Subst.id
   := by funext n; cases n <;> rfl
@@ -667,9 +669,10 @@ theorem lsubst_id' (t : Terminator φ) : t.lsubst (λi => Terminator.br i (Term.
 /-- Create a substitution from a label renaming -/
 def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Terminator.br (ρ n) (Term.var 0)
 
+theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ = @fromLwk φ σ := rfl
+
 @[simp]
-theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := by
-  funext n; cases n <;> rfl
+theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := rfl
 
 @[simp]
 theorem Subst.fromLwk_apply (ρ : ℕ -> ℕ) (n : ℕ)
@@ -826,30 +829,20 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
   split
   case inl h => simp [liftn, vlift, h]
   case inr h =>
-    sorry
+    simp only [vlift, ←lsubst_lwk, ←lsubst_comp]
+    congr
+    funext k
+    simp only [comp, vlift, Function.comp_apply, lsubst, liftn, add_lt_iff_neg_right, not_lt_zero',
+      ↓reduceIte, add_tsub_cancel_right, vwk_lift_comp_fromLwk, Term.subst0_var0, vsubst_wk,
+      <-vwk_vwk, lsubst_lwk, vwk_lwk]
+    congr
+    funext k
+    cases k <;> rfl
 
 theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   have h := Subst.liftn_comp 1 σ τ
   simp only [Subst.liftn_one] at h
   exact h
-  -- funext n
-  -- cases n with
-  -- | zero => rfl
-  -- | succ n =>
-  --   simp only [lift, comp, <-Terminator.lsubst_lwk, <-Terminator.lsubst_comp]
-  --   congr
-  --   funext n
-  --   simp only [
-  --     comp, lift, Function.comp_apply, Terminator.lsubst, Nat.succ_eq_add_one,
-  --     <-Terminator.vsubst_wk, <-Terminator.vsubst_comp, vlift]
-  --   rw [
-  --     <-Term.Subst.comp_assoc,
-  --     Term.liftWk_succ_comp_subst0,
-  --     Term.alpha_var,
-  --     Term.Subst.id_comp]
-  --   generalize σ n = t
-  --   induction t <;> simp [*]
-  --   sorry
 
 end Terminator
 
