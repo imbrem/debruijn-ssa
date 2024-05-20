@@ -306,6 +306,9 @@ theorem Terminator.vwk_vwk (σ τ : ℕ → ℕ) (r : Terminator φ)
   induction r generalizing σ τ
   <;> simp [Term.wk_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
+theorem Terminator.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := funext (Terminator.vwk_vwk ρ σ)
+
 theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
   := rfl
 
