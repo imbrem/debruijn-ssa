@@ -276,8 +276,11 @@ theorem Term.wk_id (t : Term φ) : t.wk id = t := by induction t <;> simp [*]
 @[simp]
 theorem Term.wk_id' : (t : Term φ) -> t.wk (λx => x) = t := wk_id
 
-theorem Term.wk_wk (σ : ℕ → ℕ) (ρ : ℕ → ℕ) (t : Term φ)
-  : t.wk (ρ ∘ σ) = (t.wk σ).wk ρ := by induction t <;> simp [*]
+theorem Term.wk_wk (ρ : ℕ → ℕ) (σ : ℕ → ℕ) (t : Term φ)
+  : (t.wk σ).wk ρ  = t.wk (ρ ∘ σ) := by induction t <;> simp [*]
+
+theorem Term.wk_comp (ρ σ)
+  : @wk φ (ρ ∘ σ) = wk ρ ∘ wk σ := Eq.symm $ funext (Term.wk_wk ρ σ)
 
 @[simp]
 theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
@@ -286,9 +289,12 @@ theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
 theorem Body.wk_id' : (b : Body φ) → b.wk (λx => x) = b := wk_id
 
 theorem Body.wk_wk (σ τ : ℕ → ℕ) (b : Body φ)
-  : b.wk (σ ∘ τ) = (b.wk τ).wk σ := by
+  : (b.wk τ).wk σ = b.wk (σ ∘ τ) := by
   induction b generalizing σ τ
   <;> simp [Term.wk_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+theorem Body.wk_comp (ρ σ)
+  : @wk φ (ρ ∘ σ) = wk ρ ∘ wk σ := Eq.symm $ funext (Body.wk_wk ρ σ)
 
 @[simp]
 theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by

@@ -64,7 +64,7 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
         . rename_i H; simp_arith at H
         . split
           . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [<-Term.wk_wk]
+          . simp only [Term.wk_wk]
             apply congr
             apply congrArg
             funext v
@@ -153,7 +153,7 @@ theorem subst_liftn (n : ℕ) (σ : Subst φ) (t : Term φ)
       . simp [Nat.liftnWk, *]
       . rename_i H C; exact (C (Nat.le_step H)).elim
     . rename_i C
-      simp_arith only [ite_false, <-wk_wk]
+      simp_arith only [ite_false, wk_wk]
       apply congr
       . apply congrArg
         funext v
@@ -259,6 +259,15 @@ theorem substn_succ (n : ℕ) (t : Term φ)
           (Nat.zero_le n)
           (Nat.lt_of_le_of_ne (Nat.le_of_not_lt h) (Ne.symm h'))
 
+theorem substn_add (n m : ℕ) (t : Term φ)
+  : substn (n + m) (t.wk (· + m)) = (substn n t).liftn m := by
+  induction m with
+  | zero => simp
+  | succ m I => rw [Subst.liftn_succ, <-I, <-substn_succ, <-Nat.add_assoc, wk_wk]; rfl
+
+theorem substn_add_right (n m : ℕ) (t : Term φ)
+  : substn (m + n) (t.wk (· + m)) = (substn n t).liftn m := Nat.add_comm _ _ ▸ substn_add n m t
+
 @[simp]
 theorem substn_n (n : ℕ) (t : Term φ) : substn n t n = t := by simp [substn]
 
@@ -295,13 +304,13 @@ theorem liftn_subst0 (n : ℕ) (t : Term φ) : t.subst0.liftn n = (t.wk (· + n)
   | succ n I =>
     rw [Subst.liftn_succ, I]
     have h : (· + (n + 1)) = Nat.succ ∘ (· + n) := by funext m; simp_arith
-    rw [h, Term.wk_wk, substn_succ]
+    rw [h, <-Term.wk_wk, substn_succ]
 
 theorem subst_liftn_subst0_wk (e s : Term φ) (ρ n)
   : (e.subst (s.subst0.liftn n)).wk (Nat.liftnWk n ρ)
   = (e.wk (Nat.liftnWk (n + 1) ρ)).subst ((s.wk ρ).subst0.liftn n)
   := by
-  simp only [liftn_subst0, subst_substn_wk, <-wk_wk]
+  simp only [liftn_subst0, subst_substn_wk, wk_wk]
   congr
   apply congrArg
   congr
@@ -670,6 +679,10 @@ theorem Subst.vliftn_eq_iterate_vlift (n: ℕ) : Subst.vliftn n = (@Subst.vlift 
 theorem Subst.vliftn_succ' (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = σ.vlift.vliftn i
   := by simp [vliftn_eq_iterate_vlift]
 
+theorem Subst.vliftn_add (σ : Subst φ) (n m: ℕ) : σ.vliftn (n + m) = (σ.vliftn m).vliftn n := by
+  funext k
+  simp [vliftn_eq_iterate_vlift, Function.iterate_add_apply]
+
 theorem Subst.iterate_vlift_id : (n: ℕ) -> Subst.vlift^[n] (@id φ) = id
   | 0 => rfl
   | n + 1 => by simp [Subst.vlift_id, iterate_vlift_id n]
@@ -834,7 +847,7 @@ theorem vsubst_substn_vwk (t : Terminator φ) (e : Term φ) (ρ n)
   | _ => simp [
     <-Nat.liftnWk_succ_apply',
     <-Term.substn_succ, Term.subst_substn_wk,
-    <-Term.wk_wk, Nat.liftnWk_comp_succ, *]
+    Term.wk_wk, Nat.liftnWk_comp_succ, *]
 
 theorem vsubst_subst0_vwk (t : Terminator φ) (e : Term φ) (ρ)
   : (t.vsubst e.subst0).vwk ρ = (t.vwk (Nat.liftWk ρ)).vsubst (e.wk ρ).subst0 := by
@@ -1067,6 +1080,10 @@ theorem Subst.vliftn_eq_iterate_vlift (n: ℕ) : Subst.vliftn n = (@Subst.vlift 
 theorem Subst.vliftn_succ' (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = σ.vlift.vliftn i
   := by simp [vliftn_eq_iterate_vlift]
 
+theorem Subst.vliftn_add (σ : Subst φ) (n m: ℕ) : σ.vliftn (n + m) = (σ.vliftn m).vliftn n := by
+  funext k
+  simp [vliftn_eq_iterate_vlift, Function.iterate_add_apply]
+
 theorem Subst.iterate_vlift_id : (n: ℕ) -> Subst.vlift^[n] (@id φ) = id
   | 0 => rfl
   | n + 1 => by simp [Subst.vlift_id, iterate_vlift_id n]
@@ -1223,7 +1240,11 @@ theorem vsubst_substn_lsubst_vliftn (t : Region φ) (e : Term φ) (σ : Subst φ
     cases k with
     | zero => rfl
     | succ k => simp_arith [Term.Subst.comp, Term.subst, Term.substn, Nat.liftWk]
-  | _ => stop simp only [vsubst, lsubst,  <-Subst.vliftn_succ, <-Term.substn_succ, *]
+  | _ => simp only [
+    vsubst, lsubst,  <-Subst.vliftn_succ, <-Term.substn_succ,
+    <-Subst.vliftn_add, <-Nat.add_assoc, <-Term.substn_add_right,
+    <-Subst.vliftn_liftn_comm, *
+  ]
 
 theorem vsubst_subst0_lsubst_vlift (t : Region φ) (e : Term φ) (σ : Subst φ)
     : (t.lsubst σ.vlift).vsubst e.subst0 = (t.vsubst e.subst0).lsubst σ := by
