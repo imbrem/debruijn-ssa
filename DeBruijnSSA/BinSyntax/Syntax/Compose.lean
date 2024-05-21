@@ -38,7 +38,7 @@ theorem Body.ltimes_num_defs (b b' : Body φ) : (b.ltimes b').num_defs = b.num_d
 
 theorem Body.wk_ltimes (ρ : ℕ → ℕ) (b b' : Body φ)
   : (b.ltimes b').wk ρ = (b.wk ρ).ltimes (b'.wk ρ) := by
-  simp only [ltimes, wk_append, <-wk_wk]
+  simp only [ltimes, wk_append, wk_wk]
   congr
   funext n
   simp [Function.comp_apply, Nat.liftnWk, num_defs_wk]
@@ -52,14 +52,14 @@ theorem Body.nil_ltimes (b : Body φ) : nil.ltimes b = b :=
 
 theorem Body.let1_ltimes (a : Term φ) (b b' : Body φ)
   : (let1 a b).ltimes b' = let1 a (b.ltimes (b'.wk Nat.succ)) := by
-  simp only [ltimes, append, wk_append, <-wk_wk]
+  simp only [ltimes, append, wk_append, wk_wk]
   congr
   funext n
   simp_arith
 
 theorem Body.let2_ltimes (a : Term φ) (b b' : Body φ)
   : (let2 a b).ltimes b' = let2 a (b.ltimes (b'.wk (λn => n + 2))) := by
-  simp only [ltimes, append, wk_append, <-wk_wk]
+  simp only [ltimes, append, wk_append, wk_wk]
   congr
   funext n
   simp_arith
