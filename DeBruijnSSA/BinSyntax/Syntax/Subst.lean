@@ -1255,12 +1255,12 @@ theorem vsubst_subst0_lsubst_vlift (t : Region φ) (e : Term φ) (σ : Subst φ)
 theorem vsubst_substn_vwk (t : Region φ) (e : Term φ) (ρ n)
   : (t.vsubst (e.substn n)).vwk (Nat.liftnWk n ρ)
   = (t.vwk (Nat.liftnWk (n + 1) ρ)).vsubst ((e.wk (Nat.liftnWk n ρ)).substn n)
-  := by induction t generalizing e ρ n with
-  | let2 e' r Ir => sorry
-  | _ => simp [
-    <-Nat.liftnWk_succ_apply',
-    <-Term.substn_succ, Term.subst_substn_wk,
-    Term.wk_wk, Nat.liftnWk_comp_succ, *]
+  := by induction t generalizing e ρ n <;> simp [
+        <-Nat.liftnWk_succ_apply', ← Nat.liftnWk_add_apply,
+        <-Term.substn_succ, Term.subst_substn_wk,
+        Term.wk_wk, Nat.liftnWk_comp_succ,  ← Term.substn_add_right,
+        <-Nat.add_assoc, Nat.liftnWk_comp_add_right, *
+      ]
 
 theorem vsubst_subst0_vwk (t : Region φ) (e : Term φ) (ρ)
   : (t.vsubst e.subst0).vwk ρ = (t.vwk (Nat.liftWk ρ)).vsubst (e.wk ρ).subst0 := by
