@@ -1372,6 +1372,9 @@ theorem lsubst_lwk (σ ρ) (t : Region φ)
   | br ℓ e => rfl
   | _ => simp [Subst.vlift_comp_lwk, Subst.vliftn_comp_lwk, Subst.liftn_comp_lwk, *]
 
+theorem Subst.liftn_comp_add (n) (σ : Subst φ) : σ.liftn n ∘ (· + n) = lwk (· + n) ∘ σ := by
+  funext i; simp [liftn]
+
 theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
   := by
   funext k
@@ -1381,7 +1384,7 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
   case inr h =>
     rw [lwk_lsubst, lsubst_lwk]
     congr
-    sorry
+    rw [lwk_comp_vlift, vlift, vlift, Function.comp.assoc, liftn_comp_add]
 
 theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   have h := Subst.liftn_comp 1 σ τ
