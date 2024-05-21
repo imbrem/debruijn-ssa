@@ -65,6 +65,10 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
 def Term.WfD.subst0 {a : Term φ} (ha : a.WfD Δ V) : a.subst0.WfD Δ (V::Δ)
   := λi => i.cases ha (λi => Term.WfD.var ⟨by simp, by simp⟩)
 
+def Term.Subst.WfD.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.Subst φ}
+  (hσ : σ.WfD Γ Δ) (hτ : τ.WfD Δ Ξ) : (σ.comp τ).WfD Γ Ξ
+  := λi => (hτ i).subst hσ
+
 def Body.WfD.subst {Γ Δ : Ctx α ε} {σ} {b : Body φ} (hσ : σ.WfD Γ Δ)
   : b.WfD Δ V → (b.subst σ).WfD Γ V
   | nil => nil
@@ -176,6 +180,10 @@ def Terminator.WfD.lsubst {Γ : Ctx α ε} {σ} {t : Terminator φ} (hσ : σ.Wf
   | br hL ha => hL.subst0 hσ ha
   | case he hs ht => case he (hs.lsubst (hσ.vlift _)) (ht.lsubst (hσ.vlift _))
 
+def Terminator.Subst.WfD.comp {Γ : Ctx α ε} {σ : Terminator.Subst φ} {τ : Terminator.Subst φ}
+  (hσ : σ.WfD Γ K J) (hτ : τ.WfD Γ L K) : (σ.comp τ).WfD Γ L J
+  := λi => (hτ i).lsubst (hσ.vlift _)
+
 def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) : (b.lsubst σ).WfD Γ Ξ K
   where
   body := hb.body
@@ -276,6 +284,10 @@ def Region.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.WfD Γ
   | cfg n R hR hr hG => cfg n R hR
     (hr.lsubst (hσ.liftn_append' hR.symm))
     (λi => (hG i).lsubst ((hσ.liftn_append' hR.symm).vlift _))
+
+def Region.Subst.WfD.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
+  (hσ : σ.WfD Γ K J) (hτ : τ.WfD Γ L K) : (σ.comp τ).WfD Γ L J
+  := λi => (hτ i).lsubst (hσ.vlift _)
 
 end RegionSubst
 
