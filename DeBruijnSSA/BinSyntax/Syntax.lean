@@ -419,7 +419,7 @@ theorem Terminator.toRegion_lsubst (σ : Subst φ) (t : Terminator φ)
   : (t.lsubst σ).toRegion = t.toRegion.lsubst σ := by
   induction t generalizing σ with
   | br => simp only [lsubst, Region.lsubst]; rw [toRegion_vsubst]; rfl
-  | _ => stop simp [toRegion, Terminator.lsubst, toRegion, Subst.liftn, *]
+  | _ => simp [toRegion, Terminator.lsubst, toRegion, Subst.liftn, Subst.toRegion_vlift, *]
 
 theorem TRegion.toRegion_toTerminator (r : TRegion φ) (k : ℕ)
   : r.toRegion.toTerminator k = r.toTerminator k := by
