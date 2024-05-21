@@ -3,15 +3,6 @@ import Mathlib.Order.BoundedOrder
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Lattice
 
-/--
-A type equipped with a purity predicate
--/
-class HasPurity (ε : Type u) [SemilatticeSup ε] [Bot ε] where
-  isPure : ε → Bool
-  sup_isPure : ∀ e e', isPure e → isPure e' → isPure (e ⊔ e')
-  isPure_of_le : Antitone isPure
-  bot_isPure : isPure ⊥
-
 -- If there exists something impure, then ⊤ is impure
 
 /--
@@ -51,10 +42,10 @@ Note this is essentially just a set equipped with a semilattice-hom to transpare
 (central, relevant, affine, pure); this might be nicer to state that way...
 -/
 class EffectSet (ε : Type u) [SemilatticeSup ε] [Bot ε]
-  extends HasPurity ε, HasCentrality ε, HasRelevance ε, HasAffinity ε where
-  isCentral_of_isPure : ∀ e, isPure e ≤ isCentral e
-  isRelevant_of_isPure : ∀ e, isPure e ≤ isRelevant e
-  isAffine_of_isPure : ∀ e, isPure e ≤ isAffine e
+  extends HasCentrality ε, HasRelevance ε, HasAffinity ε where
+  bot_isCentral : isCentral ⊥
+  bot_isRelevant : isRelevant ⊥
+  bot_isAffine : isAffine ⊥
 
 -- TODO: ⊥ is central, relevant, affine
 
@@ -85,22 +76,18 @@ instance : Top Impurity where
   top := Impurity.impure
 
 instance : EffectSet Impurity where
-  isPure := λ | Impurity.none => true | _ => false
   isCentral := λ | Impurity.none => true | _ => false
   isRelevant := λ | Impurity.none => true | _ => false
   isAffine := λ | Impurity.none => true | _ => false
   isCentral_of_le e e' h := by cases h <;> simp [*]
   isRelevant_of_le e e' h := by cases h <;> simp [*]
   isAffine_of_le e e' h := by cases h <;> simp [*]
-  isPure_of_le e e' h := by cases h <;> simp [*]
   sup_isCentral e e' := by cases e <;> cases e' <;> simp
   sup_isRelevant e e' := by cases e <;> cases e' <;> simp
   sup_isAffine e e' := by cases e <;> cases e' <;> simp
-  sup_isPure e e' := by cases e <;> cases e' <;> simp
-  bot_isPure := rfl
-  isCentral_of_isPure e h := h
-  isRelevant_of_isPure e h := h
-  isAffine_of_isPure e h := h
+  bot_isCentral := rfl
+  bot_isRelevant := rfl
+  bot_isAffine := rfl
 
 class InstSet (φ : Type u) (α : Type v) (ε : Type w) where
   src : φ → α

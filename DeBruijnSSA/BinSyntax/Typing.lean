@@ -244,7 +244,7 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
 /-- Infer the effect of a term; pun with infimum -/
 def Term.infEffect [Sup ε] (Γ : Ctx α ε) : Term φ → ε
   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
-  | op f _ => Φ.effect f
+  | op f e => Φ.effect f ⊔ e.infEffect Γ
   | pair a b => a.infEffect Γ ⊔ b.infEffect Γ
   | inl a => a.infEffect Γ
   | inr b => b.infEffect Γ
@@ -736,15 +736,36 @@ section Minimal
 
 variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
-theorem Term.WfD.minEffect_le
+theorem Term.WfD.infEffect_le
   {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infEffect Γ ≤ e
   := match h with
   | var dv => by simp [infEffect, dv.length, dv.get.right]
-  | op df de => df.effect
-  | pair dl dr => sup_le_iff.mpr ⟨dl.minEffect_le, dr.minEffect_le⟩
-  | inl dl => dl.minEffect_le
-  | inr dr => dr.minEffect_le
+  | op df de => sup_le_iff.mpr ⟨df.effect, de.infEffect_le⟩
+  | pair dl dr => sup_le_iff.mpr ⟨dl.infEffect_le, dr.infEffect_le⟩
+  | inl dl => dl.infEffect_le
+  | inr dr => dr.infEffect_le
   | unit _ => bot_le
+
+def Ctx.Var.toInfEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
+  : Γ.Var n ⟨V.1, if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥⟩
+  := ⟨h.length, by
+    constructor
+    exact h.get.1
+    simp [h.length]
+  ⟩
+
+def Term.WfD.toInfEffect {Γ : Ctx α ε} {a : Term φ} {V}
+  : WfD Γ a V → WfD Γ a ⟨V.1, a.infEffect Γ⟩
+  | var dv => var dv.toInfEffect
+  | op df de => op
+    ⟨df.src, df.trg, by simp [infEffect]⟩
+    (de.toInfEffect.wk_eff (by simp [infEffect]))
+  | pair dl dr => pair
+    (dl.toInfEffect.wk_eff (by simp [infEffect]))
+    (dr.toInfEffect.wk_eff (by simp [infEffect]))
+  | inl dl => inl dl.toInfEffect
+  | inr dr => inr dr.toInfEffect
+  | unit e => unit ⊥
 
 -- def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε
 --   | Body.nil => []
