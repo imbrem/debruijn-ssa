@@ -1256,11 +1256,11 @@ theorem vsubst_substn_vwk (t : Region φ) (e : Term φ) (ρ n)
   : (t.vsubst (e.substn n)).vwk (Nat.liftnWk n ρ)
   = (t.vwk (Nat.liftnWk (n + 1) ρ)).vsubst ((e.wk (Nat.liftnWk n ρ)).substn n)
   := by induction t generalizing e ρ n with
-  | br ℓ e' => simp only [vwk, vsubst, Term.subst_substn_wk]
-  | _ => stop simp [
+  | let2 e' r Ir => sorry
+  | _ => simp [
     <-Nat.liftnWk_succ_apply',
     <-Term.substn_succ, Term.subst_substn_wk,
-    <-Term.wk_wk, Nat.liftnWk_comp_succ, *]
+    Term.wk_wk, Nat.liftnWk_comp_succ, *]
 
 theorem vsubst_subst0_vwk (t : Region φ) (e : Term φ) (ρ)
   : (t.vsubst e.subst0).vwk ρ = (t.vwk (Nat.liftWk ρ)).vsubst (e.wk ρ).subst0 := by
@@ -1272,9 +1272,11 @@ theorem vwk_lsubst (σ ρ) (t : Region φ)
   : (t.lsubst σ).vwk ρ = (t.vwk ρ).lsubst (vwk (Nat.liftWk ρ) ∘ σ)
   := by induction t generalizing σ ρ with
   | br ℓ e => simp [vsubst_subst0_vwk]
+  | let2 => sorry
+  | cfg => sorry
   | _ =>
     simp only [vwk, lsubst, *]
-    congr <;> stop simp only [
+    congr <;> simp only [
       Subst.vlift, <-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ
     ]
 
@@ -1294,7 +1296,9 @@ theorem lsubst_lsubst (σ τ : Subst φ) (t : Region φ)
   : (t.lsubst τ).lsubst σ = t.lsubst (σ.comp τ)
   := by induction t generalizing σ τ with
   | br ℓ e => simp only [lsubst, Subst.comp, vsubst_subst0_lsubst_vlift]
-  | _ => stop simp only [lsubst, Subst.comp, Subst.vlift_comp, *]
+  | let2 => sorry
+  | cfg => sorry
+  | _ => simp only [lsubst, Subst.comp, Subst.vlift_comp, *]
 
 theorem lsubst_comp (σ τ : Subst φ)
   : Region.lsubst (σ.comp τ) = Region.lsubst σ ∘ Region.lsubst τ
