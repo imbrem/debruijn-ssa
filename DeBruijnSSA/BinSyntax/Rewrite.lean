@@ -13,7 +13,10 @@ def Term.subst₂ (a b: Term φ) : Subst φ
 
 def Term.WfD.subst₂ {Γ : Ctx α ε} {a b : Term φ}
   (ha : a.WfD Γ ⟨A, e⟩) (hb : b.WfD Γ ⟨B, e⟩)
-  : (a.subst₂ b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Γ) := sorry
+  : (a.subst₂ b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Γ)
+  | ⟨0, _⟩ => ha
+  | ⟨1, _⟩ => hb
+  | ⟨n + 2, h⟩ => var ⟨by simp at h; exact h, le_refl _⟩
 
 inductive Region.Beta (Γ : Ctx α ε) : Region φ → Region φ → Prop
   | let1 (e : Term φ) (r : Region φ)
