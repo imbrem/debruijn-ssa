@@ -302,12 +302,12 @@ theorem Terminator.vwk_id (r : Terminator φ) : r.vwk id = r := by
 theorem Terminator.vwk_id' : (r : Terminator φ) → r.vwk (λx => x) = r := vwk_id
 
 theorem Terminator.vwk_vwk (σ τ : ℕ → ℕ) (r : Terminator φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  : (r.vwk τ).vwk σ = r.vwk (σ ∘ τ) := by
   induction r generalizing σ τ
   <;> simp [Term.wk_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 theorem Terminator.vwk_comp (ρ σ)
-  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := funext (Terminator.vwk_vwk ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Terminator.vwk_vwk ρ σ)
 
 theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
   := rfl
@@ -335,8 +335,11 @@ theorem Terminator.lwk_id (r : Terminator φ) : r.lwk id = r := by
 theorem Terminator.lwk_id' : (t : Terminator φ) → t.lwk (λx => x) = t := lwk_id
 
 theorem Terminator.lwk_lwk (σ τ : ℕ → ℕ) (t : Terminator φ)
-  : t.lwk (σ ∘ τ) = (t.lwk τ).lwk σ := by
+  : (t.lwk τ).lwk σ = t.lwk (σ ∘ τ) := by
   induction t generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
+
+theorem Terminator.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (Terminator.lwk_lwk ρ σ)
 
 theorem Terminator.toBlock_lwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.lwk ρ).toBlock = t.toBlock.lwk ρ
   := rfl
@@ -359,8 +362,11 @@ theorem Block.vwk_id (β : Block φ) : β.vwk id = β := by simp
 @[simp]
 theorem Block.vwk_id' : (β : Block φ) → β.vwk (λx => x) = β := vwk_id
 
-theorem Block.vwk_vwk (σ τ : ℕ → ℕ) (β : Block φ) : β.vwk (σ ∘ τ) = (β.vwk τ).vwk σ
+theorem Block.vwk_vwk (σ τ : ℕ → ℕ) (β : Block φ) : (β.vwk τ).vwk σ = β.vwk (σ ∘ τ)
   := by simp [Body.wk_wk, Terminator.vwk_vwk, Nat.liftnWk_comp, *]
+
+theorem Block.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Block.vwk_vwk ρ σ)
 
 @[simp]
 theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
@@ -368,8 +374,11 @@ theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
 @[simp]
 theorem Block.lwk_id' : (β : Block φ) → β.lwk (λx => x) = β := lwk_id
 
-theorem Block.lwk_lwk (σ τ : ℕ → ℕ) (β : Block φ) : β.lwk (σ ∘ τ) = (β.lwk τ).lwk σ
+theorem Block.lwk_lwk (σ τ : ℕ → ℕ) (β : Block φ) : (β.lwk τ).lwk σ = β.lwk (σ ∘ τ)
   := by simp [Terminator.lwk_lwk]
+
+theorem Block.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (Block.lwk_lwk ρ σ)
 
 @[simp]
 theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
@@ -379,9 +388,12 @@ theorem BBRegion.vwk_id (r : BBRegion φ) : r.vwk id = r := by
 theorem BBRegion.vwk_id' : (r : BBRegion φ) → r.vwk (λx => x) = r := vwk_id
 
 theorem BBRegion.vwk_vwk (σ τ : ℕ → ℕ) (r : BBRegion φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  : (r.vwk τ).vwk σ = r.vwk (σ ∘ τ) := by
   induction r generalizing σ τ
   simp [Body.wk_wk, Terminator.vwk_vwk, Body.num_defs_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+theorem BBRegion.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (BBRegion.vwk_vwk ρ σ)
 
 @[simp]
 theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
@@ -391,9 +403,12 @@ theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
 theorem BBRegion.lwk_id' : (r : BBRegion φ) → r.lwk (λx => x) = r := lwk_id
 
 theorem BBRegion.lwk_lwk (σ τ : ℕ → ℕ) (r : BBRegion φ)
-  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  : (r.lwk τ).lwk σ = r.lwk (σ ∘ τ) := by
   induction r generalizing σ τ
   simp [Body.wk_wk, Terminator.lwk_lwk, Nat.liftnWk_comp, *]
+
+theorem BBRegion.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (BBRegion.lwk_lwk ρ σ)
 
 @[simp]
 theorem BBCFG.vwk_id (cfg : BBCFG φ) : cfg.vwk id = cfg := by
@@ -402,7 +417,7 @@ theorem BBCFG.vwk_id (cfg : BBCFG φ) : cfg.vwk id = cfg := by
 @[simp]
 theorem BBCFG.vwk_id' : (cfg : BBCFG φ) → cfg.vwk (λx => x) = cfg := vwk_id
 
-theorem BBCFG.vwk_vwk (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
+theorem BBCFG.vwk_vwk (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : (cfg.vwk τ).vwk σ = cfg.vwk (σ ∘ τ) := by
   cases cfg; simp [BBRegion.vwk_vwk, *]
 
 @[simp]
@@ -412,8 +427,11 @@ theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
 @[simp]
 theorem BBCFG.lwk_id' : (cfg : BBCFG φ) → cfg.lwk (λx => x) = cfg := lwk_id
 
-theorem BBCFG.lwk_lwk (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
+theorem BBCFG.lwk_lwk (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : (cfg.lwk τ).lwk σ = cfg.lwk (σ ∘ τ) := by
   cases cfg; simp [BBRegion.lwk_lwk, *]
+
+theorem BBCFG.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (BBCFG.lwk_lwk ρ σ)
 
 @[simp]
 theorem TRegion.vwk_id (r : TRegion φ) : r.vwk id = r := by
@@ -423,9 +441,12 @@ theorem TRegion.vwk_id (r : TRegion φ) : r.vwk id = r := by
 theorem TRegion.vwk_id' : (r : TRegion φ) → r.vwk (λx => x) = r := vwk_id
 
 theorem TRegion.vwk_vwk (σ τ : ℕ → ℕ) (r : TRegion φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  : (r.vwk τ).vwk σ = r.vwk (σ ∘ τ) := by
   induction r generalizing σ τ
   <;> simp [Term.wk_wk, Terminator.vwk_vwk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
+
+theorem TRegion.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (TRegion.vwk_vwk ρ σ)
 
 theorem TRegion.toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.vwk ρ).toRegion = t.toRegion.vwk ρ
   := by induction t generalizing ρ <;> simp [Terminator.toRegion_vwk, *]
@@ -441,9 +462,12 @@ theorem TRegion.lwk_id (r : TRegion φ) : r.lwk id = r := by
 theorem TRegion.lwk_id' : (r : TRegion φ) → r.lwk (λx => x) = r := lwk_id
 
 theorem TRegion.lwk_lwk (σ τ : ℕ → ℕ) (r : TRegion φ)
-  : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+  : (r.lwk τ).lwk σ = r.lwk (σ ∘ τ) := by
   induction r generalizing σ τ
   <;> simp [Term.wk_wk, Terminator.lwk_lwk, Nat.liftnWk_comp, *]
+
+theorem TRegion.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (TRegion.lwk_lwk ρ σ)
 
 theorem TRegion.toRegion_lwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.lwk ρ).toRegion = t.toRegion.lwk ρ
   := by induction t generalizing ρ <;> simp [Terminator.toRegion_lwk, *]
@@ -458,8 +482,11 @@ theorem TCFG.vwk_id (cfg : TCFG φ) : cfg.vwk id = cfg := by
 @[simp]
 theorem TCFG.vwk_id' : (cfg : TCFG φ) → cfg.vwk (λx => x) = cfg := vwk_id
 
-theorem TCFG.vwk_vwk (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.vwk (σ ∘ τ) = (cfg.vwk τ).vwk σ := by
+theorem TCFG.vwk_vwk (σ τ : ℕ → ℕ) (cfg : TCFG φ) : (cfg.vwk τ).vwk σ = cfg.vwk (σ ∘ τ) := by
   cases cfg; simp [TRegion.vwk_vwk, *]
+
+theorem TCFG.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (TCFG.vwk_vwk ρ σ)
 
 @[simp]
 theorem TCFG.lwk_id (cfg : TCFG φ) : cfg.lwk id = cfg := by
@@ -468,8 +495,11 @@ theorem TCFG.lwk_id (cfg : TCFG φ) : cfg.lwk id = cfg := by
 @[simp]
 theorem TCFG.lwk_id' : (cfg : TCFG φ) → cfg.lwk (λx => x) = cfg := lwk_id
 
-theorem TCFG.lwk_lwk (σ τ : ℕ → ℕ) (cfg : TCFG φ) : cfg.lwk (σ ∘ τ) = (cfg.lwk τ).lwk σ := by
+theorem TCFG.lwk_lwk (σ τ : ℕ → ℕ) (cfg : TCFG φ) : (cfg.lwk τ).lwk σ = cfg.lwk (σ ∘ τ) := by
   cases cfg; simp [TCFG.lwk, TRegion.lwk_lwk, Nat.liftnWk_comp, *]
+
+theorem TCFG.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (TCFG.lwk_lwk ρ σ)
 
 @[simp]
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
@@ -479,12 +509,12 @@ theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
 theorem Region.vwk_id' : (r : Region φ) → r.vwk (λx => x) = r := vwk_id
 
 theorem Region.vwk_vwk (σ τ : ℕ → ℕ) (r : Region φ)
-  : r.vwk (σ ∘ τ) = (r.vwk τ).vwk σ := by
+  : (r.vwk τ).vwk σ = r.vwk (σ ∘ τ) := by
   induction r generalizing σ τ
   <;> simp [vwk, Term.wk_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 theorem Region.vwk_comp (ρ σ)
-  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := funext (Region.vwk_vwk ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Region.vwk_vwk ρ σ)
 
 @[simp]
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
@@ -492,8 +522,11 @@ theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp 
 @[simp]
 theorem Region.lwk_id' : (r : Region φ) → r.lwk (λx => x) = r := lwk_id
 
-theorem Region.lwk_lwk (σ τ : ℕ → ℕ) (r : Region φ) : r.lwk (σ ∘ τ) = (r.lwk τ).lwk σ := by
+theorem Region.lwk_lwk (σ τ : ℕ → ℕ) (r : Region φ) : (r.lwk τ).lwk σ = r.lwk (σ ∘ τ) := by
   induction r generalizing σ τ <;> simp [Nat.liftnWk_comp, *]
+
+theorem Region.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (Region.lwk_lwk ρ σ)
 
 theorem Region.lwk_vwk (t : Region φ) : (t.vwk ρ).lwk σ = (t.lwk σ).vwk ρ := by
   induction t generalizing ρ σ <;> simp [*]
@@ -510,8 +543,11 @@ theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 @[simp]
 theorem CFG.vwk_id' : (G : CFG φ) → G.vwk (λx => x) = G := vwk_id
 
-theorem CFG.vwk_vwk (σ τ : ℕ → ℕ) (G : CFG φ) : G.vwk (σ ∘ τ) = (G.vwk τ).vwk σ
+theorem CFG.vwk_vwk (σ τ : ℕ → ℕ) (G : CFG φ) : (G.vwk τ).vwk σ = G.vwk (σ ∘ τ)
   := by cases G; simp only [CFG.vwk, Region.vwk_vwk, *]
+
+theorem CFG.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (CFG.vwk_vwk ρ σ)
 
 @[simp]
 theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
@@ -519,8 +555,11 @@ theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
 @[simp]
 theorem CFG.lwk_id' : (G : CFG φ) → G.lwk (λx => x) = G := lwk_id
 
-theorem CFG.lwk_lwk (σ τ : ℕ → ℕ) (G : CFG φ) : G.lwk (σ ∘ τ) = (G.lwk τ).lwk σ
+theorem CFG.lwk_lwk (σ τ : ℕ → ℕ) (G : CFG φ) : (G.lwk τ).lwk σ = G.lwk (σ ∘ τ)
   := by cases G; simp only [CFG.lwk, Nat.liftnWk_comp, Region.lwk_lwk, *]
+
+theorem CFG.lwk_comp (ρ σ)
+  : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (CFG.lwk_lwk ρ σ)
 
 theorem TCFG.toCFG_vwk (ρ : ℕ → ℕ) (G : TCFG φ) : (G.vwk ρ).toCFG = G.toCFG.vwk ρ
   := by cases G; simp [toCFG, TRegion.toRegion_vwk]

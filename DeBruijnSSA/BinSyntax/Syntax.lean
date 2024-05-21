@@ -316,7 +316,7 @@ theorem TRegion.IsTerminator.eq_cfg (k : ℕ) {r : TRegion φ} (h : r.IsTerminat
     simp only [toTerminator, tsub_zero, not_lt_zero', ↓reduceDite, Terminator.lwk_id',
     cfg.injEq, heq_eq_eq, true_and]
     constructor
-    . simp only [Terminator.lsubst_id']
+    . simp only [Terminator.lsubst_id_apply']
       induction k with
       | zero => rfl
       | succ k I => rw [<-I]
