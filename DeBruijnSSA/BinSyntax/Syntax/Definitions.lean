@@ -483,6 +483,9 @@ theorem Region.vwk_vwk (σ τ : ℕ → ℕ) (r : Region φ)
   induction r generalizing σ τ
   <;> simp [vwk, Term.wk_wk, Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
+theorem Region.vwk_comp (ρ σ)
+  : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := funext (Region.vwk_vwk ρ σ)
+
 @[simp]
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
 
