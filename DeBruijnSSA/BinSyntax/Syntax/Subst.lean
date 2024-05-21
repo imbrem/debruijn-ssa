@@ -1306,39 +1306,28 @@ theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
 theorem Subst.vlift_comp (σ τ : Subst φ) : (σ.comp τ).vlift = σ.vlift.comp τ.vlift
   := σ.vliftn_comp 1 τ
 
-theorem lsubst_lsubst (σ τ : Subst φ) (t : Region φ)
-  : (t.lsubst τ).lsubst σ = t.lsubst (σ.comp τ)
-  := by induction t generalizing σ τ with
-  | br ℓ e => simp only [lsubst, Subst.comp, vsubst_subst0_lsubst_vlift]
-  | let2 => sorry
-  | cfg => sorry
-  | _ => simp only [lsubst, Subst.comp, Subst.vlift_comp, *]
-
-theorem lsubst_comp (σ τ : Subst φ)
-  : Region.lsubst (σ.comp τ) = Region.lsubst σ ∘ Region.lsubst τ
-  := Eq.symm $ funext $ lsubst_lsubst σ τ
-
 theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
   := by
   funext k
   simp only [liftn, comp]
   split
   case inl h => simp [liftn, vlift, h]
-  case inr h =>
-    simp only [vlift, ←lsubst_lwk, lsubst_lsubst]
-    congr
-    funext k
-    simp only [comp, vlift, Function.comp_apply, lsubst, liftn, add_lt_iff_neg_right, not_lt_zero',
-      ↓reduceIte, add_tsub_cancel_right, vwk_lift_comp_fromLwk, Term.subst0_var0, vsubst_wk,
-      vwk_vwk, lsubst_lwk, vwk_lwk]
-    congr
-    funext k
-    cases k <;> rfl
+  case inr h => sorry
 
 theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   have h := Subst.liftn_comp 1 σ τ
   simp only [Subst.liftn_one] at h
   exact h
+
+theorem lsubst_lsubst (σ τ : Subst φ) (t : Region φ)
+  : (t.lsubst τ).lsubst σ = t.lsubst (σ.comp τ)
+  := by induction t generalizing σ τ with
+  | br ℓ e => simp only [lsubst, Subst.comp, vsubst_subst0_lsubst_vlift]
+  | _ => simp only [lsubst, Subst.comp, Subst.vlift_comp, Subst.vliftn_comp, Subst.liftn_comp, *]
+
+theorem lsubst_comp (σ τ : Subst φ)
+  : Region.lsubst (σ.comp τ) = Region.lsubst σ ∘ Region.lsubst τ
+  := Eq.symm $ funext $ lsubst_lsubst σ τ
 
 end Region
 
