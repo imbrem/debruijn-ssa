@@ -1345,12 +1345,27 @@ theorem Subst.lwk_comp_vlift (ρ) (σ : Subst φ) : lwk ρ ∘ σ.vlift = vlift 
 theorem Subst.lwk_comp_vliftn (ρ) (σ : Subst φ) (n) : lwk ρ ∘ σ.vliftn n = vliftn n (lwk ρ ∘ σ)
   := sorry
 
+theorem Subst.vlift_comp_lwk (σ : Subst φ) (ρ) : vlift (σ ∘ ρ) = σ.vlift ∘ ρ
+  := sorry
+
+theorem Subst.vliftn_comp_lwk (σ : Subst φ) (ρ) (n) : vliftn n (σ ∘ ρ) = σ.vliftn n ∘ ρ
+  := sorry
+
+theorem Subst.liftn_comp_lwk (σ : Subst φ) (ρ) (n) : liftn n (σ ∘ ρ) = σ.liftn n ∘ (Nat.liftnWk n ρ)
+  := sorry
+
 theorem lwk_lsubst (σ ρ) (t : Region φ)
   : (t.lsubst σ).lwk ρ = t.lsubst (lwk ρ ∘ σ)
   := by induction t generalizing σ ρ with
   | br ℓ e => simp only [lsubst, Function.comp_apply, lwk_vsubst]
   | cfg β n G Iβ IG => sorry
   | _ => simp [Subst.lwk_comp_vlift, Subst.lwk_comp_vliftn, *]
+
+theorem lsubst_lwk (σ ρ) (t : Region φ)
+  : (t.lwk ρ).lsubst σ = t.lsubst (σ ∘ ρ) := by
+  induction t generalizing σ ρ with
+  | br ℓ e => rfl
+  | _ => simp [Subst.vlift_comp_lwk, Subst.vliftn_comp_lwk, Subst.liftn_comp_lwk, *]
 
 theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (σ.liftn n).comp (τ.liftn n)
   := by
@@ -1359,8 +1374,8 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
   split
   case inl h => simp [liftn, vlift, h]
   case inr h =>
-    generalize τ (k - n) = t
-    rw [lwk_lsubst]
+    rw [lwk_lsubst, lsubst_lwk]
+    congr
     sorry
 
 theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
