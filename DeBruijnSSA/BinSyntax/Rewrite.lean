@@ -12,8 +12,8 @@ def Term.subst₂ (a b: Term φ) : Subst φ
   | n + 2 => Term.var n
 
 def Term.WfD.subst₂ {Γ : Ctx α ε} {a b : Term φ}
-  (ha : a.WfD Γ ⟨A, e⟩) (hb : b.WfD Γ ⟨B, e⟩)
-  : (a.subst₂ b).WfD Γ (⟨A, e⟩::⟨B, e⟩::Γ)
+  (ha : a.WfD Γ ⟨A, e⟩) (hb : b.WfD Γ ⟨B, e'⟩)
+  : (a.subst₂ b).WfD Γ (⟨A, e⟩::⟨B, e'⟩::Γ)
   | ⟨0, _⟩ => ha
   | ⟨1, _⟩ => hb
   | ⟨n + 2, h⟩ => var ⟨by simp at h; exact h, le_refl _⟩
