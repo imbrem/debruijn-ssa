@@ -1149,7 +1149,8 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Region φ)
       congr
       funext n
       simp_arith [Nat.liftnWk]
-  | cfg n β G Iβ IG => sorry
+  | cfg β k G Iβ IG =>
+    simp only [lsubst, lwk, Subst.liftn_add_apply, <-Nat.add_assoc, <-Nat.liftnWk_add_apply, *]
   | _ => simp [Subst.vlift_liftn_comm, Subst.vliftn_liftn_comm, *]
 
 theorem lsubst_iterate_lift (n : ℕ) (σ : Subst φ) (t : Region φ)
