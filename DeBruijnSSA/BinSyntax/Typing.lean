@@ -636,6 +636,10 @@ def Block.WfD.vwk {β : Block φ} (h : Γ.Wkn Δ ρ) (hβ : WfD Δ β Ξ L) : Wf
   terminator := hβ.terminator.vwk
     (hβ.body.num_defs_eq_length ▸ (h.liftn_append' (by simp [Ctx.reverse])))
 
+def Block.WfD.vwk_id {β : Block φ} (h : Γ.Wkn Δ id) (hβ : WfD Δ β Ξ L) : WfD Γ β Ξ L where
+  body := hβ.body.wk_id h
+  terminator := hβ.terminator.vwk_id sorry--(h.liftn_append_id (by simp [Ctx.reverse]))
+
 def Block.WfD.lwk {β : Block φ} (h : L.Wkn K ρ) (hβ : WfD Γ β Ξ L) : WfD Γ (β.lwk ρ) Ξ K where
   body := hβ.body
   terminator := hβ.terminator.lwk h
@@ -645,6 +649,11 @@ def BBRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : BBRegion φ
   | cfg n R hR hβ hG =>
     cfg n R hR (hβ.vwk h) (λi => (hG i).vwk (hβ.body.num_defs_eq_length ▸ h.liftn_append_cons _ _))
 
+def BBRegion.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : BBRegion φ} (h : Γ.Wkn Δ id)
+  : WfD Δ r L → WfD Γ r L
+  | cfg n R hR hβ hG =>
+    cfg n R hR (hβ.vwk_id h) (λi => (hG i).vwk_id sorry)
+
 def BBRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : BBRegion φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K
   | cfg n R hR hβ hG =>
@@ -653,9 +662,15 @@ def BBRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : BB
 
 def TRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : TRegion φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ r L → WfD Γ (r.vwk ρ) L
-  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.lift (le_refl _)))
-  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.liftn₂ (le_refl _) (le_refl _)))
-  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.lift (le_refl _)))
+  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.slift _))
+  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.sliftn₂ _ _))
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.slift _))
+
+def TRegion.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : TRegion φ} (h : Γ.Wkn Δ id)
+  : WfD Δ r L → WfD Γ r L
+  | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id (h.slift_id _))
+  | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id sorry)
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id (h.slift_id _))
 
 def TRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : TRegion φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K
@@ -672,6 +687,14 @@ def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h
   | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.slift _))
   | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.sliftn₂ _ _))
   | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.slift _))
+
+def Region.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : Region φ} (h : Γ.Wkn Δ id)
+  : WfD Δ r L → WfD Γ r L
+  | br hL ha => br hL (ha.wk_id h)
+  | case he hs ht => case (he.wk_id h) (hs.vwk_id (h.slift_id _)) (ht.vwk_id (h.slift_id _))
+  | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id (h.slift_id _))
+  | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id sorry)
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id (h.slift_id _))
 
 def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Region φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K

@@ -152,10 +152,68 @@ def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) :
   terminator := hb.terminator.lsubst (hσ.vliftn_append'
     (by rw [hb.body.num_defs_eq_length, Ctx.reverse, List.length_reverse]))
 
--- def BBRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ L K)
---   : r.WfD Γ L → (r.lsubst σ).WfD Γ K
---   | cfg n R hR hb hG => cfg n R hR (hb.lsubst sorry) (λi => (hG i).lsubst sorry)
+def BBRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ L K)
+  : r.WfD Γ L → (r.lsubst σ).WfD Γ K
+  | cfg n R hR hb hG => cfg n R hR (hb.lsubst sorry) (λi => (hG i).lsubst sorry)
+
+def TRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : TRegion φ} (hσ : σ.WfD Γ L K)
+  : r.WfD Γ L → (r.lsubst σ).WfD Γ K
+  | let1 da dt => let1 da (dt.lsubst (hσ.vlift _))
+  | let2 da dt => let2 da (dt.lsubst sorry)
+  | cfg n R hR hr hG => cfg n R hR (hr.lsubst sorry) (λi => (hG i).lsubst sorry)
 
 end TerminatorSubst
+
+section RegionSubst
+
+variable
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+  {Γ Δ : Ctx α ε} {σ : Region.Subst φ}
+
+def Region.Subst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : Region.Subst φ) : Type _
+  := ∀i : Fin L.length, (σ i).WfD (⟨L.get i, ⊥⟩::Γ) K
+
+def Region.Subst.WfD.lift (h : A ≤ A') (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A'::K)
+  := λi => i.cases
+    (Region.WfD.br ⟨by simp, h⟩ (Term.WfD.var (Ctx.Var.head (le_refl _) _))) -- TODO: factor
+    (λi => (hσ i).lwk (LCtx.Wkn.id _).step)
+
+def Region.Subst.WfD.slift (A) (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A::K)
+  := hσ.lift (le_refl A)
+
+def Region.Subst.WfD.liftn_append (J : LCtx α) (hσ : σ.WfD Γ L K)
+  : (σ.liftn J.length).WfD Γ (J ++ L) (J ++ K)
+  := match J with
+  | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
+  | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift _
+
+def Region.Subst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
+  := λi => (hσ i).vwk ((Ctx.Wkn.id Γ).step.slift _)
+
+def Region.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn Ξ.length).WfD (Ξ ++ Γ) L K
+  := λi => (hσ i).vwk (((Ctx.Wkn.id Γ).stepn_append Ξ).slift _)
+
+def Region.Subst.WfD.vliftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn n).WfD (Ξ ++ Γ) L K
+  := λi => (hσ i).vwk (((Ctx.Wkn.id Γ).stepn_append' hn).slift _)
+
+def LCtx.Trg.rsubst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
+  := (hσ ⟨n, h.length⟩).vwk_id ((Ctx.Wkn.id Γ).lift_id (by simp [h.get]))
+
+def LCtx.Trg.rsubst0
+  {a : Term φ} (hσ : σ.WfD Γ L K) (h : L.Trg n A) (ha : a.WfD Γ ⟨A, ⊥⟩)
+  : ((σ n).vsubst a.subst0).WfD Γ K
+  := (h.rsubst hσ).vsubst ha.subst0
+
+def Region.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.WfD Γ L K)
+  : r.WfD Γ L → (r.lsubst σ).WfD Γ K
+  | br hL ha => hL.rsubst0 hσ ha
+  | case he hs ht => case he (hs.lsubst (hσ.vlift _)) (ht.lsubst (hσ.vlift _))
+  | let1 da dt => let1 da (dt.lsubst (hσ.vlift _))
+  | let2 da dt => let2 da (dt.lsubst sorry)
+  | cfg n R hR hr hG => cfg n R hR (hr.lsubst sorry) (λi => (hG i).lsubst sorry)
+
+end RegionSubst
 
 end BinSyntax
