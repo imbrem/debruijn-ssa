@@ -1268,17 +1268,31 @@ theorem vsubst_subst0_vwk (t : Region φ) (e : Term φ) (ρ)
   simp [Nat.liftnWk_one, Nat.liftnWk_zero, Term.substn_zero] at h
   exact h
 
+theorem Subst.vwk_liftWk_comp_liftn (σ : Subst φ) (ρ)
+    : vwk (Nat.liftWk ρ) ∘ σ.liftn n = liftn n (vwk (Nat.liftWk ρ) ∘ σ) := by
+  funext k
+  simp only [Function.comp_apply, liftn]
+  split
+  rfl
+  rw [lwk_vwk]
+
+theorem Subst.vwk_liftWk_liftWk_comp_vlift (σ : Subst φ) (ρ)
+    : vwk (Nat.liftWk (Nat.liftWk ρ)) ∘ σ.vlift = vlift (vwk (Nat.liftWk ρ) ∘ σ) := by
+  simp only [vlift, ← Function.comp.assoc, ← vwk_comp, ← Nat.liftWk_comp, Nat.liftWk_comp_succ]
+
+theorem Subst.vwk_liftWk_liftnWk_comp_vliftn (n : ℕ) (σ : Subst φ) (ρ)
+    : vwk (Nat.liftWk (Nat.liftnWk n ρ)) ∘ σ.vliftn n = vliftn n (vwk (Nat.liftWk ρ) ∘ σ) := by
+  simp only [vliftn, ← Function.comp.assoc, ← vwk_comp, ← Nat.liftWk_comp, Nat.liftnWk_comp_add]
+
 theorem vwk_lsubst (σ ρ) (t : Region φ)
   : (t.lsubst σ).vwk ρ = (t.vwk ρ).lsubst (vwk (Nat.liftWk ρ) ∘ σ)
   := by induction t generalizing σ ρ with
   | br ℓ e => simp [vsubst_subst0_vwk]
-  | let2 => sorry
-  | cfg => sorry
   | _ =>
-    simp only [vwk, lsubst, *]
-    congr <;> simp only [
-      Subst.vlift, <-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ
-    ]
+    simp only [
+      vwk, lsubst,
+      Subst.vwk_liftWk_liftWk_comp_vlift, Subst.vwk_liftWk_liftnWk_comp_vliftn,
+      Subst.vwk_liftWk_comp_liftn, *]
 
 theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
   : (σ.comp τ).vliftn n = (σ.vliftn n).comp (τ.vliftn n)
