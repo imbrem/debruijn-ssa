@@ -39,6 +39,10 @@ def Term.Subst.WfD.liftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ)
   : (σ.liftn (Ξ.length + 1)).WfD (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
   := liftn_append (V::Ξ) hσ
 
+def Term.Subst.WfD.liftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.length + 1) (hσ : σ.WfD Γ Δ)
+  : (σ.liftn n).WfD (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
+  := hn ▸ hσ.liftn_append_cons V Ξ
+
 -- TODO: version with nicer defeq?
 def Term.Subst.WfD.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ : σ.WfD Γ Δ)
   : (σ.liftn 2).WfD (V₁::V₂::Γ) (V₁'::V₂'::Δ)
@@ -81,7 +85,7 @@ def Block.WfD.vsubst {b : Block φ} (hσ : σ.WfD Γ Δ) (hb : b.WfD Δ Ξ L) : 
 def BBRegion.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ Δ)
   : r.WfD Δ L → (r.vsubst σ).WfD Γ L
   | cfg n R hR hb hG => cfg n R hR (hb.vsubst hσ)
-    (λi => (hG i).vsubst (hb.body.num_defs_eq_length ▸ hσ.liftn_append_cons _ _))
+    (λi => (hG i).vsubst (hσ.liftn_append_cons' _ (by rw [hb.body.num_defs_eq_length])))
 
 def TRegion.WfD.vsubst {Γ Δ : Ctx α ε} {σ}  {r : TRegion φ} (hσ : σ.WfD Γ Δ)
   : r.WfD Δ L → (r.vsubst σ).WfD Γ L
@@ -122,8 +126,26 @@ def Terminator.Subst.WfD.liftn_append (J : LCtx α) (hσ : σ.WfD Γ L K)
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
   | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift _
 
+def Terminator.Subst.WfD.liftn_append' {J : LCtx α} (hn : n = J.length) (hσ : σ.WfD Γ L K)
+  : (σ.liftn n).WfD Γ (J ++ L) (J ++ K)
+  := hn ▸ hσ.liftn_append J
+
+def Terminator.Subst.WfD.liftn_append_cons (V : Ty α) (J : LCtx α) (hσ : σ.WfD Γ L K)
+  : (σ.liftn (J.length + 1)).WfD Γ (V::(J ++ L)) (V::(J ++ K))
+  := liftn_append (V::J) hσ
+
+def Terminator.Subst.WfD.liftn_append_cons' (V : Ty α) {J : LCtx α} (hn : n = J.length + 1) (hσ : σ.WfD Γ L K)
+  : (σ.liftn n).WfD Γ (V::(J ++ L)) (V::(J ++ K))
+  := hn ▸ hσ.liftn_append_cons V J
+
 def Terminator.Subst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
   := λi => (hσ i).vwk ((Ctx.Wkn.id Γ).step.slift _)
+
+def Terminator.Subst.WfD.vlift₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : σ.vlift.vlift.WfD (V₁::V₂::Γ) L K
+  := (hσ.vlift _).vlift _
+
+def Terminator.Subst.WfD.vliftn₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : (σ.vliftn 2).WfD (V₁::V₂::Γ) L K
+  := Terminator.Subst.vliftn_eq_iterate_vlift 2 ▸ hσ.vlift₂ _ _
 
 def Terminator.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
   : (σ.vliftn Ξ.length).WfD (Ξ ++ Γ) L K
@@ -132,6 +154,14 @@ def Terminator.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
 def Terminator.Subst.WfD.vliftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ L K)
   : (σ.vliftn n).WfD (Ξ ++ Γ) L K
   := λi => (hσ i).vwk (((Ctx.Wkn.id Γ).stepn_append' hn).slift _)
+
+def Terminator.Subst.WfD.vliftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn (Ξ.length + 1)).WfD (V::(Ξ ++ Γ)) L K
+  := vliftn_append (V::Ξ) hσ
+
+def Terminator.Subst.WfD.vliftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.length + 1) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn n).WfD (V::(Ξ ++ Γ)) L K
+  := hn ▸ hσ.vliftn_append_cons V Ξ
 
 def LCtx.Trg.subst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
   := (hσ ⟨n, h.length⟩).vwk_id ((Ctx.Wkn.id Γ).lift_id (by simp [h.get]))
@@ -154,13 +184,18 @@ def Block.WfD.lsubst {b : Block φ} (hσ : σ.WfD Γ L K) (hb : b.WfD Γ Ξ L) :
 
 def BBRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : BBRegion φ} (hσ : σ.WfD Γ L K)
   : r.WfD Γ L → (r.lsubst σ).WfD Γ K
-  | cfg n R hR hb hG => cfg n R hR (hb.lsubst sorry) (λi => (hG i).lsubst sorry)
+  | cfg n R hR hb hG => cfg n R hR
+    (hb.lsubst (hσ.liftn_append' hR.symm))
+    (λi => (hG i).lsubst
+      ((hσ.liftn_append' hR.symm).vliftn_append_cons' _ (by rw [hb.body.num_defs_eq_length])))
 
 def TRegion.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : TRegion φ} (hσ : σ.WfD Γ L K)
   : r.WfD Γ L → (r.lsubst σ).WfD Γ K
   | let1 da dt => let1 da (dt.lsubst (hσ.vlift _))
-  | let2 da dt => let2 da (dt.lsubst sorry)
-  | cfg n R hR hr hG => cfg n R hR (hr.lsubst sorry) (λi => (hG i).lsubst sorry)
+  | let2 da dt => let2 da (dt.lsubst (hσ.vliftn₂ _ _))
+  | cfg n R hR hr hG => cfg n R hR
+    (hr.lsubst (hσ.liftn_append' hR.symm))
+    (λi => (hG i).lsubst ((hσ.liftn_append' hR.symm).vlift _))
 
 end TerminatorSubst
 
@@ -187,8 +222,26 @@ def Region.Subst.WfD.liftn_append (J : LCtx α) (hσ : σ.WfD Γ L K)
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
   | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift _
 
+def Region.Subst.WfD.liftn_append' {J : LCtx α} (hn : n = J.length) (hσ : σ.WfD Γ L K)
+  : (σ.liftn n).WfD Γ (J ++ L) (J ++ K)
+  := hn ▸ hσ.liftn_append J
+
+def Region.Subst.WfD.liftn_append_cons (V : Ty α) (J : LCtx α) (hσ : σ.WfD Γ L K)
+  : (σ.liftn (J.length + 1)).WfD Γ (V::(J ++ L)) (V::(J ++ K))
+  := liftn_append (V::J) hσ
+
+def Region.Subst.WfD.liftn_append_cons' (V : Ty α) {J : LCtx α} (hn : n = J.length + 1) (hσ : σ.WfD Γ L K)
+  : (σ.liftn n).WfD Γ (V::(J ++ L)) (V::(J ++ K))
+  := hn ▸ hσ.liftn_append_cons V J
+
 def Region.Subst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
   := λi => (hσ i).vwk ((Ctx.Wkn.id Γ).step.slift _)
+
+def Region.Subst.WfD.vlift₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : σ.vlift.vlift.WfD (V₁::V₂::Γ) L K
+  := (hσ.vlift _).vlift _
+
+def Region.Subst.WfD.vliftn₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : (σ.vliftn 2).WfD (V₁::V₂::Γ) L K
+  := Region.Subst.vliftn_eq_iterate_vlift 2 ▸ hσ.vlift₂ _ _
 
 def Region.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
   : (σ.vliftn Ξ.length).WfD (Ξ ++ Γ) L K
@@ -197,6 +250,14 @@ def Region.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
 def Region.Subst.WfD.vliftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ L K)
   : (σ.vliftn n).WfD (Ξ ++ Γ) L K
   := λi => (hσ i).vwk (((Ctx.Wkn.id Γ).stepn_append' hn).slift _)
+
+def Region.Subst.WfD.vliftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn (Ξ.length + 1)).WfD (V::(Ξ ++ Γ)) L K
+  := vliftn_append (V::Ξ) hσ
+
+def Region.Subst.WfD.vliftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.length + 1) (hσ : σ.WfD Γ L K)
+  : (σ.vliftn n).WfD (V::(Ξ ++ Γ)) L K
+  := hn ▸ hσ.vliftn_append_cons V Ξ
 
 def LCtx.Trg.rsubst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
   := (hσ ⟨n, h.length⟩).vwk_id ((Ctx.Wkn.id Γ).lift_id (by simp [h.get]))
@@ -211,8 +272,10 @@ def Region.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.WfD Γ
   | br hL ha => hL.rsubst0 hσ ha
   | case he hs ht => case he (hs.lsubst (hσ.vlift _)) (ht.lsubst (hσ.vlift _))
   | let1 da dt => let1 da (dt.lsubst (hσ.vlift _))
-  | let2 da dt => let2 da (dt.lsubst sorry)
-  | cfg n R hR hr hG => cfg n R hR (hr.lsubst sorry) (λi => (hG i).lsubst sorry)
+  | let2 da dt => let2 da (dt.lsubst (hσ.vliftn₂ _ _))
+  | cfg n R hR hr hG => cfg n R hR
+    (hr.lsubst (hσ.liftn_append' hR.symm))
+    (λi => (hG i).lsubst ((hσ.liftn_append' hR.symm).vlift _))
 
 end RegionSubst
 

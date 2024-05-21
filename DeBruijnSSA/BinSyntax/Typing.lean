@@ -479,6 +479,14 @@ theorem Ctx.Wkn.slift₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) (Nat.liftWk (Nat.liftWk ρ))
   := h.lift₂ (le_refl _) (le_refl _)
 
+theorem Ctx.Wkn.lift_id₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ _root_.id)
+  : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) _root_.id
+  := Nat.liftWk_id ▸ Nat.liftWk_id ▸ h.lift₂ hV₁ hV₂
+
+theorem Ctx.Wkn.slift_id₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ _root_.id)
+  : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) _root_.id
+  := h.lift_id₂ (le_refl _) (le_refl _)
+
 theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftnWk 2 ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn₂ hV₁ hV₂)
@@ -486,6 +494,14 @@ theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤
 theorem Ctx.Wkn.sliftn₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) (Nat.liftnWk 2 ρ)
   := h.liftn₂ (le_refl _) (le_refl _)
+
+theorem Ctx.Wkn.liftn_id₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ _root_.id)
+  : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) _root_.id
+  := Nat.liftnWk_id 2 ▸ h.liftn₂ hV₁ hV₂
+
+theorem Ctx.Wkn.sliftn_id₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ _root_.id)
+  : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) _root_.id
+  := h.liftn_id₂ (le_refl _) (le_refl _)
 
 theorem Ctx.Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
@@ -495,6 +511,10 @@ theorem Ctx.Wkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
   := hn ▸ liftn_append Ξ h
 
+theorem Ctx.Wkn.liftn_append_id (Ξ) (h : Γ.Wkn Δ _root_.id)
+  : Wkn (Ξ ++ Γ) (Ξ ++ Δ) _root_.id
+  := Nat.liftnWk_id _ ▸ liftn_append Ξ h
+
 theorem Ctx.Wkn.liftn_append_cons (A Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
   := liftn_append (A::Ξ) h
@@ -502,6 +522,10 @@ theorem Ctx.Wkn.liftn_append_cons (A Ξ) (h : Γ.Wkn Δ ρ)
 theorem Ctx.Wkn.liftn_append_cons' (A) {Ξ} (hn : n = Ξ.length + 1) (h : Γ.Wkn Δ ρ)
   : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk n ρ)
   := hn ▸ liftn_append_cons A Ξ h
+
+theorem Ctx.Wkn.liftn_append_cons_id (A Ξ) (h : Γ.Wkn Δ _root_.id)
+  : Wkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) _root_.id
+  := Nat.liftnWk_id _ ▸  liftn_append_cons A Ξ h
 
 theorem Ctx.Wkn.stepn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) Δ (Nat.stepnWk Ξ.length ρ)
@@ -638,7 +662,7 @@ def Block.WfD.vwk {β : Block φ} (h : Γ.Wkn Δ ρ) (hβ : WfD Δ β Ξ L) : Wf
 
 def Block.WfD.vwk_id {β : Block φ} (h : Γ.Wkn Δ id) (hβ : WfD Δ β Ξ L) : WfD Γ β Ξ L where
   body := hβ.body.wk_id h
-  terminator := hβ.terminator.vwk_id sorry--(h.liftn_append_id (by simp [Ctx.reverse]))
+  terminator := hβ.terminator.vwk_id (h.liftn_append_id _)
 
 def Block.WfD.lwk {β : Block φ} (h : L.Wkn K ρ) (hβ : WfD Γ β Ξ L) : WfD Γ (β.lwk ρ) Ξ K where
   body := hβ.body
@@ -652,7 +676,7 @@ def BBRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : BBRegion φ
 def BBRegion.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : BBRegion φ} (h : Γ.Wkn Δ id)
   : WfD Δ r L → WfD Γ r L
   | cfg n R hR hβ hG =>
-    cfg n R hR (hβ.vwk_id h) (λi => (hG i).vwk_id sorry)
+    cfg n R hR (hβ.vwk_id h) (λi => (hG i).vwk_id (h.liftn_append_cons_id _ _))
 
 def BBRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : BBRegion φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K
@@ -669,7 +693,7 @@ def TRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : TRegion φ} 
 def TRegion.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : TRegion φ} (h : Γ.Wkn Δ id)
   : WfD Δ r L → WfD Γ r L
   | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id (h.slift_id _))
-  | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id sorry)
+  | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id (h.slift_id₂ _ _))
   | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id (h.slift_id _))
 
 def TRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : TRegion φ} (h : L.Wkn K ρ)
@@ -693,7 +717,7 @@ def Region.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : Region φ} (h : Γ.Wkn Δ id)
   | br hL ha => br hL (ha.wk_id h)
   | case he hs ht => case (he.wk_id h) (hs.vwk_id (h.slift_id _)) (ht.vwk_id (h.slift_id _))
   | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id (h.slift_id _))
-  | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id sorry)
+  | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id (h.slift_id₂ _ _))
   | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id (h.slift_id _))
 
 def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Region φ} (h : L.Wkn K ρ)

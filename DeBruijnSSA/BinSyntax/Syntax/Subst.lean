@@ -898,7 +898,7 @@ def Block.lsubst (σ : Terminator.Subst φ) (β : Block φ) : Block φ where
 /-- Substitute the free labels in this region -/
 def BBRegion.lsubst (σ : Terminator.Subst φ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lsubst (σ.liftn n)) n
-    (λ i => (f i).lsubst ((σ.liftn n).vliftn β.body.num_defs))
+    (λ i => (f i).lsubst ((σ.liftn n).vliftn (β.body.num_defs + 1)))
 
 /-- Substitute the free labels in this control-flow graph -/
 def BBCFG.lsubst (σ : Terminator.Subst φ) (cfg : BBCFG φ) : BBCFG φ where
@@ -909,7 +909,7 @@ def BBCFG.lsubst (σ : Terminator.Subst φ) (cfg : BBCFG φ) : BBCFG φ where
 def TRegion.lsubst (σ : Terminator.Subst φ) : TRegion φ → TRegion φ
   | let1 e t => let1 e (t.lsubst σ.vlift)
   | let2 e t => let2 e (t.lsubst (σ.vliftn 2))
-  | cfg β n f => cfg (β.lsubst (σ.liftn n)) n (λ i => (f i).lsubst (σ.liftn n))
+  | cfg β n f => cfg (β.lsubst (σ.liftn n)) n (λ i => (f i).lsubst (σ.liftn n).vlift)
 
 /-- Substitute the free labels in this control-flow graph -/
 def TCFG.lsubst (σ : Terminator.Subst φ) (cfg : TCFG φ) : TCFG φ where
@@ -1084,7 +1084,7 @@ def lsubst (σ : Subst φ) : Region φ → Region φ
   | case e s t => case e (lsubst σ.vlift s) (lsubst σ.vlift t)
   | let1 e t => let1 e (lsubst σ.vlift t)
   | let2 e t => let2 e (lsubst (σ.vliftn 2) t)
-  | cfg β n f => cfg (lsubst (σ.liftn n) β) n (λ i => lsubst (σ.liftn n) (f i))
+  | cfg β n f => cfg (lsubst (σ.liftn n) β) n (λ i => lsubst (σ.liftn n).vlift (f i))
 
 @[simp]
 theorem lsubst_id (t : Region φ) : t.lsubst Subst.id = t
@@ -1149,8 +1149,8 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Region φ)
       congr
       funext n
       simp_arith [Nat.liftnWk]
-  | cfg β k G Iβ IG =>
-    simp only [lsubst, lwk, Subst.liftn_add_apply, <-Nat.add_assoc, <-Nat.liftnWk_add_apply, *]
+  | cfg β k G Iβ IG => sorry
+    -- simp only [lsubst, lwk, Subst.liftn_add_apply, <-Nat.add_assoc, <-Nat.liftnWk_add_apply, *]
   | _ => simp [Subst.vlift_liftn_comm, Subst.vliftn_liftn_comm, *]
 
 theorem lsubst_iterate_lift (n : ℕ) (σ : Subst φ) (t : Region φ)
