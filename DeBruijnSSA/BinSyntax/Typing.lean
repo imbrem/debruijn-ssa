@@ -20,6 +20,12 @@ inductive Ty (α : Type u) where
   | empty : Ty α
   deriving Repr, DecidableEq
 
+inductive Ty.IsInitial : Ty α → Prop
+  | prod_left : ∀{A}, IsInitial A → IsInitial (prod A B)
+  | prod_right : ∀{B}, IsInitial B → IsInitial (prod A B)
+  | coprod : ∀{A B}, IsInitial A → IsInitial B → IsInitial (coprod A B)
+  | empty : IsInitial empty
+
 inductive Ty.LE : Ty α → Ty α → Prop where
   | base {x y} : x ≤ y → LE (base x) (base y)
   | prod {x₁ x₂ y₁ y₂} : LE x₁ y₁ → LE x₂ y₂ → LE (prod x₁ x₂) (prod y₁ y₂)
@@ -91,6 +97,27 @@ def Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   get := h
 
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
+
+instance : Membership (Ty α × ε) (Ctx α ε)
+  := (inferInstance : Membership (Ty α × ε) (List (Ty α × ε)))
+
+def Ctx.IsInitial (Γ : Ctx α ε) : Prop := ∃V ∈ Γ, Ty.IsInitial V.1
+
+theorem Ctx.IsInitial.append_left {Γ : Ctx α ε} (h : Γ.IsInitial) (Δ) : (Γ ++ Δ).IsInitial
+  := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_left _ hV, hV0⟩
+
+theorem Ctx.IsInitial.append_right (Γ) {Δ : Ctx α ε} (h : Δ.IsInitial) : (Γ ++ Δ).IsInitial
+  := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_right _ hV, hV0⟩
+
+@[simp]
+theorem Ctx.IsInitial.append {Γ Δ : Ctx α ε} : (Γ ++ Δ).IsInitial ↔ Γ.IsInitial ∨ Δ.IsInitial
+  := ⟨
+    λ⟨V, hV, hV0⟩ => (List.mem_append.mp hV).elim (Or.inl ⟨V, ·, hV0⟩) (Or.inr ⟨V, ·, hV0⟩),
+    λh => h.elim (append_left · _) (append_right _)⟩
+
+-- def Ctx.IsInitial.cons {A ε} (h : Ty.IsInitial A) (Γ : Ctx α ε)
+--   : IsInitial (⟨A, ε⟩::Γ)
+--   := ⟨V, List.mem_cons_self _ _, h⟩
 
 -- TODO: HAppend of Ctx and List?
 
@@ -384,6 +411,16 @@ structure LCtx.Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
   get : A ≤ L.get ⟨n, length⟩
 
 instance : Append (LCtx α) := (inferInstance : Append (List (Ty α)))
+
+instance : Membership (Ty α) (LCtx α) := (inferInstance : Membership (Ty α) (List (Ty α)))
+
+def LCtx.IsInitial (L : LCtx α) : Prop := ∀A ∈ L, Ty.IsInitial A
+
+@[simp]
+theorem LCtx.IsInitial.append (L K : LCtx α) : (L ++ K).IsInitial ↔ L.IsInitial ∧ K.IsInitial
+  := ⟨
+    λh => ⟨λV hV => h V (List.mem_append_left _ hV), λV hV => h V (List.mem_append_right _ hV)⟩,
+    λ⟨h, h'⟩ V hV => (List.mem_append.mp hV).elim (h V) (h' V)⟩
 
 def LCtx.take (n : ℕ) (L : LCtx α) : LCtx α := List.take n L
 
