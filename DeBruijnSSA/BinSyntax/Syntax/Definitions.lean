@@ -17,6 +17,7 @@ inductive Term (φ : Type) where
   | unit : Term φ
   | inl : Term φ → Term φ
   | inr : Term φ → Term φ
+  | abort : Term φ → Term φ
 
 /-- Rename the variables in a `Term` using `ρ` -/
 @[simp]
@@ -27,6 +28,7 @@ def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
   | unit => unit
   | inl a => inl (wk ρ a)
   | inr a => inr (wk ρ a)
+  | abort a => abort (wk ρ a)
 
 /-- A basic block body, which consists of a sequence of variable definitions -/
 inductive Body (φ : Type) : Type
