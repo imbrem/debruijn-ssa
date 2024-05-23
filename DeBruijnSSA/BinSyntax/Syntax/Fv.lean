@@ -192,6 +192,9 @@ def Region.fv : Region φ → Multiset ℕ
   | let2 e t => e.fv + t.fv.liftnFv 2
   | cfg β _ f => β.fv + Finset.sum Finset.univ (λi => (f i).fv.liftnFv 1)
 
+theorem Region.fv_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fv = r.fv := by
+  induction r generalizing ρ <;> simp [*]
+
 /-- The free label variables in this region -/
 @[simp]
 def Region.fl : Region φ → Multiset ℕ
@@ -199,7 +202,13 @@ def Region.fl : Region φ → Multiset ℕ
   | case _ s t => s.fl + t.fl
   | let1 _ t => t.fl
   | let2 _ t => t.fl
-  | cfg β n f => β.fl + Finset.sum Finset.univ (λi => (f i).fl.liftnFv n)
+  | cfg β n f => β.fl.liftnFv n + Finset.sum Finset.univ (λi => (f i).fl.liftnFv n)
+
+theorem Region.fl_vwk (ρ : ℕ → ℕ) (r : Region φ) : (r.vwk ρ).fl = r.fl := by
+  induction r generalizing ρ <;> simp [*]
+
+theorem Region.fl_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fl = r.fl.map ρ := by
+  induction r generalizing ρ <;> simp [Multiset.map_finsum, *]
 
 /-- The free variables in this control-flow graph -/
 @[simp]
