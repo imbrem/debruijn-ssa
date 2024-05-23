@@ -117,6 +117,14 @@ theorem Ancestors.split_iff (G : Fin n → Region φ) (i j)
   : Ancestors G i j ↔ ∃k, i ∈ (G k).fl ∧ j ∈ SelfAncestors G k
   := ⟨Ancestors.split, λ⟨_, hki, hkj⟩ => Ancestors.of_split hki hkj⟩
 
+theorem Ancestors.split' {G : Fin n → Region φ} (h : Ancestors G i j)
+  : ∃k, k ∈ SelfAncestors G i ∧ k ∈ (G ⟨j, h.lt⟩).fl := by
+  induction h using Relation.TransGen.head_induction_on with
+  | base hr => exact ⟨_, SelfAncestors.self_mem _, hr.2⟩
+  | ih hr _ I =>
+    have ⟨k, hki, hkj⟩ := I
+    exact ⟨k, hki.head hr, hkj⟩
+
 inductive Acyclic' : Set ℕ → Set (Region φ)
   | br {D ℓ} (h : ℓ ∉ D) e : Acyclic' D (br ℓ e)
   | case e : Acyclic' D s → Acyclic' D t → Acyclic' D (case e s t)
@@ -205,9 +213,49 @@ theorem Acyclic'.not_mem_fl (h : Acyclic' D r) : ∀i ∈ D, i ∉ r.fl := by
 theorem Acyclic'.mem_fl (h : Acyclic' D r) : ∀i ∈ r.fl, i ∉ D
   := λi hi hd => h.not_mem_fl i hd hi
 
+theorem Acyclic'.self_not_mem_ancestors' (h : @Acyclic' φ D (Region.cfg β n G)) :
+  ∀i : Fin n, ↑i ∉ Ancestors G i := by cases h with
+  | cfg _ hG =>
+    intro i hi
+    have ⟨k, hik, hki⟩ := hi.split
+    apply (hG k).mem_fl _ hik
+    simp [hki]
+
+theorem Acyclic'.self_not_mem_ancestors (h : @Acyclic' φ D (Region.cfg β n G))
+  : ∀i, i ∉ Ancestors G i
+  := λi hi => h.self_not_mem_ancestors' ⟨i, hi.lt⟩ hi
+
 theorem SAcyclic'.not_mem_fl (h : SAcyclic' D r) : ∀i ∈ D, i ∉ r.fl := h.acyclic'.not_mem_fl
 
 theorem SAcyclic'.mem_fl (h : SAcyclic' D r) : ∀i ∈ r.fl, i ∉ D := h.acyclic'.mem_fl
+
+theorem SAcyclic'.ancestors_empty (h : @SAcyclic' D φ (Region.cfg β n G)) :
+  ∀i : Fin n, Ancestors G i = ∅ :=
+  by cases h with
+  | cfg _ hG =>
+    intro i
+    ext j
+    simp only [Set.mem_empty_iff_false, iff_false]
+    intro hj
+    have ⟨k, hki, hkj⟩ := hj.split'
+    have hk : k < n := by
+      cases hki.lt_or_eq with
+      | inl h => exact h
+      | inr h => exact h.symm ▸ i.prop
+    exact (hG ⟨j, hj.lt⟩).not_mem_fl _ (Or.inr hk) hkj
+
+theorem SAcyclic'.ancestors_empty' (h : @SAcyclic' D φ (Region.cfg β n G)) :
+  ∀{i}, (h : i < n) → Ancestors G i = ∅ := λ{i} h' => h.ancestors_empty ⟨i, h'⟩
+
+theorem SAcyclic'.successors_ge (h : @SAcyclic' D φ (Region.cfg β n G)) :
+    ∀i : Fin n, ∀j ∈ (G i).fl, n ≤ j := by
+  intro i j hj
+  apply Nat.le_of_not_lt
+  intro hn
+  have hj' : ↑i ∈ Ancestors G j := by
+    constructor
+    exact ⟨i.prop, hj⟩
+  simp [h.ancestors_empty' hn] at hj'
 
 theorem Acyclic'.vwk (ρ) (h : Acyclic' D r) : Acyclic' D (vwk ρ r) := by
   induction h generalizing ρ with
@@ -225,7 +273,86 @@ inductive SAcyclic : Set (Region φ)
   | let2 e : SAcyclic s → SAcyclic (let2 e s)
   | cfg : SAcyclic β →
     (∀i : Fin n, SAcyclic (G i)) →
-    (∀i : Fin n, ∀j ∈ Ancestors G i, n ≤ j) → SAcyclic (cfg β n G)
+    (∀i : Fin n, ∀j ∈ fl (G i), n ≤ j) → SAcyclic (cfg β n G)
+
+@[simp]
+theorem SAcyclic.br_iff (ℓ e) : @SAcyclic φ (Region.br ℓ e) ↔ True
+  := ⟨λ_ => trivial, λ_ => SAcyclic.br ℓ e⟩
+
+@[simp]
+theorem SAcyclic.case_iff (e s t) : @SAcyclic φ (Region.case e s t) ↔ SAcyclic s ∧ SAcyclic t
+  := ⟨λh => by cases h; constructor <;> assumption, λ⟨hs, ht⟩ => case e hs ht⟩
+
+@[simp]
+theorem SAcyclic.let1_iff (e s) : @SAcyclic φ (Region.let1 e s) ↔ SAcyclic s
+  := ⟨λh => by cases h; assumption, λh => let1 _ h⟩
+
+@[simp]
+theorem SAcyclic.let2_iff (e s) : @SAcyclic φ (Region.let2 e s) ↔ SAcyclic s
+  := ⟨λh => by cases h; assumption, λh => let2 _ h⟩
+
+@[simp]
+theorem SAcyclic.cfg_iff (β n G) :
+  @SAcyclic φ (Region.cfg β n G) ↔
+  SAcyclic β ∧ (∀i : Fin n, SAcyclic (G i)) ∧ (∀i : Fin n, ∀j ∈ fl (G i), n ≤ j)
+  := ⟨λh => by cases h; repeat first | constructor | assumption, λ⟨hβ, hG, hJ⟩ => cfg hβ hG hJ⟩
+
+theorem SAcyclic.successors_ge (h : @SAcyclic φ (Region.cfg β n G)) :
+  ∀i : Fin n, ∀j ∈ fl (G i), n ≤ j := by cases h; assumption
+
+theorem SAcyclic.ancestors_empty (h : @SAcyclic φ (Region.cfg β n G)) :
+    ∀i : Fin n, Ancestors G i = ∅ := by
+  intro i
+  ext j
+  simp only [Set.mem_empty_iff_false, iff_false]
+  intro hj
+  have ⟨k, hki, hkj⟩ := hj.split'
+  have hj' := h.successors_ge ⟨j, hj.lt⟩ k hkj
+  have hk : k < n := hki.lt_or_eq.elim id (λh => h ▸ i.prop)
+  exact Nat.not_le_of_lt hk hj'
+
+theorem SAcyclic.ancestors_empty' (h : @SAcyclic φ (Region.cfg β n G)) :
+  ∀{i}, (h : i < n) → Ancestors G i = ∅ := λ{i} h' => h.ancestors_empty ⟨i, h'⟩
+
+theorem SAcyclic'.sacyclic (h : SAcyclic' D r) : SAcyclic r := by
+  induction h with
+  | cfg hβ hG Iβ IG => exact SAcyclic.cfg Iβ IG (cfg hβ hG).successors_ge
+  | _ => constructor <;> assumption
+
+theorem SAcyclic'.of_sacyclic {r : Region φ} (h : SAcyclic r) (hD : ∀x ∈ r.fl, x ∉ D)
+  : SAcyclic' D r := by
+  induction h generalizing D with
+  | br => exact SAcyclic'.br (hD _ (by simp)) _
+  | case e _ _ Is It =>
+    exact SAcyclic'.case e
+      (Is (λi hi => hD i (by simp [hi])))
+      (It (λi hi => hD i (by simp [hi])))
+  | let1 e _ Is => exact SAcyclic'.let1 e (Is (λi hi => hD i (by simp [hi])))
+  | let2 e _ Is => exact SAcyclic'.let2 e (Is (λi hi => hD i (by simp [hi])))
+  | cfg hβ hG hG' Iβ IG =>
+    apply SAcyclic'.cfg
+    . apply Iβ
+      simp only [Set.mem_image, not_exists, not_and]
+      intro i hi j hj c
+      cases c
+      apply hD j
+      simp [Multiset.mem_liftnFv, hi]
+      exact hj
+    . intro i
+      apply IG
+      intro j hj
+      simp only [Set.mem_union, Set.mem_image, not_or, not_exists, not_and]
+      constructor
+      . intro x hx c
+        cases c
+        apply hD x
+        simp only [fl, Multiset.mem_add, Multiset.mem_liftnFv]
+        right
+        apply (Multiset.mem_finsum _ _ _).mpr
+        simp only [Finset.mem_univ, Multiset.mem_liftnFv, true_and]
+        exact ⟨_, hj⟩
+        exact hx
+      . exact Nat.not_lt_of_le $ (SAcyclic.cfg hβ hG hG').successors_ge i j hj
 
 -- TODO: relationship between SAcyclic and SACyclic'
 
@@ -254,11 +381,11 @@ theorem Acyclic.let1_iff (e s) : @Acyclic φ (Region.let1 e s) ↔ Acyclic s
 theorem Acyclic.let2_iff (e s) : @Acyclic φ (Region.let2 e s) ↔ Acyclic s
   := ⟨λh => by cases h; assumption, λh => let2 _ h⟩
 
-theorem Acyclic.not_mem_ancestors' (h : @Acyclic φ (Region.cfg β n G)) :
+theorem Acyclic.self_not_mem_ancestors' (h : @Acyclic φ (Region.cfg β n G)) :
   ∀i : Fin n, ↑i ∉ Ancestors G i := by cases h; assumption
 
-theorem Acyclic.not_mem_ancestors (h : @Acyclic φ (Region.cfg β n G)) : ∀i, i ∉ Ancestors G i
-  := λi hi => h.not_mem_ancestors' ⟨i, hi.lt⟩ hi
+theorem Acyclic.self_not_mem_ancestors (h : @Acyclic φ (Region.cfg β n G)) : ∀i, i ∉ Ancestors G i
+  := λi hi => h.self_not_mem_ancestors' ⟨i, hi.lt⟩ hi
 
 @[simp]
 theorem Acyclic.cfg_iff (β n G) :
@@ -268,12 +395,7 @@ theorem Acyclic.cfg_iff (β n G) :
 
 theorem Acyclic'.acyclic (h : Acyclic' D r) : Acyclic r := by
   induction h with
-  | @cfg n _ _ _ _ hG Iβ IG =>
-    apply Acyclic.cfg Iβ IG
-    intro i hi
-    have ⟨k, hik, hki⟩ := hi.split
-    apply (hG k).mem_fl _ hik
-    simp [hki]
+  | @cfg n _ _ _ hβ hG Iβ IG => exact Acyclic.cfg Iβ IG (cfg hβ hG).self_not_mem_ancestors'
   | _ => constructor <;> assumption
 
 theorem Acyclic'.of_acyclic {r : Region φ} (h : Acyclic r) (hD : ∀x ∈ r.fl, x ∉ D) : Acyclic' D r
