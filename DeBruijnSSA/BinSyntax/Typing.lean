@@ -96,6 +96,8 @@ def Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   length := by simp
   get := h
 
+def Ctx.infEffect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
+
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 
 instance : Membership (Ty α × ε) (Ctx α ε)
@@ -283,7 +285,7 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
 
 /-- Infer the effect of a term; pun with infimum -/
 def Term.infEffect [Sup ε] (Γ : Ctx α ε) : Term φ → ε
-  | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
+  | var n => Γ.infEffect n
   | op f e => Φ.effect f ⊔ e.infEffect Γ
   | pair a b => a.infEffect Γ ⊔ b.infEffect Γ
   | inl a => a.infEffect Γ
@@ -589,6 +591,24 @@ theorem Ctx.Wkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
 theorem Ctx.Wkn.id_len_le : Γ.Wkn Δ _root_.id → Δ.length ≤ Γ.length := by
   rw [Wkn_iff]; apply List.NWkn.id_len_le
 
+def Ctx.Types (Γ : Ctx α ε) : List (Ty α) := Γ.map Prod.fst
+
+theorem Ctx.length_types (Γ : Ctx α ε) : Γ.Types.length = Γ.length := by
+  simp [Ctx.Types]
+
+def Ctx.Effects (Γ : Ctx α ε) : List ε := Γ.map Prod.snd
+
+theorem Ctx.length_effects (Γ : Ctx α ε) : Γ.Effects.length = Γ.length := by
+  simp [Ctx.Effects]
+
+def Ctx.WknTy (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop := Γ.Types.NWkn Δ.Types ρ
+
+theorem Ctx.WknTy.id_types_len_le : Γ.WknTy Δ _root_.id → Δ.Types.length ≤ Γ.Types.length
+  := List.NWkn.id_len_le
+
+theorem Ctx.WknTy.id_len_le : Γ.WknTy Δ _root_.id → Δ.length ≤ Γ.length
+  := Δ.length_types ▸ Γ.length_types ▸ Ctx.WknTy.id_types_len_le
+
 theorem Ctx.Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
   get := le_trans hΓ.get h
@@ -794,7 +814,7 @@ variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [Orde
 theorem Term.WfD.infEffect_le
   {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infEffect Γ ≤ e
   := match h with
-  | var dv => by simp [infEffect, dv.length, dv.get.right]
+  | var dv => by simp [Ctx.infEffect, infEffect, dv.length, dv.get.right]
   | op df de => sup_le_iff.mpr ⟨df.effect, de.infEffect_le⟩
   | pair dl dr => sup_le_iff.mpr ⟨dl.infEffect_le, dr.infEffect_le⟩
   | inl dl => dl.infEffect_le
@@ -803,11 +823,11 @@ theorem Term.WfD.infEffect_le
   | unit _ => bot_le
 
 def Ctx.Var.toInfEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
-  : Γ.Var n ⟨V.1, if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥⟩
+  : Γ.Var n ⟨V.1, Γ.infEffect n⟩
   := ⟨h.length, by
     constructor
     exact h.get.1
-    simp [h.length]
+    simp [Ctx.infEffect, h.length]
   ⟩
 
 def Term.WfD.toInfEffect {Γ : Ctx α ε} {a : Term φ} {V}
