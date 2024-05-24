@@ -1,4 +1,4 @@
-import Discretion
+import Discretion.Wk.Fun
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv
 import DeBruijnSSA.BinSyntax.Syntax.Subst
@@ -11,23 +11,6 @@ import DeBruijnSSA.BinSyntax.Syntax.Compose
 namespace BinSyntax
 
 -- TODO: stepnwk and friends
-
-theorem Body.fv_append (b b' : Body φ) : (b.append b').fv = b.fv + b'.fv.liftnFv b.num_defs := by
-  induction b generalizing b'
-  <;> simp [append, fv, <-Multiset.liftnFv_add, add_assoc, Nat.add_comm, *]
-
-theorem Body.fv_ltimes (b b' : Body φ) : (b.ltimes b').fv = b.fv + b'.fv := by
-  rw [ltimes, fv_append, fv_wk]
-  congr
-  -- TODO: factor out as theorem in `Discretion`
-  generalize b'.fv = s
-  generalize b.num_defs = n
-  open Multiset in
-  ext i
-  simp only [liftnFv, ge_iff_le, count_map, filter_filter, <-countP_eq_card_filter, countP_map]
-  congr
-  ext a
-  simp
 
 /-- Convert this region to the terminator based format -/
 def BBRegion.toTRegion : BBRegion φ → TRegion φ

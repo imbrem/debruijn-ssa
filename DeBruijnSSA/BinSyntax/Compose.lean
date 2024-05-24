@@ -49,4 +49,12 @@ def Block.WfD.ltimes {Γ Δ Ξ : Ctx α ε} {b : Body φ} {β : Block φ}
 
 end Body
 
+section Region
+
+variable
+  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+  {Γ Δ : Ctx α ε}
+
+end Region
+
 end BinSyntax
