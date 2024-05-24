@@ -124,7 +124,7 @@ def let2_eta : Region φ :=
   let2 (Term.var 0) $
   ret (Term.pair (Term.var 0) (Term.var 1))
 
-def case_eta : Region φ := case (Term.var 0) (ret (Term.var 0)) (ret (Term.var 0))
+def case_eta : Region φ := case (Term.var 0) (ret (Term.var 0).inl) (ret (Term.var 0).inr)
 
 def drop : Region φ :=
   let1 (Term.var 0) $
@@ -137,16 +137,28 @@ def join (r r' : Region φ) : Region φ := case (Term.var 0)
 def abort : Region φ := ret (Term.var 0).abort
 
 def left_distributor : Region φ :=
+  case (Term.var 0)
+    (ret (Term.pair (Term.var 0) (Term.var 2).inl))
+    (ret (Term.pair (Term.var 0) (Term.var 2).inr))
+
+def left_distributor_inv : Region φ :=
   let2 (Term.var 0) $
   case (Term.var 1)
     (ret (Term.pair (Term.var 0) (Term.var 1)))
     (ret (Term.pair (Term.var 0) (Term.var 1)))
 
 def right_distributor : Region φ :=
+  case (Term.var 0)
+    (ret (Term.pair (Term.var 2).inl (Term.var 0)))
+    (ret (Term.pair (Term.var 2).inr (Term.var 0)))
+
+def right_distributor_inv : Region φ :=
   let2 (Term.var 0) $
   case (Term.var 0)
     (ret (Term.pair (Term.var 2) (Term.var 0)))
     (ret (Term.pair (Term.var 2) (Term.var 0)))
+
+def swap_sum : Region φ := case (Term.var 0) (ret (Term.var 0).inr) (ret (Term.var 0).inl)
 
 def right_exit : Region φ :=
   case (Term.var 0)
