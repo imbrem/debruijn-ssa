@@ -52,7 +52,7 @@ theorem Region.Reduce.case_inr_trg {e} {r s s' : Region φ}
 def Region.Reduce.WfD {Γ : Ctx α ε} {r r' : Region φ}
   : Region.Reduce r r' → r.WfD Γ A → r'.WfD Γ A
   | h, WfD.let2 (Term.WfD.pair da db) dr
-    => h.let2_pair_trg ▸ (WfD.let1 da $ WfD.let1 (db.wk ((Ctx.Wkn.id _).step)) $ dr)
+    => h.let2_pair_trg ▸ (WfD.let1 da $ WfD.let1 (db.wk (Ctx.Wkn.id.step)) $ dr)
   | h, WfD.case (Term.WfD.inl de) dr _ => h.case_inl_trg ▸ dr.let1 de
   | h, WfD.case (Term.WfD.inr de) _ ds => h.case_inr_trg ▸ ds.let1 de
 
@@ -63,22 +63,65 @@ inductive Region.TermEta1 : Region φ → Region φ → Prop
       $ r.vwk (Nat.liftWk Nat.succ))
   | let1_pair (a b r) : TermEta1 (let1 (Term.pair a b) r)
     (let1 a
-      $ let1 b
+      $ let1 (b.wk Nat.succ)
       $ let1 (Term.pair (Term.var 1) (Term.var 0))
       $ r.vwk (Nat.liftWk (· + 2))
     )
-  | let1_inl (e r s) : TermEta1 (case (Term.inl e) r s)
+  | let1_inl (e r) : TermEta1 (let1 (Term.inl e) r)
     (let1 e
       $ let1 (Term.inl (Term.var 0))
       $ r.vwk (Nat.liftWk Nat.succ))
-  | let1_inr (e r s) : TermEta1 (case (Term.inr e) r s)
+  | let1_inr (e r) : TermEta1 (let1 (Term.inr e) r)
     (let1 e
       $ let1 (Term.inr (Term.var 0))
-      $ s.vwk (Nat.liftWk Nat.succ))
+      $ r.vwk (Nat.liftWk Nat.succ))
   | let1_abort (e r) : TermEta1 (let1 (Term.abort e) r)
     (let1 e
       $ let1 (Term.abort (Term.var 0))
       $ r.vwk (Nat.liftWk Nat.succ))
+
+theorem Region.TermEta1.let1_op_trg {f e} {r r' : Region φ}
+  (h : Region.TermEta1 (Region.let1 (Term.op f e) r) r')
+  : r' = (Region.let1 e $ Region.let1 (Term.op f (Term.var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+  := by cases h; rfl
+
+theorem Region.TermEta1.let1_pair_trg {a b} {r r' : Region φ}
+  (h : Region.TermEta1 (Region.let1 (Term.pair a b) r) r')
+  : r' = (Region.let1 a
+    $ Region.let1 (b.wk Nat.succ)
+    $ Region.let1 (Term.pair (Term.var 1) (Term.var 0))
+    $ r.vwk (Nat.liftWk (· + 2)))
+  := by cases h; rfl
+
+theorem Region.TermEta1.let1_inl_trg {e} {r r' : Region φ}
+  (h : Region.TermEta1 (Region.let1 (Term.inl e) r) r')
+  : r' = (Region.let1 e $ Region.let1 (Term.inl (Term.var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+  := by cases h; rfl
+
+theorem Region.TermEta1.let1_inr_trg {e} {r r' : Region φ}
+  (h : Region.TermEta1 (Region.let1 (Term.inr e) r) r')
+  : r' = (Region.let1 e $ Region.let1 (Term.inr (Term.var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+  := by cases h; rfl
+
+theorem Region.TermEta1.let1_abort_trg {e} {r r' : Region φ}
+  (h : Region.TermEta1 (Region.let1 (Term.abort e) r) r')
+  : r' = (Region.let1 e $ Region.let1 (Term.abort (Term.var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+  := by cases h; rfl
+
+-- def Region.TermEta1.WfD {Γ : Ctx α ε} {r r' : Region φ}
+--   : Region.TermEta1 r r' → r.WfD Γ L → r'.WfD Γ L
+--   | h, WfD.let1 (Term.WfD.op df de) dr => h.let1_op_trg ▸ (
+--       WfD.let1 de
+--       $ WfD.let1 (Term.WfD.op df (Term.WfD.var Ctx.var_bot_head))
+--       $ dr.vwk Ctx.Wkn.id.step.slift)
+--   | h, WfD.let1 (Term.WfD.pair da db) dr => h.let1_pair_trg ▸ (
+--       WfD.let1 da
+--       $ WfD.let1 (db.wk Ctx.Wkn.id.step) sorry)
+--       -- $ WfD.let1 (Term.WfD.pair (Term.WfD.var Ctx.var_bot_head.step) (Term.WfD.var Ctx.var_bot_head))
+--       -- $ dr.vwk Ctx.Wkn.id.step.step.slift)
+--   | h, WfD.let1 (Term.WfD.inl de) dr => sorry
+--   | h, WfD.let1 (Term.WfD.inr de) ds => sorry
+--   | h, WfD.let1 (Term.WfD.abort de) dr => sorry
 
 -- TODO: WfD preservation for TermEta1
 
@@ -119,7 +162,9 @@ inductive Region.WkCfg : Region φ → Region φ → Prop
   | cfg (β n G k) (ρ : Fin k → Fin n)
     : WkCfg (cfg (β.lwk (Fin.toNatWk ρ)) n G) (cfg β k (G ∘ ρ))
 
--- TODO: general eta...
+theorem Region.WkCfg.trans {r r' r'' : Region φ}
+  (h : Region.WkCfg r r') (h' : Region.WkCfg r' r'') : Region.WkCfg r r'' :=
+  by cases h; cases h'; rw [lwk_lwk, <-Fin.toNatWk_comp]; constructor
 
 inductive Region.SimpleCongruence (P : Region φ → Region φ → Prop) : Region φ → Region φ → Prop
   | step (r r') : P r r' → SimpleCongruence P r r'
@@ -131,5 +176,7 @@ inductive Region.SimpleCongruence (P : Region φ → Region φ → Prop) : Regio
   | cfg_block (r r' n G i G') : SimpleCongruence P r r' → G' = Function.update G i r' →
     SimpleCongruence P (cfg β n G) (cfg β n G')
 
+theorem Region.SimpleCongruence.refl (hP : IsRefl _ P) (r : Region φ) : SimpleCongruence P r r :=
+  step _ _ (hP.refl r)
 
 end BinSyntax

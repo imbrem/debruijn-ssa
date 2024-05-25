@@ -96,6 +96,11 @@ def Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   length := by simp
   get := h
 
+def Ctx.var_shead {V : Ty α × ε} {Γ : Ctx α ε} : Var (V::Γ) 0 V := Var.head (le_refl _) Γ
+
+def Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
+  := ⟨by simp [h.length], by simp [h.get]⟩
+
 def Ctx.infEffect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
 
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
@@ -503,7 +508,7 @@ theorem Ctx.Wkn_def' (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔
 theorem Ctx.Wkn_iff (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔ List.NWkn Γ Δ ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
-theorem Ctx.Wkn.id (Γ : Ctx α ε) : Γ.Wkn Γ id := λ_ hi => ⟨hi, le_refl _⟩
+theorem Ctx.Wkn.id {Γ : Ctx α ε} : Γ.Wkn Γ id := λ_ hi => ⟨hi, le_refl _⟩
 
 theorem Ctx.Wkn.lift {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ ρ)
   : Wkn (V::Γ) (V'::Δ) (Nat.liftWk ρ)
@@ -806,6 +811,15 @@ def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Regi
     cfg n R hR (hβ.lwk trg_wk) (λi => (hG i).lwk trg_wk)
 
 end Weakening
+
+section OrderBot
+
+variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+
+def Ctx.var_bot_head {Γ : Ctx α ε} : Var (⟨A, ⊥⟩::Γ) 0 ⟨A, e⟩
+  := Var.head (by simp) Γ
+
+end OrderBot
 
 section Minimal
 
