@@ -451,7 +451,7 @@ inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
@@ -464,7 +464,7 @@ inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
     → t.WfD (⟨B, ⊥⟩::Γ) L
     → WfD Γ (case e s t) L
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →

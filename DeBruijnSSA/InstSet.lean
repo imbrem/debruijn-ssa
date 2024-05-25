@@ -2,6 +2,7 @@ import Mathlib.Order.Monotone.Basic
 import Mathlib.Order.BoundedOrder
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Lattice
+import Mathlib.Data.Set.Basic
 
 -- If there exists something impure, then ⊤ is impure
 
@@ -122,3 +123,51 @@ theorem InstSet.Fn.wk_eff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [
   src := hf.src
   trg := hf.trg
   effect := le_trans hf.effect h
+
+structure Linearity where
+  relevant : Bool
+  affine : Bool
+  deriving Repr, DecidableEq
+
+instance : PartialOrder Linearity where
+  le x y := x.relevant ≥ y.relevant ∧ x.affine ≥ y.affine
+  le_refl x := ⟨le_refl x.relevant, le_refl x.affine⟩
+  le_trans x y z h h' := ⟨le_trans h'.1 h.1, le_trans h'.2 h.2⟩
+  le_antisymm x y h h' := by
+    cases x; cases y
+    simp only [Linearity.mk.injEq]
+    exact ⟨le_antisymm h'.1 h.1, le_antisymm h'.2 h.2⟩
+
+-- TODO: actually a lattice...
+
+instance : OrderBot Linearity where
+  bot := ⟨true, true⟩
+  bot_le a := by constructor <;> simp
+
+instance : OrderTop Linearity where
+  top := ⟨false, false⟩
+  le_top a := by constructor <;> simp
+
+-- TODO: generalize this to use the EffectSet typeclass...
+
+def Linearity.compat (l : Linearity) : Set ℕ
+  := λn => (l.relevant ∨ n ≥ 1) ∧ (l.affine ∨ n ≤ 1)
+
+@[simp]
+theorem Linearity.one_mem_compat (l : Linearity) : 1 ∈ Linearity.compat l
+  := ⟨Or.inr (le_refl _), Or.inr (le_refl _)⟩
+
+@[simp]
+theorem Linearity.compat_top : Linearity.compat ⊤ = {1} := Set.ext (λ_ =>
+  ⟨λ | ⟨Or.inr h, Or.inr h'⟩ => le_antisymm h' h,
+  λh => h ▸ one_mem_compat _⟩)
+
+@[simp]
+theorem Linearity.compat_bot : Linearity.compat ⊥ = Set.univ := Set.ext (λ_ => by
+  simp only [Set.mem_univ, iff_true]
+  exact ⟨Or.inl rfl, Or.inl rfl⟩)
+
+theorem Linearity.compat_antitone : Antitone (Linearity.compat) := λ_ _ h _ ⟨hr, ha⟩ =>
+    ⟨hr.elim (Or.inl ∘ h.1) Or.inr, ha.elim (Or.inl ∘ h.2) Or.inr⟩
+
+-- TODO: compat sends joins to meets and meets to joins
