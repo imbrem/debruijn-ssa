@@ -253,7 +253,7 @@ theorem substn_succ (n : ℕ) (t : Term φ)
   cases m with
   | zero => simp [substn]
   | succ m =>
-    simp only [substn, add_lt_add_iff_right, add_left_inj, add_tsub_cancel_right, Subst.lift]
+    simp only [substn, Nat.add_lt_add_iff_right, add_left_inj, Nat.add_sub_cancel, Subst.lift]
     split
     case inl => rfl
     case inr h =>
@@ -926,12 +926,14 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
     simp only [vlift, ←lsubst_fromLwk_apply, lsubst_lsubst]
     congr
     funext k
-    simp only [comp, vlift, Function.comp_apply, lsubst, liftn, add_lt_iff_neg_right, not_lt_zero',
-      ↓reduceIte, add_tsub_cancel_right, vwk_lift_comp_fromLwk, Term.subst0_var0,
-      vsubst_fromWk_apply, vwk_vwk, lsubst_fromLwk_apply, vwk_lwk]
+    simp only [comp, vlift, vwk_lift_comp_fromLwk, Function.comp_apply, lsubst_fromLwk_apply,
+      lsubst, Term.subst0_var0, liftn, Nat.add_sub_cancel, vwk_vwk, vsubst_fromWk_apply]
+    rw [ite_cond_eq_false]
+    simp only [vwk_lwk]
     congr
     funext k
     cases k <;> rfl
+    simp_arith
 
 theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   have h := Subst.liftn_comp 1 σ τ
@@ -1351,7 +1353,7 @@ theorem Subst.vlift_comp_lwk (σ : Subst φ) (ρ) : vlift (σ ∘ ρ) = σ.vlift
 theorem Subst.vliftn_comp_lwk (σ : Subst φ) (ρ) (n) : vliftn n (σ ∘ ρ) = σ.vliftn n ∘ ρ := rfl
 
 theorem Subst.liftn_comp_lwk (σ : Subst φ) (ρ) (n) : liftn n (σ ∘ ρ) = σ.liftn n ∘ Nat.liftnWk n ρ
-  := by funext i; simp only [liftn, Function.comp_apply, Nat.liftnWk]; split <;> simp
+  := by funext i; simp only [liftn, Function.comp_apply, Nat.liftnWk]; split <;> simp_arith
 
 theorem Subst.liftn_lwk_comp (σ : Subst φ) (ρ) (n)
     : liftn n (lwk ρ ∘ σ) = lwk (Nat.liftnWk n ρ) ∘ σ.liftn n := by

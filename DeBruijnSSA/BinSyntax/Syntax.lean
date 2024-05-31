@@ -296,10 +296,11 @@ theorem Terminator.toTerminator_toRegion (k : ℕ) (r : Terminator φ)
 theorem TRegion.IsTerminator.eq_cfg (k : ℕ) {r : TRegion φ} (h : r.IsTerminator)
   : r = TRegion.cfg (r.toTerminator k) 0 Fin.elim0 := by cases h with
   | cfg r _ =>
-    simp only [toTerminator, tsub_zero, not_lt_zero', ↓reduceDite, Terminator.lwk_id',
+    simp only [toTerminator, tsub_zero, ↓reduceDite, Terminator.lwk_id',
     cfg.injEq, heq_eq_eq, true_and]
     constructor
-    . simp only [Terminator.lsubst_id_apply']
+    . simp only [Nat.sub_zero, Nat.not_lt_zero, ↓reduceDite, Terminator.lsubst_id_apply',
+      Terminator.lwk_id']
       induction k with
       | zero => rfl
       | succ k I => rw [<-I]
@@ -444,7 +445,7 @@ theorem Region.IsTRegion.eq_toTRegion {r : Region φ} (h : r.IsTRegion) : r = r.
     induction hr with
     | br =>
       simp only [num_defs, append_cfg, add_zero, Nat.liftnWk_id', lwk_id, Terminator.toRegion,
-        Fin.addCases, not_lt_zero', ↓reduceDite, Nat.add_zero, Function.comp_apply, lwk_id',
+        Fin.addCases, ↓reduceDite, Nat.add_zero, Function.comp_apply, lwk_id',
         eq_rec_constant]
       rw [Region.cfg_cast_eq _ (0 + n) n _ (by simp)]
       congr
@@ -452,7 +453,7 @@ theorem Region.IsTRegion.eq_toTRegion {r : Region φ} (h : r.IsTRegion) : r = r.
       simp [Fin.subNat, <-I]
     | case _ _ _ hs ht =>
       simp only [append_cfg, num_defs, Nat.add_zero, add_zero, Nat.liftnWk_id', lwk_id,
-        Terminator.toRegion, <- hs.eq_coe, <- ht.eq_coe, Fin.addCases, not_lt_zero', ↓reduceDite,
+        Terminator.toRegion, <- hs.eq_coe, <- ht.eq_coe, Fin.addCases, ↓reduceDite,
         Function.comp_apply, lwk_id', eq_rec_constant, zero_add, true_and]
       rw [Region.cfg_cast_eq _ (0 + n) n _ (by simp)]
       congr
