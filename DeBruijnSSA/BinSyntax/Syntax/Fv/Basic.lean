@@ -1,6 +1,7 @@
 import Discretion.Wk.Fun
 import Discretion.Wk.Multiset
 import Discretion.Wk.Multiset
+import Mathlib.Data.ENat.Basic
 
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 
@@ -38,6 +39,21 @@ def Term.fvi : Term φ → ℕ
 theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
   induction t <;> simp [*]
 
+/-- Get the count of how often a free variable occurs in this term -/
+@[simp]
+def Term.fvc (x : ℕ) : Term φ → ℕ
+  | var y => if x = y then 1 else 0
+  | op _ y => y.fvc x
+  | pair y z => y.fvc x + z.fvc x
+  | inl y => y.fvc x
+  | inr y => y.fvc x
+  | _ => 0
+
+theorem Term.fvc_eq_fv_count (x : ℕ) (t : Term φ) : t.fvc x = t.fv.count x := by
+  induction t with
+  | var y => simp [Multiset.count_singleton]
+  | _ => simp [*]
+
 /-- The free variables in this body -/
 @[simp]
 def Body.fv : Body φ → Multiset ℕ
@@ -56,6 +72,17 @@ def Body.fvi : Body φ → ℕ
   | let1 e t => Nat.max e.fvi (t.fvi - 1)
   | let2 e t => Nat.max e.fvi (t.fvi - 2)
 
+/-- Get the count of how often a free variable occurs in this body -/
+@[simp]
+def Body.fvc (x : ℕ) : Body φ → ℕ
+  | nil => 0
+  | let1 e t => e.fvc x + t.fvc (x + 1)
+  | let2 e t => e.fvc x + t.fvc (x + 2)
+
+theorem Body.fvc_eq_fv_count (x : ℕ) (b : Body φ) : b.fvc x = b.fv.count x := by
+  induction b generalizing x <;>
+  simp [Term.fvc_eq_fv_count, Multiset.count_liftnFv, Multiset.count_liftFv, *]
+
 /-- The free variables of this terminator -/
 @[simp]
 def Terminator.fv : Terminator φ → Multiset ℕ
@@ -73,6 +100,22 @@ theorem Terminator.fv_lwk (ρ : ℕ → ℕ) (r : Terminator φ) : (r.lwk ρ).fv
 def Terminator.fvi : Terminator φ → ℕ
   | br _ e => e.fvi
   | case e s t => Nat.max e.fvi (Nat.max (s.fvi - 1) (t.fvi - 1))
+
+/-- Get the count of how often a free variable occurs in this terminator -/
+@[simp]
+def Terminator.fvc (x : ℕ) : Terminator φ → ℕ
+  | br _ e => e.fvc x
+  | case e s t => e.fvc x + s.fvc (x + 1) + t.fvc (x + 1)
+
+/-- Get the count of how often a free variable occurs in this terminator, or ∞ if it appears
+ in a special position. Currently all terminator positions count as special -/
+@[simp]
+def Terminator.sfvc (x : ℕ) : Terminator φ → ℕ∞
+  | br _ e => if e.fvc x = 0 then 0 else ⊤
+  | case e s t => e.fvc x + s.fvc (x + 1) + t.fvc (x + 1)
+
+theorem Terminator.fvc_eq_fv_count (x : ℕ) (r : Terminator φ) : r.fvc x = r.fv.count x := by
+  induction r generalizing x <;> simp [Term.fvc_eq_fv_count, Multiset.count_liftFv, *]
 
 /-- The free labels of this terminator -/
 @[simp]
@@ -105,6 +148,15 @@ theorem Block.fv_lwk (ρ : ℕ → ℕ) (β : Block φ) : (β.lwk ρ).fv = β.fv
 /-- The highest free variable in this basic block, plus one -/
 @[simp]
 def Block.fvi (β : Block φ) : ℕ := Nat.max β.body.fvi (β.terminator.fvi - β.body.num_defs)
+
+/-- Get the count of how often a free variable occurs in this basic block -/
+@[simp]
+def Block.fvc (x : ℕ) (β : Block φ) : ℕ := β.body.fvc x + β.terminator.fvc (x + β.body.num_defs)
+
+/-- Get the count of how often a free variable occurs in this basic block, or ∞ if it
+  appears in a special position -/
+@[simp]
+def Block.sfvc (x : ℕ) (β : Block φ) : ℕ∞ := β.body.fvc x + β.terminator.sfvc (x + β.body.num_defs)
 
 /-- The free labels in this basic block -/
 @[simp]
@@ -141,6 +193,17 @@ theorem BBRegion.fv_vwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.vwk ρ).fv = r
 theorem BBRegion.fv_lwk (ρ : ℕ → ℕ) (r : BBRegion φ) : (r.lwk ρ).fv = r.fv := by
   induction r generalizing ρ; simp [Terminator.fv_lwk, *]
 
+/-- Get the count of how often a free variable occurs in this region -/
+@[simp]
+def BBRegion.fvc (x : ℕ) : BBRegion φ → ℕ
+  | cfg β _ f => β.fvc x + Finset.sum Finset.univ (λi => (f i).fvc (x + β.body.num_defs + 1))
+
+/-- Get the count of how often a free variable occurs in this region, or ∞ if it appears
+ in a special position. -/
+@[simp]
+def BBRegion.sfvc (x : ℕ) : BBRegion φ → ℕ∞
+  | cfg β _ f => β.sfvc x + Finset.sum Finset.univ (λi => (f i).sfvc (x + β.body.num_defs + 1))
+
 /-- The free label variables in this region -/
 @[simp]
 def BBRegion.fl : BBRegion φ → Multiset ℕ
@@ -165,7 +228,29 @@ def BBCFG.fl (cfg : BBCFG φ) : Multiset ℕ := Finset.sum Finset.univ (λi => (
 def TRegion.fv : TRegion φ → Multiset ℕ
   | let1 e t => e.fv + t.fv.liftFv
   | let2 e t => e.fv + t.fv.liftnFv 2
-  | cfg β _ f => β.fv + Finset.sum Finset.univ (λi => (f i).fv.liftFv)
+  | cfg β _ G => β.fv + Finset.sum Finset.univ (λi => (G i).fv.liftFv)
+
+/-- The highest free variable in this region, plus one -/
+@[simp]
+def TRegion.fvi : TRegion φ → ℕ
+  | let1 e t => Nat.max e.fvi (t.fvi - 1)
+  | let2 e t => Nat.max e.fvi (t.fvi - 2)
+  | cfg β _ G => Nat.max β.fvi (Finset.sup Finset.univ (λi => (G i).fvi - 1))
+
+/-- Get the count of how often a free variable occurs in this region -/
+@[simp]
+def TRegion.fvc (x : ℕ) : TRegion φ → ℕ
+  | let1 e t => e.fvc x + t.fvc (x + 1)
+  | let2 e t => e.fvc x + t.fvc (x + 2)
+  | cfg β _ G => β.fvc x + Finset.sum Finset.univ (λi => (G i).fvc (x + 1))
+
+/-- Get the count of how often a free variable occurs in this region, or ∞ if it appears
+ in a special position. -/
+@[simp]
+def TRegion.sfvc (x : ℕ) : TRegion φ → ℕ∞
+  | let1 e t => e.fvc x + t.fvc (x + 1)
+  | let2 e t => e.fvc x + t.fvc (x + 2)
+  | cfg β _ G => β.sfvc x + Finset.sum Finset.univ (λi => (G i).sfvc (x + 1))
 
 /-- The free label variables in this region -/
 @[simp]
@@ -190,6 +275,34 @@ def Region.fv : Region φ → Multiset ℕ
   | let1 e t => e.fv + t.fv.liftFv
   | let2 e t => e.fv + t.fv.liftnFv 2
   | cfg β _ f => β.fv + Finset.sum Finset.univ (λi => (f i).fv.liftnFv 1)
+
+/-- The highest free variable in this region, plus one -/
+@[simp]
+def Region.fvi : Region φ → ℕ
+  | br _ e => e.fvi
+  | case e s t => Nat.max e.fvi (Nat.max (s.fvi - 1) (t.fvi - 1))
+  | let1 e t => Nat.max e.fvi (t.fvi - 1)
+  | let2 e t => Nat.max e.fvi (t.fvi - 2)
+  | cfg β _ f => Nat.max β.fvi (Finset.sup Finset.univ (λi => (f i).fvi - 1))
+
+/-- Get the count of how often a free variable occurs in this region -/
+@[simp]
+def Region.fvc (x : ℕ) : Region φ → ℕ
+  | br _ e => e.fvc x
+  | case e s t => e.fvc x + s.fvc (x + 1) + t.fvc (x + 1)
+  | let1 e t => e.fvc x + t.fvc (x + 1)
+  | let2 e t => e.fvc x + t.fvc (x + 2)
+  | cfg β _ f => β.fvc x + Finset.sum Finset.univ (λi => (f i).fvc (x + 1))
+
+/-- Get the count of how often a free variable occurs in this region, or ∞ if it appears
+ in a special position. -/
+@[simp]
+def Region.sfvc (x : ℕ) : Region φ → ℕ∞
+  | br _ e => if e.fvc x = 0 then 0 else ⊤
+  | case e s t => if e.fvc x = 0 then 0 else ⊤ + s.fvc (x + 1) + t.fvc (x + 1)
+  | let1 e t => e.fvc x + t.fvc (x + 1)
+  | let2 e t => e.fvc x + t.fvc (x + 2)
+  | cfg β _ f => β.fvc x + Finset.sum Finset.univ (λi => (f i).sfvc (x + 1))
 
 theorem Region.fv_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fv = r.fv := by
   induction r generalizing ρ <;> simp [*]
