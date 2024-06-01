@@ -5,6 +5,8 @@ import DeBruijnSSA.InstSet
 
 namespace BinSyntax
 
+section Definitions
+
 variable [Φ : EffectSet φ ε] [Bot ε] [Sup ε]
 
 /-- Infer the effect of a term -/
@@ -23,24 +25,128 @@ def Body.effect (Γ : ℕ → ε) : Body φ → ε
   | let1 e b => e.effect Γ ⊔ b.effect (Nat.liftBot Γ)
   | let2 e b => e.effect Γ ⊔ b.effect (Nat.liftnBot 2 Γ)
 
--- TODO: this is currently asserting that the arguments to `case` and `br` always have effect `⊥`!
+/-- Infer the effect of a terminator -/
+def Terminator.effect (Γ : ℕ → ε) : Terminator φ → ε
+  | br _ e => e.effect Γ
+  | case e s t => e.effect Γ ⊔ s.effect (Nat.liftBot Γ) ⊔ t.effect (Nat.liftBot Γ)
+
+/-- Infer the effect of a basic block -/
+def Block.effect (Γ : ℕ → ε) (b : Block φ)
+  := b.body.effect Γ ⊔ b.terminator.effect (Nat.liftnBot b.body.num_defs Γ)
 
 /-- Infer the effect of a `BBRegion`, _without_ taking control-flow into account -/
 def BBRegion.effect (Γ : ℕ → ε) : BBRegion φ → ε
-  | cfg β _ G => β.body.effect Γ ⊔ Fin.sup (λi => (G i).effect (Nat.liftnBot β.body.num_defs Γ))
+  | cfg β _ G => β.effect Γ ⊔ Fin.sup (λi => (G i).effect (Nat.liftnBot β.body.num_defs Γ))
 
 /-- Infer the effect of a `TRegion`, _without_ taking control-flow into account -/
 def TRegion.effect (Γ : ℕ → ε) : TRegion φ → ε
   | let1 e r => e.effect Γ ⊔ r.effect (Nat.liftBot Γ)
   | let2 e r => e.effect Γ ⊔ r.effect (Nat.liftnBot 2 Γ)
-  | cfg _ _ G => Fin.sup (λi => (G i).effect Γ)
+  | cfg β _ G => β.effect Γ ⊔ Fin.sup (λi => (G i).effect Γ)
 
 /-- Infer the effect of a `Region`, _without_ taking control-flow into account -/
 def Region.effect (Γ : ℕ → ε) : Region φ → ε
-  | br _ _ => ⊥
+  | br _ e => e.effect Γ
   | let1 e r => e.effect Γ ⊔ r.effect (Nat.liftBot Γ)
   | let2 e r => e.effect Γ ⊔ r.effect (Nat.liftnBot 2 Γ)
-  | case _ s t => s.effect Γ ⊔ t.effect Γ
+  | case e s t => e.effect Γ ⊔ s.effect (Nat.liftBot Γ) ⊔ t.effect (Nat.liftBot Γ)
   | cfg β _ G => β.effect Γ ⊔ Fin.sup (λi => (G i).effect Γ)
+
+end Definitions
+
+section Monotone
+
+variable [Φ : EffectSet φ ε] [Bot ε] [SemilatticeSup ε]
+
+theorem Term.effect_mono {Γ : ℕ → ε} {e : Term φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : e.effect Γ ≤ e.effect Δ := by
+  induction e with
+  | var => exact H _
+  | op f e I => exact sup_le_sup_left I _
+  | pair a b Ia Ib => exact sup_le_sup Ia Ib
+  | inl _ I => exact I
+  | inr _ I => exact I
+  | abort _ I => exact I
+  | _ => exact le_refl _
+
+theorem Body.effect_mono {Γ : ℕ → ε} {b : Body φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : b.effect Γ ≤ b.effect Δ := by
+  induction b generalizing Γ Δ with
+  | nil => exact le_refl _
+  | let1 e b I => exact sup_le_sup (e.effect_mono H) (I (Nat.liftBot_mono H))
+  | let2 e b I => exact sup_le_sup (e.effect_mono H) (I (Nat.liftnBot_mono _ H))
+
+theorem Terminator.effect_mono {Γ : ℕ → ε} {t : Terminator φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : t.effect Γ ≤ t.effect Δ := by
+  induction t generalizing Γ Δ with
+  | br _ e => exact e.effect_mono H
+  | case e s t Is It =>
+    exact sup_le_sup
+      (sup_le_sup (e.effect_mono H) (Is (Nat.liftBot_mono H)))
+      (It (Nat.liftBot_mono H))
+
+theorem Block.effect_mono {Γ : ℕ → ε} {b : Block φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : b.effect Γ ≤ b.effect Δ := sup_le_sup
+    (b.body.effect_mono H)
+    (b.terminator.effect_mono (Nat.liftnBot_mono _ H))
+
+theorem BBRegion.effect_mono {Γ : ℕ → ε} {r : BBRegion φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : r.effect Γ ≤ r.effect Δ := by
+  induction r generalizing Γ Δ with
+  | cfg β n G IG =>
+    apply sup_le_sup (β.effect_mono H)
+    -- TODO: Fin.sup_le_sup not working here for some reason...
+    induction n with
+    | zero => rfl
+    | succ n I =>
+      rw [Fin.sup_succ, Fin.sup_succ]
+      apply sup_le_sup
+      apply IG 0 (Nat.liftnBot_mono _ H)
+      apply I
+      intro k Γ' Δ' H'
+      apply IG k.succ H'
+
+theorem TRegion.effect_mono {Γ : ℕ → ε} {r : TRegion φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : r.effect Γ ≤ r.effect Δ := by
+  induction r generalizing Γ Δ with
+  | let1 e r I => exact sup_le_sup (e.effect_mono H) (I (Nat.liftBot_mono H))
+  | let2 e r I => exact sup_le_sup (e.effect_mono H) (I (Nat.liftnBot_mono _ H))
+  | cfg β n G IG =>
+    apply sup_le_sup (β.effect_mono H)
+    -- TODO: Fin.sup_le_sup not working here for some reason...
+    induction n with
+    | zero => rfl
+    | succ n I =>
+      rw [Fin.sup_succ, Fin.sup_succ]
+      apply sup_le_sup
+      apply IG 0 H
+      apply I
+      intro k Γ' Δ' H'
+      apply IG k.succ H'
+
+theorem Region.effect_mono {Γ : ℕ → ε} {r : Region φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : r.effect Γ ≤ r.effect Δ := by
+  induction r generalizing Γ Δ with
+  | br _ e => exact e.effect_mono H
+  | let1 e r I => exact sup_le_sup (e.effect_mono H) (I (Nat.liftBot_mono H))
+  | let2 e r I => exact sup_le_sup (e.effect_mono H) (I (Nat.liftnBot_mono _ H))
+  | case e s t Is It =>
+    exact sup_le_sup
+      (sup_le_sup (e.effect_mono H) (Is (Nat.liftBot_mono H)))
+      (It (Nat.liftBot_mono H))
+  | cfg β n G Iβ IG =>
+    apply sup_le_sup (Iβ H)
+    -- TODO: Fin.sup_le_sup not working here for some reason...
+    induction n with
+    | zero => rfl
+    | succ n I =>
+      rw [Fin.sup_succ, Fin.sup_succ]
+      apply sup_le_sup
+      apply IG 0 H
+      apply I
+      intro k Γ' Δ' H'
+      apply IG k.succ H'
+
+end Monotone
 
 end BinSyntax

@@ -487,17 +487,15 @@ theorem BBRegion.toRegion_is_tRegion (r : BBRegion φ) : r.toRegion.IsTRegion :=
     apply Region.IsTRegion.prepend
     constructor <;> simp [I]
 
--- TODO: Region.tail'
-
--- TODO: Region.terminator_region
-
--- TODO: Region.cfg
-
--- TODO: normalize Region to TRegion; commutes with label-substitution
-
--- TODO: transitively, normalize Region to BBRegion; commutes with label-substitution
-
--- TODO: normalize TRegion to Region; commutes with label-substiution
+/-- Move all free variables in this region out of special positions -/
+def Region.rsfv : Region φ → Region φ
+  | br ℓ e => (br ℓ (Term.var 0)).let1 e
+  | case e s t => (case (Term.var 0)
+    (s.rsfv.vwk (Nat.liftWk Nat.succ))
+    (t.rsfv.vwk (Nat.liftWk Nat.succ))).let1 e
+  | let1 e r => let1 e r.rsfv
+  | let2 e r => let2 e r.rsfv
+  | cfg r n G => cfg r.rsfv n (λi => (G i).rsfv)
 
 -- /-- A single-entry multiple-exit region, applying a substitution on jumps -/
 -- inductive SRegion (φ : Type) : Type

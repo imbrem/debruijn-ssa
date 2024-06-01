@@ -90,10 +90,11 @@ instance : HasEffect Impurity where
   bot_isRelevant := rfl
   bot_isAffine := rfl
 
-class EffectSet (φ : Type u) (ε : Type v) where
+class EffectSet (φ : Type u) (ε : outParam (Type v)) where
   effect : φ → ε
 
-class InstSet (φ : Type u) (α : outParam (Type v)) (ε : Type w) extends EffectSet φ ε where
+class InstSet (φ : Type u) (α : outParam (Type v)) (ε : outParam (Type w))
+  extends EffectSet φ ε where
   src : φ → α
   trg : φ → α
 

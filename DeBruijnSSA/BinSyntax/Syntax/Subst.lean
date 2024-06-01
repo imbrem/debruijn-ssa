@@ -1404,6 +1404,19 @@ theorem lsubst_comp (σ τ : Subst φ)
   : Region.lsubst (σ.comp τ) = Region.lsubst σ ∘ Region.lsubst τ
   := Eq.symm $ funext $ lsubst_lsubst σ τ
 
+/-- Substitute the labels in a `Region` using `σ` and let-bindings -/
+@[simp]
+def llsubst (σ : Subst φ) : Region φ → Region φ
+  | br n e => (σ n).let1 e
+  | case e s t => case e (llsubst σ.vlift s) (llsubst σ.vlift t)
+  | let1 e t => let1 e (llsubst σ.vlift t)
+  | let2 e t => let2 e (llsubst (σ.vliftn 2) t)
+  | cfg β n f => cfg (llsubst (σ.liftn n) β) n (λ i => llsubst (σ.liftn n).vlift (f i))
+
+/-- Compose two label-substitutions via let-bindings to yield another -/
+def Subst.lcomp (σ τ : Subst φ): Subst φ
+  | n => (τ n).llsubst σ.vlift
+
 end Region
 
 /-- Substitute the free labels in this control-flow graph -/

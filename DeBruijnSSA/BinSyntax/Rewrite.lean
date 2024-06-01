@@ -18,19 +18,19 @@ def Term.WfD.subst₂ {Γ : Ctx α ε} {a b : Term φ}
   | ⟨1, _⟩ => hb
   | ⟨n + 2, h⟩ => var ⟨by simp at h; exact h, le_refl _⟩
 
--- inductive Region.CBeta (Γ : Ctx α ε) : Region φ → Region φ → Prop
---   | let1 (e : Term φ) (r : Region φ)
---     : e.effect Γ = ⊥ → CBeta Γ (r.let1 e) (r.vsubst e.subst0)
+inductive Region.PureBeta (Γ : ℕ → ε) : Region φ → Region φ → Prop
+  | let1 (e : Term φ) (r : Region φ)
+    : e.effect Γ = ⊥ → PureBeta Γ (r.let1 e) (r.vsubst e.subst0)
 
--- theorem Region.CBeta.let1_pure {Γ : Ctx α ε} {e} {r r' : Region φ}
---   (h : Region.CBeta Γ (r.let1 e) r') : e.effect Γ = ⊥ := by cases h; assumption
+theorem Region.PureBeta.let1_pure {Γ : ℕ → ε} {e} {r r' : Region φ}
+  (h : Region.PureBeta Γ (r.let1 e) r') : e.effect Γ = ⊥ := by cases h; assumption
 
--- theorem Region.CBeta.let1_trg {Γ : Ctx α ε} {e} {r r' : Region φ}
---   (h : Region.CBeta Γ (r.let1 e) r') : r' = r.vsubst e.subst0 := by cases h; rfl
+theorem Region.PureBeta.let1_trg {Γ : ℕ → ε} {e} {r r' : Region φ}
+  (h : Region.PureBeta Γ (r.let1 e) r') : r' = r.vsubst e.subst0 := by cases h; rfl
 
--- def Region.CBeta.WfD {Γ : Ctx α ε} {r r' : Region φ}
---   : Region.CBeta Γ r r' → r.WfD Γ A → r'.WfD Γ A
---   | h, WfD.let1 de dr => h.let1_trg ▸ dr.vsubst (h.let1_pure ▸ de.toeffect.subst0)
+def Region.PureBeta.WfD {Γ : Ctx α ε} {r r' : Region φ}
+  : Region.PureBeta Γ.effect r r' → r.WfD Γ A → r'.WfD Γ A
+  | h, WfD.let1 de dr => h.let1_trg ▸ dr.vsubst (h.let1_pure ▸ de.toeffect.subst0)
 
 inductive Region.Reduce : Region φ → Region φ → Prop
   | let2_pair (a b r) : Reduce (let2 (Term.pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
