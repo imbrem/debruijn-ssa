@@ -1,8 +1,11 @@
 import DeBruijnSSA.BinSyntax.Syntax.Subst
+import DeBruijnSSA.BinSyntax.Syntax.Rewrite
 
 namespace BinSyntax
 
 namespace Region
+
+variable [Φ: EffectSet φ ε] [SemilatticeSup ε] [OrderBot ε]
 
 def lsubst0 (r : Region φ) : Subst φ
   | 0 => r
@@ -69,6 +72,25 @@ theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r''
 def lappend (r r' : Region φ) : Region φ := r.llsubst (r'.alpha 0).vlift
 
 theorem lappend_def (r r' : Region φ) : r.lappend r' = r.llsubst (r'.alpha 0).vlift := rfl
+
+theorem lappend_nil (r : Region φ) : r.lappend nil = (lsubst (let1 (Term.var 0) ∘ Subst.id) r) := by
+  simp [lappend_def]
+
+theorem nil_lappend (r : Region φ)
+  : nil.lappend r = let1 (Term.var 0) (r.vwk (Nat.liftWk Nat.succ)) := by
+  simp only [lappend_def, llsubst, lsubst, vsubst, Term.subst, Term.subst0, Subst.vlift, alpha,
+    Function.comp_apply, Function.update_same, let1.injEq, true_and]
+  rw [<-vsubst_fromWk_apply, vsubst_vsubst, vsubst_id']
+  funext k
+  cases k <;> rfl
+
+def wappend (r r' : Region φ) : Region φ := cfg r 1 (λ_ => r'.lwk Nat.succ)
+
+theorem wappend_def (r r' : Region φ) : r.wappend r' = cfg r 1 (λ_ => r'.lwk Nat.succ) := rfl
+
+theorem wappend_nil (r : Region φ) : r.wappend nil = cfg r 1 (λ_ => br 1 (Term.var 0)) := rfl
+
+theorem nil_wappend (r : Region φ) : nil.wappend r = cfg nil 1 (λ_ => r.lwk Nat.succ) := rfl
 
 def Subst.left_label_distrib (e : Term φ) : Subst φ
   := λℓ => br ℓ (Term.pair (e.wk Nat.succ) (Term.var 0))
@@ -177,8 +199,6 @@ def left_exit : Region φ :=
 def fixpoint (r : Region φ) : Region φ := cfg nil 1 (λ_ => r ++ left_exit)
 
 def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
-
-def wappend (r r' : Region φ) : Region φ := cfg r 1 (λ_ => r'.lwk Nat.succ)
 
 end Region
 

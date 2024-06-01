@@ -1,9 +1,11 @@
+import Mathlib.Combinatorics.Quiver.Path
+
 import DeBruijnSSA.BinSyntax.Syntax.Subst
 import DeBruijnSSA.BinSyntax.Effect
 
 namespace BinSyntax
 
-variable [Φ: EffectSet φ ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
+variable [Φ: EffectSet φ ε] [SemilatticeSup ε] [OrderBot ε]
 
 -- TODO: define as Subst.cons or smt...
 def Term.subst₂ (a b: Term φ) : Subst φ
@@ -147,48 +149,48 @@ theorem Region.SimpleCongruence.refl (hP : IsRefl _ P) (r : Region φ) : SimpleC
 
 open Term
 
-inductive Region.PRewriteD (Γ : ℕ → ε) : Region φ → Region φ → Type
-  | let1_beta (e r) : e.effect Γ = ⊥ → PRewriteD Γ (let1 e r) (r.vsubst e.subst0)
-  | let2_pair (a b r) : PRewriteD Γ (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
-  | case_inl (e r s) : PRewriteD Γ (case (inl e) r s) (let1 e r)
-  | case_inr (e r s) : PRewriteD Γ (case (inr e) r s) (let1 e s)
+inductive Region.PStepD (Γ : ℕ → ε) : Region φ → Region φ → Type
+  | let1_beta (e r) : e.effect Γ = ⊥ → PStepD Γ (let1 e r) (r.vsubst e.subst0)
+  | let2_pair (a b r) : PStepD Γ (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
+  | case_inl (e r s) : PStepD Γ (case (inl e) r s) (let1 e r)
+  | case_inr (e r s) : PStepD Γ (case (inr e) r s) (let1 e s)
   | let1_op (f e r) :
-    PRewriteD Γ (let1 (op f e) r) (let1 e $ let1 (op f (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+    PStepD Γ (let1 (op f e) r) (let1 e $ let1 (op f (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   | let1_pair (a b r) :
-    PRewriteD Γ (let1 (pair a b) r)
+    PStepD Γ (let1 (pair a b) r)
     (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk (Nat.liftWk (· + 2))
   )
   | let1_inl (e r) :
-    PRewriteD Γ (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+    PStepD Γ (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   | let1_inr (e r) :
-    PRewriteD Γ (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+    PStepD Γ (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   | let1_abort (e r) :
-    PRewriteD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+    PStepD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   | let2_op (f e r) :
-    PRewriteD Γ (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+    PStepD Γ (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   | let2_abort (e r) :
-    PRewriteD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+    PStepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   | let1_case (a b r s) :
-    PRewriteD Γ (let1 a $ case (b.wk Nat.succ) r s)
+    PStepD Γ (let1 a $ case (b.wk Nat.succ) r s)
     (case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s))
   | let2_case (a b r s) :
-    PRewriteD Γ (let2 a $ case (b.wk (· + 2)) r s)
+    PStepD Γ (let2 a $ case (b.wk (· + 2)) r s)
     (case b (let2 (a.wk Nat.succ) r) (let2 (a.wk Nat.succ) s))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
-    PRewriteD Γ (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).vsubst e.subst0) n G)
+    PStepD Γ (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).vsubst e.subst0) n G)
   | cfg_br_ge (ℓ e n G) (h : n ≤ ℓ) :
-    PRewriteD Γ (cfg (br ℓ e) n G) (cfg (br (ℓ - n) e) n G)
+    PStepD Γ (cfg (br ℓ e) n G) (cfg (br (ℓ - n) e) n G)
   | cfg_let1 (a β n G) :
-    PRewriteD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk Nat.succ ∘ G))
+    PStepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk Nat.succ ∘ G))
   | cfg_let2 (a β n G) :
-    PRewriteD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk (· + 2) ∘ G))
+    PStepD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk (· + 2) ∘ G))
   | cfg_case (e r s n G) :
-    PRewriteD Γ (cfg (case e r s) n G)
+    PStepD Γ (cfg (case e r s) n G)
       (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G)))
   | cfg_cfg (β n G n' G') :
-    PRewriteD Γ (cfg (cfg β n G) n' G') (cfg β (n' + n) (Fin.addCases (lwk (· + n) ∘ G') G))
+    PStepD Γ (cfg (cfg β n G) n' G') (cfg β (n' + n) (Fin.addCases (lwk (· + n) ∘ G') G))
   | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
-    PRewriteD Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G) (cfg β k (G ∘ ρ))
+    PStepD Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G) (cfg β k (G ∘ ρ))
 
 inductive Region.SimpleCongruenceD (P : Region φ → Region φ → Type u) : Region φ → Region φ → Type u
   | step (r r') : P r r' → SimpleCongruenceD P r r'
@@ -200,3 +202,8 @@ inductive Region.SimpleCongruenceD (P : Region φ → Region φ → Type u) : Re
   | cfg_entry (r r' n G) : SimpleCongruenceD P r r' → SimpleCongruenceD P (cfg r n G) (cfg r' n G)
   | cfg_block (r r' n G i G') : SimpleCongruenceD P r r' → G' = Function.update G i r' →
     SimpleCongruenceD P (cfg β n G) (cfg β n G')
+
+def Region.pStepQuiver (Γ : ℕ → ε) : Quiver (Region φ) where
+  Hom := SimpleCongruenceD (PStepD Γ)
+
+end BinSyntax

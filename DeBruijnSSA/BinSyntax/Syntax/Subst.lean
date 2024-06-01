@@ -511,6 +511,9 @@ def Region.vsubst (σ : Term.Subst φ) : Region φ → Region φ
 theorem Region.vsubst_id (r : Region φ) : r.vsubst Term.Subst.id = r := by
   induction r <;> simp [*]
 
+theorem Region.vsubst_id' (r : Region φ) (h : σ = Term.Subst.id) : r.vsubst σ = r := by
+  cases h; simp
+
 theorem Region.vsubst_comp_apply (σ τ : Term.Subst φ) (r : Region φ)
   : r.vsubst (σ.comp τ) = (r.vsubst τ).vsubst σ := by
   induction r generalizing σ τ
