@@ -435,15 +435,66 @@ inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
     → t.WfD (⟨B, ⊥⟩::Γ) L
     → WfD Γ (case e s t) L
 
+inductive Terminator.Wf : Ctx α ε → Terminator φ → LCtx α → Prop
+  | br : L.Trg n A → a.Wf Γ ⟨A, ⊥⟩ → Wf Γ (br n a) L
+  | case : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩
+    → s.Wf (⟨A, ⊥⟩::Γ) L
+    → t.Wf (⟨B, ⊥⟩::Γ) L
+    → Wf Γ (case e s t) L
+
+inductive Terminator.WfSD : Ctx α ε → Terminator φ → LCtx α → Type _
+  | br : L.Trg n A → a.WfD Γ ⟨A, e⟩ → WfSD Γ (br n a) L
+  | case : a.WfD Γ ⟨Ty.coprod A B, e⟩
+    → s.WfSD (⟨A, ⊥⟩::Γ) L
+    → t.WfSD (⟨B, ⊥⟩::Γ) L
+    → WfSD Γ (case a s t) L
+
+inductive Terminator.WfS : Ctx α ε → Terminator φ → LCtx α → Prop
+  | br : L.Trg n A → a.Wf Γ ⟨A, e⟩ → WfS Γ (br n a) L
+  | case : a.Wf Γ ⟨Ty.coprod A B, e⟩
+    → s.WfS (⟨A, ⊥⟩::Γ) L
+    → t.WfS (⟨B, ⊥⟩::Γ) L
+    → WfS Γ (case a s t) L
+
 structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
   terminator : β.terminator.WfD (Δ.reverse ++ Γ) L
+
+structure Block.Wf (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) : Prop where
+  body : β.body.Wf Γ Δ
+  terminator : β.terminator.Wf (Δ.reverse ++ Γ) L
+
+structure Block.WfSD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
+  body : β.body.WfD Γ Δ
+  terminator : β.terminator.WfSD (Δ.reverse ++ Γ) L
+
+structure Block.WfS (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) : Prop where
+  body : β.body.Wf Γ Δ
+  terminator : β.terminator.WfS (Δ.reverse ++ Γ) L
 
 inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
   | cfg (n) {G} (R : LCtx α) :
     (hR : R.length = n) → β.WfD Γ Δ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
     WfD Γ (cfg β n G) L
+
+inductive BBRegion.Wf : Ctx α ε → BBRegion φ → LCtx α → Prop
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.Wf Γ Δ (R ++ L) →
+    (∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
+    Wf Γ (cfg β n G) L
+
+inductive BBRegion.WfSD : Ctx α ε → BBRegion φ → LCtx α → Type _
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfSD Γ Δ (R ++ L) →
+    (∀i : Fin n, (G i).WfSD (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
+    WfSD Γ (cfg β n G) L
+
+inductive BBRegion.WfS : Ctx α ε → BBRegion φ → LCtx α → Prop
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfS Γ Δ (R ++ L) →
+    (∀i : Fin n, (G i).WfS (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
+    WfS Γ (cfg β n G) L
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
@@ -452,6 +503,30 @@ inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
     WfD Γ (cfg β n G) L
+
+inductive TRegion.Wf : Ctx α ε → TRegion φ → LCtx α → Prop
+  | let1 : a.Wf Γ ⟨A, e⟩ → t.Wf (⟨A, ⊥⟩::Γ) L → (let1 a t).Wf Γ L
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.Wf (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).Wf Γ L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.Wf Γ (R ++ L) →
+    (∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    Wf Γ (cfg β n G) L
+
+inductive TRegion.WfSD : Ctx α ε → TRegion φ → LCtx α → Type _
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfSD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfSD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfSD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfSD Γ L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfSD Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfSD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfSD Γ (cfg β n G) L
+
+inductive TRegion.WfS : Ctx α ε → TRegion φ → LCtx α → Prop
+  | let1 : a.Wf Γ ⟨A, e⟩ → t.WfS (⟨A, ⊥⟩::Γ) L → (let1 a t).WfS Γ L
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.WfS (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfS Γ L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfS Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfS (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfS Γ (cfg β n G) L
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
@@ -465,6 +540,45 @@ inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
     (hR : R.length = n) → β.WfD Γ (R ++ L) →
     (∀i : Fin n, (G i).WfD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
     WfD Γ (cfg β n G) L
+
+inductive Region.Wf : Ctx α ε → Region φ → LCtx α → Prop
+  | br : L.Trg n A → a.Wf Γ ⟨A, ⊥⟩ → Wf Γ (br n a) L
+  | case : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩
+    → s.Wf (⟨A, ⊥⟩::Γ) L
+    → t.Wf (⟨B, ⊥⟩::Γ) L
+    → Wf Γ (case e s t) L
+  | let1 : a.Wf Γ ⟨A, e⟩ → t.Wf (⟨A, ⊥⟩::Γ) L → (let1 a t).Wf Γ L
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.Wf (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).Wf Γ L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.Wf Γ (R ++ L) →
+    (∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    Wf Γ (cfg β n G) L
+
+inductive Region.WfSD : Ctx α ε → Region φ → LCtx α → Type _
+  | br : L.Trg n A → a.WfD Γ ⟨A, e⟩ → WfSD Γ (br n a) L
+  | case : a.WfD Γ ⟨Ty.coprod A B, e⟩
+    → s.WfSD (⟨A, ⊥⟩::Γ) L
+    → t.WfSD (⟨B, ⊥⟩::Γ) L
+    → WfSD Γ (case a s t) L
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfSD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfSD Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfSD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfSD Γ L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfSD Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfSD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfSD Γ (cfg β n G) L
+
+inductive Region.WfS : Ctx α ε → Region φ → LCtx α → Prop
+  | br : L.Trg n A → a.Wf Γ ⟨A, e⟩ → WfS Γ (br n a) L
+  | case : a.Wf Γ ⟨Ty.coprod A B, e⟩
+    → s.WfS (⟨A, ⊥⟩::Γ) L
+    → t.WfS (⟨B, ⊥⟩::Γ) L
+    → WfS Γ (case a s t) L
+  | let1 : a.Wf Γ ⟨A, e⟩ → t.WfS (⟨A, ⊥⟩::Γ) L → (let1 a t).WfS Γ L
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.WfS (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfS Γ L
+  | cfg (n) {G} (R : LCtx α) :
+    (hR : R.length = n) → β.WfS Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfS (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfS Γ (cfg β n G) L
 
 def Region.WfD.src {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := Γ
 
