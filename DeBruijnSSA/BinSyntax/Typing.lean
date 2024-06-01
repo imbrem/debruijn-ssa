@@ -1,7 +1,8 @@
 import Discretion.Wk.List
 import Discretion.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
-import DeBruijnSSA.InstSet
+import DeBruijnSSA.BinSyntax.Effect
+
 namespace BinSyntax
 
 section Basic
@@ -101,7 +102,7 @@ def Ctx.var_shead {V : Ty α × ε} {Γ : Ctx α ε} : Var (V::Γ) 0 V := Var.he
 def Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
   := ⟨by simp [h.length], by simp [h.get]⟩
 
-def Ctx.infEffect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
+def Ctx.effect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
 
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 
@@ -287,16 +288,6 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
 --   | prod dl dr => prod (dl.toInfTy) (dr.toInfTy)
 --   | unit e => unit e
 --   | bool b e => bool b e
-
-/-- Infer the effect of a term; pun with infimum -/
-def Term.infEffect [Sup ε] (Γ : Ctx α ε) : Term φ → ε
-  | var n => Γ.infEffect n
-  | op f e => Φ.effect f ⊔ e.infEffect Γ
-  | pair a b => a.infEffect Γ ⊔ b.infEffect Γ
-  | inl a => a.infEffect Γ
-  | inr b => b.infEffect Γ
-  | abort e => e.infEffect Γ
-  | unit => ⊥
 
 -- TODO: WfD ==> Wf
 
@@ -825,37 +816,37 @@ section Minimal
 
 variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
-theorem Term.WfD.infEffect_le
-  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.infEffect Γ ≤ e
+theorem Term.WfD.effect_le
+  {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.effect Γ.effect ≤ e
   := match h with
-  | var dv => by simp [Ctx.infEffect, infEffect, dv.length, dv.get.right]
-  | op df de => sup_le_iff.mpr ⟨df.effect, de.infEffect_le⟩
-  | pair dl dr => sup_le_iff.mpr ⟨dl.infEffect_le, dr.infEffect_le⟩
-  | inl dl => dl.infEffect_le
-  | inr dr => dr.infEffect_le
-  | abort da => da.infEffect_le
+  | var dv => by simp [Ctx.effect, effect, dv.length, dv.get.right]
+  | op df de => sup_le_iff.mpr ⟨df.effect, de.effect_le⟩
+  | pair dl dr => sup_le_iff.mpr ⟨dl.effect_le, dr.effect_le⟩
+  | inl dl => dl.effect_le
+  | inr dr => dr.effect_le
+  | abort da => da.effect_le
   | unit _ => bot_le
 
-def Ctx.Var.toInfEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
-  : Γ.Var n ⟨V.1, Γ.infEffect n⟩
+def Ctx.Var.toeffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
+  : Γ.Var n ⟨V.1, Γ.effect n⟩
   := ⟨h.length, by
     constructor
     exact h.get.1
-    simp [Ctx.infEffect, h.length]
+    simp [Ctx.effect, h.length]
   ⟩
 
-def Term.WfD.toInfEffect {Γ : Ctx α ε} {a : Term φ} {V}
-  : WfD Γ a V → WfD Γ a ⟨V.1, a.infEffect Γ⟩
-  | var dv => var dv.toInfEffect
+def Term.WfD.toeffect {Γ : Ctx α ε} {a : Term φ} {V}
+  : WfD Γ a V → WfD Γ a ⟨V.1, a.effect Γ.effect⟩
+  | var dv => var dv.toeffect
   | op df de => op
-    ⟨df.src, df.trg, by simp [infEffect]⟩
-    (de.toInfEffect.wk_eff (by simp [infEffect]))
+    ⟨df.src, df.trg, by simp [effect]⟩
+    (de.toeffect.wk_eff (by simp [effect]))
   | pair dl dr => pair
-    (dl.toInfEffect.wk_eff (by simp [infEffect]))
-    (dr.toInfEffect.wk_eff (by simp [infEffect]))
-  | inl dl => inl dl.toInfEffect
-  | inr dr => inr dr.toInfEffect
-  | abort da => abort da.toInfEffect
+    (dl.toeffect.wk_eff (by simp [effect]))
+    (dr.toeffect.wk_eff (by simp [effect]))
+  | inl dl => inl dl.toeffect
+  | inr dr => inr dr.toeffect
+  | abort da => abort da.toeffect
   | unit e => unit ⊥
 
 -- def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε

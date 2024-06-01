@@ -42,7 +42,7 @@ may be arbitrarily shrunk further.
 Note this is essentially just a set equipped with a semilattice-hom to transparency, i.e.
 (central, relevant, affine, pure); this might be nicer to state that way...
 -/
-class EffectSet (ε : Type u) [SemilatticeSup ε] [Bot ε]
+class HasEffect (ε : Type u) [SemilatticeSup ε] [Bot ε]
   extends HasCentrality ε, HasRelevance ε, HasAffinity ε where
   bot_isCentral : isCentral ⊥
   bot_isRelevant : isRelevant ⊥
@@ -76,7 +76,7 @@ instance : Bot Impurity where
 instance : Top Impurity where
   top := Impurity.impure
 
-instance : EffectSet Impurity where
+instance : HasEffect Impurity where
   isCentral := λ | Impurity.none => true | _ => false
   isRelevant := λ | Impurity.none => true | _ => false
   isAffine := λ | Impurity.none => true | _ => false
@@ -90,10 +90,12 @@ instance : EffectSet Impurity where
   bot_isRelevant := rfl
   bot_isAffine := rfl
 
-class InstSet (φ : Type u) (α : Type v) (ε : Type w) where
+class EffectSet (φ : Type u) (ε : Type v) where
+  effect : φ → ε
+
+class InstSet (φ : Type u) (α : outParam (Type v)) (ε : Type w) extends EffectSet φ ε where
   src : φ → α
   trg : φ → α
-  effect : φ → ε
 
 structure InstSet.Fn {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
   (f : φ) (A B : α) (e : ε) : Prop where
@@ -124,12 +126,15 @@ theorem InstSet.Fn.wk_eff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [
   trg := hf.trg
   effect := le_trans hf.effect h
 
+-- TODO: a Linearity is an Affinity and a Relevance
+-- TODO: a _Transparency_ is a Linearity and a Centrality
+
 structure Linearity where
   relevant : Bool
   affine : Bool
   deriving Repr, DecidableEq
 
-instance : PartialOrder Linearity where
+instance : Lattice Linearity where
   le x y := x.relevant ≥ y.relevant ∧ x.affine ≥ y.affine
   le_refl x := ⟨le_refl x.relevant, le_refl x.affine⟩
   le_trans x y z h h' := ⟨le_trans h'.1 h.1, le_trans h'.2 h.2⟩
@@ -137,8 +142,24 @@ instance : PartialOrder Linearity where
     cases x; cases y
     simp only [Linearity.mk.injEq]
     exact ⟨le_antisymm h'.1 h.1, le_antisymm h'.2 h.2⟩
-
--- TODO: actually a lattice...
+  sup l r := ⟨l.relevant ∧ r.relevant, l.affine ∧ r.affine⟩
+  inf l r := ⟨l.relevant ∨ r.relevant, l.affine ∨ r.affine⟩
+  le_sup_left := by intro ⟨_, _⟩ ⟨_, _⟩; simp [Bool.and_le_left]
+  le_sup_right := by intro ⟨_, _⟩ ⟨_, _⟩; simp [Bool.and_le_right]
+  sup_le := by
+    intro ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩
+    simp only
+    intro ⟨hr, ha⟩ ⟨hr', ha'⟩
+    simp only [Bool.decide_and, Bool.decide_eq_true, ge_iff_le]
+    exact ⟨Bool.le_and hr hr', Bool.le_and ha ha'⟩
+  inf_le_left := by intro ⟨_, _⟩ ⟨_, _⟩; simp [Bool.left_le_or]
+  inf_le_right := by intro ⟨_, _⟩ ⟨_, _⟩; simp [Bool.right_le_or]
+  le_inf := by
+    intro ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩
+    simp only
+    intro ⟨hr, ha⟩ ⟨hr', ha'⟩
+    simp only [Bool.decide_or, Bool.decide_eq_true, ge_iff_le]
+    exact ⟨Bool.or_le hr hr', Bool.or_le ha ha'⟩
 
 instance : OrderBot Linearity where
   bot := ⟨true, true⟩
@@ -148,26 +169,49 @@ instance : OrderTop Linearity where
   top := ⟨false, false⟩
   le_top a := by constructor <;> simp
 
--- TODO: generalize this to use the EffectSet typeclass...
+instance : HasEffect Linearity where
+  isCentral _ := true
+  isRelevant l := l.relevant
+  isAffine l := l.affine
+  isCentral_of_le _ _ h := by cases h; simp
+  isRelevant_of_le _ _ h := h.1
+  isAffine_of_le _ _ h := h.2
+  sup_isCentral _ _ _ _ := rfl
+  sup_isRelevant _ _ := by
+    simp only [Sup.sup, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
+    intros; simp [*]
+  sup_isAffine _ _ := by
+    simp only [Sup.sup, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
+    intros; simp [*]
+  bot_isCentral := rfl
+  bot_isRelevant := rfl
+  bot_isAffine := rfl
 
-def Linearity.compat (l : Linearity) : Set ℕ
-  := λn => (l.relevant ∨ n ≥ 1) ∧ (l.affine ∨ n ≤ 1)
+-- TODO: generalize this to use the HasEffect typeclass...
+
+open HasRelevance HasAffinity
+
+variable [SemilatticeSup ε] [HasRelevance ε] [HasAffinity ε]
+
+def Nat.compatEff (l : ε) : Set ℕ
+  := λn => (isRelevant l ∨ n ≥ 1) ∧ (isAffine l ∨ n ≤ 1)
 
 @[simp]
-theorem Linearity.one_mem_compat (l : Linearity) : 1 ∈ Linearity.compat l
+theorem Nat.one_mem_compatEff (l : ε) : 1 ∈ Nat.compatEff l
   := ⟨Or.inr (le_refl _), Or.inr (le_refl _)⟩
 
-@[simp]
-theorem Linearity.compat_top : Linearity.compat ⊤ = {1} := Set.ext (λ_ =>
-  ⟨λ | ⟨Or.inr h, Or.inr h'⟩ => le_antisymm h' h,
-  λh => h ▸ one_mem_compat _⟩)
+-- @[simp]
+-- theorem Linearity.compat_top : Linearity.compat ⊤ = {1} := Set.ext (λ_ =>
+--   ⟨λ | ⟨Or.inr h, Or.inr h'⟩ => le_antisymm h' h,
+--   λh => h ▸ one_mem_compat _⟩)
 
-@[simp]
-theorem Linearity.compat_bot : Linearity.compat ⊥ = Set.univ := Set.ext (λ_ => by
-  simp only [Set.mem_univ, iff_true]
-  exact ⟨Or.inl rfl, Or.inl rfl⟩)
+-- @[simp]
+-- theorem Linearity.compat_bot : Linearity.compat ⊥ = Set.univ := Set.ext (λ_ => by
+--   simp only [Set.mem_univ, iff_true]
+--   exact ⟨Or.inl rfl, Or.inl rfl⟩)
 
-theorem Linearity.compat_antitone : Antitone (Linearity.compat) := λ_ _ h _ ⟨hr, ha⟩ =>
-    ⟨hr.elim (Or.inl ∘ h.1) Or.inr, ha.elim (Or.inl ∘ h.2) Or.inr⟩
+theorem Nat.compatEff_antitone : Antitone (@compatEff ε _ _ _)
+  := λ_ _ h _ ⟨hr, ha⟩ => ⟨hr.elim (Or.inl ∘ isRelevant_of_le h) Or.inr,
+                           ha.elim (Or.inl ∘ isAffine_of_le h) Or.inr⟩
 
 -- TODO: compat sends joins to meets and meets to joins
