@@ -66,6 +66,10 @@ theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r''
     cases n <;> rfl
   | succ => rfl
 
+def lappend (r r' : Region φ) : Region φ := r.llsubst (r'.alpha 0).vlift
+
+theorem lappend_def (r r' : Region φ) : r.lappend r' = r.llsubst (r'.alpha 0).vlift := rfl
+
 def Subst.left_label_distrib (e : Term φ) : Subst φ
   := λℓ => br ℓ (Term.pair (e.wk Nat.succ) (Term.var 0))
 

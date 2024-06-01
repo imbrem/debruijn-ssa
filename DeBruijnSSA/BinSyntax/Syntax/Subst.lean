@@ -516,6 +516,11 @@ theorem Region.vsubst_comp_apply (σ τ : Term.Subst φ) (r : Region φ)
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Term.Subst.lift_comp, Term.Subst.liftn_comp, *]
 
+theorem Region.vsubst_vsubst (σ τ : Term.Subst φ) (r : Region φ)
+  : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ) := by
+  induction r generalizing σ τ
+  <;> simp [Term.subst_comp, Term.Subst.lift_comp, Term.Subst.liftn_comp, *]
+
 theorem Region.ext_vsubst (σ τ : Term.Subst φ)
   (h : ∀t : Region φ, t.vsubst σ = t.vsubst τ) : ∀n, σ n = τ n
   := λn => by
@@ -1407,15 +1412,39 @@ theorem lsubst_comp (σ τ : Subst φ)
 /-- Substitute the labels in a `Region` using `σ` and let-bindings -/
 @[simp]
 def llsubst (σ : Subst φ) : Region φ → Region φ
-  | br n e => (σ n).let1 e
-  | case e s t => case e (llsubst σ.vlift s) (llsubst σ.vlift t)
-  | let1 e t => let1 e (llsubst σ.vlift t)
-  | let2 e t => let2 e (llsubst (σ.vliftn 2) t)
-  | cfg β n f => cfg (llsubst (σ.liftn n) β) n (λ i => llsubst (σ.liftn n).vlift (f i))
+  := lsubst (let1 (Term.var 0) ∘ σ.vlift)
 
 /-- Compose two label-substitutions via let-bindings to yield another -/
 def Subst.lcomp (σ τ : Subst φ): Subst φ
   | n => (τ n).llsubst σ.vlift
+
+theorem Subst.vlift_let1_zero (σ : Subst φ)
+    : vlift (let1 (Term.var 0) ∘ σ.vlift) = let1 (Term.var 0) ∘ σ.vlift.vlift :=
+  by funext k; simp [vlift, vwk_vwk, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
+
+theorem Subst.vliftn_let1_zero (σ : Subst φ)
+    : vliftn n (let1 (Term.var 0) ∘ σ.vlift) = let1 (Term.var 0) ∘ (σ.vliftn n).vlift :=
+  by induction n with
+  | zero => simp
+  | succ n I => rw [vliftn_succ, I, vlift_let1_zero, vliftn_succ]
+
+theorem llsubst_lcomp (σ τ : Subst φ) : llsubst (σ.lcomp τ) = llsubst σ ∘ llsubst τ := by
+  simp only [llsubst, <-lsubst_comp]
+  apply congrArg
+  funext k
+  simp only [Subst.vlift, Function.comp_apply, Subst.lcomp, llsubst, Subst.comp, lsubst, let1.injEq,
+    true_and]
+  rw [vwk_lsubst]
+  congr
+  funext k
+  simp only [Function.comp_apply, vwk, Term.wk, Nat.liftWk_zero, let1.injEq, true_and, vwk_vwk]
+  congr
+  simp only [<-Nat.liftWk_comp, Nat.liftWk_comp_succ, <-Function.comp.assoc]
+  rw [Function.comp.assoc, Nat.liftWk_comp_succ, Function.comp.assoc]
+
+theorem llsubst_llsubst (σ τ : Subst φ) (t : Region φ)
+  : (t.llsubst τ).llsubst σ = t.llsubst (σ.lcomp τ)
+  := by rw [llsubst_lcomp]; simp
 
 end Region
 
