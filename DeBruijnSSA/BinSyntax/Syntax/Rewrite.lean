@@ -116,7 +116,7 @@ inductive Eta : Region φ → Region φ → Prop
     (cfg ((G ⟨ℓ, h⟩).vsubst e.subst0) n G)
   | cfg_br_ge (ℓ e n G) (h : n ≤ ℓ) : Eta
     (cfg (br ℓ e) n G)
-    (cfg (br (ℓ - n) e) n G)
+    (br (ℓ - n) e)
   | cfg_let1 (a β n G) : Eta
     (cfg (let1 a β) n G)
     (let1 a $ cfg β n (vwk Nat.succ ∘ G))
@@ -183,7 +183,7 @@ inductive PStepD (Γ : ℕ → ε) : Region φ → Region φ → Type
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
     PStepD Γ (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   | cfg_br_ge (ℓ e n G) (h : n ≤ ℓ) :
-    PStepD Γ (cfg (br ℓ e) n G) (cfg (br (ℓ - n) e) n G)
+    PStepD Γ (cfg (br ℓ e) n G) (br (ℓ - n) e)
   | cfg_let1 (a β n G) :
     PStepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk Nat.succ ∘ G))
   | cfg_let2 (a β n G) :
@@ -203,9 +203,10 @@ inductive SimpleCongruenceD (P : Region φ → Region φ → Type u) : Region φ
   | case_left (e) : SimpleCongruenceD P r r' → (s : Region φ)
     → SimpleCongruenceD P (case e r s) (case e r' s)
   | case_right (e r) : SimpleCongruenceD P s s' → SimpleCongruenceD P (case e r s) (case e r s')
-  | cfg_entry (n G) : SimpleCongruenceD P r r' → SimpleCongruenceD P (cfg r n G) (cfg r' n G)
-  | cfg_block (n G i G') : SimpleCongruenceD P r r' → G' = Function.update G i r' →
-    SimpleCongruenceD P (cfg β n G) (cfg β n G')
+  | cfg_entry
+    : SimpleCongruenceD P r r' → (n : _) → (G : _) → SimpleCongruenceD P (cfg r n G) (cfg r' n G)
+  | cfg_block (β n G i) : SimpleCongruenceD P r r' →
+    SimpleCongruenceD P (cfg β n (Function.update G i r)) (cfg β n (Function.update G i r'))
 
 def PSD (Γ : ℕ → ε) : Region φ → Region φ → Type
   := SimpleCongruenceD (PStepD Γ)
@@ -223,90 +224,90 @@ def toEStep (Γ : ℕ → ε) (r : Region φ) : EStep φ Γ := r
 instance eStepQuiver {Γ : ℕ → ε} : Quiver (EStep φ Γ) where
   Hom := PSD Γ
 
-def EStep.let1_beta {Γ : ℕ → ε} (e r) (h : e.effect Γ = ⊥)
+def EStep.let1_beta (Γ : ℕ → ε) (e r) (h : e.effect Γ = ⊥)
   : @toEStep φ _ Γ (let1 e r) ⟶ toEStep Γ (r.vsubst e.subst0)
   := SimpleCongruenceD.step (PStepD.let1_beta e r h)
 
-def EStep.let2_pair {Γ : ℕ → ε} (a b r)
+def EStep.let2_pair (Γ : ℕ → ε) (a b r)
   : @toEStep φ _ Γ (let2 (pair a b) r) ⟶ toEStep Γ (let1 a $ let1 (b.wk Nat.succ) $ r)
   := SimpleCongruenceD.step (PStepD.let2_pair a b r)
 
-def EStep.case_inl {Γ : ℕ → ε} (e r s)
+def EStep.case_inl (Γ : ℕ → ε) (e r s)
   : @toEStep φ _ Γ (case (inl e) r s) ⟶ toEStep Γ (let1 e r)
   := SimpleCongruenceD.step (PStepD.case_inl e r s)
 
-def EStep.case_inr {Γ : ℕ → ε} (e r s)
+def EStep.case_inr (Γ : ℕ → ε) (e r s)
   : @toEStep φ _ Γ (case (inr e) r s) ⟶ toEStep Γ (let1 e s)
   := SimpleCongruenceD.step (PStepD.case_inr e r s)
 
-def EStep.let1_op {Γ : ℕ → ε} (f e r)
+def EStep.let1_op (Γ : ℕ → ε) (f e r)
   : @toEStep φ _ Γ (let1 (op f e) r) ⟶ toEStep Γ (let1 e $ let1 (op f (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := SimpleCongruenceD.step (PStepD.let1_op f e r)
 
-def EStep.let1_pair {Γ : ℕ → ε} (a b r)
+def EStep.let1_pair (Γ : ℕ → ε) (a b r)
   : @toEStep φ _ Γ (let1 (pair a b) r)
     ⟶ toEStep Γ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk (Nat.liftWk (· + 2))
   )
   := SimpleCongruenceD.step (PStepD.let1_pair a b r)
 
-def EStep.let1_inl {Γ : ℕ → ε} (e r)
+def EStep.let1_inl (Γ : ℕ → ε) (e r)
   : @toEStep φ _ Γ (let1 (inl e) r) ⟶ toEStep Γ (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := SimpleCongruenceD.step (PStepD.let1_inl e r)
 
-def EStep.let1_inr {Γ : ℕ → ε} (e r)
+def EStep.let1_inr (Γ : ℕ → ε) (e r)
   : @toEStep φ _ Γ (let1 (inr e) r) ⟶ toEStep Γ (let1 e $ let1 (inr (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := SimpleCongruenceD.step (PStepD.let1_inr e r)
 
-def EStep.let1_abort {Γ : ℕ → ε} (e r)
+def EStep.let1_abort (Γ : ℕ → ε) (e r)
   : @toEStep φ _ Γ (let1 (abort e) r) ⟶ toEStep Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := SimpleCongruenceD.step (PStepD.let1_abort e r)
 
-def EStep.let2_op {Γ : ℕ → ε} (f e r)
+def EStep.let2_op (Γ : ℕ → ε) (f e r)
   : @toEStep φ _ Γ (let2 (op f e) r) ⟶ toEStep Γ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   := SimpleCongruenceD.step (PStepD.let2_op f e r)
 
-def EStep.let2_abort {Γ : ℕ → ε} (e r)
+def EStep.let2_abort (Γ : ℕ → ε) (e r)
   : @toEStep φ _ Γ (let2 (abort e) r) ⟶ toEStep Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   := SimpleCongruenceD.step (PStepD.let2_abort e r)
 
-def EStep.let1_case {Γ : ℕ → ε} (a b r s)
+def EStep.let1_case (Γ : ℕ → ε) (a b r s)
   : @toEStep φ _ Γ (let1 a $ case (b.wk Nat.succ) r s)
     ⟶ toEStep Γ (case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s))
   := SimpleCongruenceD.step (PStepD.let1_case a b r s)
 
-def EStep.let2_case {Γ : ℕ → ε} (a b r s)
+def EStep.let2_case (Γ : ℕ → ε) (a b r s)
   : @toEStep φ _ Γ (let2 a $ case (b.wk (· + 2)) r s)
     ⟶ toEStep Γ (case b (let2 (a.wk Nat.succ) r) (let2 (a.wk Nat.succ) s))
   := SimpleCongruenceD.step (PStepD.let2_case a b r s)
 
-def EStep.cfg_br_lt {Γ : ℕ → ε} (ℓ e n G) (h : ℓ < n)
+def EStep.cfg_br_lt (Γ : ℕ → ε) (ℓ e n G) (h : ℓ < n)
   : @toEStep φ _ Γ (cfg (br ℓ e) n G) ⟶ toEStep Γ (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   := SimpleCongruenceD.step (PStepD.cfg_br_lt ℓ e n G h)
 
-def EStep.cfg_br_ge {Γ : ℕ → ε} (ℓ e n G) (h : n ≤ ℓ)
-  : @toEStep φ _ Γ (cfg (br ℓ e) n G) ⟶ toEStep Γ (cfg (br (ℓ - n) e) n G)
+def EStep.cfg_br_ge (Γ : ℕ → ε) (ℓ e n G) (h : n ≤ ℓ)
+  : @toEStep φ _ Γ (cfg (br ℓ e) n G) ⟶ toEStep Γ (br (ℓ - n) e)
   := SimpleCongruenceD.step (PStepD.cfg_br_ge ℓ e n G h)
 
-def EStep.cfg_let1 {Γ : ℕ → ε} (a β n G)
+def EStep.cfg_let1 (Γ : ℕ → ε) (a β n G)
   : @toEStep φ _ Γ (cfg (let1 a β) n G) ⟶ toEStep Γ (let1 a $ cfg β n (vwk Nat.succ ∘ G))
   := SimpleCongruenceD.step (PStepD.cfg_let1 a β n G)
 
-def EStep.cfg_let2 {Γ : ℕ → ε} (a β n G)
+def EStep.cfg_let2 (Γ : ℕ → ε) (a β n G)
   : @toEStep φ _ Γ (cfg (let2 a β) n G) ⟶ toEStep Γ (let2 a $ cfg β n (vwk (· + 2) ∘ G))
   := SimpleCongruenceD.step (PStepD.cfg_let2 a β n G)
 
-def EStep.cfg_case {Γ : ℕ → ε} (e r s n G)
+def EStep.cfg_case (Γ : ℕ → ε) (e r s n G)
   : @toEStep φ _ Γ (cfg (case e r s) n G)
     ⟶ toEStep Γ (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G))
   )
   := SimpleCongruenceD.step (PStepD.cfg_case e r s n G)
 
-def EStep.cfg_cfg {Γ : ℕ → ε} (β n G n' G')
+def EStep.cfg_cfg (Γ : ℕ → ε) (β n G n' G')
   : @toEStep φ _ Γ (cfg (cfg β n G) n' G')
     ⟶ toEStep Γ (cfg β (n' + n) (Fin.addCases (lwk (· + n) ∘ G') G))
   := SimpleCongruenceD.step (PStepD.cfg_cfg β n G n' G')
 
-def EStep.wk_cfg {Γ : ℕ → ε} (β n G k) (ρ : Fin k → Fin n)
+def EStep.wk_cfg (Γ : ℕ → ε) (β n G k) (ρ : Fin k → Fin n)
   : @toEStep φ _ Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G) ⟶ toEStep Γ (cfg β k (G ∘ ρ))
   := SimpleCongruenceD.step (PStepD.wk_cfg β n G k ρ)
 
@@ -326,13 +327,112 @@ def EStep.case_right {Γ : ℕ → ε} (e r) (h : @toEStep φ _ Γ s ⟶ toEStep
   : @toEStep φ _ Γ (case e r s) ⟶ toEStep Γ (case e r s')
   := SimpleCongruenceD.case_right e r h
 
-def EStep.cfg_entry {Γ : ℕ → ε} (n G) (h : @toEStep φ _ Γ r ⟶ toEStep Γ r')
+def EStep.cfg_entry {Γ : ℕ → ε} (h : @toEStep φ _ Γ r ⟶ toEStep Γ r') (n G)
   : @toEStep φ _ Γ (cfg r n G) ⟶ toEStep Γ (cfg r' n G)
-  := SimpleCongruenceD.cfg_entry n G h
+  := SimpleCongruenceD.cfg_entry h n G
 
-def EStep.cfg_block {Γ : ℕ → ε} (n G i G') (h : @toEStep φ _ Γ r ⟶ toEStep Γ r')
-  : G' = Function.update G i r' → (@toEStep φ _ Γ (cfg β n G) ⟶ toEStep Γ (cfg β n G'))
-  := SimpleCongruenceD.cfg_block n G i G' h
+def EStep.cfg_block {Γ : ℕ → ε} (β n G i) (h : @toEStep φ _ Γ r ⟶ toEStep Γ r')
+  : (@toEStep φ _ Γ (cfg β n (Function.update G i r))
+  ⟶ toEStep Γ (cfg β n (Function.update G i r')))
+  := SimpleCongruenceD.cfg_block β n G i h
+
+def EStep.let1_func (Γ : ℕ → ε) (e : Term φ) : Prefunctor (EStep φ Γ) (EStep φ Γ) where
+  obj := Region.let1 e
+  map := EStep.let1 e
+
+def EStep.let2_func (Γ : ℕ → ε) (e : Term φ) : Prefunctor (EStep φ Γ) (EStep φ Γ) where
+  obj := Region.let2 e
+  map := EStep.let2 e
+
+def EStep.case_left_func (Γ : ℕ → ε) (e : Term φ) (s : Region φ)
+  : Prefunctor (EStep φ Γ) (EStep φ Γ) where
+  obj := (Region.case e · s)
+  map := (EStep.case_left e · s)
+
+def EStep.case_right_func (Γ : ℕ → ε) (e : Term φ) (r : Region φ)
+  : Prefunctor (EStep φ Γ) (EStep φ Γ) where
+  obj := Region.case e r
+  map := EStep.case_right e r
+
+def EStep.cfg_entry_func (Γ : ℕ → ε) (n) (G : Fin n → Region φ)
+  : Prefunctor (EStep φ Γ) (EStep φ Γ) where
+  obj := (Region.cfg · n G)
+  map := (EStep.cfg_entry · n G)
+
+def EStep.cfg_block_func (Γ : ℕ → ε) (β : Region φ) (n) (G : Fin n → Region φ) (i : Fin n)
+  : Prefunctor (EStep φ Γ) (EStep φ Γ) where
+  obj := (λg => Region.cfg β n (Function.update G i g))
+  map := EStep.cfg_block β n G i
+
+def EStep.let1_path {Γ : ℕ → ε} (e) (h : Quiver.Path (@toEStep φ _ Γ r) r')
+  : Quiver.Path (toEStep Γ (Region.let1 e r)) (Region.let1 e r')
+  := (let1_func Γ e).mapPath h
+
+def EStep.let2_path {Γ : ℕ → ε} (e) (h : Quiver.Path (@toEStep φ _ Γ r) r')
+  : Quiver.Path (toEStep Γ (Region.let2 e r)) (Region.let2 e r')
+  := (let2_func Γ e).mapPath h
+
+def EStep.case_left_path {Γ : ℕ → ε} (e) (h : Quiver.Path (@toEStep φ _ Γ r) r') (s)
+  : Quiver.Path (toEStep Γ (Region.case e r s)) (Region.case e r' s)
+  := (case_left_func Γ e s).mapPath h
+
+def EStep.case_right_path {Γ : ℕ → ε} (e r) (h : Quiver.Path (@toEStep φ _ Γ s) s')
+  : Quiver.Path (toEStep Γ (Region.case e r s)) (Region.case e r s')
+  := (case_right_func Γ e r).mapPath h
+
+def EStep.case_path {Γ : ℕ → ε} (e)
+  (hr : Quiver.Path (@toEStep φ _ Γ r) r')
+  (hs : Quiver.Path (@toEStep φ _ Γ s) s')
+  : Quiver.Path (toEStep Γ (Region.case e r s)) (Region.case e r' s')
+  := Quiver.Path.comp (case_left_path e hr _) (case_right_path e _ hs)
+
+def EStep.cfg_entry_path {Γ : ℕ → ε} (n G) (h : Quiver.Path (@toEStep φ _ Γ r) r')
+  : Quiver.Path (toEStep Γ (Region.cfg r n G)) (Region.cfg r' n G)
+  := (cfg_entry_func Γ n G).mapPath h
+
+def EStep.cfg_block_path {Γ : ℕ → ε} (β n G i) (h : Quiver.Path (@toEStep φ _ Γ r) r')
+  : Quiver.Path
+    (toEStep Γ (Region.cfg β n (Function.update G i r)))
+    (Region.cfg β n (Function.update G i r'))
+  := (cfg_block_func Γ β n G i).mapPath h
+
+def EStep.cast_path_trg {Γ : ℕ → ε} {r₁ r₂ r₂' : Region φ}
+  (h : Quiver.Path (@toEStep φ _ Γ r₁) r₂) (h' : r₂ = r₂')
+  : Quiver.Path (@toEStep φ _ Γ r₁) r₂' := h' ▸ h
+
+def EStep.cast_path_src {Γ : ℕ → ε} {r₁ r₁' r₂ : Region φ}
+  (h : Quiver.Path (@toEStep φ _ Γ r₁) r₂) (h' : r₁ = r₁')
+  : Quiver.Path (@toEStep φ _ Γ r₁') r₂ := h' ▸ h
+
+def EStep.cfg_blocks {Γ : ℕ → ε} (β n G G')
+  (h : ∀i, Quiver.Path (@toEStep φ _ Γ (G i)) (G' i))
+  : Quiver.Path
+    (toEStep Γ (Region.cfg β n G))
+    (Region.cfg β n G')
+  := sorry
+
+def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
+  : Quiver.Path (toEStep Γ (cfg (β.lwk (· + n)) n G)) β
+  := match β with
+  | Region.br ℓ e =>
+    have h : ℓ + n - n = ℓ := by simp;
+    (h ▸ cfg_br_ge Γ (ℓ + n) e n G (by simp)).toPath
+  | Region.let1 a β =>
+    Quiver.Path.comp
+      (cfg_let1 Γ a (β.lwk (· + n)) n G).toPath
+      (let1_path a (cfg_elim β n _))
+  | Region.let2 a β =>
+    Quiver.Path.comp
+      (cfg_let2 Γ a (β.lwk (· + n)) n G).toPath
+      (let2_path a (cfg_elim β n _))
+  | Region.case e r s =>
+    Quiver.Path.comp
+      (cfg_case Γ e (r.lwk (· + n)) (s.lwk (· + n)) n G).toPath
+      (case_path e (cfg_elim r n _) (cfg_elim s n _))
+  | Region.cfg β' n' G' =>
+    Quiver.Path.comp
+      (cfg_cfg Γ _ _ _ _ _).toPath
+      sorry --(cast_path_trg (wk_cfg _ _ _ _ _ _) sorry)
 
 end Region
 
