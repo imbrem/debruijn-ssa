@@ -128,7 +128,7 @@ inductive Eta : Region φ → Region φ → Prop
     (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G)))
   | cfg_cfg (β n G n' G') : Eta
     (cfg (cfg β n G) n' G')
-    (cfg β (n' + n) (Fin.addCases (lwk (· + n) ∘ G') G))
+    (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
 
 inductive WkCfg : Region φ → Region φ → Prop
   | cfg (β n G k) (ρ : Fin k → Fin n)
@@ -192,9 +192,11 @@ inductive PStepD (Γ : ℕ → ε) : Region φ → Region φ → Type
     PStepD Γ (cfg (case e r s) n G)
       (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G)))
   | cfg_cfg (β n G n' G') :
-    PStepD Γ (cfg (cfg β n G) n' G') (cfg β (n' + n) (Fin.addCases (lwk (· + n) ∘ G') G))
+    PStepD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
-    PStepD Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G) (cfg β k (G ∘ ρ))
+    PStepD Γ
+      (cfg (β.lwk (Fin.toNatWk ρ)) n G)
+      (cfg β k ((lwk (Fin.toNatWk ρ)) ∘ G ∘ ρ))
 
 inductive SimpleCongruenceD (P : Region φ → Region φ → Type u) : Region φ → Region φ → Type u
   | step : P r r' → SimpleCongruenceD P r r'
@@ -304,11 +306,12 @@ def EStep.cfg_case (Γ : ℕ → ε) (e r s n G)
 
 def EStep.cfg_cfg (Γ : ℕ → ε) (β n G n' G')
   : @toEStep φ _ Γ (cfg (cfg β n G) n' G')
-    ⟶ toEStep Γ (cfg β (n' + n) (Fin.addCases (lwk (· + n) ∘ G') G))
+    ⟶ toEStep Γ (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   := SimpleCongruenceD.step (PStepD.cfg_cfg β n G n' G')
 
 def EStep.wk_cfg (Γ : ℕ → ε) (β n G k) (ρ : Fin k → Fin n)
-  : @toEStep φ _ Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G) ⟶ toEStep Γ (cfg β k (G ∘ ρ))
+  : @toEStep φ _ Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G)
+    ⟶ toEStep Γ (cfg β k ((lwk (Fin.toNatWk ρ)) ∘ G ∘ ρ))
   := SimpleCongruenceD.step (PStepD.wk_cfg β n G k ρ)
 
 def EStep.let1 {Γ : ℕ → ε} (e) (h : @toEStep φ _ Γ r ⟶ toEStep Γ r')
@@ -401,8 +404,8 @@ def EStep.cast_path_trg {Γ : ℕ → ε} {r₁ r₂ r₂' : Region φ}
   : Quiver.Path (@toEStep φ _ Γ r₁) r₂' := h' ▸ h
 
 def EStep.cast_path_src {Γ : ℕ → ε} {r₁ r₁' r₂ : Region φ}
-  (h' : r₁ = r₁') (h : Quiver.Path (@toEStep φ _ Γ r₁) r₂)
-  : Quiver.Path (@toEStep φ _ Γ r₁') r₂ := h' ▸ h
+  (h' : r₁ = r₁') (h : Quiver.Path (@toEStep φ _ Γ r₁') r₂)
+  : Quiver.Path (@toEStep φ _ Γ r₁) r₂ := h' ▸ h
 
 def EStep.refl_path {Γ : ℕ → ε} {r : Region φ}
   : Quiver.Path (@toEStep φ _ Γ r) r := Quiver.Path.nil
@@ -482,10 +485,39 @@ def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
     Quiver.Path.comp
       (cfg_case Γ e (r.lwk (· + n)) (s.lwk (· + n)) n G).toPath
       (case_path e (cfg_elim r n _) (cfg_elim s n _))
-  | Region.cfg β' n' G' =>
+  | Region.cfg β n' G' =>
     Quiver.Path.comp
       (cfg_cfg Γ _ _ _ _ _).toPath
-      sorry --(cast_path_trg (wk_cfg _ _ _ _ _ _) sorry)
+      (cast_path_src
+        (by
+          simp only [cfg.injEq, heq_eq_eq, true_and]
+          constructor
+          congr
+          funext i
+          rw [Fin.toNatWk, Nat.liftnWk]
+          split
+          rfl
+          rw [Nat.add_assoc, Nat.add_comm n n']
+          funext i
+          simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
+          split
+          . rw [lwk_lwk]
+            congr
+            funext i'
+            rw [Function.comp_apply, Fin.toNatWk]
+          . sorry
+        )
+        (cast_path_trg (wk_cfg _ β (n + n')
+          (Fin.addCases (lwk (· + n') ∘ G) (lwk (n.liftnWk (· + n')) ∘ G')) _ (
+            Fin.castLE (Nat.le_add_left n' n)
+          )).toPath
+          (by
+            congr
+            funext i
+            simp only [Fin.addCases, Function.comp_apply, eq_rec_constant, Fin.castLE, i.prop,
+              ↓reduceDite, Fin.castLT_mk, Fin.eta]
+            sorry
+          )))
 
 end Region
 
