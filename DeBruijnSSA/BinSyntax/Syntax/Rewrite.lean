@@ -401,15 +401,68 @@ def EStep.cast_path_trg {Γ : ℕ → ε} {r₁ r₂ r₂' : Region φ}
   : Quiver.Path (@toEStep φ _ Γ r₁) r₂' := h' ▸ h
 
 def EStep.cast_path_src {Γ : ℕ → ε} {r₁ r₁' r₂ : Region φ}
-  (h : Quiver.Path (@toEStep φ _ Γ r₁) r₂) (h' : r₁ = r₁')
+  (h' : r₁ = r₁') (h : Quiver.Path (@toEStep φ _ Γ r₁) r₂)
   : Quiver.Path (@toEStep φ _ Γ r₁') r₂ := h' ▸ h
+
+def EStep.refl_path {Γ : ℕ → ε} {r : Region φ}
+  : Quiver.Path (@toEStep φ _ Γ r) r := Quiver.Path.nil
+
+def EStep.path_of_eq {Γ : ℕ → ε} {r r' : Region φ} (h : r = r')
+  : Quiver.Path (@toEStep φ _ Γ r) r' := cast_path_trg refl_path h
+
+def EStep.cfg_blocks_partial {Γ : ℕ → ε} (β n) (G : Fin n → Region φ) (G': Fin n → Region φ)
+  (h : ∀i, Quiver.Path (@toEStep φ _ Γ (G i)) (G' i))
+  : ∀k : ℕ, Quiver.Path
+    (toEStep Γ (Region.cfg β n G))
+    (Region.cfg β n (λi => if i < k then G' i else G i))
+  | 0 => Quiver.Path.nil
+  | k + 1 => if hk : k < n then
+      Quiver.Path.comp
+        (cast_path_trg (cfg_blocks_partial β n G G' h k)
+          (by
+            congr
+            rw [Function.eq_update_self_iff]
+            simp))
+        (cast_path_trg (cfg_block_path β n
+          (λi => if i < k then G' i else G i)
+          ⟨k, hk⟩ (h ⟨k, hk⟩))
+          (by
+            congr
+            funext i
+            split
+            case _ h =>
+              rw [Function.update_apply]
+              split
+              case _ h =>
+                cases h
+                rfl
+              case _ he =>
+                have h : i < k := Nat.lt_of_le_of_ne
+                  (Nat.le_of_lt_succ h)
+                  (Fin.vne_of_ne he)
+                simp [h]
+            case _ h =>
+              have h := Nat.le_of_not_lt h
+              rw [Function.update_noteq, ite_cond_eq_false]
+              simp [Nat.le_of_succ_le h]
+              apply Fin.ne_of_gt
+              exact Nat.lt_of_succ_le h
+            ))
+    else
+      cast_path_trg (cfg_blocks_partial β n G G' h k) (by
+        have hk := Nat.le_of_not_lt hk;
+        simp only [cfg.injEq, heq_eq_eq, true_and]
+        funext i
+        have hi := Nat.lt_of_lt_of_le i.prop hk
+        simp [hi, Nat.lt_succ_of_lt hi]
+      )
 
 def EStep.cfg_blocks {Γ : ℕ → ε} (β n G G')
   (h : ∀i, Quiver.Path (@toEStep φ _ Γ (G i)) (G' i))
   : Quiver.Path
     (toEStep Γ (Region.cfg β n G))
     (Region.cfg β n G')
-  := sorry
+  := cast_path_trg (cfg_blocks_partial β n G G' h n) (by simp)
 
 def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
   : Quiver.Path (toEStep Γ (cfg (β.lwk (· + n)) n G)) β
