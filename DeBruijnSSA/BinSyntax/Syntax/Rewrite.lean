@@ -195,7 +195,7 @@ inductive PStepD (Γ : ℕ → ε) : Region φ → Region φ → Type
     PStepD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
     PStepD Γ
-      (cfg (β.lwk (Fin.toNatWk ρ)) n G)
+      (cfg (β.lwk (Fin.toNatWk ρ)) n ((lwk (Fin.toNatWk ρ)) ∘ G))
       (cfg β k ((lwk (Fin.toNatWk ρ)) ∘ G ∘ ρ))
 
 inductive SimpleCongruenceD (P : Region φ → Region φ → Type u) : Region φ → Region φ → Type u
@@ -310,7 +310,7 @@ def EStep.cfg_cfg (Γ : ℕ → ε) (β n G n' G')
   := SimpleCongruenceD.step (PStepD.cfg_cfg β n G n' G')
 
 def EStep.wk_cfg (Γ : ℕ → ε) (β n G k) (ρ : Fin k → Fin n)
-  : @toEStep φ _ Γ (cfg (β.lwk (Fin.toNatWk ρ)) n G)
+  : @toEStep φ _ Γ (cfg (β.lwk (Fin.toNatWk ρ)) n ((lwk (Fin.toNatWk ρ)) ∘ G))
     ⟶ toEStep Γ (cfg β k ((lwk (Fin.toNatWk ρ)) ∘ G ∘ ρ))
   := SimpleCongruenceD.step (PStepD.wk_cfg β n G k ρ)
 
@@ -486,7 +486,9 @@ def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
       (cfg_case Γ e (r.lwk (· + n)) (s.lwk (· + n)) n G).toPath
       (case_path e (cfg_elim r n _) (cfg_elim s n _))
   | Region.cfg β n' G' =>
-    Quiver.Path.comp
+    by
+    rw [lwk]
+    exact Quiver.Path.comp
       (cfg_cfg Γ _ _ _ _ _).toPath
       (cast_path_src
         (by
@@ -501,15 +503,21 @@ def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
           funext i
           simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
           split
-          . rw [lwk_lwk]
-            congr
+          . congr
             funext i'
-            rw [Function.comp_apply, Fin.toNatWk]
-          . sorry
+            rw [Fin.toNatWk, Nat.liftnWk]
+            split
+            rfl
+            simp_arith
+          . congr
+            funext i
+            simp only [Function.comp_apply, Fin.toNatWk, Fin.castLE_mk, Nat.add_sub_cancel,
+              dite_eq_ite]
+            sorry
         )
-        (cast_path_trg (wk_cfg _ β (n + n')
-          (Fin.addCases (lwk (· + n') ∘ G) (lwk (n.liftnWk (· + n')) ∘ G')) _ (
-            Fin.castLE (Nat.le_add_left n' n)
+        (cast_path_trg (wk_cfg _ β (n' + n)
+          (Fin.addCases G' G) _ (
+            Fin.castLE (Nat.le_add_right n' n)
           )).toPath
           (by
             congr
