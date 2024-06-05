@@ -130,14 +130,6 @@ inductive Eta : Region φ → Region φ → Prop
     (cfg (cfg β n G) n' G')
     (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
 
-inductive WkCfg : Region φ → Region φ → Prop
-  | cfg (β n G k) (ρ : Fin k → Fin n)
-    : WkCfg (cfg (β.lwk (Fin.toNatWk ρ)) n G) (cfg β k (G ∘ ρ))
-
-theorem WkCfg.trans {r r' r'' : Region φ}
-  (h : WkCfg r r') (h' : WkCfg r' r'') : WkCfg r r'' :=
-  by cases h; cases h'; rw [lwk_lwk, <-Fin.toNatWk_comp]; constructor
-
 inductive SimpleCongruence (P : Region φ → Region φ → Prop) : Region φ → Region φ → Prop
   | step (r r') : P r r' → SimpleCongruence P r r'
   | let1 (e r r') : SimpleCongruence P r r' → SimpleCongruence P (let1 e r) (let1 e r')
@@ -193,10 +185,16 @@ inductive PStepD (Γ : ℕ → ε) : Region φ → Region φ → Type
       (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G)))
   | cfg_cfg (β n G n' G') :
     PStepD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
-  | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
+  | wk_cfg (β n G k) (ρ : Fin k → Fin n) /-(hρ : Function.Bijective ρ)-/ :
     PStepD Γ
-      (cfg (β.lwk (Fin.toNatWk ρ)) n ((lwk (Fin.toNatWk ρ)) ∘ G))
-      (cfg β k ((lwk (Fin.toNatWk ρ)) ∘ G ∘ ρ))
+      (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+      (cfg β k (G ∘ ρ))
+  -- Note: this adds a tiny bit of power to wk_cfg, which otherwise could only detect G is dead code if it never
+  -- recursively called itself, i.e. if it could be written as G = (lwk (· + n) ∘ Gn)
+  | dead_cfg_left (β n G m G') :
+    PStepD Γ
+      (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
+      (cfg β m G')
 
 inductive SimpleCongruenceD (P : Region φ → Region φ → Type u) : Region φ → Region φ → Type u
   | step : P r r' → SimpleCongruenceD P r r'
@@ -309,10 +307,61 @@ def EStep.cfg_cfg (Γ : ℕ → ε) (β n G n' G')
     ⟶ toEStep Γ (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   := SimpleCongruenceD.step (PStepD.cfg_cfg β n G n' G')
 
-def EStep.wk_cfg (Γ : ℕ → ε) (β n G k) (ρ : Fin k → Fin n)
-  : @toEStep φ _ Γ (cfg (β.lwk (Fin.toNatWk ρ)) n ((lwk (Fin.toNatWk ρ)) ∘ G))
-    ⟶ toEStep Γ (cfg β k ((lwk (Fin.toNatWk ρ)) ∘ G ∘ ρ))
+def EStep.wk_cfg (Γ : ℕ → ε) (β n G k) (ρ : Fin k → Fin n) --(hρ : Function.Bijective ρ)
+  : toEStep Γ (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G)) ⟶ @toEStep φ _ Γ (cfg β k (G ∘ ρ))
   := SimpleCongruenceD.step (PStepD.wk_cfg β n G k ρ)
+
+def EStep.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ}
+  (h : r₀ = r₀') (s : toEStep Γ r₀ ⟶ toEStep Γ r₁)
+  : toEStep Γ r₀' ⟶ toEStep Γ r₁
+  := h ▸ s
+
+def EStep.cast_trg {Γ : ℕ → ε} {r₀ r₁ r₁' : Region φ}
+  (s : toEStep Γ r₀ ⟶ toEStep Γ r₁) (h : r₁ = r₁')
+  : toEStep Γ r₀ ⟶ toEStep Γ r₁'
+  := h ▸ s
+
+def EStep.swap_cfg' (Γ : ℕ → ε) (β n G m G')
+  : @toEStep φ _ Γ
+    (cfg
+      (lwk (Fin.toNatWk (Fin.swapAdd n m)) β)
+      (m + n) (lwk (Fin.toNatWk (Fin.swapAdd n m)) ∘ Fin.addCases G' G))
+    ⟶ toEStep Γ (cfg β (n + m) (Fin.addCases G G'))
+  :=
+  have h : Fin.addCases G G' = Fin.addCases G' G ∘ Fin.swapAdd n m := by
+    rw [Fin.addCases_comp_swapAdd]
+  by
+    rw [h]
+    apply wk_cfg
+
+def EStep.swap_cfg (Γ : ℕ → ε) (β n G m G')
+  : toEStep Γ (cfg β (n + m) (Fin.addCases G G')) ⟶
+    @toEStep φ _ Γ
+    (cfg
+      (lwk (Fin.toNatWk (Fin.swapAdd n m)) β)
+      (m + n) (lwk (Fin.toNatWk (Fin.swapAdd n m)) ∘ Fin.addCases G' G))
+  := cast_trg (cast_src
+    (by
+      rw [
+        <-Fin.comp_addCases,
+        <-Function.comp.assoc,
+        lwk_lwk, comp_lwk,
+        Fin.swapAdd
+      ]
+      simp [<-Fin.toNatWk_comp, Fin.addCases_natAdd_castAdd_nil]
+    )
+    (swap_cfg' Γ
+      (β.lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))))
+      m
+      (lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))) ∘ G')
+      n
+      (lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))) ∘ G)))
+    (by simp [Fin.comp_addCases, Fin.swapAdd])
+
+def EStep.dead_cfg_left (Γ : ℕ → ε) (β n G m G')
+  : toEStep Γ (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
+    ⟶ @toEStep φ _ Γ (cfg β m G')
+  := SimpleCongruenceD.step (PStepD.dead_cfg_left β n G m G')
 
 def EStep.let1 {Γ : ℕ → ε} (e) (h : @toEStep φ _ Γ r ⟶ toEStep Γ r')
   : @toEStep φ _ Γ (let1 e r) ⟶ toEStep Γ (let1 e r')
@@ -467,6 +516,17 @@ def EStep.cfg_blocks {Γ : ℕ → ε} (β n G G')
     (Region.cfg β n G')
   := cast_path_trg (cfg_blocks_partial β n G G' h n) (by simp)
 
+def EStep.dead_cfg_right (Γ : ℕ → ε) (β n G m G')
+  : Quiver.Path
+    (toEStep Γ (cfg (β.lwk (n.liftnWk (· + m))) (n + m) (Fin.addCases (lwk (n.liftnWk (· + m)) ∘ G) G')))
+    (@toEStep φ _ Γ (cfg β n G)) :=
+  Quiver.Path.comp
+    (cast_trg (swap_cfg Γ (β.lwk (n.liftnWk (· + m))) n (lwk (n.liftnWk (· + m)) ∘ G) m G')
+      (by
+        rw [Fin.comp_addCases, lwk_lwk, <-Function.comp.assoc, comp_lwk, Fin.toNatWk_swapAdd_comp_liftnWk_add]
+      )).toPath
+    (dead_cfg_left Γ β m _ n G).toPath
+
 def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
   : Quiver.Path (toEStep Γ (cfg (β.lwk (· + n)) n G)) β
   := match β with
@@ -485,47 +545,9 @@ def EStep.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
     Quiver.Path.comp
       (cfg_case Γ e (r.lwk (· + n)) (s.lwk (· + n)) n G).toPath
       (case_path e (cfg_elim r n _) (cfg_elim s n _))
-  | Region.cfg β n' G' =>
-    by
-    rw [lwk]
-    exact Quiver.Path.comp
+  | Region.cfg β n' G' => Quiver.Path.comp
       (cfg_cfg Γ _ _ _ _ _).toPath
-      (cast_path_src
-        (by
-          simp only [cfg.injEq, heq_eq_eq, true_and]
-          constructor
-          congr
-          funext i
-          rw [Fin.toNatWk, Nat.liftnWk]
-          split
-          rfl
-          rw [Nat.add_assoc, Nat.add_comm n n']
-          funext i
-          simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
-          split
-          . congr
-            funext i'
-            rw [Fin.toNatWk, Nat.liftnWk]
-            split
-            rfl
-            simp_arith
-          . congr
-            funext i
-            simp only [Function.comp_apply, Fin.toNatWk, Fin.castLE_mk, Nat.add_sub_cancel,
-              dite_eq_ite]
-            sorry
-        )
-        (cast_path_trg (wk_cfg _ β (n' + n)
-          (Fin.addCases G' G) _ (
-            Fin.castLE (Nat.le_add_right n' n)
-          )).toPath
-          (by
-            congr
-            funext i
-            simp only [Fin.addCases, Function.comp_apply, eq_rec_constant, Fin.castLE, i.prop,
-              ↓reduceDite, Fin.castLT_mk, Fin.eta]
-            sorry
-          )))
+      (dead_cfg_right Γ _ _ _ _ _)
 
 end Region
 
