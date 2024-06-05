@@ -11,7 +11,7 @@ section Basic
 
 -- Can we even do centrality? Propositional parametrization?
 
-variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
 
 inductive Ty (α : Type u) where
   | base : α → Ty α
@@ -145,7 +145,7 @@ def FCtx (α ε) := Σn, Fin n → Ty α × ε
 /-- A well-formed term -/
 inductive Term.Wf : Ctx α ε → Term φ → Ty α × ε → Prop
   | var : Γ.Var n V → Wf Γ (var n) V
-  | op : Φ.Fn f A B e → Wf Γ a ⟨A, e⟩ → Wf Γ (op f a) ⟨B, e⟩
+  | op : Φ.EFn f A B e → Wf Γ a ⟨A, e⟩ → Wf Γ (op f a) ⟨B, e⟩
   | pair : Wf Γ a ⟨A, e⟩ → Wf Γ b ⟨B, e⟩ → Wf Γ (pair a b) ⟨(Ty.prod A B), e⟩
   | inl : Wf Γ a ⟨A, e⟩ → Wf Γ (inl a) ⟨(Ty.coprod A B), e⟩
   | inr : Wf Γ b ⟨B, e⟩ → Wf Γ (inr b) ⟨(Ty.coprod A B), e⟩
@@ -160,10 +160,10 @@ theorem Term.Wf.to_fn' {Γ : Ctx α ε} {a : Term φ}
   (hA : A ≤ Φ.src f)
   (hB : V.1 ≤ B)
   (he : V.2 ≤ e)
-  : Φ.Fn f A B e := by cases h with | op hf => exact ⟨hA, hf.trg.trans hB, hf.effect.trans he⟩
+  : Φ.EFn f A B e := by cases h with | op hf => exact ⟨⟨hA, hf.trg.trans hB⟩, hf.effect.trans he⟩
 
 theorem Term.Wf.to_fn {Γ : Ctx α ε} {a : Term φ} (h : Wf Γ (Term.op f a) V)
-  : Φ.Fn f (Φ.src f) V.1 V.2 := h.to_fn' (le_refl _) (le_refl _) (le_refl _)
+  : Φ.EFn f (Φ.src f) V.1 V.2 := h.to_fn' (le_refl _) (le_refl _) (le_refl _)
 
 theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV : V ≤ V') : Wf Γ a V'
   := by induction h generalizing V' with
@@ -173,7 +173,7 @@ theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV
   | op hf _ I =>
     cases V'
     constructor
-    exact ⟨hf.src, hf.trg.trans hV.left, hf.effect.trans hV.right⟩
+    exact ⟨⟨hf.src, hf.trg.trans hV.left⟩, hf.effect.trans hV.right⟩
     exact I ⟨le_refl _, hV.right⟩
   | pair _ _ Il Ir =>
     cases V'
@@ -219,7 +219,7 @@ theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
 /-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | var : Γ.Var n V → WfD Γ (var n) V
-  | op : Φ.Fn f A B e → WfD Γ a ⟨A, e⟩ → WfD Γ (op f a) ⟨B, e⟩
+  | op : Φ.EFn f A B e → WfD Γ a ⟨A, e⟩ → WfD Γ (op f a) ⟨B, e⟩
   | pair : WfD Γ a ⟨A, e⟩ → WfD Γ b ⟨B, e⟩ → WfD Γ (pair a b) ⟨(Ty.prod A B), e⟩
   | inl : WfD Γ a ⟨A, e⟩ → WfD Γ (inl a) ⟨(Ty.coprod A B), e⟩
   | inr : WfD Γ b ⟨B, e⟩ → WfD Γ (inr b) ⟨(Ty.coprod A B), e⟩
@@ -430,31 +430,31 @@ def FLCtx (α) := Σn, Fin n → Ty α
 
 inductive Terminator.WfD : Ctx α ε → Terminator φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
-  | case : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩
+  | case : a.WfD Γ ⟨Ty.coprod A B, e⟩
     → s.WfD (⟨A, ⊥⟩::Γ) L
     → t.WfD (⟨B, ⊥⟩::Γ) L
-    → WfD Γ (case e s t) L
+    → WfD Γ (case a s t) L
 
 inductive Terminator.Wf : Ctx α ε → Terminator φ → LCtx α → Prop
   | br : L.Trg n A → a.Wf Γ ⟨A, ⊥⟩ → Wf Γ (br n a) L
-  | case : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩
+  | case : a.Wf Γ ⟨Ty.coprod A B, e⟩
     → s.Wf (⟨A, ⊥⟩::Γ) L
     → t.Wf (⟨B, ⊥⟩::Γ) L
-    → Wf Γ (case e s t) L
+    → Wf Γ (case a s t) L
 
-inductive Terminator.WfSD : Ctx α ε → Terminator φ → LCtx α → Type _
-  | br : L.Trg n A → a.WfD Γ ⟨A, e⟩ → WfSD Γ (br n a) L
+inductive Terminator.WfJED : Ctx α ε → Terminator φ → LCtx α → Type _
+  | br : L.Trg n A → a.WfD Γ ⟨A, e⟩ → WfJED Γ (br n a) L
   | case : a.WfD Γ ⟨Ty.coprod A B, e⟩
-    → s.WfSD (⟨A, ⊥⟩::Γ) L
-    → t.WfSD (⟨B, ⊥⟩::Γ) L
-    → WfSD Γ (case a s t) L
+    → s.WfJED (⟨A, ⊥⟩::Γ) L
+    → t.WfJED (⟨B, ⊥⟩::Γ) L
+    → WfJED Γ (case a s t) L
 
-inductive Terminator.WfS : Ctx α ε → Terminator φ → LCtx α → Prop
-  | br : L.Trg n A → a.Wf Γ ⟨A, e⟩ → WfS Γ (br n a) L
+inductive Terminator.WfJE : Ctx α ε → Terminator φ → LCtx α → Prop
+  | br : L.Trg n A → a.Wf Γ ⟨A, e⟩ → WfJE Γ (br n a) L
   | case : a.Wf Γ ⟨Ty.coprod A B, e⟩
-    → s.WfS (⟨A, ⊥⟩::Γ) L
-    → t.WfS (⟨B, ⊥⟩::Γ) L
-    → WfS Γ (case a s t) L
+    → s.WfJE (⟨A, ⊥⟩::Γ) L
+    → t.WfJE (⟨B, ⊥⟩::Γ) L
+    → WfJE Γ (case a s t) L
 
 structure Block.WfD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
@@ -464,13 +464,13 @@ structure Block.Wf (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx �
   body : β.body.Wf Γ Δ
   terminator : β.terminator.Wf (Δ.reverse ++ Γ) L
 
-structure Block.WfSD (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
+structure Block.WfJED (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) where
   body : β.body.WfD Γ Δ
-  terminator : β.terminator.WfSD (Δ.reverse ++ Γ) L
+  terminator : β.terminator.WfJED (Δ.reverse ++ Γ) L
 
-structure Block.WfS (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) : Prop where
+structure Block.WfJE (Γ : Ctx α ε) (β : Block φ) (Δ : Ctx α ε) (L : LCtx α) : Prop where
   body : β.body.Wf Γ Δ
-  terminator : β.terminator.WfS (Δ.reverse ++ Γ) L
+  terminator : β.terminator.WfJE (Δ.reverse ++ Γ) L
 
 inductive BBRegion.WfD : Ctx α ε → BBRegion φ → LCtx α → Type _
   | cfg (n) {G} (R : LCtx α) :
@@ -484,17 +484,17 @@ inductive BBRegion.Wf : Ctx α ε → BBRegion φ → LCtx α → Prop
     (∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
     Wf Γ (cfg β n G) L
 
-inductive BBRegion.WfSD : Ctx α ε → BBRegion φ → LCtx α → Type _
+inductive BBRegion.WfJED : Ctx α ε → BBRegion φ → LCtx α → Type _
   | cfg (n) {G} (R : LCtx α) :
-    (hR : R.length = n) → β.WfSD Γ Δ (R ++ L) →
-    (∀i : Fin n, (G i).WfSD (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
-    WfSD Γ (cfg β n G) L
+    (hR : R.length = n) → β.WfJED Γ Δ (R ++ L) →
+    (∀i : Fin n, (G i).WfJED (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
+    WfJED Γ (cfg β n G) L
 
-inductive BBRegion.WfS : Ctx α ε → BBRegion φ → LCtx α → Prop
+inductive BBRegion.WfJE : Ctx α ε → BBRegion φ → LCtx α → Prop
   | cfg (n) {G} (R : LCtx α) :
-    (hR : R.length = n) → β.WfS Γ Δ (R ++ L) →
-    (∀i : Fin n, (G i).WfS (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
-    WfS Γ (cfg β n G) L
+    (hR : R.length = n) → β.WfJE Γ Δ (R ++ L) →
+    (∀i : Fin n, (G i).WfJE (⟨R.get (i.cast hR.symm), ⊥⟩::(Δ ++ Γ)) (R ++ L)) →
+    WfJE Γ (cfg β n G) L
 
 inductive TRegion.WfD : Ctx α ε → TRegion φ → LCtx α → Type _
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
@@ -512,21 +512,21 @@ inductive TRegion.Wf : Ctx α ε → TRegion φ → LCtx α → Prop
     (∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
     Wf Γ (cfg β n G) L
 
-inductive TRegion.WfSD : Ctx α ε → TRegion φ → LCtx α → Type _
-  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfSD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfSD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfSD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfSD Γ L
+inductive TRegion.WfJED : Ctx α ε → TRegion φ → LCtx α → Type _
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfJED (⟨A, ⊥⟩::Γ) L → (let1 a t).WfJED Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfJED (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfJED Γ L
   | cfg (n) {G} (R : LCtx α) :
-    (hR : R.length = n) → β.WfSD Γ (R ++ L) →
-    (∀i : Fin n, (G i).WfSD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
-    WfSD Γ (cfg β n G) L
+    (hR : R.length = n) → β.WfJED Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfJED (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfJED Γ (cfg β n G) L
 
-inductive TRegion.WfS : Ctx α ε → TRegion φ → LCtx α → Prop
-  | let1 : a.Wf Γ ⟨A, e⟩ → t.WfS (⟨A, ⊥⟩::Γ) L → (let1 a t).WfS Γ L
-  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.WfS (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfS Γ L
+inductive TRegion.WfJE : Ctx α ε → TRegion φ → LCtx α → Prop
+  | let1 : a.Wf Γ ⟨A, e⟩ → t.WfJE (⟨A, ⊥⟩::Γ) L → (let1 a t).WfJE Γ L
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.WfJE (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfJE Γ L
   | cfg (n) {G} (R : LCtx α) :
-    (hR : R.length = n) → β.WfS Γ (R ++ L) →
-    (∀i : Fin n, (G i).WfS (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
-    WfS Γ (cfg β n G) L
+    (hR : R.length = n) → β.WfJE Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfJE (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfJE Γ (cfg β n G) L
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
@@ -543,10 +543,10 @@ inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
 
 inductive Region.Wf : Ctx α ε → Region φ → LCtx α → Prop
   | br : L.Trg n A → a.Wf Γ ⟨A, ⊥⟩ → Wf Γ (br n a) L
-  | case : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩
+  | case : a.Wf Γ ⟨Ty.coprod A B, e⟩
     → s.Wf (⟨A, ⊥⟩::Γ) L
     → t.Wf (⟨B, ⊥⟩::Γ) L
-    → Wf Γ (case e s t) L
+    → Wf Γ (case a s t) L
   | let1 : a.Wf Γ ⟨A, e⟩ → t.Wf (⟨A, ⊥⟩::Γ) L → (let1 a t).Wf Γ L
   | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.Wf (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).Wf Γ L
   | cfg (n) {G} (R : LCtx α) :
@@ -554,31 +554,31 @@ inductive Region.Wf : Ctx α ε → Region φ → LCtx α → Prop
     (∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
     Wf Γ (cfg β n G) L
 
-inductive Region.WfSD : Ctx α ε → Region φ → LCtx α → Type _
-  | br : L.Trg n A → a.WfD Γ ⟨A, e⟩ → WfSD Γ (br n a) L
+inductive Region.WfJED : Ctx α ε → Region φ → LCtx α → Type _
+  | br : L.Trg n A → a.WfD Γ ⟨A, e⟩ → WfJED Γ (br n a) L
   | case : a.WfD Γ ⟨Ty.coprod A B, e⟩
-    → s.WfSD (⟨A, ⊥⟩::Γ) L
-    → t.WfSD (⟨B, ⊥⟩::Γ) L
-    → WfSD Γ (case a s t) L
-  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfSD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfSD Γ L
-  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfSD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfSD Γ L
+    → s.WfJED (⟨A, ⊥⟩::Γ) L
+    → t.WfJED (⟨B, ⊥⟩::Γ) L
+    → WfJED Γ (case a s t) L
+  | let1 : a.WfD Γ ⟨A, e⟩ → t.WfJED (⟨A, ⊥⟩::Γ) L → (let1 a t).WfJED Γ L
+  | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfJED (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfJED Γ L
   | cfg (n) {G} (R : LCtx α) :
-    (hR : R.length = n) → β.WfSD Γ (R ++ L) →
-    (∀i : Fin n, (G i).WfSD (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
-    WfSD Γ (cfg β n G) L
+    (hR : R.length = n) → β.WfJED Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfJED (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfJED Γ (cfg β n G) L
 
-inductive Region.WfS : Ctx α ε → Region φ → LCtx α → Prop
-  | br : L.Trg n A → a.Wf Γ ⟨A, e⟩ → WfS Γ (br n a) L
+inductive Region.WfJE : Ctx α ε → Region φ → LCtx α → Prop
+  | br : L.Trg n A → a.Wf Γ ⟨A, e⟩ → WfJE Γ (br n a) L
   | case : a.Wf Γ ⟨Ty.coprod A B, e⟩
-    → s.WfS (⟨A, ⊥⟩::Γ) L
-    → t.WfS (⟨B, ⊥⟩::Γ) L
-    → WfS Γ (case a s t) L
-  | let1 : a.Wf Γ ⟨A, e⟩ → t.WfS (⟨A, ⊥⟩::Γ) L → (let1 a t).WfS Γ L
-  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.WfS (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfS Γ L
+    → s.WfJE (⟨A, ⊥⟩::Γ) L
+    → t.WfJE (⟨B, ⊥⟩::Γ) L
+    → WfJE Γ (case a s t) L
+  | let1 : a.Wf Γ ⟨A, e⟩ → t.WfJE (⟨A, ⊥⟩::Γ) L → (let1 a t).WfJE Γ L
+  | let2 : a.Wf Γ ⟨(Ty.prod A B), e⟩ → t.WfJE (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfJE Γ L
   | cfg (n) {G} (R : LCtx α) :
-    (hR : R.length = n) → β.WfS Γ (R ++ L) →
-    (∀i : Fin n, (G i).WfS (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
-    WfS Γ (cfg β n G) L
+    (hR : R.length = n) → β.WfJE Γ (R ++ L) →
+    (∀i : Fin n, (G i).WfJE (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) →
+    WfJE Γ (cfg β n G) L
 
 def Region.WfD.src {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := Γ
 
@@ -598,7 +598,7 @@ end Basic
 section Weakening
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+  [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} -- {a b : Term φ} {A B : Ty α} {e e' : ε}
 
 def Ctx.Wkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
@@ -919,7 +919,7 @@ end Weakening
 
 section OrderBot
 
-variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
 
 def Ctx.var_bot_head {Γ : Ctx α ε} : Var (⟨A, ⊥⟩::Γ) 0 ⟨A, e⟩
   := Var.head (by simp) Γ
@@ -928,7 +928,7 @@ end OrderBot
 
 section Minimal
 
-variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
 theorem Term.WfD.effect_le
   {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.effect Γ.effect ≤ e
@@ -941,7 +941,7 @@ theorem Term.WfD.effect_le
   | abort da => da.effect_le
   | unit _ => bot_le
 
-def Ctx.Var.toeffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
+def Ctx.Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
   : Γ.Var n ⟨V.1, Γ.effect n⟩
   := ⟨h.length, by
     constructor
@@ -949,18 +949,18 @@ def Ctx.Var.toeffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
     simp [Ctx.effect, h.length]
   ⟩
 
-def Term.WfD.toeffect {Γ : Ctx α ε} {a : Term φ} {V}
+def Term.WfD.toEffect {Γ : Ctx α ε} {a : Term φ} {V}
   : WfD Γ a V → WfD Γ a ⟨V.1, a.effect Γ.effect⟩
-  | var dv => var dv.toeffect
+  | var dv => var dv.toEffect
   | op df de => op
-    ⟨df.src, df.trg, by simp [effect]⟩
-    (de.toeffect.wk_eff (by simp [effect]))
+    ⟨⟨df.src, df.trg⟩, by simp [effect]⟩
+    (de.toEffect.wk_eff (by simp [effect]))
   | pair dl dr => pair
-    (dl.toeffect.wk_eff (by simp [effect]))
-    (dr.toeffect.wk_eff (by simp [effect]))
-  | inl dl => inl dl.toeffect
-  | inr dr => inr dr.toeffect
-  | abort da => abort da.toeffect
+    (dl.toEffect.wk_eff (by simp [effect]))
+    (dr.toEffect.wk_eff (by simp [effect]))
+  | inl dl => inl dl.toEffect
+  | inr dr => inr dr.toEffect
+  | abort da => abort da.toEffect
   | unit e => unit ⊥
 
 -- def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε

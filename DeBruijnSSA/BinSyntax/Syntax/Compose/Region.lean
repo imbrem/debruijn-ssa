@@ -69,20 +69,22 @@ theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r''
     cases n <;> rfl
   | succ => rfl
 
-def lappend (r r' : Region φ) : Region φ := r.llsubst (r'.alpha 0).vlift
+def lappend (r r' : Region φ) : Region φ := r ++ r'.let1V0
 
-theorem lappend_def (r r' : Region φ) : r.lappend r' = r.llsubst (r'.alpha 0).vlift := rfl
+instance : ShiftRight (Region φ) := ⟨Region.lappend⟩
 
-theorem lappend_nil (r : Region φ) : r.lappend nil = (lsubst (let1 (Term.var 0) ∘ Subst.id) r) := by
-  simp [lappend_def]
+theorem lappend_def (r r' : Region φ) : r >>> r' = r ++ r'.let1V0 := rfl
 
-theorem nil_lappend (r : Region φ)
-  : nil.lappend r = let1 (Term.var 0) (r.vwk (Nat.liftWk Nat.succ)) := by
-  simp only [lappend_def, llsubst, lsubst, vsubst, Term.subst, Term.subst0, Subst.vlift, alpha,
-    Function.comp_apply, Function.update_same, let1.injEq, true_and]
-  rw [<-vsubst_fromWk_apply, vsubst_vsubst, vsubst_id']
-  funext k
-  cases k <;> rfl
+-- theorem lappend_nil (r : Region φ) : r >>> nil = (lsubst (let1 (Term.var 0) ∘ Subst.id) r) := by
+--   simp [lappend_def]
+
+-- theorem nil_lappend (r : Region φ)
+--   : nil >>> r = let1 (Term.var 0) (r.vwk (Nat.liftWk Nat.succ)) := by
+--   simp only [lappend_def, llsubst, lsubst, vsubst, Term.subst, Term.subst0, Subst.vlift, alpha,
+--     Function.comp_apply, Function.update_same, let1.injEq, true_and]
+--   rw [<-vsubst_fromWk_apply, vsubst_vsubst, vsubst_id']
+--   funext k
+--   cases k <;> rfl
 
 def wappend (r r' : Region φ) : Region φ := cfg r 1 (λ_ => r'.lwk Nat.succ)
 

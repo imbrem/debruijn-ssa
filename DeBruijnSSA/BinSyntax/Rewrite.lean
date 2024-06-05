@@ -3,7 +3,7 @@ import DeBruijnSSA.BinSyntax.Syntax.Rewrite
 
 namespace BinSyntax
 
-variable [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
 def Term.WfD.subst₂ {Γ : Ctx α ε} {a b : Term φ}
   (ha : a.WfD Γ ⟨A, e⟩) (hb : b.WfD Γ ⟨B, e'⟩)
@@ -14,14 +14,14 @@ def Term.WfD.subst₂ {Γ : Ctx α ε} {a b : Term φ}
 
 def Region.PureBeta.WfD {Γ : Ctx α ε} {r r' : Region φ}
   : Region.PureBeta Γ.effect r r' → r.WfD Γ A → r'.WfD Γ A
-  | h, WfD.let1 de dr => h.let1_trg ▸ dr.vsubst (h.let1_pure ▸ de.toeffect.subst0)
+  | h, WfD.let1 de dr => h.let1_trg ▸ dr.vsubst (h.let1_pure ▸ de.toEffect.subst0)
 
-def Region.Reduce.WfD {Γ : Ctx α ε} {r r' : Region φ}
-  : Region.Reduce r r' → r.WfD Γ A → r'.WfD Γ A
-  | h, WfD.let2 (Term.WfD.pair da db) dr
-    => h.let2_pair_trg ▸ (WfD.let1 da $ WfD.let1 (db.wk (Ctx.Wkn.id.step)) $ dr)
-  | h, WfD.case (Term.WfD.inl de) dr _ => h.case_inl_trg ▸ dr.let1 de
-  | h, WfD.case (Term.WfD.inr de) _ ds => h.case_inr_trg ▸ ds.let1 de
+-- def Region.Reduce.WfD {Γ : Ctx α ε} {r r' : Region φ}
+--   : Region.Reduce r r' → r.WfD Γ A → r'.WfD Γ A
+--   | h, WfD.let2 (Term.WfD.pair da db) dr
+--     => h.let2_pair_trg ▸ (WfD.let1 da $ WfD.let1 (db.wk (Ctx.Wkn.id.step)) $ dr)
+--   | h, WfD.case (Term.WfD.inl de) dr _ => h.case_inl_trg ▸ dr.let1 de
+--   | h, WfD.case (Term.WfD.inr de) _ ds => h.case_inr_trg ▸ ds.let1 de
 
 -- def Region.TermEta1.WfD {Γ : Ctx α ε} {r r' : Region φ}
 --   : Region.TermEta1 r r' → r.WfD Γ L → r'.WfD Γ L

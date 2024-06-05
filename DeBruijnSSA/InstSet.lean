@@ -90,39 +90,46 @@ instance : HasEffect Impurity where
   bot_isRelevant := rfl
   bot_isAffine := rfl
 
-class EffectSet (φ : Type u) (ε : outParam (Type v)) where
+class EffectSet (φ : Type u) (ε : semiOutParam (Type v)) where
   effect : φ → ε
 
-class InstSet (φ : Type u) (α : outParam (Type v)) (ε : outParam (Type w))
-  extends EffectSet φ ε where
+class InstSet (φ : Type u) (α : outParam (Type v)) where
   src : φ → α
   trg : φ → α
 
-structure InstSet.Fn {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
-  (f : φ) (A B : α) (e : ε) : Prop where
+class EffInstSet (φ : Type u) (α : outParam (Type v)) (ε : outParam (Type w))
+  extends EffectSet φ ε, InstSet φ α where
+
+structure InstSet.Fn {φ α} [Φ : InstSet φ α] [PartialOrder α]
+  (f : φ) (A B : α): Prop where
   src : A ≤ Φ.src f
   trg : Φ.trg f ≤ B
+
+structure EffInstSet.EFn {φ α ε} [Φ : EffInstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  (f : φ) (A B : α) (e : ε)
+  extends InstSet.Fn f A B : Prop
+  where
   effect : Φ.effect f ≤ e
 
-theorem InstSet.fn_iff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
-  {f : φ} {A B : α} {e : ε} : Φ.Fn f A B e ↔ A ≤ Φ.src f ∧ Φ.trg f ≤ B ∧ Φ.effect f ≤ e := ⟨
+theorem EffInstSet.efn_iff {φ α ε} [Φ : EffInstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A B : α} {e : ε} : Φ.EFn f A B e ↔ A ≤ Φ.src f ∧ Φ.trg f ≤ B ∧ Φ.effect f ≤ e := ⟨
   λ h => ⟨h.src, h.trg, h.effect⟩,
-  λ ⟨hsrc, htrg, heff⟩ => ⟨hsrc, htrg, heff⟩⟩
+  λ ⟨hsrc, htrg, heff⟩ => ⟨⟨hsrc, htrg⟩, heff⟩⟩
 
-theorem InstSet.Fn.wk_src {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
-  {f : φ} {A A' B : α} {e : ε} (h : A' ≤ A) (hf : Φ.Fn f A B e) : Φ.Fn f A' B e where
+theorem EffInstSet.EFn.wk_src {φ α ε} [Φ : EffInstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A A' B : α} {e : ε} (h : A' ≤ A) (hf : Φ.EFn f A B e) : Φ.EFn f A' B e where
   src := le_trans h hf.src
   trg := hf.trg
   effect := hf.effect
 
-theorem InstSet.Fn.wk_trg {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
-  {f : φ} {A B B' : α} {e : ε} (h : B ≤ B') (hf : Φ.Fn f A B e) : Φ.Fn f A B' e where
+theorem EffInstSet.EFn.wk_trg {φ α ε} [Φ : EffInstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A B B' : α} {e : ε} (h : B ≤ B') (hf : Φ.EFn f A B e) : Φ.EFn f A B' e where
   src := hf.src
   trg := le_trans hf.trg h
   effect := hf.effect
 
-theorem InstSet.Fn.wk_eff {φ α ε} [Φ : InstSet φ α ε] [PartialOrder α] [PartialOrder ε]
-  {f : φ} {A B : α} {e e' : ε} (h : e ≤ e') (hf : Φ.Fn f A B e) : Φ.Fn f A B e' where
+theorem EffInstSet.EFn.wk_eff {φ α ε} [Φ : EffInstSet φ α ε] [PartialOrder α] [PartialOrder ε]
+  {f : φ} {A B : α} {e e' : ε} (h : e ≤ e') (hf : Φ.EFn f A B e) : Φ.EFn f A B e' where
   src := hf.src
   trg := hf.trg
   effect := le_trans hf.effect h

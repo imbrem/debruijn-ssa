@@ -1449,6 +1449,16 @@ theorem llsubst_llsubst (σ τ : Subst φ) (t : Region φ)
   : (t.llsubst τ).llsubst σ = t.llsubst (σ.lcomp τ)
   := by rw [llsubst_lcomp]; simp
 
+def let1V0 (r : Region φ) : Region φ := (r.vwk (Nat.liftWk Nat.succ)).let1 (Term.var 0)
+
+theorem lsubst_let1V0_comp (σ : Subst φ) (r : Region φ)
+  : (r.lsubst (let1V0 ∘ σ)) = r.llsubst σ
+  := rfl
+
+def let1Br : Subst φ := λℓ => (br ℓ (Term.var 0)).let1 (Term.var 0)
+
+theorem Subst.let1V0_comp_id : @let1V0 φ ∘ id = let1Br := rfl
+
 end Region
 
 /-- Substitute the free labels in this control-flow graph -/

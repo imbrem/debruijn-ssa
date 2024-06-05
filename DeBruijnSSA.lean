@@ -4,3 +4,4 @@ import DeBruijnSSA.BinSyntax.Subst
 import DeBruijnSSA.BinSyntax.Compose
 import DeBruijnSSA.BinSyntax.Rewrite
 import DeBruijnSSA.BinSyntax.Acyclic
+import DeBruijnSSA.BinSyntax.SimpleTyping

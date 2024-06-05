@@ -6,7 +6,7 @@ namespace BinSyntax
 section Subst
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+  [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε} {σ : Term.Subst φ}
 
 def Term.Subst.WfD (Γ Δ : Ctx α ε) (σ : Subst φ) : Type _
@@ -111,7 +111,7 @@ end Subst
 section TerminatorSubst
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+  [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
   {Γ Δ : Ctx α ε} {σ : Terminator.Subst φ}
 
 def Terminator.Subst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : Terminator.Subst φ) : Type _
@@ -211,7 +211,7 @@ end TerminatorSubst
 section RegionSubst
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+  [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
   {Γ Δ : Ctx α ε} {σ : Region.Subst φ}
 
 def Region.Subst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : Region.Subst φ) : Type _

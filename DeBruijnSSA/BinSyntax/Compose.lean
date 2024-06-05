@@ -6,7 +6,7 @@ namespace BinSyntax
 section Body
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+  [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε}
 
 def Body.WfD.append {Γ Δ Ξ : Ctx α ε} {b b' : Body φ}
@@ -52,7 +52,7 @@ end Body
 section Region
 
 variable
-  [Φ: InstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+  [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
   {Γ Δ : Ctx α ε}
 
 end Region
