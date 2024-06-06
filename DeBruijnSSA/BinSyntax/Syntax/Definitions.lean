@@ -291,6 +291,10 @@ theorem Term.comp_wk (ρ σ)
 theorem Term.wk_comp (ρ σ)
   : @wk φ (ρ ∘ σ) = wk ρ ∘ wk σ := (comp_wk ρ σ).symm
 
+def Term.wk1 : Term φ → Term φ := wk (Nat.liftWk Nat.succ)
+
+def Term.wkn (n : ℕ) : Term φ → Term φ := wk (Nat.liftWk (· + n))
+
 theorem Body.wk_id (b : Body φ) : b.wk id = b := by induction b <;> simp [*]
 
 @[simp]
@@ -311,6 +315,10 @@ theorem Body.comp_wk (ρ σ)
 
 theorem Body.wk_comp (ρ σ)
   : @wk φ (ρ ∘ σ) = wk ρ ∘ wk σ := Eq.symm $ funext (Body.wk_wk ρ σ)
+
+def Body.wk1 : Body φ → Body φ := wk (Nat.liftWk Nat.succ)
+
+def Body.wkn (n : ℕ) : Body φ → Body φ := wk (Nat.liftWk (· + n))
 
 @[simp]
 theorem Body.num_defs_wk (ρ : ℕ → ℕ) (b : Body φ) : (b.wk ρ).num_defs = b.num_defs := by
@@ -337,6 +345,12 @@ theorem Terminator.comp_vwk (ρ σ)
 
 theorem Terminator.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Terminator.vwk_vwk ρ σ)
+
+def Terminator.vwk0 : Terminator φ → Terminator φ := vwk Nat.succ
+
+def Terminator.vwk1 : Terminator φ → Terminator φ := vwk (Nat.liftWk Nat.succ)
+
+def Terminator.vwkn (n : ℕ) : Terminator φ → Terminator φ := vwk (Nat.liftWk (· + n))
 
 theorem Terminator.toBlock_vwk (ρ : ℕ → ℕ) (t : Terminator φ) : (t.vwk ρ).toBlock = t.toBlock.vwk ρ
   := rfl
@@ -411,6 +425,10 @@ theorem Block.comp_vwk (ρ σ)
 theorem Block.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Block.vwk_vwk ρ σ)
 
+def Block.wk1 : Block φ → Block φ := vwk (Nat.liftWk Nat.succ)
+
+def Block.vwkn (n : ℕ) : Block φ → Block φ := vwk (Nat.liftWk (· + n))
+
 theorem Block.lwk_id (β : Block φ) : β.lwk id = β := by simp
 
 @[simp]
@@ -452,6 +470,10 @@ theorem BBRegion.comp_vwk (ρ σ)
 theorem BBRegion.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (BBRegion.vwk_vwk ρ σ)
 
+def BBRegion.vwk1 : BBRegion φ → BBRegion φ := vwk (Nat.liftWk Nat.succ)
+
+def BBRegion.vwkn (n : ℕ) : BBRegion φ → BBRegion φ := vwk (Nat.liftWk (· + n))
+
 theorem BBRegion.lwk_id (r : BBRegion φ) : r.lwk id = r := by
   induction r; simp [*]
 
@@ -487,6 +509,10 @@ theorem BBCFG.vwk_of_id' : @vwk φ (λx => x) = id := funext vwk_id
 
 theorem BBCFG.vwk_vwk (σ τ : ℕ → ℕ) (cfg : BBCFG φ) : (cfg.vwk τ).vwk σ = cfg.vwk (σ ∘ τ) := by
   cases cfg; simp [BBRegion.vwk_vwk, *]
+
+def BBCFG.vwk1 : BBCFG φ → BBCFG φ := vwk (Nat.liftWk Nat.succ)
+
+def BBCFG.vwkn (n : ℕ) : BBCFG φ → BBCFG φ := vwk (Nat.liftWk (· + n))
 
 theorem BBCFG.lwk_id (cfg : BBCFG φ) : cfg.lwk id = cfg := by
   cases cfg; simp [*]
@@ -529,6 +555,10 @@ theorem TRegion.comp_vwk (ρ σ)
 
 theorem TRegion.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (TRegion.vwk_vwk ρ σ)
+
+def TRegion.vwk1 : TRegion φ → TRegion φ := vwk (Nat.liftWk Nat.succ)
+
+def TRegion.vwkn (n : ℕ) : TRegion φ → TRegion φ := vwk (Nat.liftWk (· + n))
 
 theorem TRegion.toRegion_vwk (ρ : ℕ → ℕ) (t : TRegion φ) : (t.vwk ρ).toRegion = t.toRegion.vwk ρ
   := by induction t generalizing ρ <;> simp [Terminator.toRegion_vwk, *]
@@ -604,6 +634,10 @@ theorem TCFG.comp_lwk (ρ σ)
 theorem TCFG.lwk_comp (ρ σ)
   : @lwk φ (ρ ∘ σ) = lwk ρ ∘ lwk σ := Eq.symm $ funext (TCFG.lwk_lwk ρ σ)
 
+def TCFG.vwk1 : TCFG φ → TCFG φ := vwk (Nat.liftWk Nat.succ)
+
+def TCFG.vwkn (n : ℕ) : TCFG φ → TCFG φ := vwk (Nat.liftWk (· + n))
+
 theorem Region.vwk_id (r : Region φ) : r.vwk id = r := by
   induction r <;> simp [Region.vwk, Nat.liftnWk_id, *]
 
@@ -625,6 +659,10 @@ theorem Region.comp_vwk (ρ σ)
 
 theorem Region.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Region.vwk_vwk ρ σ)
+
+def Region.vwk1 : Region φ → Region φ := vwk (Nat.liftWk Nat.succ)
+
+def Region.vwkn (n : ℕ) : Region φ → Region φ := vwk (Nat.liftWk (· + n))
 
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
 
@@ -672,6 +710,10 @@ theorem CFG.comp_vwk (ρ σ)
 
 theorem CFG.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (CFG.vwk_vwk ρ σ)
+
+def CFG.vwk1 : CFG φ → CFG φ := vwk (Nat.liftWk Nat.succ)
+
+def CFG.vwkn (n : ℕ) : CFG φ → CFG φ := vwk (Nat.liftWk (· + n))
 
 theorem CFG.lwk_id (G : CFG φ) : G.lwk id = G := by cases G; simp [lwk]
 

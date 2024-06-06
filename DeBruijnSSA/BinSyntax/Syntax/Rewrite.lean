@@ -421,6 +421,12 @@ def EStep.dead_cfg_left (Γ : ℕ → ε) (β n G m G')
     ⟶ @toEStep φ _ Γ (cfg β m G')
   := SimpleCongruenceD.step (PStepD.dead_cfg_left β n G m G')
 
+def EStep.let1V0_id (Γ : ℕ → ε) (r) (hΓ : Γ 0 = ⊥)
+  : @toEStep φ _ Γ r.let1V0 ⟶ toEStep Γ r
+  := cast_trg
+    (SimpleCongruenceD.step (PStepD.let1_beta (var 0) (r.vwk (Nat.liftWk Nat.succ)) hΓ))
+    (by rw [<-vsubst_fromWk_apply, vsubst_vsubst, vsubst_id']; funext i; cases i <;> rfl)
+
 def EStep.let1 {Γ : ℕ → ε} (e) (h : @toEStep φ _ Γ r ⟶ toEStep Γ r')
   : @toEStep φ _ Γ (let1 e r) ⟶ toEStep Γ (let1 e r')
   := SimpleCongruenceD.let1 e h
