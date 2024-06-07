@@ -143,7 +143,8 @@ theorem Terminator.Subst.toRegion_liftn (n : ℕ) (σ : Terminator.Subst φ) : (
   by funext m; simp only [Region.Subst.liftn, toRegion, liftn]; split <;> simp [Terminator.toRegion_lwk]
 
 theorem Terminator.Subst.toRegion_vlift (σ : Terminator.Subst φ) : σ.vlift.toRegion = σ.toRegion.vlift := by
-  funext n; simp [Region.Subst.vlift, toRegion, vlift, Terminator.toRegion_vwk]
+  funext n; simp [Region.Subst.vlift, toRegion, vlift, Terminator.toRegion_vwk, vwk1, Region.vwk1]
+
 
 theorem Terminator.Subst.toRegion_vliftn (n : ℕ) (σ : Terminator.Subst φ)
   : (σ.vliftn n).toRegion = σ.toRegion.vliftn n :=
