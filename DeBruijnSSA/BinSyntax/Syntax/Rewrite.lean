@@ -270,7 +270,11 @@ inductive SCongD (P : Region φ → Region φ → Type u) : Region φ → Region
 
 abbrev RWD (P : Region φ → Region φ → Type u) := Corr.Path (SCongD P)
 
+@[match_pattern]
 def RWD.refl {P} (r : Region φ) : RWD P r r := Corr.Path.nil r
+
+@[match_pattern]
+def RWD.cons {P} {a b c : Region φ} : RWD P a b → SCongD P b c → RWD P a c := Corr.Path.cons
 
 def RWD.comp {P} {a b c : Region φ} : RWD P a b → RWD P b c → RWD P a c := Corr.Path.comp
 

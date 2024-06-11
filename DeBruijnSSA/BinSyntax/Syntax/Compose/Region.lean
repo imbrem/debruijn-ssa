@@ -100,59 +100,54 @@ theorem lsubst_alpha_cfg (β n G k) (r : Region φ)
   simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp, liftn_alpha]
   rfl
 
--- Note: we need this auxiliary definition because recursion otherwise won't work, since the equation compiler
--- can't tell that toEStep Γ {r₀, r₀'} is just {r₀, r₀'}
--- def EStep.lsubst_alpha' (Γ : ℕ → ε) {r₀ r₀'}
---   (p : SimpleCongruenceD (PStepD Γ) r₀ r₀') (n) (r₁ : Region φ)
---   : Quiver.Path (toEStep Γ (r₀.lsubst (alpha n r₁))) (toEStep Γ (r₀'.lsubst (alpha n r₁))) :=
---   match r₀, r₀', p with
---   | _, _, SimpleCongruenceD.step s => sorry
---   | _, _, SimpleCongruenceD.let1 e p => by
---     simp only [lsubst_alpha_let1]
---     apply EStep.let1_path e
---     apply lsubst_alpha' _ p
---   | _, _, SimpleCongruenceD.let2 e p => by
---     simp only [lsubst_alpha_let2]
---     apply EStep.let2_path e
---     apply lsubst_alpha' _ p
---   | _, _, SimpleCongruenceD.case_left e p t => by
---     simp only [lsubst_alpha_case]
---     apply EStep.case_left_path e
---     apply lsubst_alpha' _ p
---   | _, _, SimpleCongruenceD.case_right e s p => by
---     simp only [lsubst_alpha_case]
---     apply EStep.case_right_path e
---     apply lsubst_alpha' _ p
---   | _, _, SimpleCongruenceD.cfg_entry p n G => by
---     simp only [lsubst_alpha_cfg]
---     apply EStep.cfg_entry_path
---     apply lsubst_alpha' _ p
---   | _, _, SimpleCongruenceD.cfg_block β n G i p => by
---     simp only [lsubst_alpha_cfg, Function.comp_update]
---     apply EStep.cfg_block_path
---     apply lsubst_alpha' _ p
+def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
+  (p : PStepD Γ r₀ r₀') (n) (r₁ : Region φ)
+  : RWD (PStepD Γ) (r₀.lsubst (alpha n r₁)) (r₀'.lsubst (alpha n r₁)) := sorry
 
--- def EStep.lsubst_alpha (Γ : ℕ → ε) {r₀ r₀'}
---   (p : toEStep Γ r₀ ⟶ toEStep Γ r₀') (n) (r₁ : Region φ)
---   : Quiver.Path (toEStep Γ (r₀.lsubst (alpha n r₁))) (toEStep Γ (r₀'.lsubst (alpha n r₁)))
---   := EStep.lsubst_alpha' Γ p n r₁
+-- TODO: factor out as more general lifting lemma
+def SCongD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
+  (p : SCongD (PStepD Γ) r₀ r₀') (n) (r₁ : Region φ)
+  : RWD (PStepD Γ) (r₀.lsubst (alpha n r₁)) (r₀'.lsubst (alpha n r₁)) :=
+  match r₀, r₀', p with
+  | _, _, SCongD.step s => s.lsubst_alpha n r₁
+  | _, _, SCongD.let1 e p => by
+    simp only [lsubst_alpha_let1]
+    apply RWD.let1 e
+    apply lsubst_alpha p _ _
+  | _, _, SCongD.let2 e p => by
+    simp only [lsubst_alpha_let2]
+    apply RWD.let2 e
+    apply lsubst_alpha p _ _
+  | _, _, SCongD.case_left e p t => by
+    simp only [lsubst_alpha_case]
+    apply RWD.case_left e
+    apply lsubst_alpha p _ _
+  | _, _, SCongD.case_right e s p => by
+    simp only [lsubst_alpha_case]
+    apply RWD.case_right e
+    apply lsubst_alpha p _ _
+  | _, _, SCongD.cfg_entry p n G => by
+    simp only [lsubst_alpha_cfg]
+    apply RWD.cfg_entry
+    apply lsubst_alpha p _ _
+  | _, _, SCongD.cfg_block β n G i p => by
+    simp only [lsubst_alpha_cfg, Function.comp_update]
+    apply RWD.cfg_block
+    apply lsubst_alpha p _ _
 
--- -- def EStep.append_right (Γ : ℕ → ε) {r₀ r₀'}
--- --   (p : toEStep Γ r₀ ⟶ toEStep Γ r₀') (r₁ : Region φ) : toEStep Γ (r₀ ++ r₁) ⟶ toEStep Γ (r₀ ++ r₁')
--- --   := match r₀, p with
--- --   | _, SimpleCongruenceD.step s => sorry
--- --   | _, SimpleCongruenceD.let1 e p => sorry--SimpleCongruenceD.let1 e (EStep.append_right Γ p r₁)
--- --   | _, SimpleCongruenceD.let2 e p => sorry
--- --   | _, SimpleCongruenceD.case_left e p t => sorry
--- --   | _, SimpleCongruenceD.case_right e s p => sorry
--- --   | _, SimpleCongruenceD.cfg_entry p n G => sorry
--- --   | _, SimpleCongruenceD.cfg_block β n G i p => sorry
+-- TODO: factor out as more general lifting lemma
+set_option linter.unusedVariables false in
+def RWD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
+  (p : RWD (PStepD Γ) r₀ r₀') (n) (r₁ : Region φ)
+  : RWD (PStepD Γ) (r₀.lsubst (alpha n r₁)) (r₀'.lsubst (alpha n r₁))
+  := match p with
+  | RWD.refl _ => RWD.refl _
+  | RWD.cons p s => RWD.comp (p.lsubst_alpha n r₁) (s.lsubst_alpha n r₁)
 
--- def EStep.append_path_right (Γ : ℕ → ε) {r₀ r₀'} (p : Quiver.Path (toEStep Γ r₀) (toEStep Γ r₀')) (r₁ : Region φ)
---   : Quiver.Path (toEStep Γ (r₀ ++ r₁)) (toEStep Γ (r₀ ++ r₁'))
---   := sorry
-
--- TODO: ret append ret should be alpha0 or smt...
+def RWD.append_right {Γ : ℕ → ε} {r₀ r₀' : Region φ}
+  (p : RWD (PStepD Γ) r₀ r₀') (r₁)
+  : RWD (PStepD Γ) (r₀ ++ r₁) (r₀' ++ r₁)
+  := p.lsubst_alpha 0 _
 
 @[simp]
 theorem Subst.vwk_liftWk_comp_id : vwk (Nat.liftWk ρ) ∘ id = @id φ := rfl
