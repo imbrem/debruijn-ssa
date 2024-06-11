@@ -1,4 +1,5 @@
-import Discretion.Wk.Fun
+import Discretion.Wk.Nat
+import Discretion.Wk.Fin
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv
 import DeBruijnSSA.BinSyntax.Syntax.Subst

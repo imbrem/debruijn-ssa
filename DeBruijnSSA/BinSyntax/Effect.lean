@@ -155,7 +155,7 @@ theorem BBRegion.effect_mono {Γ : ℕ → ε} {r : BBRegion φ} {Δ : ℕ → �
     apply sup_le_sup (β.effect_mono H)
     -- TODO: Fin.sup_le_sup not working here for some reason...
     induction n with
-    | zero => rfl
+    | zero => simp
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup
@@ -171,7 +171,7 @@ theorem BBRegion.control_effect_mono {Γ : ℕ → ε} {r : BBRegion φ} {Δ : �
     apply sup_le_sup (β.control_effect_mono H)
     -- TODO: Fin.sup_le_sup not working here for some reason...
     induction n with
-    | zero => rfl
+    | zero => simp
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup
@@ -189,7 +189,7 @@ theorem TRegion.effect_mono {Γ : ℕ → ε} {r : TRegion φ} {Δ : ℕ → ε}
     apply sup_le_sup (β.effect_mono H)
     -- TODO: Fin.sup_le_sup not working here for some reason...
     induction n with
-    | zero => rfl
+    | zero => simp
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup
@@ -207,7 +207,7 @@ theorem TRegion.control_effect_mono {Γ : ℕ → ε} {r : TRegion φ} {Δ : ℕ
     apply sup_le_sup (β.effect_mono H)
     -- TODO: Fin.sup_le_sup not working here for some reason...
     induction n with
-    | zero => rfl
+    | zero => simp
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup
@@ -230,7 +230,7 @@ theorem Region.effect_mono {Γ : ℕ → ε} {r : Region φ} {Δ : ℕ → ε}
     apply sup_le_sup (Iβ H)
     -- TODO: Fin.sup_le_sup not working here for some reason...
     induction n with
-    | zero => rfl
+    | zero => simp
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup
@@ -253,7 +253,7 @@ theorem Region.control_effect_mono {Γ : ℕ → ε} {r : Region φ} {Δ : ℕ �
     apply sup_le_sup (Iβ H)
     -- TODO: Fin.sup_le_sup not working here for some reason...
     induction n with
-    | zero => rfl
+    | zero => simp
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup

@@ -1,4 +1,5 @@
-import Discretion.Wk.Fun
+import Discretion.Wk.Nat
+import Discretion.Wk.Fin
 import Discretion.Wk.Multiset
 import Discretion.Wk.Multiset
 

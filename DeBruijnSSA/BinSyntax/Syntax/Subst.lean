@@ -1,4 +1,5 @@
-import Discretion.Wk.Fun
+import Discretion.Wk.Nat
+import Discretion.Wk.Fin
 import Discretion.Wk.Multiset
 import Discretion.Wk.Multiset
 
@@ -255,11 +256,11 @@ theorem substn_succ (n : ℕ) (t : Term φ)
   | succ m =>
     simp only [substn, Nat.add_lt_add_iff_right, add_left_inj, Nat.add_sub_cancel, Subst.lift]
     split
-    case inl => rfl
-    case inr h =>
+    case isTrue => rfl
+    case isFalse h =>
       split
-      case inl => rfl
-      case inr h' =>
+      case isTrue => rfl
+      case isFalse h' =>
         simp only [wk, Nat.succ_eq_add_one, var.injEq]
         rw [Nat.sub_add_cancel]
         exact Nat.succ_le_of_lt $ Nat.lt_of_le_of_lt
@@ -285,15 +286,15 @@ theorem subst_substn_wk (e s : Term φ) (ρ) (n)
   | var k =>
     simp only [wk, substn, subst, Nat.liftnWk]
     split
-    case inl h =>
+    case isTrue h =>
       have h' : k < n + 1 := Nat.lt_succ_of_lt h
       simp only [wk, h, h', Nat.liftnWk, ↓reduceIte]
-    case inr h =>
+    case isFalse h =>
       split
-      case inl h =>
+      case isTrue h =>
         cases h
         simp
-      case inr h' =>
+      case isFalse h' =>
         have hn : ¬k ≤ n := match Nat.eq_or_lt_of_not_lt h with
           | Or.inl h => (h' h).elim
           | Or.inr h => Nat.not_le_of_lt h
@@ -344,11 +345,11 @@ theorem wkn_comp_substn_succ (n : ℕ) (e : Term φ)
   simp only [Subst.comp, subst, substn, Nat.wkn, alpha, Function.update, eq_rec_constant,
     Subst.id_apply, dite_eq_ite, Nat.lt_succ_iff]
   split
-  case inl h =>
+  case isTrue h =>
     split
-    case inl h' => simp [Nat.ne_of_lt h']
-    case inr h' => simp [Nat.le_antisymm h (Nat.le_of_not_lt h')]
-  case inr h =>
+    case isTrue h' => simp [Nat.ne_of_lt h']
+    case isFalse h' => simp [Nat.le_antisymm h (Nat.le_of_not_lt h')]
+  case isFalse h =>
     have c : ¬(i + 1 < n) := λc => h (Nat.le_of_lt (Nat.lt_trans (by simp) c))
     have c' : i + 1 ≠ n := λc => by cases c; simp at h
     have c'' : i ≠ n := λc => h (Nat.le_of_eq c)
@@ -928,8 +929,8 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
   funext k
   simp only [liftn, comp]
   split
-  case inl h => simp [liftn, vlift, h]
-  case inr h =>
+  case isTrue h => simp [liftn, vlift, h]
+  case isFalse h =>
     simp only [vlift, ←lsubst_fromLwk_apply, lsubst_lsubst]
     congr
     funext k
@@ -1389,8 +1390,8 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
   funext k
   simp only [liftn, comp]
   split
-  case inl h => simp [liftn, vlift, h]
-  case inr h =>
+  case isTrue h => simp [liftn, vlift, h]
+  case isFalse h =>
     rw [lwk_lsubst, lsubst_lwk]
     congr
     rw [lwk_comp_vlift, vlift, vlift, Function.comp.assoc, liftn_comp_add]
