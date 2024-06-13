@@ -1164,7 +1164,11 @@ theorem lsubst_id' : @lsubst φ (λi => Region.br i (Term.var 0)) = id := funext
 /-- Create a substitution from a label renaming -/
 def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Region.br (ρ n) (Term.var 0)
 
+@[simp]
 theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ = @fromLwk φ σ := rfl
+
+@[simp]
+theorem Subst.vwk_lift_comp_id (ρ) : vwk (Nat.liftWk ρ) ∘ Subst.id = @Subst.id φ := rfl
 
 @[simp]
 theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := rfl
