@@ -208,6 +208,8 @@ def PRwD.cast_trg {Γ : ℕ → ε} {r₀ r₁ r₁' : Region φ} (p : PRwD Γ r
 def PRwD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : PRwD Γ r₀ r₁) : PRwD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
 
+-- TODO: PRwD is effect preserving
+
 -- TODO: PRwD WfD iff?
 
 inductive PStepD (Γ : ℕ → ε) : Region φ → Region φ → Type
@@ -336,6 +338,8 @@ def PStepD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀' =
 def PStepD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : PStepD Γ r₀ r₁) : PStepD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
 
+-- TODO: PStepD is effect monotonic
+
 inductive SCongD (P : Region φ → Region φ → Type u) : Region φ → Region φ → Type u
   | step : P r r' → SCongD P r r'
   | let1 (e) : SCongD P r r' → SCongD P (let1 e r) (let1 e r')
@@ -348,8 +352,13 @@ inductive SCongD (P : Region φ → Region φ → Type u) : Region φ → Region
   | cfg_block (β n G i) : SCongD P r r' →
     SCongD P (cfg β n (Function.update G i r)) (cfg β n (Function.update G i r'))
 
+-- TODO: SCongD is effect monotone/antitone iff underlying is
+-- ==> SCongD is effect preserving iff underlying is
 
 abbrev RWD (P : Region φ → Region φ → Type u) := Corr.Path (SCongD P)
+
+-- TODO: RwD is effect monotone/antitone iff underlying is
+-- ==> RwD is effect preserving iff underlying is
 
 @[match_pattern]
 def RWD.refl {P} (r : Region φ) : RWD P r r := Corr.Path.nil r
@@ -665,6 +674,26 @@ def RWD.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
 def RWD.cfg_br_ge {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : n ≤ ℓ)
   : RWD (PStepD Γ) (cfg (br ℓ e) n G) (br (ℓ - n) e)
   := cast_src (by simp [h]) (cfg_elim (br (ℓ - n) e) n G)
+
+-- TODO: vwk, lwk lore...
+
+inductive SCongD.SubstCong (P : Region φ → Region φ → Type _) : Subst φ → Subst φ → Type _
+  | step (n) : SCongD P r r' → SubstCong P (Function.update σ n r) (Function.update σ' n r')
+
+def RWD.Subst (P) (σ σ' : Subst φ) := ∀n, RWD P (σ n) (σ' n)
+
+-- TODO: RwD.Subst is effect monotone/antitone iff underlying is
+-- ==> RwD.Subst is effect preserving iff underlying is
+
+def RWD.Subst.refl {P} (σ : Region.Subst φ) : RWD.Subst P σ σ := λ_ => RWD.refl _
+
+def RWD.Subst.comp {P} {σ σ' σ'' : Region.Subst φ} (h : RWD.Subst P σ σ') (h' : RWD.Subst P σ' σ'')
+  : RWD.Subst P σ σ''
+  := λn => (h n).comp (h' n)
+
+-- TODO: lift, liftn, lwk, vwk lore
+
+-- TODO: Path SubstCong ==> RWD, RWD ∩ FiniteDiff ==> Path SubstCong, "adjunction"
 
 end Region
 
