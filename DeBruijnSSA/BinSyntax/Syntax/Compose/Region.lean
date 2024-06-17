@@ -230,13 +230,20 @@ def PRwD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
         rw [Nat.add_comm n n', <-Nat.add_assoc]
         simp [h]
   )
+  | cfg_zero β G => by
+    simp only [lsubst, Subst.liftn_zero]
+    apply cfg_zero
 
 def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   (p : PStepD Γ r₀ r₀') (n) (r₁ : Region φ)
   : PStepD Γ (r₀.lsubst (alpha n r₁)) (r₀'.lsubst (alpha n r₁)) := match p with
   | rw p => rw (p.lsubst_alpha n r₁)
   | rw_symm p => rw_symm (p.lsubst_alpha n r₁)
-  | _ => sorry
+  | let1_beta e r he => cast_trg (let1_beta e _ he) (by rw [vsubst_subst0_lsubst_vlift])
+  | case_inl e r s => case_inl e _ _
+  | case_inr e r s => case_inr e _ _
+  | wk_cfg β n G k ρ => sorry
+  | dead_cfg_left β n G m G' => sorry
 
 -- TODO: factor out as more general lifting lemma
 def SCongD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
