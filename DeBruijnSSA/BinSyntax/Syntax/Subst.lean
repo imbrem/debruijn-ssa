@@ -1466,6 +1466,47 @@ def let1Br : Subst φ := λℓ => (br ℓ (Term.var 0)).let1 (Term.var 0)
 
 theorem Subst.let1V0_comp_id : @let1V0 φ ∘ id = let1Br := rfl
 
+theorem lwk_lsubst_swap (σ σ' : Subst φ) (ρ ρ') (r : Region φ)
+  (h : lwk ρ ∘ σ = σ' ∘ ρ')
+  : (r.lsubst σ).lwk ρ = (r.lwk ρ').lsubst σ'
+  := by rw [lwk_lsubst, lsubst_lwk, h]
+
+theorem lsubst_lwk_swap (σ σ' : Subst φ) (ρ ρ') (r : Region φ)
+  (h : σ ∘ ρ = lwk ρ' ∘ σ')
+  : (r.lwk ρ).lsubst σ = (r.lsubst σ').lwk ρ'
+  := by rw [lwk_lsubst, lsubst_lwk, h]
+
+theorem lwk_lsubst_comm (σ : Subst φ) (ρ) (r : Region φ)
+  (h : lwk ρ ∘ σ = σ ∘ ρ)
+  : (r.lsubst σ).lwk ρ = (r.lwk ρ).lsubst σ
+  := lwk_lsubst_swap σ σ ρ ρ r h
+
+theorem lsubst_lwk_comm (σ : Subst φ) (ρ) (r : Region φ)
+  (h : σ ∘ ρ = lwk ρ ∘ σ)
+  : (r.lwk ρ).lsubst σ = (r.lsubst σ).lwk ρ
+  := lsubst_lwk_swap σ σ ρ ρ r h
+
+theorem Subst.liftn_comp_toNatWk {ρ : Fin k → Fin n}
+  : (@liftn φ n σ) ∘ (Fin.toNatWk ρ) = (lwk $ Fin.toNatWk ρ) ∘ (@liftn φ k σ) := by
+  funext i
+  simp only [Function.comp_apply, liftn, Fin.toNatWk]
+  split
+  case isTrue h => simp [Fin.toNatWk, h]
+  case isFalse h =>
+    simp [Nat.sub_add_cancel (Nat.le_of_not_lt h), h, lwk_lwk, Fin.toNatWk_comp_add]
+
+theorem lsubst_liftn_lwk_toNatWk {ρ : Fin k → Fin n}
+    : (lsubst (@Subst.liftn φ n σ) (lwk (Fin.toNatWk ρ) r))
+      = (lwk (Fin.toNatWk ρ) (lsubst (Subst.liftn k σ) r)) := by
+  apply lsubst_lwk_swap
+  apply Subst.liftn_comp_toNatWk
+
+theorem lsubst_liftn_comp_lwk_toNatWk {ρ : Fin k → Fin n}
+    : (lsubst (Subst.liftn n σ) ∘ lwk (Fin.toNatWk ρ))
+      = (lwk (Fin.toNatWk ρ) ∘ lsubst (Subst.liftn k σ)) := by
+  funext r
+  apply lsubst_liftn_lwk_toNatWk
+
 end Region
 
 /-- Substitute the free labels in this control-flow graph -/

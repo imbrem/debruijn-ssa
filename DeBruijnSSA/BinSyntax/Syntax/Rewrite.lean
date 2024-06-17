@@ -194,6 +194,10 @@ inductive PRwD (Γ : ℕ → ε) : Region φ → Region φ → Type
   | cfg_cfg (β n G n' G') :
     PRwD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   | cfg_zero (β G) : PRwD Γ (cfg β 0 G) β
+  -- | cfg_perm (β n G k) (ρ : Fin k → Fin n) /-(hρ : Function.Bijective ρ)-/ :
+  --   PRwD Γ
+  --     (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+  --     (cfg β k (G ∘ ρ))
 
 def PRwD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀ = r₀') (p : PRwD Γ r₀ r₁)
   : PRwD Γ r₀' r₁ := h ▸ p

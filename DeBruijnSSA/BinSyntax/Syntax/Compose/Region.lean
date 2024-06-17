@@ -242,7 +242,19 @@ def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   | let1_beta e r he => cast_trg (let1_beta e _ he) (by rw [vsubst_subst0_lsubst_vlift])
   | case_inl e r s => case_inl e _ _
   | case_inr e r s => case_inr e _ _
-  | wk_cfg β n G k ρ => sorry
+  | wk_cfg β n G k ρ => by
+    rw [
+      lsubst_cfg, lsubst_cfg,
+      lsubst_liftn_lwk_toNatWk,
+      <-Function.comp.assoc,
+      Subst.vlift_liftn_comm,
+      lsubst_liftn_comp_lwk_toNatWk,
+      Function.comp.assoc
+    ]
+    apply cast_trg
+    apply wk_cfg
+    rw [Subst.vlift_liftn_comm]
+    rfl
   | dead_cfg_left β n G m G' =>
     cast_src (by
       simp only [lsubst_cfg, Fin.comp_addCases, liftn_alpha, vlift_alpha, lsubst_lwk, lwk_lsubst]
