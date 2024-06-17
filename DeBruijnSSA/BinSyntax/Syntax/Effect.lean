@@ -1,4 +1,5 @@
 import Discretion.Wk.Order
+import Discretion.Wk.Multiset
 
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.InstSet
@@ -39,6 +40,17 @@ def Terminator.jump_effect (Γ : ℕ → ε) : Terminator φ → ε
   | br _ e => e.effect Γ
   | case _ s t => s.jump_effect (Nat.liftBot Γ) ⊔ t.jump_effect (Nat.liftBot Γ)
 
+/-- Infer the branch effect of a terminator to a of target -/
+def Terminator.trg_effect (target : ℕ) (Γ : ℕ → ε) : Terminator φ → ε
+  | br ℓ e => if ℓ = target then e.effect Γ else ⊥
+  | case _ s t => s.trg_effect target (Nat.liftBot Γ) ⊔ t.trg_effect target (Nat.liftBot Γ)
+
+/-- Infer the branch effect of a terminator to a set of targets -/
+def Terminator.trg_set_effect (targets : Multiset ℕ) (Γ : ℕ → ε) : Terminator φ → ε
+  | br ℓ e => if ℓ ∈ targets then e.effect Γ else ⊥
+  | case _ s t =>
+    s.trg_set_effect targets (Nat.liftBot Γ) ⊔ t.trg_set_effect targets (Nat.liftBot Γ)
+
 /-- Infer the effect of a basic block -/
 def Block.effect (Γ : ℕ → ε) (b : Block φ)
   := b.body.effect Γ ⊔ b.terminator.effect (Nat.liftnBot b.body.num_defs Γ)
@@ -50,6 +62,14 @@ def Block.control_effect (Γ : ℕ → ε) (b : Block φ)
 /-- Infer the jump effect of a block -/
 def Block.jump_effect (Γ : ℕ → ε) (b : Block φ)
   := b.terminator.jump_effect (Nat.liftnBot b.body.num_defs Γ)
+
+/-- Infer the branch effect of a block to a targets -/
+def Block.trg_effect (target : ℕ) (Γ : ℕ → ε) (b : Block φ)
+  := b.terminator.trg_effect target (Nat.liftnBot b.body.num_defs Γ)
+
+/-- Infer the branch effect of a block to a set of targets -/
+def Block.trg_set_effect (targets : Multiset ℕ) (Γ : ℕ → ε) (b : Block φ)
+  := b.terminator.trg_set_effect targets (Nat.liftnBot b.body.num_defs Γ)
 
 /-- Infer the effect of a `BBRegion`, _without_ taking control-flow into account -/
 def BBRegion.effect (Γ : ℕ → ε) : BBRegion φ → ε
@@ -63,6 +83,17 @@ def BBRegion.control_effect (Γ : ℕ → ε) : BBRegion φ → ε
 /-- Infer the jump effect of a `BBRegion`, _without_ taking control-flow into account -/
 def BBRegion.jump_effect (Γ : ℕ → ε) : BBRegion φ → ε
   | cfg β _ G => β.jump_effect Γ ⊔ Fin.sup (λi => (G i).jump_effect (Nat.liftnBot β.body.num_defs Γ))
+
+/-- Infer the branch effect of a block to a target -/
+def BBRegion.trg_effect (target : ℕ) (Γ : ℕ → ε) : BBRegion φ → ε
+  | cfg β n G => β.trg_effect target Γ
+    ⊔ Fin.sup (λi => (G i).trg_effect (target + n) (Nat.liftnBot β.body.num_defs Γ))
+
+/-- Infer the branch effect of a block to a set of targets -/
+def BBRegion.trg_set_effect (targets : Multiset ℕ) (Γ : ℕ → ε) : BBRegion φ → ε
+  | cfg β n G
+  => β.trg_set_effect targets Γ
+    ⊔ Fin.sup (λi => (G i).trg_set_effect (targets.liftnFv n) (Nat.liftnBot β.body.num_defs Γ))
 
 /-- Infer the effect of a `TRegion`, _without_ taking control-flow into account -/
 def TRegion.effect (Γ : ℕ → ε) : TRegion φ → ε
@@ -81,6 +112,19 @@ def TRegion.jump_effect (Γ : ℕ → ε) : TRegion φ → ε
   | let1 _ r => r.jump_effect (Nat.liftBot Γ)
   | let2 _ r => r.jump_effect (Nat.liftnBot 2 Γ)
   | cfg β _ G => β.jump_effect Γ ⊔ Fin.sup (λi => (G i).jump_effect Γ)
+
+/-- Infer the branch effect of a `TRegion` to a target -/
+def TRegion.trg_effect (target : ℕ) (Γ : ℕ → ε) : TRegion φ → ε
+  | let1 _ r => r.trg_effect target (Nat.liftBot Γ)
+  | let2 _ r => r.trg_effect target (Nat.liftnBot 2 Γ)
+  | cfg β n G => β.trg_effect (target + n) Γ ⊔ Fin.sup (λi => (G i).trg_effect (target + n) Γ)
+
+/-- Infer the branch effect of a `TRegion` to a set of targets -/
+def TRegion.trg_set_effect (targets : Multiset ℕ) (Γ : ℕ → ε) : TRegion φ → ε
+  | let1 _ r => r.trg_set_effect targets (Nat.liftBot Γ)
+  | let2 _ r => r.trg_set_effect targets (Nat.liftnBot 2 Γ)
+  | cfg β n G => β.trg_set_effect (targets.liftnFv n) Γ
+    ⊔ Fin.sup (λi => (G i).trg_set_effect (targets.liftnFv n) Γ)
 
 /-- Infer the effect of a `Region`, _without_ taking control-flow into account -/
 def Region.effect (Γ : ℕ → ε) : Region φ → ε
@@ -105,6 +149,23 @@ def Region.jump_effect (Γ : ℕ → ε) : Region φ → ε
   | let2 _ r => r.jump_effect (Nat.liftnBot 2 Γ)
   | case _ s t => s.jump_effect (Nat.liftBot Γ) ⊔ t.jump_effect (Nat.liftBot Γ)
   | cfg β _ G => β.jump_effect Γ ⊔ Fin.sup (λi => (G i).jump_effect Γ)
+
+/-- Infer the branch effect of a `Region` to a target -/
+def Region.trg_effect (target : ℕ) (Γ : ℕ → ε) : Region φ → ε
+  | br ℓ e => if ℓ = target then e.effect Γ else ⊥
+  | let1 _ r => r.trg_effect target (Nat.liftBot Γ)
+  | let2 _ r => r.trg_effect target (Nat.liftnBot 2 Γ)
+  | case _ s t => s.trg_effect target (Nat.liftBot Γ) ⊔ t.trg_effect target (Nat.liftBot Γ)
+  | cfg β n G => β.trg_effect target Γ ⊔ Fin.sup (λi => (G i).trg_effect (target + n) Γ)
+
+/-- Infer the branch effect of a `Region` to a set of targets -/
+def Region.trg_set_effect (targets : Multiset ℕ) (Γ : ℕ → ε) : Region φ → ε
+  | br ℓ e => if ℓ ∈ targets then e.effect Γ else ⊥
+  | let1 _ r => r.trg_set_effect targets (Nat.liftBot Γ)
+  | let2 _ r => r.trg_set_effect targets (Nat.liftnBot 2 Γ)
+  | case _ s t => s.trg_set_effect targets (Nat.liftBot Γ) ⊔ t.trg_set_effect targets (Nat.liftBot Γ)
+  | cfg β n G => β.trg_set_effect targets Γ
+    ⊔ Fin.sup (λi => (G i).trg_set_effect (targets.liftnFv n) Γ)
 
 end Definitions
 

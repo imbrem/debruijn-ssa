@@ -5,7 +5,7 @@ import Mathlib.CategoryTheory.PathCategory
 import Discretion.Correspondence.Definitions
 
 import DeBruijnSSA.BinSyntax.Syntax.Subst
-import DeBruijnSSA.BinSyntax.Effect
+import DeBruijnSSA.BinSyntax.Syntax.Effect
 
 namespace BinSyntax
 
