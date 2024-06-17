@@ -174,11 +174,62 @@ def PRwD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
     apply congrArg <;>
     funext k <;> cases k <;> rfl)
   | cfg_br_lt ℓ e n G hℓ => by
-    sorry
-  | cfg_let1 a β n G => cast_trg (cfg_let1 _ _ _ _) sorry
-  | cfg_let2 a β n G => cast_trg (cfg_let2 _ _ _ _) sorry
-  | cfg_case e r s n G => cast_trg (cfg_case _ _ _ _ _) sorry
-  | cfg_cfg β n G n' G' => cast_trg (cfg_cfg _ _ _ _ _) sorry
+    simp only [lsubst, Subst.liftn, hℓ, ↓reduceIte, vsubst.eq_1, Term.subst, Term.subst0_zero]
+    exact cfg_br_lt ℓ e n _ hℓ
+  | cfg_let1 a β n G => cast_trg (cfg_let1 _ _ _ _) (by
+    simp only [
+      vliftn_alpha, liftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1,
+      vwk_lwk]
+    congr
+    funext i
+    simp only [Function.comp_apply, vwk_lsubst, vwk_lift_alpha, vwk_vwk, ← Nat.liftWk_comp,
+      Nat.liftWk_comp_succ, lwk_vwk]
+  )
+  | cfg_let2 a β n G => cast_trg (cfg_let2 _ _ _ _) (by
+    simp only [
+      vliftn_alpha, liftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1,
+      vwk_lwk]
+    congr
+    funext i
+    simp only [Function.comp_apply, vwk_lsubst, vwk_lift_alpha, vwk_vwk, ← Nat.liftWk_comp,
+      Nat.liftWk_comp_succ, lwk_vwk]
+    rfl
+    )
+  | cfg_case e r s n G => cast_trg (cfg_case _ _ _ _ _) (by
+    simp only [
+      vliftn_alpha, liftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1,
+      vwk_lwk]
+    congr <;>
+    funext i <;>
+    simp only [Function.comp_apply, vwk_lsubst, vwk_lift_alpha, vwk_vwk, ← Nat.liftWk_comp,
+    Nat.liftWk_comp_succ, lwk_vwk]
+  )
+  | cfg_cfg β n G n' G' => cast_trg (cfg_cfg _ _ _ _ _) (by
+    simp only [lsubst, cfg.injEq, heq_eq_eq, true_and, Subst.liftn_liftn]
+    funext i
+    simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
+    split
+    . rfl
+    . simp only [liftn_alpha, vlift_alpha, lwk_lsubst, lsubst_lwk]
+      congr
+      funext k
+      simp only [alpha, Function.comp_apply, Function.update, eq_rec_constant, dite_eq_ite]
+      split
+      case isTrue h =>
+        cases h
+        rw [Nat.add_assoc]
+        simp only [add_right_inj]
+        rw [Nat.add_comm]
+        simp only [↓reduceIte, vwk1, vwk_lwk, lwk_lwk]
+        congr
+        funext k'
+        simp_arith
+      case isFalse h =>
+        rw [ite_cond_eq_false]
+        rfl
+        rw [Nat.add_comm n n', <-Nat.add_assoc]
+        simp [h]
+  )
 
 def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   (p : PStepD Γ r₀ r₀') (n) (r₁ : Region φ)

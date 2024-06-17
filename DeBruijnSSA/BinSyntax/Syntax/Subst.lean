@@ -99,7 +99,7 @@ theorem Subst.liftn_id (n: ℕ): (@id φ).liftn n = id := by
 theorem Subst.liftn_add (n m: ℕ) : Subst.liftn (m + n) = (@Subst.liftn α m) ∘ (@Subst.liftn α n)
   := by simp [liftn_eq_iterate_lift, Function.iterate_add]
 
-theorem Subst.liftn_add_apply (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
+theorem Subst.liftn_liftn (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
   := by simp [liftn_add]
 
 /-- Substitute the free variables in a `Term` using `σ` -/
@@ -649,7 +649,7 @@ theorem Subst.liftn_id (n: ℕ): (@id φ).liftn n = id := by
 theorem Subst.liftn_add (n m: ℕ) : Subst.liftn (m + n) = (@Subst.liftn α m) ∘ (@Subst.liftn α n)
   := by simp [liftn_eq_iterate_lift, Function.iterate_add]
 
-theorem Subst.liftn_add_apply (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
+theorem Subst.liftn_liftn (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
   := by simp [liftn_add]
 
 theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk Nat.succ := rfl
@@ -1061,7 +1061,7 @@ theorem Subst.liftn_id (n: ℕ): (@id φ).liftn n = id := by
 theorem Subst.liftn_add (n m: ℕ) : Subst.liftn (m + n) = (@Subst.liftn α m) ∘ (@Subst.liftn α n)
   := by simp [liftn_eq_iterate_lift, Function.iterate_add]
 
-theorem Subst.liftn_add_apply (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
+theorem Subst.liftn_liftn (n m: ℕ) (σ: Subst φ): (σ.liftn n).liftn m = σ.liftn (m + n)
   := by simp [liftn_add]
 
 theorem Subst.lift_succ (σ : Subst φ) (i : ℕ) : σ.lift (i + 1) = (σ i).lwk Nat.succ := rfl
@@ -1226,7 +1226,7 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Region φ)
       funext n
       simp_arith [Nat.liftnWk]
   | cfg β k G Iβ IG => simp only [
-    Subst.vlift_liftn_comm, lsubst, lwk, Subst.liftn_add_apply,
+    Subst.vlift_liftn_comm, lsubst, lwk, Subst.liftn_liftn,
     <-Nat.add_assoc, <-Nat.liftnWk_add_apply, *]
   | _ => simp [Subst.vlift_liftn_comm, Subst.vliftn_liftn, *]
 
