@@ -235,15 +235,38 @@ def PRwD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
     apply cfg_zero
 
 def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
-  (p : PStepD Γ r₀ r₀') (n) (r₁ : Region φ)
-  : PStepD Γ (r₀.lsubst (alpha n r₁)) (r₀'.lsubst (alpha n r₁)) := match p with
-  | rw p => rw (p.lsubst_alpha n r₁)
-  | rw_symm p => rw_symm (p.lsubst_alpha n r₁)
+  (p : PStepD Γ r₀ r₀') (k) (r₁ : Region φ)
+  : PStepD Γ (r₀.lsubst (alpha k r₁)) (r₀'.lsubst (alpha k r₁)) := match p with
+  | rw p => rw (p.lsubst_alpha k r₁)
+  | rw_symm p => rw_symm (p.lsubst_alpha k r₁)
   | let1_beta e r he => cast_trg (let1_beta e _ he) (by rw [vsubst_subst0_lsubst_vlift])
   | case_inl e r s => case_inl e _ _
   | case_inr e r s => case_inr e _ _
   | wk_cfg β n G k ρ => sorry
-  | dead_cfg_left β n G m G' => sorry
+  | dead_cfg_left β n G m G' =>
+    cast_src (by
+      simp only [lsubst_cfg, Fin.comp_addCases, liftn_alpha, vlift_alpha, lsubst_lwk, lwk_lsubst]
+      congr
+      . funext i
+        -- TODO: factor out more nicely
+        simp only [alpha, Nat.add_comm n m, ← Nat.add_assoc, Function.comp_apply, Function.update,
+          add_left_inj, eq_rec_constant, dite_eq_ite]
+        split
+        . simp [lwk_lwk, <-Nat.add_assoc]
+        . rfl
+      . funext i
+        congr
+        . funext i
+          simp only [Function.comp_apply, lsubst_lwk, lwk_lsubst]
+          congr
+          -- TODO: factor out more nicely
+          funext i
+          simp only [alpha, Nat.add_comm n m, ← Nat.add_assoc, Function.comp_apply, Function.update,
+            add_left_inj, eq_rec_constant, dite_eq_ite]
+          split
+          . simp [vwk1, lwk_vwk, lwk_lwk, <-Nat.add_assoc]
+          . rfl
+    ) (dead_cfg_left _ n (lsubst (alpha (k + (n + m)) (lwk (· + (n + m)) r₁)).vlift ∘ G) m _)
 
 -- TODO: factor out as more general lifting lemma
 def SCongD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
