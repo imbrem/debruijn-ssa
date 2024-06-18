@@ -208,6 +208,78 @@ def PRwD.cast_trg {Γ : ℕ → ε} {r₀ r₁ r₁' : Region φ} (p : PRwD Γ r
 def PRwD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : PRwD Γ r₀ r₁) : PRwD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
 
+theorem PRwD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : PRwD Γ r r') : r.effect Γ = r'.effect Γ := by
+  cases p with
+  | let1_op =>
+    simp only [Region.effect, Term.effect, Nat.liftBot_zero, ge_iff_le, bot_le, sup_of_le_left]
+    rw [<-sup_assoc]
+    apply congr
+    rw [sup_comm]
+    rw [vwk1, effect_vwk, Nat.liftBot_comp_liftWk]
+    rfl
+  | let2_op =>
+    simp only [Region.effect, Term.effect, Nat.liftBot, ge_iff_le, bot_le, sup_of_le_left,
+      effect_liftnBot_vwk_liftnWk, Nat.liftBot_comp_succ]
+    rw [<-sup_assoc]
+    simp only [sup_comm]
+  | let2_pair => simp [Nat.liftBot, sup_assoc, Nat.liftnBot_iterate]
+  | let2_abort =>
+    simp [Nat.liftnBot_iterate, Nat.liftBot, Nat.liftnWk_two,
+      Region.effect_liftBot_vwk_liftWk, Nat.liftBot_comp_liftWk]
+  | case_op =>
+    simp only [Region.effect, Term.effect, Nat.liftBot, ge_iff_le, bot_le, sup_of_le_left,
+      effect_liftBot2_vwk1]
+    rw [<-sup_assoc, <-sup_assoc]
+    simp only [sup_comm]
+  | case_abort => simp [Nat.liftBot, effect_liftBot2_vwk1, sup_assoc]
+  | let1_case a b r s =>
+    simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
+    have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
+      intro x y z w
+      rw [
+        sup_assoc, sup_assoc, sup_assoc, sup_comm, sup_comm z, <-sup_assoc, <-sup_assoc, sup_idem,
+        sup_assoc y, sup_assoc y]
+      apply congrArg
+      simp only [sup_assoc, sup_comm]
+    rw [h]
+  | let2_case =>
+    simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
+    have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
+      intro x y z w
+      rw [
+        sup_assoc, sup_assoc, sup_assoc, sup_comm, sup_comm z, <-sup_assoc, <-sup_assoc, sup_idem,
+        sup_assoc y, sup_assoc y]
+      apply congrArg
+      simp only [sup_assoc, sup_comm]
+    rw [h]
+    simp [Nat.liftnBot_two]
+  | cfg_br_lt ℓ e n G h =>
+    simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
+    rw [sup_assoc]
+    apply congrArg
+    rw [sup_of_le_right]
+    exact Fin.elem_le_sup (λi => (G i).effect (Nat.liftBot Γ)) ⟨ℓ, h⟩
+  | cfg_let2 =>
+    simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
+    rw [sup_assoc]
+    apply congrArg
+    apply congrArg
+    apply congrArg
+    funext i
+    rw [
+      Nat.liftnBot_two_apply, <-Nat.liftnBot_two_apply, Function.comp_apply, effect_liftnBot_vwk_add
+    ]
+  | cfg_case => simp [sup_assoc]
+  | cfg_cfg =>
+    simp only [effect_cfg, sup_assoc]
+    apply congrArg
+    rw [Fin.comp_addCases, Fin.sup_addCases]
+    apply congrArg
+    apply congrArg
+    funext i
+    simp [Region.effect_lwk]
+  | _ => simp [Nat.liftBot, sup_assoc]
+
 -- TODO: PRwD is effect preserving
 
 -- TODO: PRwD WfD iff?

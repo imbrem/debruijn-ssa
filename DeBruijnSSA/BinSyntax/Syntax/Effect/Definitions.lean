@@ -25,6 +25,34 @@ theorem Term.effect_wk (ρ : ℕ → ℕ) (Γ : ℕ → ε) (e : Term φ)
   : (e.wk ρ).effect Γ = e.effect (Γ ∘ ρ)
   := by induction e <;> simp [*]
 
+theorem Term.effect_liftBot_wk_liftWk (Γ : ℕ → ε) (e : Term φ)
+  : (e.wk (Nat.liftWk ρ)).effect (Nat.liftBot Γ) = e.effect (Nat.liftBot (Γ ∘ ρ))
+  := by rw [effect_wk, Nat.liftBot_comp_liftWk]
+
+theorem Term.effect_liftnBot_wk_liftnWk (Γ : ℕ → ε) (e : Term φ)
+  : (e.wk (Nat.liftnWk n ρ)).effect (Nat.liftnBot n Γ) = e.effect (Nat.liftnBot n (Γ ∘ ρ))
+  := by rw [effect_wk, Nat.liftnBot_comp_liftnWk]
+
+@[simp]
+theorem Term.effect_liftBot_wk_succ (Γ : ℕ → ε) (e : Term φ)
+  : (e.wk Nat.succ).effect (Nat.liftBot Γ) = e.effect Γ
+  := by rw [effect_wk]; rfl
+
+@[simp]
+theorem Term.effect_liftnBot_wk_add (Γ : ℕ → ε) (e : Term φ)
+  : (e.wk (· + n)).effect (Nat.liftnBot n Γ) = e.effect Γ
+  := by rw [effect_wk, Nat.liftnBot_comp_add]
+
+@[simp]
+theorem Term.effect_liftBot2_wk1 (Γ : ℕ → ε) (e : Term φ)
+  : (e.wk1).effect (Nat.liftBot (Nat.liftBot Γ)) = e.effect (Nat.liftBot Γ)
+  := by rw [wk1, effect_wk, Nat.liftBot_comp_liftWk]; rfl
+
+@[simp]
+theorem Term.effect_liftnBot2_wk1 (Γ : ℕ → ε) (e : Term φ)
+  : (e.wk1).effect (Nat.liftnBot 2 Γ) = e.effect (Nat.liftBot Γ)
+  := by rw [Nat.liftnBot_iterate, <-Term.effect_liftBot2_wk1]; rfl
+
 /-- Infer the effect of a body -/
 @[simp]
 def Body.effect (Γ : ℕ → ε) : Body φ → ε
@@ -190,10 +218,47 @@ def Region.effect (Γ : ℕ → ε) : Region φ → ε
   | case e s t => e.effect Γ ⊔ s.effect (Nat.liftBot Γ) ⊔ t.effect (Nat.liftBot Γ)
   | cfg β _ G => β.effect Γ ⊔ Fin.sup (λi => (G i).effect (Nat.liftBot Γ))
 
+theorem Region.effect_cfg {Γ : ℕ → ε} {β : Region φ} {n G}
+  : (β.cfg n G).effect Γ = β.effect Γ ⊔ Fin.sup (effect (Nat.liftBot Γ) ∘ G)
+  := rfl
+
 theorem Region.effect_vwk (ρ : ℕ → ℕ) (Γ : ℕ → ε) (r : Region φ)
   : (r.vwk ρ).effect Γ = r.effect (Γ ∘ ρ)
   := by induction r generalizing Γ ρ
     <;> simp [Term.effect_wk, Nat.liftBot_comp_liftWk, Nat.liftnBot_comp_liftnWk, *]
+
+theorem Region.effect_liftBot_vwk_liftWk (Γ : ℕ → ε) (e : Region φ)
+  : (e.vwk (Nat.liftWk ρ)).effect (Nat.liftBot Γ) = e.effect (Nat.liftBot (Γ ∘ ρ))
+  := by rw [effect_vwk, Nat.liftBot_comp_liftWk]
+
+theorem Region.effect_liftnBot_vwk_liftnWk (Γ : ℕ → ε) (e : Region φ)
+  : (e.vwk (Nat.liftnWk n ρ)).effect (Nat.liftnBot n Γ) = e.effect (Nat.liftnBot n (Γ ∘ ρ))
+  := by rw [effect_vwk, Nat.liftnBot_comp_liftnWk]
+
+@[simp]
+theorem Region.effect_liftBot2_vwk1 (Γ : ℕ → ε) (e : Region φ)
+  : (e.vwk1).effect (Nat.liftBot (Nat.liftBot Γ)) = e.effect (Nat.liftBot Γ)
+  := by rw [vwk1, effect_vwk, Nat.liftBot_comp_liftWk]; rfl
+
+@[simp]
+theorem Region.effect_liftnBot2_vwk1 (Γ : ℕ → ε) (e : Region φ)
+  : (e.vwk1).effect (Nat.liftnBot 2 Γ) = e.effect (Nat.liftBot Γ)
+  := by rw [Nat.liftnBot_iterate, <-Region.effect_liftBot2_vwk1]; rfl
+
+-- @[simp]
+-- theorem Region.effect_liftnBot_liftBot_vwk2 (Γ : ℕ → ε) (e : Region φ)
+--   : (e.vwk (Nat.liftWk (· + 2))).effect (Nat.liftnBot 2 (Nat.liftBot Γ)) = e.effect (Nat.liftBot Γ)
+--   := by rw [Nat.liftnBot_iterate, <-Region.effect_liftBot2_vwk1]; rfl
+
+@[simp]
+theorem Region.effect_liftBot_vwk_succ (Γ : ℕ → ε) (e : Region φ)
+  : (e.vwk Nat.succ).effect (Nat.liftBot Γ) = e.effect Γ
+  := by rw [effect_vwk]; rfl
+
+@[simp]
+theorem Region.effect_liftnBot_vwk_add (Γ : ℕ → ε) (e : Region φ)
+  : (e.vwk (· + n)).effect (Nat.liftnBot n Γ) = e.effect Γ
+  := by rw [effect_vwk, Nat.liftnBot_comp_add]
 
 theorem Region.effect_lwk (ρ : ℕ → ℕ) (Γ : ℕ → ε) (r : Region φ)
   : (r.lwk ρ).effect Γ = r.effect Γ
