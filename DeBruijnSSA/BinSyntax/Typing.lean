@@ -1,7 +1,7 @@
 import Discretion.Wk.List
 import Discretion.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
-import DeBruijnSSA.BinSyntax.Syntax.Effect
+import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions
 
 namespace BinSyntax
 
