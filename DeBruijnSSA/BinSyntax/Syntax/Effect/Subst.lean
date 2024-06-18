@@ -22,6 +22,13 @@ theorem effect_liftBot_lift (Γ : ℕ → ε) (σ : Subst φ)
   : effect (Nat.liftBot Γ) (σ.lift) = Nat.liftBot (effect Γ σ)
   := by funext k; cases k <;> simp [Nat.liftBot, Term.effect_wk]
 
+theorem effect_liftnBot_liftn (Γ : ℕ → ε) (σ : Subst φ)
+  : effect (Nat.liftnBot n Γ) (σ.liftn n) = Nat.liftnBot n (effect Γ σ) := by
+  simp only [Subst.liftn_eq_iterate_lift_apply, Nat.liftnWk_eq_iterate_liftWk, Nat.liftnBot_iterate]
+  induction n with
+  | zero => rfl
+  | succ n I => simp only [Function.iterate_succ', Function.comp_apply, effect_liftBot_lift, I]
+
 end Subst
 
 theorem effect_subst (Γ : ℕ → ε) (σ : Subst φ) (e : Term φ)
@@ -48,9 +55,10 @@ def hasTrgEffect (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Pro
 
 end Subst
 
--- theorem effect_vsubst (Γ : ℕ → ε) (σ : Term.Subst φ) (t : Terminator φ)
---   : (t.vsubst σ).effect Γ = t.effect (σ.effect Γ)
---     := sorry --by induction t generalizing Γ σ <;> simp [Term.effect_subst, *]
+theorem effect_vsubst (Γ : ℕ → ε) (σ : Term.Subst φ) (t : Terminator φ)
+  : (t.vsubst σ).effect Γ = t.effect (σ.effect Γ)
+    := by induction t generalizing Γ σ
+    <;> simp [Term.effect_subst, Term.Subst.effect_liftBot_lift, *]
 
 end Terminator
 
@@ -69,6 +77,13 @@ def hasTrgEffect (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Pro
   := ∀n, trg_effect target Γ σ n ≤ e
 
 end Subst
+
+theorem effect_vsubst (Γ : ℕ → ε) (σ : Term.Subst φ) (r : Region φ)
+  : (r.vsubst σ).effect Γ = r.effect (σ.effect Γ)
+    := by induction r generalizing Γ σ
+    <;> simp [Term.effect_subst,
+      Term.Subst.effect_liftBot_lift,
+      Term.Subst.effect_liftnBot_liftn, *]
 
 end Region
 

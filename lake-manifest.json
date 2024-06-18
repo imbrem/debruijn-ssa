@@ -67,7 +67,7 @@
   {"url": "https://github.com/imbrem/discretion.git",
    "type": "git",
    "subDir": null,
-   "rev": "806f74d6f6a0528288c44a473b1c00e09869e8f4",
+   "rev": "55551dc6588c63676811094add43a73a28b9bbe1",
    "name": "discretion",
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",

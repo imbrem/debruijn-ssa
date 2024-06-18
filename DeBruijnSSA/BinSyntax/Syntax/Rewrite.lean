@@ -5,7 +5,7 @@ import Mathlib.CategoryTheory.PathCategory
 import Discretion.Correspondence.Definitions
 
 import DeBruijnSSA.BinSyntax.Syntax.Subst
-import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions
+import DeBruijnSSA.BinSyntax.Syntax.Effect.Subst
 
 namespace BinSyntax
 
@@ -409,6 +409,34 @@ def PStepD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀' =
 
 def PStepD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : PStepD Γ r₀ r₁) : PStepD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
+
+theorem PStepD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : PStepD Γ r r')
+  : r'.effect Γ ≤ r.effect Γ := by
+  cases p with
+  | rw p => rw [p.effect]
+  | rw_symm p => rw [p.effect]
+  | let1_beta _ _ he =>
+    apply le_of_eq
+    simp only [effect_vsubst, Subst.effect, effect, he, ge_iff_le, bot_le, sup_of_le_right]
+    congr
+    funext k
+    cases k with
+    | zero => simp [he, Nat.liftBot]
+    | succ k => rfl
+  | case_inl _ _ _ => simp
+  | case_inr e r s =>
+    simp only [effect, Term.effect]
+    rw [sup_assoc, sup_comm (r.effect _), <-sup_assoc]
+    simp
+  | wk_cfg _ _ _ _ _ =>
+    simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
+    apply sup_le_sup_left
+    apply Fin.sup_comp_le
+  | dead_cfg_left _ _ _ _ =>
+    simp only [effect_cfg, effect_lwk, Fin.comp_addCases, Fin.sup_addCases]
+    apply sup_le_sup_left
+    apply le_sup_of_le_right
+    rw [<-Function.comp.assoc, effect_comp_lwk]
 
 -- TODO: PStepD is effect monotonic
 

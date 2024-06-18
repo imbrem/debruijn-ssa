@@ -265,6 +265,11 @@ theorem Region.effect_lwk (ρ : ℕ → ℕ) (Γ : ℕ → ε) (r : Region φ)
   := by induction r generalizing Γ ρ
     <;> simp [Term.effect_wk, Nat.liftBot_comp_liftWk, *]
 
+@[simp]
+theorem Region.effect_comp_lwk (ρ : ℕ → ℕ) (Γ : ℕ → ε)
+  : effect Γ ∘ @lwk φ ρ = effect Γ
+  := by funext i; simp [effect_lwk]
+
 /-- Infer the control effect of a `Region`, _without_ taking control-flow into account -/
 @[simp]
 def Region.control_effect (Γ : ℕ → ε) : Region φ → ε
