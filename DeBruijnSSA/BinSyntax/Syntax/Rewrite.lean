@@ -194,10 +194,10 @@ inductive PRwD (Γ : ℕ → ε) : Region φ → Region φ → Type
   | cfg_cfg (β n G n' G') :
     PRwD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   | cfg_zero (β G) : PRwD Γ (cfg β 0 G) β
-  -- | cfg_perm (β n G k) (ρ : Fin k → Fin n) /-(hρ : Function.Bijective ρ)-/ :
-  --   PRwD Γ
-  --     (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
-  --     (cfg β k (G ∘ ρ))
+  | cfg_fuse (β n G k) (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ) :
+    PRwD Γ
+      (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+      (cfg β k (G ∘ ρ))
 
 def PRwD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀ = r₀') (p : PRwD Γ r₀ r₁)
   : PRwD Γ r₀' r₁ := h ▸ p
@@ -278,9 +278,11 @@ theorem PRwD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : PRwD Γ r r') : r.
     apply congrArg
     funext i
     simp [Region.effect_lwk]
+  | cfg_fuse β n G k ρ hρ =>
+    simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
+    apply congrArg
+    rw [Fin.sup_comp_surj _ hρ]
   | _ => simp [Nat.liftBot, sup_assoc]
-
--- TODO: PRwD is effect preserving
 
 -- TODO: PRwD WfD iff?
 

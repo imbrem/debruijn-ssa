@@ -93,14 +93,26 @@ structure Ctx.Var (Γ : Ctx α ε) (n : ℕ) (V : Ty α × ε) : Prop where
   length : n < Γ.length
   get : Γ.get ⟨n, length⟩ ≤ V
 
-def Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
+theorem Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   length := by simp
   get := h
 
-def Ctx.var_shead {V : Ty α × ε} {Γ : Ctx α ε} : Var (V::Γ) 0 V := Var.head (le_refl _) Γ
+@[simp]
+theorem Ctx.Var.head_iff {V V' : Ty α × ε} {Γ : Ctx α ε} : Var (V::Γ) 0 V' ↔ V ≤ V'
+  := ⟨λh => h.get, λh => Ctx.Var.head h Γ⟩
 
-def Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
+theorem Ctx.Var.shead {head : Ty α × ε} {Γ : Ctx α ε}
+  : Var (head::Γ) 0 head := Var.head (le_refl _) Γ
+
+theorem Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
   := ⟨by simp [h.length], by simp [h.get]⟩
+
+theorem Ctx.Var.of_step {Γ : Ctx α ε} {n} (h : Var (V'::Γ) (n+1) V) : Var Γ n V
+  := ⟨Nat.lt_of_succ_lt_succ h.length, h.get⟩
+
+@[simp]
+theorem Ctx.Var.step_iff {V V' : Ty α × ε} {Γ : Ctx α ε} {n} : Var (V'::Γ) (n+1) V ↔ Var Γ n V
+  := ⟨Ctx.Var.of_step, Ctx.Var.step⟩
 
 def Ctx.effect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
 
@@ -225,6 +237,11 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | inr : WfD Γ b ⟨B, e⟩ → WfD Γ (inr b) ⟨(Ty.coprod A B), e⟩
   | abort : WfD Γ a ⟨Ty.empty, e⟩ → WfD Γ (abort a) ⟨A, e⟩
   | unit (e) : WfD Γ unit ⟨Ty.unit, e⟩
+
+def Term.WfD.var0 {head} {Γ : Ctx α ε} : WfD (head::Γ) (@Term.var φ 0) head := var (by simp)
+
+def Term.WfD.var1 {left right} {Γ : Ctx α ε} : WfD (left::right::Γ) (@Term.var φ 1) right
+  := var (by simp)
 
 def Term.WfD.cast_term {Γ : Ctx α ε} {a a' : Term φ} {V} (h : WfD Γ a V) (ha : a = a') : WfD Γ a' V
   := ha ▸ h
@@ -613,33 +630,49 @@ theorem Ctx.Wkn_def' (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔
 theorem Ctx.Wkn_iff (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔ List.NWkn Γ Δ ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
+@[simp]
 theorem Ctx.Wkn.id {Γ : Ctx α ε} : Γ.Wkn Γ id := λ_ hi => ⟨hi, le_refl _⟩
 
 theorem Ctx.Wkn.lift {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ ρ)
   : Wkn (V::Γ) (V'::Δ) (Nat.liftWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift hV)
 
-theorem Ctx.Wkn.slift (V : Ty α × ε) (h : Γ.Wkn Δ ρ)
-  : Wkn (V::Γ) (V::Δ) (Nat.liftWk ρ)
-  := h.lift (le_refl V)
+theorem Ctx.Wkn.lift_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
+  : Wkn Γ Δ ρ := λi hi => Var.of_step (h (i + 1) (Nat.succ_lt_succ hi))
+
+theorem Ctx.Wkn.lift_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
+  : head ≤ head'
+  := sorry
+
+theorem Ctx.Wkn.slift {head : Ty α × ε} (h : Γ.Wkn Δ ρ)
+  : Wkn (head::Γ) (head::Δ) (Nat.liftWk ρ)
+  := h.lift (le_refl head)
 
 theorem Ctx.Wkn.lift_id {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ _root_.id)
   : Wkn (V::Γ) (V'::Δ) _root_.id
   := Nat.liftWk_id ▸ h.lift hV
 
-theorem Ctx.Wkn.slift_id (V : Ty α × ε) (h : Γ.Wkn Δ _root_.id)
-  : Wkn (V::Γ) (V::Δ) _root_.id
+theorem Ctx.Wkn.slift_id {head : Ty α × ε} (h : Γ.Wkn Δ _root_.id)
+  : Wkn (head::Γ) (head::Δ) _root_.id
   := h.lift_id (le_refl _)
 
-theorem Ctx.Wkn.step {V : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (V::Γ) Δ (Nat.stepWk ρ)
+theorem Ctx.Wkn.step {head : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (head::Γ) Δ (Nat.stepWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
+
+theorem Ctx.Wkn.succ {head} {Γ : Ctx α ε}
+  : Wkn (head::Γ) Γ Nat.succ
+  := step (head := head) (id (Γ := Γ))
+
+theorem Ctx.Wkn.wk1 {head inserted} {Γ : Ctx α ε}
+  : Wkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
+  := succ.slift
 
 theorem Ctx.Wkn.lift₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftWk (Nat.liftWk ρ))
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift₂ hV₁ hV₂)
 
-theorem Ctx.Wkn.slift₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ ρ)
-  : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) (Nat.liftWk (Nat.liftWk ρ))
+theorem Ctx.Wkn.slift₂ {left right : Ty α × ε} (h : Γ.Wkn Δ ρ)
+  : Wkn (left::right::Γ) (left::right::Δ) (Nat.liftWk (Nat.liftWk ρ))
   := h.lift₂ (le_refl _) (le_refl _)
 
 theorem Ctx.Wkn.lift_id₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ _root_.id)
@@ -654,8 +687,8 @@ theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftnWk 2 ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn₂ hV₁ hV₂)
 
-theorem Ctx.Wkn.sliftn₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ ρ)
-  : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) (Nat.liftnWk 2 ρ)
+theorem Ctx.Wkn.sliftn₂ {left right : Ty α × ε} (h : Γ.Wkn Δ ρ)
+  : Wkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
   := h.liftn₂ (le_refl _) (le_refl _)
 
 theorem Ctx.Wkn.liftn_id₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ _root_.id)
@@ -776,6 +809,13 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
   | abort da => abort (da.wk h)
   | unit e => unit e
 
+def Term.WfD.wk1 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.wk1 L
+  := dr.wk Ctx.Wkn.wk1
+
+def Term.WfD.wk0 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD Γ r L)
+  : WfD (A::Γ) (r.wk Nat.succ) L
+  := dr.wk Ctx.Wkn.succ
+
 def Term.WfD.wk_id {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → WfD Γ a ⟨A, e⟩
   | var dv => var (dv.wk h)
   | op df de => op df (de.wk_id h)
@@ -787,13 +827,13 @@ def Term.WfD.wk_id {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → Wf
 
 def Body.WfD.wk {Γ Δ : Ctx α ε} {ρ} {b : Body φ} (h : Γ.Wkn Δ ρ) : WfD Δ b Ξ → WfD Γ (b.wk ρ) Ξ
   | nil => nil
-  | let1 a b => let1 (a.wk h) (b.wk (h.slift _))
-  | let2 a b => let2 (a.wk h) (b.wk (h.sliftn₂ _ _))
+  | let1 a b => let1 (a.wk h) (b.wk h.slift)
+  | let2 a b => let2 (a.wk h) (b.wk h.sliftn₂)
 
 def Body.WfD.wk_id {Γ Δ : Ctx α ε} {b : Body φ} (h : Γ.Wkn Δ id) : WfD Δ b Ξ → WfD Γ b Ξ
   | nil => nil
-  | let1 a b => let1 (a.wk_id h) (b.wk_id (Nat.liftWk_id ▸ h.slift _))
-  | let2 a b => let2 (a.wk_id h) (b.wk_id (Nat.liftnWk_id 2 ▸ h.sliftn₂ _ _))
+  | let1 a b => let1 (a.wk_id h) (b.wk_id (Nat.liftWk_id ▸ h.slift))
+  | let2 a b => let2 (a.wk_id h) (b.wk_id (Nat.liftnWk_id 2 ▸ h.sliftn₂))
 
 variable {L K : LCtx α}
 
@@ -828,12 +868,12 @@ theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
 def Terminator.WfD.vwk {Γ Δ : Ctx α ε} {ρ} {t : Terminator φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ t L → WfD Γ (t.vwk ρ) L
   | br hL ha => br hL (ha.wk h)
-  | case he hs ht => case (he.wk h) (hs.vwk (h.slift _)) (ht.vwk (h.slift _))
+  | case he hs ht => case (he.wk h) (hs.vwk h.slift) (ht.vwk h.slift)
 
 def Terminator.WfD.vwk_id {Γ Δ : Ctx α ε} {t : Terminator φ} (h : Γ.Wkn Δ id)
   : WfD Δ t L → WfD Γ t L
   | br hL ha => br hL (ha.wk_id h)
-  | case he hs ht => case (he.wk_id h) (hs.vwk_id (h.slift_id _)) (ht.vwk_id (h.slift_id _))
+  | case he hs ht => case (he.wk_id h) (hs.vwk_id h.slift_id) (ht.vwk_id h.slift_id)
 
 def Terminator.WfD.lwk {Γ : Ctx α ε} {t : Terminator φ} (h : L.Wkn K ρ)
   : WfD Γ t L → WfD Γ (t.lwk ρ) K
@@ -871,15 +911,15 @@ def BBRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : BB
 
 def TRegion.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : TRegion φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ r L → WfD Γ (r.vwk ρ) L
-  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.slift _))
-  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.sliftn₂ _ _))
-  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.slift _))
+  | let1 ha ht => let1 (ha.wk h) (ht.vwk h.slift)
+  | let2 ha ht => let2 (ha.wk h) (ht.vwk h.sliftn₂)
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk h.slift)
 
 def TRegion.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : TRegion φ} (h : Γ.Wkn Δ id)
   : WfD Δ r L → WfD Γ r L
-  | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id (h.slift_id _))
+  | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id h.slift_id)
   | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id (h.slift_id₂ _ _))
-  | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id (h.slift_id _))
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id h.slift_id)
 
 def TRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : TRegion φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K
@@ -892,18 +932,25 @@ def TRegion.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : TRe
 def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ r L → WfD Γ (r.vwk ρ) L
   | br hL ha => br hL (ha.wk h)
-  | case he hs ht => case (he.wk h) (hs.vwk (h.slift _)) (ht.vwk (h.slift _))
-  | let1 ha ht => let1 (ha.wk h) (ht.vwk (h.slift _))
-  | let2 ha ht => let2 (ha.wk h) (ht.vwk (h.sliftn₂ _ _))
-  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk (h.slift _))
+  | case he hs ht => case (he.wk h) (hs.vwk h.slift) (ht.vwk h.slift)
+  | let1 ha ht => let1 (ha.wk h) (ht.vwk h.slift)
+  | let2 ha ht => let2 (ha.wk h) (ht.vwk h.sliftn₂)
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk h.slift)
+
+def Region.WfD.vwk1 {Γ : Ctx α ε} {L} {r : Region φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.vwk1 L
+  := dr.vwk Ctx.Wkn.wk1
+
+def Region.WfD.vwk0 {Γ : Ctx α ε} {L} {r : Region φ} (dr : WfD Γ r L)
+  : WfD (A::Γ) (r.vwk Nat.succ) L
+  := dr.vwk Ctx.Wkn.succ
 
 def Region.WfD.vwk_id {Γ Δ : Ctx α ε} {L} {r : Region φ} (h : Γ.Wkn Δ id)
   : WfD Δ r L → WfD Γ r L
   | br hL ha => br hL (ha.wk_id h)
-  | case he hs ht => case (he.wk_id h) (hs.vwk_id (h.slift_id _)) (ht.vwk_id (h.slift_id _))
-  | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id (h.slift_id _))
+  | case he hs ht => case (he.wk_id h) (hs.vwk_id h.slift_id) (ht.vwk_id h.slift_id)
+  | let1 ha ht => let1 (ha.wk_id h) (ht.vwk_id h.slift_id)
   | let2 ha ht => let2 (ha.wk_id h) (ht.vwk_id (h.slift_id₂ _ _))
-  | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id (h.slift_id _))
+  | cfg n R hR hr hG => cfg n R hR (hr.vwk_id h) (λi => (hG i).vwk_id h.slift_id)
 
 def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Region φ} (h : L.Wkn K ρ)
   : WfD Γ r L → WfD Γ (r.lwk ρ) K
@@ -929,6 +976,14 @@ end OrderBot
 section Minimal
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
+
+def Term.WfD.var0_pure {ty} {Γ : Ctx α ε} {effect}
+  : WfD (⟨ty, ⊥⟩::Γ) (@Term.var φ 0) ⟨ty, effect⟩
+  := var (by simp)
+
+def Term.WfD.var1_pure {head ty} {Γ : Ctx α ε} {effect}
+  : WfD (head::⟨ty, ⊥⟩::Γ) (@Term.var φ 1) ⟨ty, effect⟩
+  := var (by simp)
 
 theorem Term.WfD.effect_le
   {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.effect Γ.effect ≤ e

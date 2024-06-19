@@ -233,6 +233,7 @@ def PRwD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   | cfg_zero β G => by
     simp only [lsubst, Subst.liftn_zero]
     apply cfg_zero
+  | _ => sorry
 
 def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   (p : PStepD Γ r₀ r₀') (k) (r₁ : Region φ)
