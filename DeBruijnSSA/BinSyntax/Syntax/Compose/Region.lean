@@ -233,7 +233,20 @@ def PRwD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   | cfg_zero β G => by
     simp only [lsubst, Subst.liftn_zero]
     apply cfg_zero
-  | _ => sorry
+  | cfg_fuse β n G k ρ hρ => by
+    rw [
+      lsubst_cfg, lsubst_cfg,
+      lsubst_liftn_lwk_toNatWk,
+      <-Function.comp.assoc,
+      Subst.vlift_liftn_comm,
+      lsubst_liftn_comp_lwk_toNatWk,
+      Function.comp.assoc
+    ]
+    apply cast_trg
+    apply cfg_fuse
+    exact hρ
+    rw [Subst.vlift_liftn_comm]
+    rfl
 
 def PStepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   (p : PStepD Γ r₀ r₀') (k) (r₁ : Region φ)
