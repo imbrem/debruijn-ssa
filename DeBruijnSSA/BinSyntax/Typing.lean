@@ -642,7 +642,12 @@ theorem Ctx.Wkn.lift_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head':
 
 theorem Ctx.Wkn.lift_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
   : head ≤ head'
-  := sorry
+  := (h 0 (by simp)).get
+
+@[simp]
+theorem Ctx.Wkn.lift_iff {head head' : Ty α × ε} {Γ Δ}
+    : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ) ↔ head ≤ head' ∧ Wkn Γ Δ ρ
+    := ⟨λh => ⟨h.lift_head, h.lift_tail⟩, λ⟨h, h'⟩ => h'.lift h⟩
 
 theorem Ctx.Wkn.slift {head : Ty α × ε} (h : Γ.Wkn Δ ρ)
   : Wkn (head::Γ) (head::Δ) (Nat.liftWk ρ)
@@ -652,13 +657,47 @@ theorem Ctx.Wkn.lift_id {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ _roo
   : Wkn (V::Γ) (V'::Δ) _root_.id
   := Nat.liftWk_id ▸ h.lift hV
 
+theorem Ctx.Wkn.lift_id_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) _root_.id)
+  : Wkn Γ Δ _root_.id := λi hi => (h (i + 1) (Nat.succ_lt_succ hi)).of_step
+
+theorem Ctx.Wkn.lift_id_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) _root_.id)
+  : head ≤ head'
+  := (h 0 (by simp)).get
+
+@[simp]
+theorem Ctx.Wkn.lift_id_iff {head head' : Ty α × ε} {Γ Δ}
+    : Wkn (head::Γ) (head'::Δ) _root_.id ↔ head ≤ head' ∧ Wkn Γ Δ _root_.id
+    := ⟨λh => ⟨h.lift_id_head, h.lift_id_tail⟩, λ⟨h, h'⟩ => h'.lift_id h⟩
+
 theorem Ctx.Wkn.slift_id {head : Ty α × ε} (h : Γ.Wkn Δ _root_.id)
   : Wkn (head::Γ) (head::Δ) _root_.id
   := h.lift_id (le_refl _)
 
+theorem Ctx.Wkn.slift_iff {head : Ty α × ε} {Γ Δ}
+  : Wkn (head::Γ) (head::Δ) (Nat.liftWk ρ) ↔ Wkn Γ Δ ρ
+  := by simp
+
+theorem Ctx.Wkn.slift_id_iff {head : Ty α × ε} {Γ Δ}
+  : Wkn (head::Γ) (head::Δ) _root_.id ↔ Wkn Γ Δ _root_.id
+  := by simp
+
 theorem Ctx.Wkn.step {head : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (head::Γ) Δ (Nat.stepWk ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
 
+theorem Ctx.Wkn.step_tail {head : Ty α × ε} (h : Wkn (head::Γ) Δ (Nat.stepWk ρ))
+  : Wkn Γ Δ ρ := λi hi => (h i hi).of_step
+
+@[simp]
+theorem Ctx.Wkn.step_iff {head : Ty α × ε} {Γ Δ}
+  : Wkn (head::Γ) Δ (Nat.stepWk ρ) ↔ Wkn Γ Δ ρ
+  := ⟨λh => h.step_tail, λh => h.step⟩
+
+@[simp]
+theorem Ctx.Wkn.succ_comp_iff {head : Ty α × ε} {Γ Δ}
+  : Wkn (head::Γ) Δ (Nat.succ ∘ ρ) ↔ Wkn Γ Δ ρ
+  := Ctx.Wkn.step_iff
+
+@[simp]
 theorem Ctx.Wkn.succ {head} {Γ : Ctx α ε}
   : Wkn (head::Γ) Γ Nat.succ
   := step (head := head) (id (Γ := Γ))
