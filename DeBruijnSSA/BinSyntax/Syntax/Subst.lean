@@ -12,7 +12,7 @@ namespace BinSyntax
 namespace Term
 
 /-- A substitution mapping variables to terms -/
-def Subst (φ : Type) := ℕ → Term φ -- TODO: Term.Subst?
+def Subst (φ : Type _) := ℕ → Term φ -- TODO: Term.Subst?
 
 /-- The identity substitution, which simply maps variables to themselves -/
 def Subst.id : Subst φ := Term.var
@@ -569,7 +569,7 @@ theorem CFG.vsubst_comp_apply (σ τ : Term.Subst φ) (G : CFG φ) : G.vsubst (�
 namespace Terminator
 
 /-- A substitution mapping labels to terminators -/
-def Subst (φ : Type) := ℕ → Terminator φ
+def Subst (φ : Type _) := ℕ → Terminator φ
 
 /-- The identity substitution, which maps labels to themselves -/
 def Subst.id : Subst φ := λn => Terminator.br n (Term.var 0)
@@ -981,7 +981,7 @@ def TCFG.lsubst (σ : Terminator.Subst φ) (cfg : TCFG φ) : TCFG φ where
 namespace Region
 
 /-- A substitution mapping labels to regions -/
-def Subst (φ : Type) := ℕ → Region φ -- TODO: Region.Subst?
+def Subst (φ : Type _) := ℕ → Region φ -- TODO: Region.Subst?
 
 /-- The identity substitution, which maps labels to themselves -/
 def Subst.id : Subst φ := λn => Region.br n (Term.var 0)

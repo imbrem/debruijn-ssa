@@ -17,7 +17,7 @@ def Region.PureBeta.wfD {Γ : Ctx α ε} {r r' : Region φ}
   | h, WfD.let1 de dr => h.let1_trg ▸ dr.vsubst (h.let1_pure ▸ de.toEffect.subst0)
 
 def Region.PRwD.wfD {Γ : Ctx α ε} {r r' : Region φ} {A}
-  : PRwD Γ.effect r r' → r.WfD Γ A → r'.WfD Γ A
+  : PRwD r r' → r.WfD Γ A → r'.WfD Γ A
   | let1_op f e r, WfD.let1 (Term.WfD.op hf he) hr
     => WfD.let1 he (WfD.let1 (Term.WfD.op hf Term.WfD.var0_pure) hr.vwk1)
   | let1_pair a b r, WfD.let1 (Term.WfD.pair ha hb) hr

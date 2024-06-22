@@ -11,7 +11,7 @@ the de-Bruijn indices are supposed to be interpreted.
 section Definitions
 
 /-- A simple term, consisting of variables, operations, pairs, units, and booleans -/
-inductive Term (φ : Type) where
+inductive Term (φ : Type _) where
   | var : ℕ → Term φ
   | op : φ → Term φ → Term φ
   | pair : Term φ → Term φ → Term φ
@@ -32,7 +32,7 @@ def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
   | abort a => abort (wk ρ a)
 
 /-- A basic block body, which consists of a sequence of variable definitions -/
-inductive Body (φ : Type) : Type
+inductive Body (φ : Type _) : Type
   | nil : Body φ
   | let1 : Term φ → Body φ → Body φ
   | let2 : Term φ → Body φ → Body φ
@@ -54,7 +54,7 @@ def Body.wk (ρ : ℕ → ℕ) : Body φ → Body φ
 /-- A terminator, which either branches to a label with a parameter, or conditionally branches
 to one of two sub-terminators.
  -/
-inductive Terminator (φ : Type) : Type
+inductive Terminator (φ : Type _) : Type
   | br : Nat → Term φ → Terminator φ
   | case : Term φ → Terminator φ → Terminator φ → Terminator φ
 
@@ -71,7 +71,7 @@ def Terminator.lwk (ρ : ℕ → ℕ) : Terminator φ → Terminator φ
   | case e s t => case e (lwk ρ s) (lwk ρ t)
 
 /-- A basic block, which consists of a sequence of instructions followed by a terminator -/
-structure Block (φ : Type) : Type where
+structure Block (φ : Type _) : Type where
   /-- The body of this basic block, containing the instructions and variable definitions within -/
   body : Body φ
   /-- The terminator of this basic block, determining where control flow goes to after the body
@@ -106,7 +106,7 @@ theorem Terminator.coe_toBlock_inj {t₁ t₂ : Terminator φ} : (t₁ : Block �
     Terminator.toBlock_injective.eq_iff
 
 /-- A basic block-based single-entry multiple-exit region -/
-inductive BBRegion (φ : Type) : Type
+inductive BBRegion (φ : Type _) : Type
   | cfg (β : Block φ) (n : Nat) : (Fin n → BBRegion φ) → BBRegion φ
 
 /-- Rename the variables referenced in a `BBRegion` using `ρ` -/
@@ -120,7 +120,7 @@ def BBRegion.lwk (ρ : ℕ → ℕ) : BBRegion φ → BBRegion φ
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 /-- A basic-block based control-flow graph with `length` entry-point regions -/
-structure BBCFG (φ : Type) : Type where
+structure BBCFG (φ : Type _) : Type where
   /-- The number of entry points to this CFG -/
   length : Nat
   /-- The number of exits for this CFG -/
@@ -139,7 +139,7 @@ def BBCFG.lwk (ρ : ℕ → ℕ) (cfg : BBCFG φ) : BBCFG φ where
   targets := λi => (cfg.targets i).lwk ρ
 
 /-- A terminator-based single-entry multiple-exit region -/
-inductive TRegion (φ : Type) : Type
+inductive TRegion (φ : Type _) : Type
   | let1 : Term φ → TRegion φ → TRegion φ
   | let2 : Term φ → TRegion φ → TRegion φ
   | cfg (β : Terminator φ) (n : Nat) : (Fin n → TRegion φ) → TRegion φ
@@ -159,7 +159,7 @@ def TRegion.lwk (ρ : ℕ → ℕ) : TRegion φ → TRegion φ
   | cfg β n f => cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 /-- A terminator-block based control-flow graph with `length` entry-point regions -/
-structure TCFG (φ : Type) : Type where
+structure TCFG (φ : Type _) : Type where
   /-- The number of entry points to this CFG -/
   length : Nat
   /-- The number of exits for this CFG -/
@@ -179,7 +179,7 @@ def TCFG.lwk (ρ : ℕ → ℕ) (cfg : TCFG φ) : TCFG φ where
 
 /-- A single-entry multiple-exit region, similar to [A-normal
   form](https://en.wikipedia.org/wiki/A-normal_form) -/
-inductive Region (φ : Type) : Type
+inductive Region (φ : Type _) : Type _
   | br : Nat → Term φ → Region φ
   | case : Term φ → Region φ → Region φ → Region φ
   | let1 : Term φ → Region φ → Region φ
@@ -240,7 +240,7 @@ def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | cfg β n f => cfg (lwk (Nat.liftnWk n ρ) β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
 
 /-- A control-flow graph with `length` entry-point regions -/
-structure CFG (φ : Type) : Type where
+structure CFG (φ : Type _) : Type _ where
   /-- The number of entry points to this CFG -/
   length : Nat
   /-- The number of exits for this CFG -/
