@@ -418,6 +418,24 @@ def associator_inv : Region φ :=
   let2 (Term.var 1) $
   ret (Term.pair (Term.pair (Term.var 2) (Term.var 0)) (Term.var 1))
 
+theorem associator_append_associator_inv_def
+  : @associator φ ++ associator_inv = (let2 (Term.var 0) $
+    let2 (Term.var 0) $
+    let2 (Term.pair (Term.var 0) (Term.pair (Term.var 1) (Term.var 2))) $
+    let2 (Term.var 1) $
+    ret (Term.pair (Term.pair (Term.var 2) (Term.var 0)) (Term.var 1)))
+  := rfl
+
+def RWD.assocatior_append_associator_inv {Γ : ℕ → ε}
+  : RWD (PStepD Γ) (@associator φ ++ associator_inv) nil
+  := by
+  rw [associator_append_associator_inv_def]
+  sorry
+
+def RWD.associator_inv_append_associator {Γ : ℕ → ε}
+  : RWD (PStepD Γ) (@associator_inv φ ++ associator) nil
+  := sorry
+
 def proj_left : Region φ :=
   let2 (Term.var 0) $
   ret (Term.var 0)
