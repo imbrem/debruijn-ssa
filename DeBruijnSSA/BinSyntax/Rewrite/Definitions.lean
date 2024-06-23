@@ -109,8 +109,8 @@ def Region.RewriteD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
   | cfg_let2 a β n G, _ => sorry
   | cfg_case e r s n G, _ => sorry
   | cfg_cfg β n G n' G', _ => sorry
-  | cfg_zero β G, _ => sorry
-  | cfg_fuse β n G k ρ hρ, _ => sorry
+  | cfg_zero β G, WfD.cfg _ [] rfl dβ dG => dβ
+  | cfg_fuse β n G k ρ hρ, WfD.cfg _ R hR dβ dG => sorry
   | let2_eta r, _ => sorry
 
 def Region.RewriteD.wfD_inv {Γ : Ctx α ε} {r r' : Region φ} {L}
@@ -132,22 +132,57 @@ def Region.RewriteD.wfD_inv {Γ : Ctx α ε} {r r' : Region φ} {L}
   | cfg_let2 a β n G, _ => sorry
   | cfg_case e r s n G, _ => sorry
   | cfg_cfg β n G n' G', _ => sorry
-  | cfg_zero β G, _ => sorry
-  | cfg_fuse β n G k ρ hρ, _ => sorry
+  | cfg_zero β G, dβ => WfD.cfg 0 [] rfl dβ (λi => i.elim0)
+  | cfg_fuse β n G k ρ hρ, WfD.cfg _ R hR dβ dG => sorry
   | let2_eta r, _ => sorry
 
 def Region.ReduceD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
-  : ReduceD Γ.effect r r' → r.WfD Γ L → r'.WfD Γ L
-  | let1_beta e r he, _ => sorry
-  | case_inl e r s, _ => sorry
-  | case_inr e r s, _ => sorry
-  | wk_cfg β n G k ρ, _ => sorry
-  | dead_cfg_left β n G m G', _ => sorry
+  : ReduceD r r' → r.WfD Γ L → r'.WfD Γ L
+  | case_inl e r s, WfD.case (Term.WfD.inl de) dr ds => dr.let1 de
+  | case_inr e r s, WfD.case (Term.WfD.inr de) dr ds => ds.let1 de
+  | wk_cfg β n G k ρ, WfD.cfg _ R hR dβ dG =>
+    sorry
+  | dead_cfg_left β n G m G', WfD.cfg _ R hR dβ dG =>
+    sorry
 
 def Region.StepD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
   : StepD Γ.effect r r' → r.WfD Γ L → r'.WfD Γ L
+  | let1_beta e r he
+    => λ | _ => sorry
   | reduce p => p.wfD
   | rw p => p.wfD
-  | rw_symm p => p.wfD_inv
+  | rw_op p => p.wfD_inv
+
+def Region.BCongD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
+  : BCongD StepD Γ.effect r r' → r.WfD Γ L → r'.WfD Γ L
+  | step s, d => s.wfD d
+  | let1 e p, WfD.let1 de dr => ((Γ.effect_append_bot ▸ p).wfD dr).let1 de
+  | let2 e p, WfD.let2 de dr => ((Γ.effect_append_bot₂ ▸ p).wfD dr).let2 de
+  | case_left e p s, WfD.case de dr ds => ((Γ.effect_append_bot ▸ p).wfD dr).case de ds
+  | case_right e r p, WfD.case de dr ds => dr.case de ((Γ.effect_append_bot ▸ p).wfD ds)
+  | cfg_entry p n G, WfD.cfg _ R hR dβ dG => (p.wfD dβ).cfg _ R hR dG
+  | cfg_block β n G i p, WfD.cfg _ R hR dβ dG => dβ.cfg _ R hR (λk => by
+    if h : i = k then
+      cases h
+      simp only [Function.update_same]
+      exact wfD (Γ.effect_append_bot ▸ p) (dG i)
+    else
+      rw [Function.update_noteq (Ne.symm h)]
+      exact dG k)
+
+-- TODO: fix this...
+set_option linter.unusedVariables false in
+def Region.RWD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
+  : RWD StepD Γ.effect r r' → r.WfD Γ L → r'.WfD Γ L
+  | RWD.refl _, d => d
+  | RWD.cons p s, d => s.wfD (p.wfD d)
+
+inductive Region.TStepD : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → Type _
+  -- TODO: do we need to require r.WfD for rw?
+  | step {Γ L r r'} : r.WfD Γ L → StepD Γ.effect r r' → Region.TStepD Γ L r r'
+  | step_op {Γ L r r'} : r.WfD Γ L → StepD Γ.effect r r' → Region.TStepD Γ L r r'
+  | initial {Γ L} : Γ.IsInitial → r.WfD Γ L → r'.WfD Γ L → Region.TStepD Γ L r r'
+  | terminal {Γ L} : e.WfD Γ ⟨Ty.unit, ⊥⟩ → e'.WfD Γ ⟨Ty.unit, ⊥⟩ → r.WfD (⟨Ty.unit, ⊥⟩::Γ) L
+    → Region.TStepD Γ L (Region.let1 e r) (Region.let1 e' r)
 
 end BinSyntax

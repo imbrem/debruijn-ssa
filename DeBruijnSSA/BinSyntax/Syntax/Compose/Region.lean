@@ -260,14 +260,13 @@ def RewriteD.lsubst_alpha {r₀ r₀'}
     cases k <;> rfl
   -- | let1_eta r => sorry
 
-def ReduceD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
-  (p : ReduceD Γ r₀ r₀') (k) (r₁ : Region φ)
-  : ReduceD Γ (r₀.lsubst (alpha k r₁)) (r₀'.lsubst (alpha k r₁)) :=
+def ReduceD.lsubst_alpha {r₀ r₀'}
+  (p : ReduceD r₀ r₀') (k) (r₁ : Region φ)
+  : ReduceD (r₀.lsubst (alpha k r₁)) (r₀'.lsubst (alpha k r₁)) :=
   match p with
-  | let1_beta e r he => cast_trg (let1_beta e _ he) (by rw [vsubst_subst0_lsubst_vlift])
-  | case_inl e r s => case_inl e _ _
-  | case_inr e r s => case_inr e _ _
-  | wk_cfg β n G k ρ => by
+  | case_inl e r _ => case_inl e _ _
+  | case_inr e r _ => case_inr e _ _
+  | wk_cfg β n G k _ => by
     rw [
       lsubst_cfg, lsubst_cfg,
       lsubst_liftn_lwk_toNatWk,
@@ -280,7 +279,7 @@ def ReduceD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
     apply wk_cfg
     rw [Subst.vlift_liftn_comm]
     rfl
-  | dead_cfg_left β n G m G' =>
+  | dead_cfg_left β n G m _ =>
     cast_src (by
       simp only [lsubst_cfg, Fin.comp_addCases, liftn_alpha, vlift_alpha, lsubst_lwk, lwk_lsubst]
       congr
@@ -309,9 +308,10 @@ def StepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀' : Region φ}
   (p : StepD Γ r₀ r₀') (k) (r₁ : Region φ)
   : StepD Γ (r₀.lsubst (alpha k r₁)) (r₀'.lsubst (alpha k r₁)) :=
   match p with
+  | let1_beta e _ he => cast_trg (let1_beta e _ he) (by rw [vsubst_subst0_lsubst_vlift])
   | reduce p => reduce (p.lsubst_alpha k r₁)
   | rw p => rw (p.lsubst_alpha k r₁)
-  | rw_symm p => rw_symm (p.lsubst_alpha k r₁)
+  | rw_op p => rw_op (p.lsubst_alpha k r₁)
 
 -- TODO: factor out as more general lifting lemma
 def BCongD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
@@ -339,8 +339,10 @@ def BCongD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
     apply RWD.cfg_entry
     apply lsubst_alpha p _ _
   | BCongD.cfg_block β n G i p => by
+    have h : β.cfg n G = β.cfg n (Function.update G i (G i)) := by simp
+    rw [h]
     simp only [lsubst_alpha_cfg, Function.comp_update]
-    apply RWD.cfg_block
+    apply RWD.cfg_block'
     apply lsubst_alpha p _ _
 
 -- TODO: factor out as more general lifting lemma

@@ -1,6 +1,7 @@
 import Discretion.Wk.List
 import Discretion.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
+import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions
 
 namespace BinSyntax
@@ -115,6 +116,16 @@ theorem Ctx.Var.step_iff {V V' : Ty α × ε} {Γ : Ctx α ε} {n} : Var (V'::Γ
   := ⟨Ctx.Var.of_step, Ctx.Var.step⟩
 
 def Ctx.effect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
+
+theorem Ctx.effect_append_bot {head : Ty α} {tail : Ctx α ε}
+  : Ctx.effect (⟨head, ⊥⟩::tail) = Nat.liftBot tail.effect
+  := by funext k; cases k with
+  | zero => simp [effect, Nat.liftBot]
+  | succ k => simp [effect, Nat.liftBot]
+
+theorem Ctx.effect_append_bot₂ {left right : Ty α} {tail : Ctx α ε}
+  : Ctx.effect (⟨left, ⊥⟩::⟨right, ⊥⟩::tail) = Nat.liftnBot 2 tail.effect
+  := by simp only [Ctx.effect_append_bot, Nat.liftnBot_two_apply]
 
 instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 
@@ -730,7 +741,8 @@ theorem Ctx.Wkn.sliftn₂ {left right : Ty α × ε} (h : Γ.Wkn Δ ρ)
   : Wkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
   := h.liftn₂ (le_refl _) (le_refl _)
 
-theorem Ctx.Wkn.liftn_id₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ _root_.id)
+theorem Ctx.Wkn.liftn_id₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂')
+  (h : Γ.Wkn Δ _root_.id)
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) _root_.id
   := Nat.liftnWk_id 2 ▸ h.liftn₂ hV₁ hV₂
 
@@ -772,6 +784,129 @@ theorem Ctx.Wkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
 
 theorem Ctx.Wkn.id_len_le : Γ.Wkn Δ _root_.id → Δ.length ≤ Γ.length := by
   rw [Wkn_iff]; apply List.NWkn.id_len_le
+
+def Ctx.EWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
+  := List.NEWkn Γ Δ ρ
+
+theorem Ctx.EWkn.wkn {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) : Γ.Wkn Δ ρ
+  := (Ctx.Wkn_iff _ _ _).mpr h.toNWkn
+
+theorem Ctx.EWkn.var {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) {i} (hi : i < Δ.length)
+  : Γ.Var (ρ i) (Δ.get ⟨i, hi⟩)
+  := h.wkn i hi
+
+theorem Ctx.EWkn.var_inv {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ)
+  (hi : i < Δ.length) (hv : Γ.Var (ρ i) V)
+  : Δ.Var i V := ⟨hi, have ⟨_, he⟩ := h i hi; he ▸ hv.get⟩
+
+@[simp]
+theorem Ctx.EWkn.id {Γ : Ctx α ε} : Γ.EWkn Γ id := List.NEWkn.id _
+
+theorem Ctx.EWkn.lift {V : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (V::Γ) (V::Δ) (Nat.liftWk ρ)
+  := List.NEWkn.lift h
+
+theorem Ctx.EWkn.lift_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
+  : EWkn Γ Δ ρ := List.NEWkn.lift_tail h
+
+theorem Ctx.EWkn.lift_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
+  : left = right := List.NEWkn.lift_head h
+
+@[simp]
+theorem Ctx.EWkn.lift_iff {left right : Ty α × ε} {Γ Δ}
+    : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ) ↔ left = right ∧ EWkn Γ Δ ρ
+    := ⟨λh => ⟨h.lift_head, h.lift_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift⟩
+
+theorem Ctx.EWkn.lift_id {V : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
+  : EWkn (V::Γ) (V::Δ) _root_.id
+  := Nat.liftWk_id ▸ h.lift
+
+theorem Ctx.EWkn.lift_id_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) _root_.id)
+  : EWkn Γ Δ _root_.id := (Nat.liftWk_id ▸ h).lift_tail
+
+theorem Ctx.EWkn.lift_id_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) _root_.id)
+  : left = right := (Nat.liftWk_id ▸ h).lift_head
+
+@[simp]
+theorem Ctx.EWkn.lift_id_iff {left right : Ty α × ε} {Γ Δ}
+    : EWkn (left::Γ) (right::Δ) _root_.id ↔ left = right ∧ EWkn Γ Δ _root_.id
+    := ⟨λh => ⟨h.lift_id_head, h.lift_id_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift_id⟩
+
+theorem Ctx.EWkn.step {head : Ty α × ε} (h : Γ.EWkn Δ ρ) : EWkn (head::Γ) Δ (Nat.stepWk ρ)
+  := List.NEWkn.step _ h
+
+theorem Ctx.EWkn.step_tail {head : Ty α × ε} (h : EWkn (head::Γ) Δ (Nat.stepWk ρ))
+  : EWkn Γ Δ ρ := List.NEWkn.step_tail h
+
+@[simp]
+theorem Ctx.EWkn.step_iff {head : Ty α × ε} {Γ Δ}
+  : EWkn (head::Γ) Δ (Nat.stepWk ρ) ↔ EWkn Γ Δ ρ
+  := List.NEWkn.step_iff _ _ _ _
+
+@[simp]
+theorem Ctx.EWkn.succ_comp_iff {head : Ty α × ε} {Γ Δ}
+  : EWkn (head::Γ) Δ (Nat.succ ∘ ρ) ↔ EWkn Γ Δ ρ
+  := List.NEWkn.step_iff _ _ _ _
+
+@[simp]
+theorem Ctx.EWkn.succ {head} {Γ : Ctx α ε}
+  : EWkn (head::Γ) Γ Nat.succ
+  := step (head := head) (id (Γ := Γ))
+
+theorem Ctx.EWkn.wk1 {head inserted} {Γ : Ctx α ε}
+  : EWkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
+  := succ.lift
+
+theorem Ctx.EWkn.lift₂ {left right : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (left::right::Γ) (left::right::Δ) (Nat.liftWk (Nat.liftWk ρ))
+  := h.lift.lift
+
+theorem Ctx.EWkn.lift_id₂ {left right : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
+  : EWkn (left::right::Γ) (left::right::Δ) _root_.id
+  := h.lift_id.lift_id
+
+theorem Ctx.EWkn.liftn₂ {left right : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
+  := Nat.liftnWk_two ▸ h.lift₂
+
+theorem Ctx.EWkn.liftn_id₂ {left right : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
+  : EWkn (left::right::Γ) (left::right::Δ) _root_.id
+  := h.lift_id₂
+
+theorem Ctx.EWkn.liftn_append (Ξ) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
+  := List.NEWkn.liftn_append _ h
+
+theorem Ctx.EWkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
+  := hn ▸ liftn_append Ξ h
+
+theorem Ctx.EWkn.liftn_append_id (Ξ) (h : Γ.EWkn Δ _root_.id)
+  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) _root_.id
+  := Nat.liftnWk_id _ ▸ liftn_append Ξ h
+
+theorem Ctx.EWkn.liftn_append_cons (A Ξ) (h : Γ.EWkn Δ ρ)
+  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
+  := liftn_append (A::Ξ) h
+
+theorem Ctx.EWkn.liftn_append_cons' (A) {Ξ} (hn : n = Ξ.length + 1) (h : Γ.EWkn Δ ρ)
+  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk n ρ)
+  := hn ▸ liftn_append_cons A Ξ h
+
+theorem Ctx.EWkn.liftn_append_cons_id (A Ξ) (h : Γ.EWkn Δ _root_.id)
+  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) _root_.id
+  := Nat.liftnWk_id _ ▸  liftn_append_cons A Ξ h
+
+theorem Ctx.EWkn.stepn_append (Ξ) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk Ξ.length ρ)
+  := List.NEWkn.stepn_append _ h
+
+theorem Ctx.EWkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk n ρ)
+  := hn ▸ stepn_append Ξ h
+
+-- theorem Ctx.EWkn.id_len_le : Γ.EWkn Δ _root_.id → Δ.length ≤ Γ.length := by
+--   apply List.NEWkn.id_len_le
 
 def Ctx.Types (Γ : Ctx α ε) : List (Ty α) := Γ.map Prod.fst
 
@@ -847,6 +982,19 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
   | inr dr => inr (dr.wk h)
   | abort da => abort (da.wk h)
   | unit e => unit e
+
+/-- Reverse-weaken a term derivation, given that it is inbounds -/
+def Term.WfD.wk_inv {a : Term φ}
+  (h : Γ.EWkn Δ ρ) (d : WfD Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : WfD Δ a ⟨A, e⟩
+  := match a, d with
+  | Term.var i, var dv => var $ h.var_inv ha dv
+  | Term.op _ _, op df de => op df (de.wk_inv h ha)
+  | Term.pair _ _, pair dl dr
+    => pair (dl.wk_inv h (fvi_pair_le_left ha)) (dr.wk_inv h (fvi_pair_le_right ha))
+  | Term.inl _, inl dl => inl (dl.wk_inv h ha)
+  | Term.inr _, inr dr => inr (dr.wk_inv h ha)
+  | Term.abort _, abort da => abort (da.wk_inv h ha)
+  | Term.unit, unit e => unit e
 
 def Term.WfD.wk1 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.wk1 L
   := dr.wk Ctx.Wkn.wk1
@@ -975,6 +1123,20 @@ def Region.WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h
   | let1 ha ht => let1 (ha.wk h) (ht.vwk h.slift)
   | let2 ha ht => let2 (ha.wk h) (ht.vwk h.sliftn₂)
   | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk h.slift)
+
+def Region.WfD.vwk_inv {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.EWkn Δ ρ)
+  (d: WfD Γ (r.vwk ρ) L) (hr : r.fvi ≤ Δ.length) : WfD Δ r L := match r, d with
+  | Region.br _ _, br hL ha => br hL (ha.wk_inv h hr)
+  | Region.case _ _ _, case he hs ht
+    => case (he.wk_inv h (fvi_case_le_disc hr))
+        (hs.vwk_inv h.lift (fvi_case_le_left hr))
+        (ht.vwk_inv h.lift (fvi_case_le_right hr))
+  | Region.let1 _ _, let1 ha ht
+    => let1 (ha.wk_inv h (fvi_let1_le_bind hr)) (ht.vwk_inv h.lift (fvi_let1_le_rest hr))
+  | Region.let2 _ _, let2 ha ht
+    => let2 (ha.wk_inv h (fvi_let2_le_bind hr)) (ht.vwk_inv h.liftn₂ (fvi_let2_le_rest hr))
+  | Region.cfg _ _ _,cfg n R hR dr hG => cfg n R hR (dr.vwk_inv h (fvi_cfg_le_entry hr))
+                                          (λi => (hG i).vwk_inv h.lift (fvi_cfg_le_blocks hr i))
 
 def Region.WfD.vwk1 {Γ : Ctx α ε} {L} {r : Region φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.vwk1 L
   := dr.vwk Ctx.Wkn.wk1

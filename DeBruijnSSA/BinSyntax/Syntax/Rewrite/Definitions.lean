@@ -170,37 +170,32 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     cases k <;> rfl
   | _ => simp [Nat.liftBot, sup_assoc]
 
-inductive ReduceD (Γ : ℕ → ε) : Region φ → Region φ → Type _
-  | let1_beta (e r) : e.effect Γ = ⊥ → ReduceD Γ (let1 e r) (r.vsubst e.subst0)
-  | case_inl (e r s) : ReduceD Γ (case (inl e) r s) (let1 e r)
-  | case_inr (e r s) : ReduceD Γ (case (inr e) r s) (let1 e s)
+inductive ReduceD : Region φ → Region φ → Type _
+  | case_inl (e r s) : ReduceD (case (inl e) r s) (let1 e r)
+  | case_inr (e r s) : ReduceD (case (inr e) r s) (let1 e s)
   | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
-    ReduceD Γ
+    ReduceD
       (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
       (cfg β k (G ∘ ρ))
   | dead_cfg_left (β n G m G') :
-    ReduceD Γ
+    ReduceD
       (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
       (cfg β m G')
 
-def ReduceD.cast_trg {Γ : ℕ → ε} {r₀ r₁ r₁' : Region φ} (p : ReduceD Γ r₀ r₁) (h : r₁ = r₁')
-  : ReduceD Γ r₀ r₁' := h ▸ p
+def ReduceD.cast_trg {r₀ r₁ r₁' : Region φ} (p : ReduceD r₀ r₁) (h : r₁ = r₁')
+  : ReduceD r₀ r₁' := h ▸ p
 
-def ReduceD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : ReduceD Γ r₀ r₁)
-  : ReduceD Γ r₀' r₁ := h ▸ p
+def ReduceD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : ReduceD r₀ r₁)
+  : ReduceD r₀' r₁ := h ▸ p
 
-def ReduceD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
-  (p : ReduceD Γ r₀ r₁) : ReduceD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
+def ReduceD.cast {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
+  (p : ReduceD r₀ r₁) : ReduceD r₀' r₁' := h₁ ▸ h₀ ▸ p
 
 inductive StepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
-  | reduce {r r'} : ReduceD Γ r r' → StepD Γ r r'
+  | let1_beta (e r) : e.effect Γ = ⊥ → StepD Γ (let1 e r) (r.vsubst e.subst0)
+  | reduce {r r'} : ReduceD r r' → StepD Γ r r'
   | rw {r r'} : RewriteD r r' → StepD Γ r r'
-  | rw_symm {r r'} : RewriteD r r' → StepD Γ r' r
-
-@[match_pattern]
-def StepD.let1_beta {Γ : ℕ → ε} (e) (r : Region φ) (h : e.effect Γ = ⊥)
-  : StepD Γ (let1 e r) (r.vsubst e.subst0)
-  := StepD.reduce (ReduceD.let1_beta e r h)
+  | rw_op {r r'} : RewriteD r r' → StepD Γ r' r
 
 @[match_pattern]
 def StepD.case_inl {Γ : ℕ → ε} (e : Term φ) (r s)
@@ -230,10 +225,10 @@ def StepD.let1_op {Γ : ℕ → ε} (f e) (r : Region φ)
   := StepD.rw $ RewriteD.let1_op f e r
 
 @[match_pattern]
-def StepD.let1_op_inv {Γ : ℕ → ε} (f e) (r : Region φ)
+def StepD.let1_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : StepD Γ (let1 e $ let1 (op f (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (op f e) r)
-  := StepD.rw_symm $ RewriteD.let1_op f e r
+  := StepD.rw_op $ RewriteD.let1_op f e r
 
 @[match_pattern]
 def StepD.let1_pair {Γ : ℕ → ε} (a b) (r : Region φ)
@@ -242,10 +237,10 @@ def StepD.let1_pair {Γ : ℕ → ε} (a b) (r : Region φ)
   := StepD.rw $ RewriteD.let1_pair a b r
 
 @[match_pattern]
-def StepD.let1_pair_inv {Γ : ℕ → ε} (a b) (r : Region φ)
+def StepD.let1_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
   : StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) r.vwk1.vwk1)
     (let1 (pair a b) r)
-  := StepD.rw_symm $ RewriteD.let1_pair a b r
+  := StepD.rw_op $ RewriteD.let1_pair a b r
 
 @[match_pattern]
 def StepD.let1_inl {Γ : ℕ → ε} (e) (r : Region φ)
@@ -253,10 +248,10 @@ def StepD.let1_inl {Γ : ℕ → ε} (e) (r : Region φ)
   := StepD.rw $ RewriteD.let1_inl e r
 
 @[match_pattern]
-def StepD.let1_inl_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def StepD.let1_inl_op {Γ : ℕ → ε} (e) (r : Region φ)
   : StepD Γ (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (inl e) r)
-  := StepD.rw_symm $ RewriteD.let1_inl e r
+  := StepD.rw_op $ RewriteD.let1_inl e r
 
 @[match_pattern]
 def StepD.let1_inr {Γ : ℕ → ε} (e) (r : Region φ)
@@ -264,10 +259,10 @@ def StepD.let1_inr {Γ : ℕ → ε} (e) (r : Region φ)
   := StepD.rw $ RewriteD.let1_inr e r
 
 @[match_pattern]
-def StepD.let1_inr_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def StepD.let1_inr_op {Γ : ℕ → ε} (e) (r : Region φ)
   : StepD Γ (let1 e $ let1 (inr (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (inr e) r)
-  := StepD.rw_symm $ RewriteD.let1_inr e r
+  := StepD.rw_op $ RewriteD.let1_inr e r
 
 @[match_pattern]
 def StepD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
@@ -275,10 +270,10 @@ def StepD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
   := StepD.rw $ RewriteD.let1_abort e r
 
 @[match_pattern]
-def StepD.let1_abort_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def StepD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
   : StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (abort e) r)
-  := StepD.rw_symm $ RewriteD.let1_abort e r
+  := StepD.rw_op $ RewriteD.let1_abort e r
 
 @[match_pattern]
 def StepD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
@@ -286,10 +281,10 @@ def StepD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
   := StepD.rw $ RewriteD.let2_op f e r
 
 @[match_pattern]
-def StepD.let2_op_inv {Γ : ℕ → ε} (f e) (r : Region φ)
+def StepD.let2_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : StepD Γ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
     (let2 (op f e) r)
-  := StepD.rw_symm $ RewriteD.let2_op f e r
+  := StepD.rw_op $ RewriteD.let2_op f e r
 
 @[match_pattern]
 def StepD.let2_pair {Γ : ℕ → ε} (a b) (r : Region φ)
@@ -297,10 +292,10 @@ def StepD.let2_pair {Γ : ℕ → ε} (a b) (r : Region φ)
   := StepD.rw $ RewriteD.let2_pair a b r
 
 @[match_pattern]
-def StepD.let2_pair_inv {Γ : ℕ → ε} (a b) (r : Region φ)
+def StepD.let2_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
   : StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ r)
     (let2 (pair a b) r)
-  := StepD.rw_symm $ RewriteD.let2_pair a b r
+  := StepD.rw_op $ RewriteD.let2_pair a b r
 
 @[match_pattern]
 def StepD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
@@ -308,10 +303,10 @@ def StepD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
   := StepD.rw $ RewriteD.let2_abort e r
 
 @[match_pattern]
-def StepD.let2_abort_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def StepD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
   : StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
     (let2 (abort e) r)
-  := StepD.rw_symm $ RewriteD.let2_abort e r
+  := StepD.rw_op $ RewriteD.let2_abort e r
 
 @[match_pattern]
 def StepD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
@@ -321,10 +316,10 @@ def StepD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
   := StepD.rw $ RewriteD.case_op f e r s
 
 @[match_pattern]
-def StepD.case_op_inv {Γ : ℕ → ε} (f e) (r s : Region φ)
+def StepD.case_op_op {Γ : ℕ → ε} (f e) (r s : Region φ)
   : StepD Γ (let1 e $ case (op f (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
     (case (op f e) r s)
-  := StepD.rw_symm $ RewriteD.case_op f e r s
+  := StepD.rw_op $ RewriteD.case_op f e r s
 
 @[match_pattern]
 def StepD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
@@ -334,10 +329,10 @@ def StepD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
   := StepD.rw $ RewriteD.case_abort e r s
 
 @[match_pattern]
-def StepD.case_abort_inv {Γ : ℕ → ε} (e) (r s : Region φ)
+def StepD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
   : StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
     (case (abort e) r s)
-  := StepD.rw_symm $ RewriteD.case_abort e r s
+  := StepD.rw_op $ RewriteD.case_abort e r s
 
 @[match_pattern]
 def StepD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
@@ -346,10 +341,10 @@ def StepD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   := StepD.rw $ RewriteD.let1_case a b r s
 
 @[match_pattern]
-def StepD.let1_case_inv {Γ : ℕ → ε} (a b) (r s : Region φ)
+def StepD.let1_case_op {Γ : ℕ → ε} (a b) (r s : Region φ)
   : StepD Γ (case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s))
     (let1 a $ case (b.wk Nat.succ) r s)
-  := StepD.rw_symm $ RewriteD.let1_case a b r s
+  := StepD.rw_op $ RewriteD.let1_case a b r s
 
 @[match_pattern]
 def StepD.let2_case {Γ : ℕ → ε} (a b) (r s : Region φ)
@@ -358,10 +353,10 @@ def StepD.let2_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   := StepD.rw $ RewriteD.let2_case a b r s
 
 @[match_pattern]
-def StepD.let2_case_inv {Γ : ℕ → ε} (a b) (r s : Region φ)
+def StepD.let2_case_op {Γ : ℕ → ε} (a b) (r s : Region φ)
   : StepD Γ (case b (let2 (a.wk Nat.succ) r) (let2 (a.wk Nat.succ) s))
     (let2 a $ case (b.wk (· + 2)) r s)
-  := StepD.rw_symm $ RewriteD.let2_case a b r s
+  := StepD.rw_op $ RewriteD.let2_case a b r s
 
 @[match_pattern]
 def StepD.cfg_br_lt {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
@@ -369,9 +364,9 @@ def StepD.cfg_br_lt {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   := StepD.rw $ RewriteD.cfg_br_lt ℓ e n G h
 
 @[match_pattern]
-def StepD.cfg_br_lt_inv {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
+def StepD.cfg_br_lt_op {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   : StepD Γ (cfg ((G ⟨ℓ, h⟩).let1 e) n G) (cfg (br ℓ e) n G)
-  := StepD.rw_symm $ RewriteD.cfg_br_lt ℓ e n G h
+  := StepD.rw_op $ RewriteD.cfg_br_lt ℓ e n G h
 
 @[match_pattern]
 def StepD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
@@ -379,10 +374,10 @@ def StepD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
   := StepD.rw $ RewriteD.cfg_let1 a β n G
 
 @[match_pattern]
-def StepD.cfg_let1_inv {Γ : ℕ → ε} (a : Term φ) (β n G)
+def StepD.cfg_let1_op {Γ : ℕ → ε} (a : Term φ) (β n G)
   : StepD Γ (let1 a $ cfg β n (vwk1 ∘ G))
     (cfg (let1 a β) n G)
-  := StepD.rw_symm $ RewriteD.cfg_let1 a β n G
+  := StepD.rw_op $ RewriteD.cfg_let1 a β n G
 
 @[match_pattern]
 def StepD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
@@ -390,10 +385,10 @@ def StepD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
   := StepD.rw $ RewriteD.cfg_let2 a β n G
 
 @[match_pattern]
-def StepD.cfg_let2_inv {Γ : ℕ → ε} (a : Term φ) (β n G)
+def StepD.cfg_let2_op {Γ : ℕ → ε} (a : Term φ) (β n G)
   : StepD Γ (let2 a $ cfg β n (vwk (· + 2) ∘ G))
     (cfg (let2 a β) n G)
-  := StepD.rw_symm $ RewriteD.cfg_let2 a β n G
+  := StepD.rw_op $ RewriteD.cfg_let2 a β n G
 
 @[match_pattern]
 def StepD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
@@ -403,10 +398,10 @@ def StepD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
   := StepD.rw $ RewriteD.cfg_case e r s n G
 
 @[match_pattern]
-def StepD.cfg_case_inv {Γ : ℕ → ε} (e : Term φ) (r s n G)
+def StepD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
   : StepD Γ (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G)))
     (cfg (case e r s) n G)
-  := StepD.rw_symm $ RewriteD.cfg_case e r s n G
+  := StepD.rw_op $ RewriteD.cfg_case e r s n G
 
 @[match_pattern]
 def StepD.cfg_cfg {Γ : ℕ → ε} (β : Region φ) (n G n' G')
@@ -414,18 +409,18 @@ def StepD.cfg_cfg {Γ : ℕ → ε} (β : Region φ) (n G n' G')
   := StepD.rw $ RewriteD.cfg_cfg β n G n' G'
 
 @[match_pattern]
-def StepD.cfg_cfg_inv {Γ : ℕ → ε} (β : Region φ) (n G n' G')
+def StepD.cfg_cfg_op {Γ : ℕ → ε} (β : Region φ) (n G n' G')
   : StepD Γ (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
     (cfg (cfg β n G) n' G')
-  := StepD.rw_symm $ RewriteD.cfg_cfg β n G n' G'
+  := StepD.rw_op $ RewriteD.cfg_cfg β n G n' G'
 
 @[match_pattern]
 def StepD.cfg_zero {Γ : ℕ → ε} (β : Region φ) (G)
   : StepD Γ (cfg β 0 G) β := StepD.rw $ RewriteD.cfg_zero β G
 
 @[match_pattern]
-def StepD.cfg_zero_inv {Γ : ℕ → ε} (β : Region φ) (G)
-  : StepD Γ β (cfg β 0 G) := StepD.rw_symm $ RewriteD.cfg_zero β G
+def StepD.cfg_zero_op {Γ : ℕ → ε} (β : Region φ) (G)
+  : StepD Γ β (cfg β 0 G) := StepD.rw_op $ RewriteD.cfg_zero β G
 
 @[match_pattern]
 def StepD.let2_eta {Γ : ℕ → ε} (r : Region φ)
@@ -433,9 +428,9 @@ def StepD.let2_eta {Γ : ℕ → ε} (r : Region φ)
   := StepD.rw $ RewriteD.let2_eta r
 
 @[match_pattern]
-def StepD.let2_eta_inv {Γ : ℕ → ε} (r : Region φ)
+def StepD.let2_eta_op {Γ : ℕ → ε} (r : Region φ)
   : StepD Γ (let1 (var 0) r) (let2 (var 0) (let1 ((var 1).pair (var 0)) r.vwk1.vwk1))
-  := StepD.rw_symm $ RewriteD.let2_eta r
+  := StepD.rw_op $ RewriteD.let2_eta r
 
 -- @[match_pattern]
 -- def StepD.let1_eta {Γ : ℕ → ε} (r : Region φ)
@@ -443,9 +438,9 @@ def StepD.let2_eta_inv {Γ : ℕ → ε} (r : Region φ)
 --   := StepD.rw $ RewriteD.let1_eta r
 
 -- @[match_pattern]
--- def StepD.let1_eta_inv {Γ : ℕ → ε} (r : Region φ)
+-- def StepD.let1_eta_op {Γ : ℕ → ε} (r : Region φ)
 --   : StepD Γ r (let1 (var 0) r.vwk1)
---   := StepD.rw_symm $ RewriteD.let1_eta r
+--   := StepD.rw_op $ RewriteD.let1_eta r
 
 def StepD.cast_trg {Γ : ℕ → ε} {r₀ r₁ r₁' : Region φ} (p : StepD Γ r₀ r₁) (h : r₁ = r₁')
   : StepD Γ r₀ r₁' := h ▸ p
@@ -456,17 +451,9 @@ def StepD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀' = 
 def StepD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : StepD Γ r₀ r₁) : StepD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
 
-theorem ReduceD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : ReduceD Γ r r')
+theorem ReduceD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : ReduceD r r')
   : r'.effect Γ ≤ r.effect Γ := by
   cases p with
-  | let1_beta _ _ he =>
-    apply le_of_eq
-    simp only [effect_vsubst, Subst.effect, effect, he, ge_iff_le, bot_le, sup_of_le_right]
-    congr
-    funext k
-    cases k with
-    | zero => simp [he, Nat.liftBot]
-    | succ k => rfl
   | case_inl _ _ _ => simp
   | case_inr e r s =>
     simp only [effect, Term.effect]
@@ -485,9 +472,17 @@ theorem ReduceD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : ReduceD Γ r
 theorem StepD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : StepD Γ r r')
   : r'.effect Γ ≤ r.effect Γ := by
   cases p with
+  | let1_beta _ _ he =>
+    apply le_of_eq
+    simp only [effect_vsubst, Subst.effect, effect, he, ge_iff_le, bot_le, sup_of_le_right]
+    congr
+    funext k
+    cases k with
+    | zero => simp [he, Nat.liftBot]
+    | succ k => rfl
   | reduce p => exact p.effect_le
   | rw p => rw [p.effect]
-  | rw_symm p => rw [p.effect]
+  | rw_op p => rw [p.effect]
 
 -- TODO: StepD is effect monotonic
 
@@ -500,8 +495,26 @@ inductive SCongD (P : Region φ → Region φ → Type _) : Region φ → Region
   | case_right (e r) : SCongD P s s' → SCongD P (case e r s) (case e r s')
   | cfg_entry
     : SCongD P r r' → (n : _) → (G : _) → SCongD P (cfg r n G) (cfg r' n G)
-  | cfg_block (β n G i) : SCongD P r r' →
-    SCongD P (cfg β n (Function.update G i r)) (cfg β n (Function.update G i r'))
+  | cfg_block (β n G i) : SCongD P (G i) g' →
+    SCongD P (cfg β n G) (cfg β n (Function.update G i g'))
+
+def SCongD.cast_trg {P : Region φ → Region φ → Type _}
+  {r₀ r₁ r₁' : Region φ} (p : SCongD P r₀ r₁) (h : r₁ = r₁')
+  : SCongD P r₀ r₁' := h ▸ p
+
+def SCongD.cast_src {P : Region φ → Region φ → Type _}
+  {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : SCongD P r₀ r₁)
+  : SCongD P r₀' r₁ := h ▸ p
+
+def SCongD.cast {P : Region φ → Region φ → Type _}
+  {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
+  (p : SCongD P r₀ r₁) : SCongD P r₀' r₁' := h₁ ▸ h₀ ▸ p
+
+def SCongD.cfg_block' {P : Region φ → Region φ → Type _}
+  (β n G i) (p : SCongD P g g')
+  : SCongD P (cfg β n (Function.update G i g)) (cfg β n (Function.update G i g'))
+  := (SCongD.cfg_block β n (Function.update G i g) i (by simp only [Function.update_same]; exact p)
+    ).cast_trg (by simp)
 
 -- TODO: SCongD is effect monotone/antitone iff underlying is
 -- ==> SCongD is effect preserving iff underlying is
@@ -516,8 +529,26 @@ inductive BCongD (P : (ℕ → ε) → Region φ → Region φ → Type _)
   | case_right (e r) : BCongD P (Nat.liftBot Γ) s s' → BCongD P Γ (case e r s) (case e r s')
   | cfg_entry
     : BCongD P Γ r r' → (n : _) → (G : _) → BCongD P Γ (cfg r n G) (cfg r' n G)
-  | cfg_block (β n G i) : BCongD P (Nat.liftBot Γ) r r' →
-    BCongD P Γ (cfg β n (Function.update G i r)) (cfg β n (Function.update G i r'))
+  | cfg_block (β n G i) : BCongD P (Nat.liftBot Γ) (G i) g' →
+    BCongD P Γ (cfg β n G) (cfg β n (Function.update G i g'))
+
+def BCongD.cast_src {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ : ℕ → ε}
+  (h : r₀ = r₀') (p : BCongD P Γ r₀' r₁)
+  : BCongD P Γ r₀ r₁ := h ▸ p
+
+def BCongD.cast_trg {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ : ℕ → ε}
+  (p : BCongD P Γ r₀ r₁) (h : r₁ = r₁')
+  : BCongD P Γ r₀ r₁' := h ▸ p
+
+def BCongD.cast {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ : ℕ → ε}
+  (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
+  (p : BCongD P Γ r₀' r₁') : BCongD P Γ r₀ r₁ := h₁ ▸ h₀ ▸ p
+
+def BCongD.cfg_block' {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ : ℕ → ε}
+  (β n G i) (p : BCongD P (Nat.liftBot Γ) g g')
+  : BCongD P Γ (cfg β n (Function.update G i g)) (cfg β n (Function.update G i g'))
+  := (BCongD.cfg_block β n (Function.update G i g) i (by simp only [Function.update_same]; exact p)
+    ).cast_trg (by simp)
 
 abbrev RWD (P : (ℕ → ε) → Region φ → Region φ → Type _) (Γ : ℕ → ε) := Corr.Path ((BCongD P) Γ)
 
@@ -552,10 +583,10 @@ def RWD.let1_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : RWD StepD Γ (let1 (op f e) r) (let1 e $ let1 (op f (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := single $ BCongD.step $ StepD.let1_op f e r
 
-def RWD.let1_op_inv {Γ : ℕ → ε} (f e) (r : Region φ)
+def RWD.let1_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let1 (op f (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (op f e) r)
-  := single $ BCongD.step $ StepD.let1_op_inv f e r
+  := single $ BCongD.step $ StepD.let1_op_op f e r
 
 def RWD.let1_pair {Γ : ℕ → ε} (a b) (r : Region φ)
   : RWD StepD Γ (let1 (pair a b) r)
@@ -563,64 +594,64 @@ def RWD.let1_pair {Γ : ℕ → ε} (a b) (r : Region φ)
   )
   := single $ BCongD.step $ StepD.let1_pair a b r
 
-def RWD.let1_pair_inv {Γ : ℕ → ε} (a b) (r : Region φ)
+def RWD.let1_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
   : RWD StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) r.vwk1.vwk1)
     (let1 (pair a b) r)
-  := single $ BCongD.step $ StepD.let1_pair_inv a b r
+  := single $ BCongD.step $ StepD.let1_pair_op a b r
 
 def RWD.let1_inl {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := single $ BCongD.step $ StepD.let1_inl e r
 
-def RWD.let1_inl_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def RWD.let1_inl_op {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (inl e) r)
-  := single $ BCongD.step $ StepD.let1_inl_inv e r
+  := single $ BCongD.step $ StepD.let1_inl_op e r
 
 def RWD.let1_inr {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := single $ BCongD.step $ StepD.let1_inr e r
 
-def RWD.let1_inr_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def RWD.let1_inr_op {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let1 (inr (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (inr e) r)
-  := single $ BCongD.step $ StepD.let1_inr_inv e r
+  := single $ BCongD.step $ StepD.let1_inr_op e r
 
 def RWD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := single $ BCongD.step $ StepD.let1_abort e r
 
-def RWD.let1_abort_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def RWD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (abort e) r)
-  := single $ BCongD.step $ StepD.let1_abort_inv e r
+  := single $ BCongD.step $ StepD.let1_abort_op e r
 
 def RWD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : RWD StepD Γ (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   := single $ BCongD.step $ StepD.let2_op f e r
 
-def RWD.let2_op_inv {Γ : ℕ → ε} (f e) (r : Region φ)
+def RWD.let2_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
     (let2 (op f e) r)
-  := single $ BCongD.step $ StepD.let2_op_inv f e r
+  := single $ BCongD.step $ StepD.let2_op_op f e r
 
 def RWD.let2_pair {Γ : ℕ → ε} (a b) (r : Region φ)
   : RWD StepD Γ (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
   := single $ BCongD.step (StepD.let2_pair a b r)
 
-def RWD.let2_pair_inv {Γ : ℕ → ε} (a b) (r : Region φ)
+def RWD.let2_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
   : RWD StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ r)
     (let2 (pair a b) r)
-  := single $ BCongD.step $ StepD.let2_pair_inv a b r
+  := single $ BCongD.step $ StepD.let2_pair_op a b r
 
 def RWD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   := single $ BCongD.step $ StepD.let2_abort e r
 
-def RWD.let2_abort_inv {Γ : ℕ → ε} (e) (r : Region φ)
+def RWD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
     (let2 (abort e) r)
-  := single $ BCongD.step $ StepD.let2_abort_inv e r
+  := single $ BCongD.step $ StepD.let2_abort_op e r
 
 def RWD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
   : RWD StepD Γ (case (op f e) r s)
@@ -628,10 +659,10 @@ def RWD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
   )
   := single $ BCongD.step $ StepD.case_op f e r s
 
-def RWD.case_op_inv {Γ : ℕ → ε} (f e) (r s : Region φ)
+def RWD.case_op_op {Γ : ℕ → ε} (f e) (r s : Region φ)
   : RWD StepD Γ (let1 e $ case (op f (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
     (case (op f e) r s)
-  := single $ BCongD.step $ StepD.case_op_inv f e r s
+  := single $ BCongD.step $ StepD.case_op_op f e r s
 
 def RWD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
   : RWD StepD Γ (case (abort e) r s)
@@ -639,56 +670,56 @@ def RWD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
   )
   := single $ BCongD.step $ StepD.case_abort e r s
 
-def RWD.case_abort_inv {Γ : ℕ → ε} (e) (r s : Region φ)
+def RWD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
   : RWD StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
     (case (abort e) r s)
-  := single $ BCongD.step $ StepD.case_abort_inv e r s
+  := single $ BCongD.step $ StepD.case_abort_op e r s
 
 def RWD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   : RWD StepD Γ (let1 a $ case (b.wk Nat.succ) r s)
     (case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s))
   := single $ BCongD.step $ StepD.let1_case a b r s
 
-def RWD.let1_case_inv {Γ : ℕ → ε} (a b) (r s : Region φ)
+def RWD.let1_case_op {Γ : ℕ → ε} (a b) (r s : Region φ)
   : RWD StepD Γ (case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s))
     (let1 a $ case (b.wk Nat.succ) r s)
-  := single $ BCongD.step $ StepD.let1_case_inv a b r s
+  := single $ BCongD.step $ StepD.let1_case_op a b r s
 
 def RWD.let2_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   : RWD StepD Γ (let2 a $ case (b.wk (· + 2)) r s)
     (case b (let2 (a.wk Nat.succ) r) (let2 (a.wk Nat.succ) s))
   := single $ BCongD.step $ StepD.let2_case a b r s
 
-def RWD.let2_case_inv {Γ : ℕ → ε} (a b) (r s : Region φ)
+def RWD.let2_case_op {Γ : ℕ → ε} (a b) (r s : Region φ)
   : RWD StepD Γ (case b (let2 (a.wk Nat.succ) r) (let2 (a.wk Nat.succ) s))
     (let2 a $ case (b.wk (· + 2)) r s)
-  := single $ BCongD.step $ StepD.let2_case_inv a b r s
+  := single $ BCongD.step $ StepD.let2_case_op a b r s
 
 def RWD.cfg_br_lt {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   : RWD StepD Γ (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   := single $ BCongD.step $ StepD.cfg_br_lt ℓ e n G h
 
-def RWD.cfg_br_lt_inv {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
+def RWD.cfg_br_lt_op {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   : RWD StepD Γ (cfg ((G ⟨ℓ, h⟩).let1 e) n G) (cfg (br ℓ e) n G)
-  := single $ BCongD.step $ StepD.cfg_br_lt_inv ℓ e n G h
+  := single $ BCongD.step $ StepD.cfg_br_lt_op ℓ e n G h
 
 def RWD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
   : RWD StepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
   := single $ BCongD.step $ StepD.cfg_let1 a β n G
 
-def RWD.cfg_let1_inv {Γ : ℕ → ε} (a : Term φ) (β n G)
+def RWD.cfg_let1_op {Γ : ℕ → ε} (a : Term φ) (β n G)
   : RWD StepD Γ (let1 a $ cfg β n (vwk1 ∘ G))
     (cfg (let1 a β) n G)
-  := single $ BCongD.step $ StepD.cfg_let1_inv a β n G
+  := single $ BCongD.step $ StepD.cfg_let1_op a β n G
 
 def RWD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
   : RWD StepD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk (· + 2) ∘ G))
   := single $ BCongD.step $ StepD.cfg_let2 a β n G
 
-def RWD.cfg_let2_inv {Γ : ℕ → ε} (a : Term φ) (β n G)
+def RWD.cfg_let2_op {Γ : ℕ → ε} (a : Term φ) (β n G)
   : RWD StepD Γ (let2 a $ cfg β n (vwk (· + 2) ∘ G))
     (cfg (let2 a β) n G)
-  := single $ BCongD.step $ StepD.cfg_let2_inv a β n G
+  := single $ BCongD.step $ StepD.cfg_let2_op a β n G
 
 def RWD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
   : RWD StepD Γ (cfg (case e r s) n G)
@@ -696,25 +727,25 @@ def RWD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
   )
   := single $ BCongD.step $ StepD.cfg_case e r s n G
 
-def RWD.cfg_case_inv {Γ : ℕ → ε} (e : Term φ) (r s n G)
+def RWD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
   : RWD StepD Γ (case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G)))
     (cfg (case e r s) n G)
-  := single $ BCongD.step $ StepD.cfg_case_inv e r s n G
+  := single $ BCongD.step $ StepD.cfg_case_op e r s n G
 
 def RWD.cfg_cfg {Γ : ℕ → ε} (β : Region φ) (n G n' G')
   : RWD StepD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   := single $ BCongD.step $ StepD.cfg_cfg β n G n' G'
 
-def RWD.cfg_cfg_inv {Γ : ℕ → ε} (β : Region φ) (n G n' G')
+def RWD.cfg_cfg_op {Γ : ℕ → ε} (β : Region φ) (n G n' G')
   : RWD StepD Γ (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
     (cfg (cfg β n G) n' G')
-  := single $ BCongD.step $ StepD.cfg_cfg_inv β n G n' G'
+  := single $ BCongD.step $ StepD.cfg_cfg_op β n G n' G'
 
 def RWD.cfg_zero {Γ : ℕ → ε} (β : Region φ) (G)
   : RWD StepD Γ (cfg β 0 G) β := single $ BCongD.step $ StepD.cfg_zero β G
 
-def RWD.cfg_zero_inv {Γ : ℕ → ε} (β : Region φ) (G)
-  : RWD StepD Γ β (cfg β 0 G) := single $ BCongD.step $ StepD.cfg_zero_inv β G
+def RWD.cfg_zero_op {Γ : ℕ → ε} (β : Region φ) (G)
+  : RWD StepD Γ β (cfg β 0 G) := single $ BCongD.step $ StepD.cfg_zero_op β G
 
 def RWD.wk_cfg {Γ : ℕ → ε} (β : Region φ) (n G k) (ρ : Fin k → Fin n) /-(hρ : Function.Bijective ρ)-/
   : RWD StepD Γ
@@ -790,12 +821,12 @@ def RWD.let2_eta {Γ : ℕ → ε} (r : Region φ)
      r.vwk1.vwk1) (let1 (Term.var 0) r)
   := single $ BCongD.step $ StepD.let2_eta r
 
-def RWD.let2_eta_inv {Γ : ℕ → ε} (r : Region φ)
+def RWD.let2_eta_op {Γ : ℕ → ε} (r : Region φ)
   : RWD StepD Γ (let1 (Term.var 0) r)
     (let2 (Term.var 0) $
      let1 ((Term.var 1).pair (Term.var 0)) $
      r.vwk1.vwk1)
-  := single $ BCongD.step $ StepD.let2_eta_inv r
+  := single $ BCongD.step $ StepD.let2_eta_op r
 
 -- def RWD.let1_eta {Γ : ℕ → ε} (r : Region φ)
 --   : RWD StepD Γ
@@ -803,11 +834,11 @@ def RWD.let2_eta_inv {Γ : ℕ → ε} (r : Region φ)
 --      r.vwk1) r
 --   := single $ BCongD.step $ StepD.let1_eta r
 
--- def RWD.let1_eta_inv {Γ : ℕ → ε} (r : Region φ)
+-- def RWD.let1_eta_op {Γ : ℕ → ε} (r : Region φ)
 --   : RWD StepD Γ r
 --     (let1 (Term.var 0) $
 --      r.vwk1)
---   := single $ BCongD.step $ StepD.let1_eta_inv r
+--   := single $ BCongD.step $ StepD.let1_eta_op r
 
 instance instTransRWD
   {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ}
@@ -843,11 +874,11 @@ def SCongD.cfg_entry_func {P : Region φ → Region φ → Type _} (n) (G : Fin 
   obj := (Region.cfg · n G)
   map := (SCongD.cfg_entry · n G)
 
-def SCongD.cfg_block_func {P : Region φ → Region φ → Type _}
+def SCongD.cfg_block_func' {P : Region φ → Region φ → Type _}
   (β : Region φ) (n) (G : Fin n → Region φ) (i : Fin n)
   : Corr.Prefunctor (SCongD P) (SCongD P) where
   obj := λr => (Region.cfg β n (Function.update G i r))
-  map := SCongD.cfg_block β n G i
+  map := SCongD.cfg_block' β n G i
 
 def BCongD.let1_func {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ} (e : Term φ)
   : Corr.Prefunctor (BCongD P (Nat.liftBot Γ)) (BCongD P Γ) where
@@ -877,11 +908,11 @@ def BCongD.cfg_entry_func {P : (ℕ → ε) → Region φ → Region φ → Type
   obj := (Region.cfg · n G)
   map := (BCongD.cfg_entry · n G)
 
-def BCongD.cfg_block_func {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ}
+def BCongD.cfg_block_func' {P : (ℕ → ε) → Region φ → Region φ → Type _} {Γ}
   (β : Region φ) (n) (G : Fin n → Region φ) (i : Fin n)
   : Corr.Prefunctor (BCongD P (Nat.liftBot Γ)) (BCongD P Γ) where
   obj := λr => (Region.cfg β n (Function.update G i r))
-  map := BCongD.cfg_block β n G i
+  map := BCongD.cfg_block' β n G i
 
 def RWD.let1 {P} {Γ : ℕ → ε} {r r'} (e : Term φ) (h : RWD P (Nat.liftBot Γ) r r')
   : RWD P Γ (let1 e r) (let1 e r')
@@ -903,9 +934,9 @@ def RWD.cfg_entry {P} {Γ : ℕ → ε} {r r' : Region φ} (h : RWD P Γ r r') (
   : RWD P Γ (cfg r n G) (cfg r' n G)
   := (BCongD.cfg_entry_func n G).mapPath h
 
-def RWD.cfg_block {P} {Γ : ℕ → ε} {r r' : Region φ} (β n G i) (h : RWD P (Nat.liftBot Γ) r r')
+def RWD.cfg_block' {P} {Γ : ℕ → ε} {r r' : Region φ} (β n G i) (h : RWD P (Nat.liftBot Γ) r r')
   : RWD P Γ (cfg β n (Function.update G i r)) (cfg β n (Function.update G i r'))
-  := (BCongD.cfg_block_func β n G i).mapPath h
+  := (BCongD.cfg_block_func' β n G i).mapPath h
 
 def RWD.case {P} {Γ : ℕ → ε} {r r' : Region φ} (e : Term φ)
   (hr : RWD P (Nat.liftBot Γ) r r')
@@ -927,7 +958,7 @@ def RWD.cfg_blocks_partial {P} {Γ : ℕ → ε} (β n) (G : Fin n → Region φ
             congr
             rw [Function.eq_update_self_iff]
             simp))
-        (cast_trg (cfg_block β n
+        (cast_trg (cfg_block' β n
           (λi => if i < k then G' i else G i)
           ⟨k, hk⟩ (h ⟨k, hk⟩))
           (by

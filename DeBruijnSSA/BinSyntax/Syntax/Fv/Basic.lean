@@ -22,6 +22,7 @@ def Term.fv : Term φ → Multiset ℕ
   | pair x y => x.fv + y.fv
   | inl a => a.fv
   | inr a => a.fv
+  | abort a => a.fv
   | _ => 0
 
 theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ := by
@@ -35,7 +36,27 @@ def Term.fvi : Term φ → ℕ
   | pair x y => Nat.max x.fvi y.fvi
   | inl a => a.fvi
   | inr a => a.fvi
+  | abort a => a.fvi
   | _ => 0
+
+theorem Term.fvi_var_le_iff {x n : ℕ} : (@var φ x).fvi ≤ n ↔ x < n := by simp [Nat.succ_le_iff]
+
+theorem Term.fvi_op_le_iff {o : φ} {t : Term φ} {n} : (op o t).fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
+
+theorem Term.fvi_pair_le_iff {l r : Term φ} {n} : (pair l r).fvi ≤ n ↔ l.fvi ≤ n ∧ r.fvi ≤ n
+  := by simp
+
+theorem Term.fvi_pair_le_left {l r : Term φ} {n} : (pair l r).fvi ≤ n → l.fvi ≤ n
+  := by simp only [fvi, max_le_iff, and_imp]; exact λl _ => l
+
+theorem Term.fvi_pair_le_right {l r : Term φ} {n} : (pair l r).fvi ≤ n → r.fvi ≤ n
+  := by simp only [fvi, max_le_iff, and_imp]; exact λ_ r => r
+
+theorem Term.fvi_inl_le_iff {t : Term φ} {n : ℕ} : t.inl.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
+
+theorem Term.fvi_inr_le_iff {t : Term φ} {n : ℕ} : t.inr.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
+
+theorem Term.fvi_abort_le_iff {t : Term φ} {n : ℕ} : t.abort.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
 
 theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
   induction t <;> simp [*]
@@ -48,6 +69,7 @@ def Term.fvc (x : ℕ) : Term φ → ℕ
   | pair y z => y.fvc x + z.fvc x
   | inl y => y.fvc x
   | inr y => y.fvc x
+  | abort y => y.fvc x
   | _ => 0
 
 theorem Term.fvc_eq_fv_count (x : ℕ) (t : Term φ) : t.fvc x = t.fv.count x := by
@@ -285,6 +307,60 @@ def Region.fvi : Region φ → ℕ
   | let1 e t => Nat.max e.fvi (t.fvi - 1)
   | let2 e t => Nat.max e.fvi (t.fvi - 2)
   | cfg β _ f => Nat.max β.fvi (Finset.sup Finset.univ (λi => (f i).fvi - 1))
+
+theorem Region.fvi_br_le_iff {n : ℕ} {e : Term φ} : (br n e).fvi ≤ n ↔ e.fvi ≤ n := Iff.rfl
+
+theorem Region.fvi_case_le_iff {e} {s t : Region φ} {n : ℕ}
+  : (case e s t).fvi ≤ n ↔ e.fvi ≤ n ∧ s.fvi ≤ n + 1 ∧ t.fvi ≤ n + 1
+  := by simp
+
+theorem Region.fvi_case_le_disc {e} {s t : Region φ} {n : ℕ}
+  : (case e s t).fvi ≤ n → e.fvi ≤ n
+  := by rw [fvi_case_le_iff]; exact λ⟨he, _, _⟩ => he
+
+theorem Region.fvi_case_le_left {e} {s t : Region φ} {n : ℕ}
+  : (case e s t).fvi ≤ n → s.fvi ≤ n + 1
+  := by rw [fvi_case_le_iff]; exact λ⟨_, hs, _⟩ => hs
+
+theorem Region.fvi_case_le_right {e} {s t : Region φ} {n : ℕ}
+  : (case e s t).fvi ≤ n → t.fvi ≤ n + 1
+  := by rw [fvi_case_le_iff]; exact λ⟨_, _, ht⟩ => ht
+
+theorem Region.fvi_let1_le_iff {e : Term φ} {t} {n : ℕ}
+  : (let1 e t).fvi ≤ n ↔ e.fvi ≤ n ∧ t.fvi ≤ n + 1
+  := by simp
+
+theorem Region.fvi_let1_le_bind {e : Term φ} {t} {n : ℕ}
+  : (let1 e t).fvi ≤ n → e.fvi ≤ n
+  := by rw [fvi_let1_le_iff]; exact λ⟨he, _⟩ => he
+
+theorem Region.fvi_let1_le_rest {e : Term φ} {t} {n : ℕ}
+  : (let1 e t).fvi ≤ n → t.fvi ≤ n + 1
+  := by rw [fvi_let1_le_iff]; exact λ⟨_, ht⟩ => ht
+
+theorem Region.fvi_let2_le_iff {e : Term φ} {t} {n : ℕ}
+  : (let2 e t).fvi ≤ n ↔ e.fvi ≤ n ∧ t.fvi ≤ n + 2
+  := by simp
+
+theorem Region.fvi_let2_le_bind {e : Term φ} {t} {n : ℕ}
+  : (let2 e t).fvi ≤ n → e.fvi ≤ n
+  := by rw [fvi_let2_le_iff]; exact λ⟨he, _⟩ => he
+
+theorem Region.fvi_let2_le_rest {e : Term φ} {t} {n : ℕ}
+  : (let2 e t).fvi ≤ n → t.fvi ≤ n + 2
+  := by rw [fvi_let2_le_iff]; exact λ⟨_, ht⟩ => ht
+
+theorem Region.fvi_cfg_le_iff {β : Region φ} {k : ℕ} {f : Fin k → Region φ}
+  : (cfg β k f).fvi ≤ n ↔ β.fvi ≤ n ∧ ∀i, (f i).fvi ≤ n + 1
+  := by simp
+
+theorem Region.fvi_cfg_le_entry {β : Region φ} {n : ℕ} {f : Fin k → Region φ}
+  : (cfg β k f).fvi ≤ n → β.fvi ≤ n
+  := by rw [fvi_cfg_le_iff]; exact λ⟨hβ, _⟩ => hβ
+
+theorem Region.fvi_cfg_le_blocks {β : Region φ} {n : ℕ} {f : Fin k → Region φ}
+  : (cfg β k f).fvi ≤ n → ∀i, (f i).fvi ≤ n + 1
+  := by rw [fvi_cfg_le_iff]; exact λ⟨_, hf⟩ i => hf i
 
 /-- Get the count of how often a free variable occurs in this region -/
 @[simp]
