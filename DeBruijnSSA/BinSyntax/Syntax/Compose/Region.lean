@@ -456,48 +456,15 @@ theorem associator_append_associator_inv_def
   := rfl
 
 def RWD.assocatior_append_associator_inv_repack_left {Γ : ℕ → ε}
-  : RWD StepD Γ (@associator φ ++ associator_inv) repack_left
-  :=
-    let d₀ : RWD StepD (Nat.liftnBot 2 (Nat.liftnBot 2 Γ)) (@Region.let1 φ (Term.var 1)
-        (Region.let1 ((Term.var 1).pair (Term.var 3))
-          (Region.let2 (Term.var 0) (ret (((Term.var 3).pair (Term.var 1)).pair (Term.var 0))))))
-        (Region.let1 ((Term.var 0).pair (Term.var 2))
-          (Region.let2 (Term.var 0) (ret (((Term.var 4).pair (Term.var 1)).pair (Term.var 0)))))
-        := let1_beta _ _ rfl;
-    let d₁ : RWD StepD (Nat.liftnBot 2 (Nat.liftnBot 2 Γ))
-      (Region.let1 ((Term.var 0).pair (Term.var 2))
-          (Region.let2 (Term.var 0) (ret (((Term.var 4).pair (Term.var 1)).pair (Term.var 0)))))
-      (Region.let2
-        ((Term.var 0).pair (Term.var 2))
-        (ret (((Term.var 3).pair (Term.var 1)).pair (Term.var 0))))
-      := let1_beta _ _ (by simp [Nat.liftnBot]);
-    let d₂ : RWD StepD (Nat.liftnBot 2 (Nat.liftnBot 2 Γ))
-      (Region.let2
-        ((Term.var 0).pair (Term.var 2))
-        (ret (((Term.var 3).pair (Term.var 1)).pair (Term.var 0))))
-      (Region.let1 (Term.var 0) $
-        Region.let1 (Term.var 3) $
-        ret (((Term.var 3).pair (Term.var 1)).pair (Term.var 0))
-      )
-      := let2_pair _ _ _
-    let d₃ : RWD StepD (Nat.liftnBot 2 (Nat.liftnBot 2 Γ))
-      (Region.let1 (Term.var 0) $
-        Region.let1 (Term.var 3) $
-        ret (((Term.var 3).pair (Term.var 1)).pair (Term.var 0))
-      )
-      (Region.let1 (Term.var 2) $
-        ret (((Term.var 2).pair (Term.var 1)).pair (Term.var 0))
-      )
-      := let1_beta _ _ rfl
-    let d₄ : RWD StepD (Nat.liftnBot 2 (Nat.liftnBot 2 Γ))
-      (Region.let1 (Term.var 2) $
-        ret (((Term.var 2).pair (Term.var 1)).pair (Term.var 0)))
-      (ret (((Term.var 1).pair (Term.var 0)).pair (Term.var 2)))
-      := let1_beta _ _ rfl
-    let2 _ $
-    let2 _ $
-    comp (let2_pair _ _ _) $
-    (comp d₀ (comp d₁ (comp d₂ (comp d₃ d₄))))
+    : RWD StepD Γ (@associator φ ++ associator_inv) repack_left :=
+  let2 _ $
+  let2 _ $
+  comp (let2_pair _ _ _) $
+  comp (let1_beta _ _ rfl) $
+  comp (let1_beta _ _ (by simp [Nat.liftnBot])) $
+  comp (let2_pair _ _ _) $
+  comp (let1_beta _ _ rfl) $
+  let1_beta _ _ rfl
 
 -- don't think these are quite true yet :(
 
@@ -510,8 +477,15 @@ def RWD.assocatior_append_associator_inv_repack_left {Γ : ℕ → ε}
 --   := comp assocatior_append_associator_inv_repack_left repack_left_nil
 
 def RWD.associator_inv_append_associator_repack_right {Γ : ℕ → ε}
-  : RWD StepD Γ (@associator_inv φ ++ associator) repack_right
-  := sorry
+    : RWD StepD Γ (@associator_inv φ ++ associator) repack_right :=
+  let2 _ $
+  let2 _ $
+  comp (let2_pair _ _ _) $
+  comp (let1_beta _ _ (by simp [Nat.liftnBot])) $
+  comp (let1_beta _ _ (by simp [Nat.liftnBot])) $
+  comp (let2_pair _ _ _) $
+  comp (let1_beta _ _ rfl) $
+  let1_beta _ _ rfl
 
 def proj_left : Region φ :=
   let2 (Term.var 0) $
