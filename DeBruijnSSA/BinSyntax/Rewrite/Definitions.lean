@@ -14,8 +14,12 @@ def Term.WfD.subst₂ {Γ : Ctx α ε} {a b : Term φ}
   | ⟨1, _⟩ => hb
   | ⟨n + 2, h⟩ => var ⟨by simp at h; exact h, le_refl _⟩
 
-def Region.RewriteD.wfD {Γ : Ctx α ε} {r r' : Region φ} {A}
-  : RewriteD r r' → r.WfD Γ A → r'.WfD Γ A
+structure HaveTarget (Γ : Ctx α ε) (L : LCtx α) (r r' : Region φ) where
+  left : r.WfD Γ L
+  right : r'.WfD Γ L
+
+def Region.RewriteD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
+  : RewriteD r r' → r.WfD Γ L → r'.WfD Γ L
   | let1_op f e r, WfD.let1 (Term.WfD.op hf he) hr
     => WfD.let1 he (WfD.let1 (Term.WfD.op hf Term.WfD.var0_pure) hr.vwk1)
   | let1_pair a b r, WfD.let1 (Term.WfD.pair ha hb) hr
@@ -47,8 +51,8 @@ def Region.RewriteD.wfD {Γ : Ctx α ε} {r r' : Region φ} {A}
   | cfg_fuse β n G k ρ hρ, _ => sorry
   | let2_eta r, _ => sorry
 
-def Region.RewriteD.wfD_inv {Γ : Ctx α ε} {r r' : Region φ} {A}
-  : RewriteD r r' → r'.WfD Γ A → r.WfD Γ A
+def Region.RewriteD.wfD_inv {Γ : Ctx α ε} {r r' : Region φ} {L}
+  : RewriteD r r' → r'.WfD Γ L → r.WfD Γ L
   | let1_op f e r, _ => sorry
   | let1_pair a b r, _ => sorry
   | let1_inl a r, _ => sorry
@@ -70,12 +74,18 @@ def Region.RewriteD.wfD_inv {Γ : Ctx α ε} {r r' : Region φ} {A}
   | cfg_fuse β n G k ρ hρ, _ => sorry
   | let2_eta r, _ => sorry
 
-def Region.ReduceD.wfD {Γ : Ctx α ε} {r r' : Region φ} {A}
-  : ReduceD Γ.effect r r' → r.WfD Γ A → r'.WfD Γ A
+def Region.ReduceD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
+  : ReduceD Γ.effect r r' → r.WfD Γ L → r'.WfD Γ L
   | let1_beta e r he, _ => sorry
   | case_inl e r s, _ => sorry
   | case_inr e r s, _ => sorry
   | wk_cfg β n G k ρ, _ => sorry
   | dead_cfg_left β n G m G', _ => sorry
+
+def Region.StepD.wfD {Γ : Ctx α ε} {r r' : Region φ} {L}
+  : StepD Γ.effect r r' → r.WfD Γ L → r'.WfD Γ L
+  | reduce p => p.wfD
+  | rw p => p.wfD
+  | rw_symm p => p.wfD_inv
 
 end BinSyntax
