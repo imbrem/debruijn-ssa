@@ -172,7 +172,7 @@ inductive Term.Wf : Ctx α ε → Term φ → Ty α × ε → Prop
   | pair : Wf Γ a ⟨A, e⟩ → Wf Γ b ⟨B, e⟩ → Wf Γ (pair a b) ⟨(Ty.prod A B), e⟩
   | inl : Wf Γ a ⟨A, e⟩ → Wf Γ (inl a) ⟨(Ty.coprod A B), e⟩
   | inr : Wf Γ b ⟨B, e⟩ → Wf Γ (inr b) ⟨(Ty.coprod A B), e⟩
-  | abort : Wf Γ a ⟨Ty.empty, e⟩ → Wf Γ (abort a) ⟨A, e⟩
+  -- | abort : Wf Γ a ⟨Ty.empty, e⟩ → Wf Γ (abort a) ⟨A, e⟩
   | unit (e) : Wf Γ unit ⟨Ty.unit, e⟩
 
 theorem Term.Wf.to_var {Γ : Ctx α ε} {n V} (h : Wf Γ (@Term.var φ n) V)
@@ -214,10 +214,10 @@ theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV
     cases hV.left
     constructor
     exact I ⟨by assumption, hV.right⟩
-  | abort _ I =>
-    cases V'
-    constructor
-    exact I ⟨le_refl _, hV.right⟩
+  -- | abort _ I =>
+  --   cases V'
+  --   constructor
+  --   exact I ⟨le_refl _, hV.right⟩
   | unit =>
     cases V'
     cases hV.left
@@ -246,7 +246,7 @@ inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | pair : WfD Γ a ⟨A, e⟩ → WfD Γ b ⟨B, e⟩ → WfD Γ (pair a b) ⟨(Ty.prod A B), e⟩
   | inl : WfD Γ a ⟨A, e⟩ → WfD Γ (inl a) ⟨(Ty.coprod A B), e⟩
   | inr : WfD Γ b ⟨B, e⟩ → WfD Γ (inr b) ⟨(Ty.coprod A B), e⟩
-  | abort : WfD Γ a ⟨Ty.empty, e⟩ → WfD Γ (abort a) ⟨A, e⟩
+  -- | abort : WfD Γ a ⟨Ty.empty, e⟩ → WfD Γ (abort a) ⟨A, e⟩
   | unit (e) : WfD Γ unit ⟨Ty.unit, e⟩
 
 def Term.WfD.var0 {head} {Γ : Ctx α ε} : WfD (head::Γ) (@Term.var φ 0) head := var (by simp)
@@ -287,7 +287,7 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
   | pair dl dr => Wf.pair dl.toWf dr.toWf
   | inl dl => Wf.inl dl.toWf
   | inr dr => Wf.inr dr.toWf
-  | abort da => Wf.abort da.toWf
+  -- | abort da => Wf.abort da.toWf
   | unit e => Wf.unit e
 
 -- /-- Infer the type of a term; pun with infimum -/
@@ -950,7 +950,7 @@ def Term.WfD.wk_eff {a : Term φ} {A e} (h : e ≤ e') : WfD Γ a ⟨A, e⟩ →
   | pair dl dr => pair (dl.wk_eff h) (dr.wk_eff h)
   | inl dl => inl (dl.wk_eff h)
   | inr dr => inr (dr.wk_eff h)
-  | abort da => abort (da.wk_eff h)
+  -- | abort da => abort (da.wk_eff h)
   | unit e => unit e'
 
 /-- Weaken the type of a term derivation -/
@@ -961,7 +961,7 @@ def Term.WfD.wk_ty {a : Term φ} {A e} (h : A ≤ A') (da : WfD Γ a ⟨A, e⟩)
   | pair dl dr, Ty.prod A B, h => pair (dl.wk_ty h.prod_left) (dr.wk_ty h.prod_right)
   | inl dl, Ty.coprod A B, h => inl (dl.wk_ty h.coprod_left)
   | inr dr, Ty.coprod A B, h => inr (dr.wk_ty h.coprod_right)
-  | abort da, _, h => abort da
+  -- | abort da, _, h => abort da
   | unit e, Ty.unit, h => unit e
 
 /-- Weaken the result of a term derivation -/
@@ -980,7 +980,7 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
   | pair dl dr => pair (dl.wk h) (dr.wk h)
   | inl dl => inl (dl.wk h)
   | inr dr => inr (dr.wk h)
-  | abort da => abort (da.wk h)
+  -- | abort da => abort (da.wk h)
   | unit e => unit e
 
 /-- Reverse-weaken a term derivation, given that it is inbounds -/
@@ -993,7 +993,7 @@ def Term.WfD.wk_inv {a : Term φ}
     => pair (dl.wk_inv h (fvi_pair_le_left ha)) (dr.wk_inv h (fvi_pair_le_right ha))
   | Term.inl _, inl dl => inl (dl.wk_inv h ha)
   | Term.inr _, inr dr => inr (dr.wk_inv h ha)
-  | Term.abort _, abort da => abort (da.wk_inv h ha)
+  -- | Term.abort _, abort da => abort (da.wk_inv h ha)
   | Term.unit, unit e => unit e
 
 def Term.WfD.wk1 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.wk1 L
@@ -1009,7 +1009,7 @@ def Term.WfD.wk_id {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → Wf
   | pair dl dr => pair (dl.wk_id h) (dr.wk_id h)
   | inl dl => inl (dl.wk_id h)
   | inr dr => inr (dr.wk_id h)
-  | abort da => abort (da.wk_id h)
+  -- | abort da => abort (da.wk_id h)
   | unit e => unit e
 
 def Body.WfD.wk {Γ Δ : Ctx α ε} {ρ} {b : Body φ} (h : Γ.Wkn Δ ρ) : WfD Δ b Ξ → WfD Γ (b.wk ρ) Ξ
@@ -1194,7 +1194,7 @@ theorem Term.WfD.effect_le
   | pair dl dr => sup_le_iff.mpr ⟨dl.effect_le, dr.effect_le⟩
   | inl dl => dl.effect_le
   | inr dr => dr.effect_le
-  | abort da => da.effect_le
+  -- | abort da => da.effect_le
   | unit _ => bot_le
 
 def Ctx.Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
@@ -1216,7 +1216,7 @@ def Term.WfD.toEffect {Γ : Ctx α ε} {a : Term φ} {V}
     (dr.toEffect.wk_eff (by simp [effect]))
   | inl dl => inl dl.toEffect
   | inr dr => inr dr.toEffect
-  | abort da => abort da.toEffect
+  -- | abort da => abort da.toEffect
   | unit e => unit ⊥
 
 -- def Body.minDefs (Γ : Ctx α ε) : Body φ → Ctx α ε

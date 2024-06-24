@@ -15,7 +15,7 @@ inductive Term.SWfD : List (Ty α) → Term φ → Ty α → Type _
   | pair : SWfD Γ a A → SWfD Γ b B → SWfD Γ (pair a b) (Ty.prod A B)
   | inl : SWfD Γ a A → SWfD Γ (inl a) (Ty.coprod A B)
   | inr : SWfD Γ b B → SWfD Γ (inr b) (Ty.coprod A B)
-  | abort : SWfD Γ a Ty.empty → SWfD Γ (abort a) A
+  -- | abort : SWfD Γ a Ty.empty → SWfD Γ (abort a) A
   | unit : SWfD Γ unit Ty.unit
 
 end BinSyntax

@@ -18,7 +18,7 @@ def Term.effect (Γ : ℕ → ε) : Term φ → ε
   | pair a b => a.effect Γ ⊔ b.effect Γ
   | inl a => a.effect Γ
   | inr b => b.effect Γ
-  | abort e => e.effect Γ
+  -- | abort e => e.effect Γ
   | unit => ⊥
 
 theorem Term.effect_wk (ρ : ℕ → ℕ) (Γ : ℕ → ε) (e : Term φ)
@@ -342,7 +342,7 @@ theorem Term.effect_mono {Γ : ℕ → ε} {e : Term φ} {Δ : ℕ → ε}
   | pair a b Ia Ib => exact sup_le_sup Ia Ib
   | inl _ I => exact I
   | inr _ I => exact I
-  | abort _ I => exact I
+  -- | abort _ I => exact I
   | _ => exact le_refl _
 
 theorem Body.effect_mono {Γ : ℕ → ε} {b : Body φ} {Δ : ℕ → ε}

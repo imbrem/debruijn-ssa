@@ -33,23 +33,23 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk1)
   | let1_inr (e r) :
     RewriteD (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.vwk1)
-  | let1_abort (e r) :
-    RewriteD (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
+  -- | let1_abort (e r) :
+  --   RewriteD (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
   | let2_op (f e r) :
     RewriteD (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   | let2_pair (a b r) : RewriteD (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
-  | let2_abort (e r) :
-    RewriteD (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+  -- | let2_abort (e r) :
+  --   RewriteD (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   | case_op (f e r s) :
     RewriteD (case (op f e) r s)
       (let1 e $ case (op f (var 0))
       (r.vwk1)
       (s.vwk1))
-  | case_abort (e r s) :
-    RewriteD (case (abort e) r s)
-      (let1 e $ case (abort (var 0))
-      (r.vwk1)
-      (s.vwk1))
+  -- | case_abort (e r s) :
+  --   RewriteD (case (abort e) r s)
+  --     (let1 e $ case (abort (var 0))
+  --     (r.vwk1)
+  --     (s.vwk1))
   | let1_case (a b r s) :
     RewriteD (let1 a $ case (b.wk Nat.succ) r s)
     (case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s))
@@ -102,15 +102,15 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     rw [<-sup_assoc]
     simp only [sup_comm]
   | let2_pair => simp [Nat.liftBot, sup_assoc, Nat.liftnBot_iterate]
-  | let2_abort =>
-    simp [Nat.liftnBot_iterate, Nat.liftBot, Nat.liftnWk_two,
-      Region.effect_liftBot_vwk_liftWk, Nat.liftBot_comp_liftWk]
+  -- | let2_abort =>
+  --   simp [Nat.liftnBot_iterate, Nat.liftBot, Nat.liftnWk_two,
+  --     Region.effect_liftBot_vwk_liftWk, Nat.liftBot_comp_liftWk]
   | case_op =>
     simp only [Region.effect, Term.effect, Nat.liftBot, ge_iff_le, bot_le, sup_of_le_left,
       effect_liftBot2_vwk1]
     rw [<-sup_assoc, <-sup_assoc]
     simp only [sup_comm]
-  | case_abort => simp [Nat.liftBot, effect_liftBot2_vwk1, sup_assoc]
+  -- | case_abort => simp [Nat.liftBot, effect_liftBot2_vwk1, sup_assoc]
   | let1_case a b r s =>
     simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
     have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
@@ -264,16 +264,16 @@ def StepD.let1_inr_op {Γ : ℕ → ε} (e) (r : Region φ)
     (let1 (inr e) r)
   := StepD.rw_op $ RewriteD.let1_inr e r
 
-@[match_pattern]
-def StepD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
-  : StepD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
-  := StepD.rw $ RewriteD.let1_abort e r
+-- @[match_pattern]
+-- def StepD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
+--   : StepD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+--   := StepD.rw $ RewriteD.let1_abort e r
 
-@[match_pattern]
-def StepD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
-  : StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
-    (let1 (abort e) r)
-  := StepD.rw_op $ RewriteD.let1_abort e r
+-- @[match_pattern]
+-- def StepD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
+--   : StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+--     (let1 (abort e) r)
+--   := StepD.rw_op $ RewriteD.let1_abort e r
 
 @[match_pattern]
 def StepD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
@@ -297,16 +297,16 @@ def StepD.let2_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
     (let2 (pair a b) r)
   := StepD.rw_op $ RewriteD.let2_pair a b r
 
-@[match_pattern]
-def StepD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
-  : StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := StepD.rw $ RewriteD.let2_abort e r
+-- @[match_pattern]
+-- def StepD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
+--   : StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+--   := StepD.rw $ RewriteD.let2_abort e r
 
-@[match_pattern]
-def StepD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
-  : StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-    (let2 (abort e) r)
-  := StepD.rw_op $ RewriteD.let2_abort e r
+-- @[match_pattern]
+-- def StepD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
+--   : StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+--     (let2 (abort e) r)
+--   := StepD.rw_op $ RewriteD.let2_abort e r
 
 @[match_pattern]
 def StepD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
@@ -321,18 +321,18 @@ def StepD.case_op_op {Γ : ℕ → ε} (f e) (r s : Region φ)
     (case (op f e) r s)
   := StepD.rw_op $ RewriteD.case_op f e r s
 
-@[match_pattern]
-def StepD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
-  : StepD Γ (case (abort e) r s)
-    (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
-  )
-  := StepD.rw $ RewriteD.case_abort e r s
+-- @[match_pattern]
+-- def StepD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
+--   : StepD Γ (case (abort e) r s)
+--     (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
+--   )
+--   := StepD.rw $ RewriteD.case_abort e r s
 
-@[match_pattern]
-def StepD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
-  : StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
-    (case (abort e) r s)
-  := StepD.rw_op $ RewriteD.case_abort e r s
+-- @[match_pattern]
+-- def StepD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
+--   : StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
+--     (case (abort e) r s)
+--   := StepD.rw_op $ RewriteD.case_abort e r s
 
 @[match_pattern]
 def StepD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
@@ -617,14 +617,14 @@ def RWD.let1_inr_op {Γ : ℕ → ε} (e) (r : Region φ)
     (let1 (inr e) r)
   := single $ BCongD.step $ StepD.let1_inr_op e r
 
-def RWD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
-  : RWD StepD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
-  := single $ BCongD.step $ StepD.let1_abort e r
+-- def RWD.let1_abort {Γ : ℕ → ε} (e) (r : Region φ)
+--   : RWD StepD Γ (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+--   := single $ BCongD.step $ StepD.let1_abort e r
 
-def RWD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
-  : RWD StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
-    (let1 (abort e) r)
-  := single $ BCongD.step $ StepD.let1_abort_op e r
+-- def RWD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
+--   : RWD StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
+--     (let1 (abort e) r)
+--   := single $ BCongD.step $ StepD.let1_abort_op e r
 
 def RWD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
   : RWD StepD Γ (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
@@ -644,14 +644,14 @@ def RWD.let2_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
     (let2 (pair a b) r)
   := single $ BCongD.step $ StepD.let2_pair_op a b r
 
-def RWD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
-  : RWD StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := single $ BCongD.step $ StepD.let2_abort e r
+-- def RWD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
+--   : RWD StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+--   := single $ BCongD.step $ StepD.let2_abort e r
 
-def RWD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
-  : RWD StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-    (let2 (abort e) r)
-  := single $ BCongD.step $ StepD.let2_abort_op e r
+-- def RWD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
+--   : RWD StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+--     (let2 (abort e) r)
+--   := single $ BCongD.step $ StepD.let2_abort_op e r
 
 def RWD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
   : RWD StepD Γ (case (op f e) r s)
@@ -664,16 +664,16 @@ def RWD.case_op_op {Γ : ℕ → ε} (f e) (r s : Region φ)
     (case (op f e) r s)
   := single $ BCongD.step $ StepD.case_op_op f e r s
 
-def RWD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
-  : RWD StepD Γ (case (abort e) r s)
-    (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
-  )
-  := single $ BCongD.step $ StepD.case_abort e r s
+-- def RWD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
+--   : RWD StepD Γ (case (abort e) r s)
+--     (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
+--   )
+--   := single $ BCongD.step $ StepD.case_abort e r s
 
-def RWD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
-  : RWD StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
-    (case (abort e) r s)
-  := single $ BCongD.step $ StepD.case_abort_op e r s
+-- def RWD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
+--   : RWD StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
+--     (case (abort e) r s)
+--   := single $ BCongD.step $ StepD.case_abort_op e r s
 
 def RWD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   : RWD StepD Γ (let1 a $ case (b.wk Nat.succ) r s)

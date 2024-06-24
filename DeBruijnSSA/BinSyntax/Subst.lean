@@ -62,7 +62,7 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
   | pair dl dr => pair (dl.subst hσ) (dr.subst hσ)
   | inl d => inl (d.subst hσ)
   | inr d => inr (d.subst hσ)
-  | abort d => abort (d.subst hσ)
+  -- | abort d => abort (d.subst hσ)
   | unit e => unit e
 
 def Term.WfD.subst0 {a : Term φ} (ha : a.WfD Δ V) : a.subst0.WfD Δ (V::Δ)

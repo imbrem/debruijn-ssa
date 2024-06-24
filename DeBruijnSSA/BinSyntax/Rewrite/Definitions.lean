@@ -209,9 +209,9 @@ theorem TStep.symm {Γ L} {r r' : Region φ} : TStep Γ L r r' → TStep Γ L r'
 inductive WfD.Cong (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop)
   : Ctx α ε → LCtx α → Region φ → Region φ → Prop
   | step : P Γ L r r' → Cong P Γ L r r'
-  | case_left : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r' → s.WfD (⟨B, ⊥⟩::Γ) L
+  | case_left : e.WfD Γ ⟨Ty.coprod A B, e'⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r' → s.WfD (⟨B, ⊥⟩::Γ) L
     → Cong P Γ L (Region.case e r s) (Region.case e r' s)
-  | case_right : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩ → r.WfD (⟨A, ⊥⟩::Γ) L → Cong P (⟨B, ⊥⟩::Γ) L s s'
+  | case_right : e.WfD Γ ⟨Ty.coprod A B, e'⟩ → r.WfD (⟨A, ⊥⟩::Γ) L → Cong P (⟨B, ⊥⟩::Γ) L s s'
     → Cong P Γ L (Region.case e r s) (Region.case e r s')
   | let1 : e.WfD Γ ⟨A, e'⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r'
     → Cong P Γ L (Region.let1 e r) (Region.let1 e r')
@@ -229,11 +229,36 @@ inductive WfD.Cong (P : Ctx α ε → LCtx α → Region φ → Region φ → Pr
     (i : Fin n) →
     Cong P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L) r r' →
     Cong P Γ L (Region.cfg β n (Function.update G i r)) (Region.cfg β n (Function.update G i r'))
+  -- | collapse {Γ L} : IsEmpty (r.WfD Γ L) → IsEmpty (r'.WfD Γ L) → Cong P Γ L r r'
 
 def Eqv (φ)
   [EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
   (Γ : Ctx α ε) (L : LCtx α)
   := Quot (WfD.Cong (TStep (φ := φ)) Γ L)
+
+def Eqv.br (ℓ : ℕ) (e : Term φ) : Eqv φ Γ L := Quot.mk _ (Region.br ℓ e)
+
+def Eqv.let1 {e : Term φ} (de : e.WfD Γ ⟨A, e'⟩)
+  : Eqv φ (⟨A, ⊥⟩::Γ) L → Eqv φ Γ L
+  := Quot.lift (λr => Quot.mk _ (r.let1 e)) (λ_ _ h => Quot.sound (h.let1 de))
+
+def Eqv.let2 {e : Term φ} (de : e.WfD Γ ⟨Ty.prod A B, e'⟩)
+  : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → Eqv φ Γ L
+  := Quot.lift (λr => Quot.mk _ (r.let2 e)) (λ_ _ h => Quot.sound (h.let2 de))
+
+-- def Eqv.case {e : Term φ} (de : e.WfD Γ ⟨Ty.coprod A B, e'⟩)
+--   : Eqv φ (⟨A, ⊥⟩::Γ) L → Eqv φ (⟨B, ⊥⟩::Γ) L → Eqv φ Γ L
+--   := Quot.lift₂ (λr s => Quot.mk _ (Region.case e r s))
+--       (λr s s' ps => Quot.sound (
+--         open Classical in
+--         if h : Nonempty (r.WfD (⟨A, ⊥⟩::Γ) L) then
+--           let ⟨dr⟩ := h;
+--           WfD.Cong.case_right de dr ps
+--         else
+--           WfD.Cong.case_left de (WfD.Cong.collapse ⟨λ dr => h ⟨dr⟩⟩ sorry) sorry
+--           -- WfD.Cong.collapse (Γ := ⟨A, ⊥⟩::Γ) (L := L) (r := r) ⟨λ | h' => h ⟨dr⟩⟩ sorry
+--       ))
+--       (λr r' s h => Quot.sound sorry)
 
 -- TODO: Eqv.br, Eqv.case, Eqv.let1, Eqv2.let2, Eqv.cfg ...
 

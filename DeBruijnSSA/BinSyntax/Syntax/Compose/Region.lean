@@ -139,7 +139,7 @@ def RewriteD.lsubst_alpha {r₀ r₀'}
   | let1_pair a b r => cast_trg (let1_pair _ _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
   | let1_inl e r => cast_trg (let1_inl _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
   | let1_inr e r => cast_trg (let1_inr _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
-  | let1_abort e r => cast_trg (let1_abort _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
+  -- | let1_abort e r => cast_trg (let1_abort _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
   | let2_op f e r => cast_trg (let2_op _ _ _) (by
     --TODO: factor more nicely...
     simp only [vliftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1]
@@ -152,17 +152,17 @@ def RewriteD.lsubst_alpha {r₀ r₀'}
     --TODO: factor more nicely...
     simp only [lsubst, vliftn_alpha, vlift_alpha, vwk1, vwk_vwk, <-Nat.liftWk_comp]
     rfl)
-  | let2_abort e r => cast_trg (let2_abort _ _) (by
-    --TODO: factor more nicely...
-    simp only [vliftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1]
-    congr
-    apply congrArg
-    apply congrFun
-    apply congrArg
-    funext k; cases k <;> rfl)
+  -- | let2_abort e r => cast_trg (let2_abort _ _) (by
+  --   --TODO: factor more nicely...
+  --   simp only [vliftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1]
+  --   congr
+  --   apply congrArg
+  --   apply congrFun
+  --   apply congrArg
+  --   funext k; cases k <;> rfl)
   | case_op f e r s => cast_trg (case_op _ _ _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
-  | case_abort e r s
-    => cast_trg (case_abort _ _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
+  -- | case_abort e r s
+  --   => cast_trg (case_abort _ _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
   | let1_case a b r s => cast_trg (let1_case _ _ _ _)
     (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
   | let2_case a b r s => cast_trg (let2_case _ _ _ _) (by
@@ -527,7 +527,7 @@ def join (r r' : Region φ) : Region φ := case (Term.var 0)
   (r.vwk (Nat.liftWk Nat.succ))
   (r'.lwk (Nat.liftWk Nat.succ))
 
-def abort : Region φ := ret (Term.var 0).abort
+-- def abort : Region φ := ret (Term.var 0).abort
 
 def left_distributor : Region φ :=
   case (Term.var 0)

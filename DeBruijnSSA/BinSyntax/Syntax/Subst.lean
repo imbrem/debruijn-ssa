@@ -111,7 +111,7 @@ def subst (σ : Subst φ) : Term φ → Term φ
 | unit => unit
 | inl a => inl (subst σ a)
 | inr a => inr (subst σ a)
-| abort a => abort (subst σ a)
+-- | abort a => abort (subst σ a)
 
 @[simp]
 theorem subst_id (t : Term φ) : t.subst Subst.id = t := by induction t <;> simp [*]

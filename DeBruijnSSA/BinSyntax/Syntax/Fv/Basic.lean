@@ -22,7 +22,7 @@ def Term.fv : Term φ → Multiset ℕ
   | pair x y => x.fv + y.fv
   | inl a => a.fv
   | inr a => a.fv
-  | abort a => a.fv
+  -- | abort a => a.fv
   | _ => 0
 
 theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ := by
@@ -36,7 +36,7 @@ def Term.fvi : Term φ → ℕ
   | pair x y => Nat.max x.fvi y.fvi
   | inl a => a.fvi
   | inr a => a.fvi
-  | abort a => a.fvi
+  -- | abort a => a.fvi
   | _ => 0
 
 theorem Term.fvi_var_le_iff {x n : ℕ} : (@var φ x).fvi ≤ n ↔ x < n := by simp [Nat.succ_le_iff]
@@ -56,7 +56,7 @@ theorem Term.fvi_inl_le_iff {t : Term φ} {n : ℕ} : t.inl.fvi ≤ n ↔ t.fvi 
 
 theorem Term.fvi_inr_le_iff {t : Term φ} {n : ℕ} : t.inr.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
 
-theorem Term.fvi_abort_le_iff {t : Term φ} {n : ℕ} : t.abort.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
+-- theorem Term.fvi_abort_le_iff {t : Term φ} {n : ℕ} : t.abort.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
 
 theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
   induction t <;> simp [*]
@@ -69,7 +69,7 @@ def Term.fvc (x : ℕ) : Term φ → ℕ
   | pair y z => y.fvc x + z.fvc x
   | inl y => y.fvc x
   | inr y => y.fvc x
-  | abort y => y.fvc x
+  -- | abort y => y.fvc x
   | _ => 0
 
 theorem Term.fvc_eq_fv_count (x : ℕ) (t : Term φ) : t.fvc x = t.fv.count x := by
