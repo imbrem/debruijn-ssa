@@ -260,7 +260,10 @@ def Eqv.let2 {e : Term φ} (de : e.WfD Γ ⟨Ty.prod A B, e'⟩)
 --       ))
 --       (λr r' s h => Quot.sound sorry)
 
--- TODO: Eqv.br, Eqv.case, Eqv.let1, Eqv2.let2, Eqv.cfg ...
+
+def Eqv.cfg (R)
+  : Eqv φ Γ (R ++ L) → ((i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)) → Eqv φ Γ L
+  := Quot.lift (λβ f => sorry) sorry
 
 end Region
 
