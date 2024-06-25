@@ -290,6 +290,53 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
   | abort da => Wf.abort da.toWf
   | unit e => Wf.unit e
 
+theorem Term.Wf.nonempty {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : Nonempty (WfD Γ a V)
+  := match h with
+  | var dv => ⟨WfD.var dv⟩
+  | op df de => let ⟨de⟩ := de.nonempty; ⟨de.op df⟩
+  | pair dl dr => let ⟨dl⟩ := dl.nonempty; let ⟨dr⟩ := dr.nonempty; ⟨dl.pair dr⟩
+  | inl dl => let ⟨dl⟩ := dl.nonempty; ⟨dl.inl⟩
+  | inr dr => let ⟨dr⟩ := dr.nonempty; ⟨dr.inr⟩
+  | abort da => let ⟨da⟩ := da.nonempty; ⟨da.abort⟩
+  | unit e => ⟨WfD.unit e⟩
+
+theorem Term.Wf.nonempty_iff {Γ : Ctx α ε} {a : Term φ} {V} : Wf Γ a V ↔ Nonempty (WfD Γ a V)
+  := ⟨Term.Wf.nonempty, λ⟨h⟩ => h.toWf⟩
+
+@[simp]
+theorem Term.Wf.var_iff {Γ : Ctx α ε} {n V} : Wf (φ := φ) Γ (Term.var n) V ↔ Γ.Var n V
+  := ⟨λ| Wf.var dv => dv, λdv => Wf.var dv⟩
+
+@[simp]
+theorem Term.Wf.op_iff {Γ : Ctx α ε} {a : Term φ} {V}
+  : Wf Γ (Term.op f a) V ↔ Φ.trg f ≤ V.1 ∧ Φ.effect f ≤ V.2 ∧ Wf Γ a ⟨Φ.src f, V.2⟩
+  := ⟨λ| Wf.op df de => ⟨df.trg, df.effect, de.wk_res ⟨df.src, le_refl _⟩⟩,
+      λ⟨trg, eff, de⟩ => Wf.op ⟨⟨le_refl _, trg⟩, eff⟩ de⟩
+
+@[simp]
+theorem Term.Wf.pair_iff {Γ : Ctx α ε} {a b : Term φ} {A B}
+  : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩ ↔ Wf Γ a ⟨A, e⟩ ∧ Wf Γ b ⟨B, e⟩
+  := ⟨λ| Wf.pair dl dr => ⟨dl, dr⟩, λ⟨dl, dr⟩ => Wf.pair dl dr⟩
+
+@[simp]
+theorem Term.Wf.inl_iff {Γ : Ctx α ε} {a : Term φ} {A B}
+  : Wf Γ (Term.inl a) ⟨Ty.coprod A B, e⟩ ↔ Wf Γ a ⟨A, e⟩
+  := ⟨λ| Wf.inl dl => dl, λdl => Wf.inl dl⟩
+
+@[simp]
+theorem Term.Wf.inr_iff {Γ : Ctx α ε} {b : Term φ} {A B}
+  : Wf Γ (Term.inr b) ⟨Ty.coprod A B, e⟩ ↔ Wf Γ b ⟨B, e⟩
+  := ⟨λ| Wf.inr dr => dr, λdr => Wf.inr dr⟩
+
+@[simp]
+theorem Term.Wf.abort_iff {Γ : Ctx α ε} {a : Term φ} {A}
+  : Wf Γ (Term.abort a) ⟨A, e⟩ ↔ Wf Γ a ⟨Ty.empty, e⟩
+  := ⟨λ| Wf.abort da => da, λda => Wf.abort da⟩
+
+@[simp]
+theorem Term.Wf.unit' {Γ : Ctx α ε} {e} : Wf (φ := φ) Γ Term.unit ⟨Ty.unit, e⟩
+  := Wf.unit e
+
 -- /-- Infer the type of a term; pun with infimum -/
 -- def Term.infTy (Γ : Ctx α ε) : Term φ → Ty α
 --   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
@@ -558,10 +605,10 @@ inductive TRegion.WfJE : Ctx α ε → TRegion φ → LCtx α → Prop
 
 inductive Region.WfD : Ctx α ε → Region φ → LCtx α → Type _
   | br : L.Trg n A → a.WfD Γ ⟨A, ⊥⟩ → WfD Γ (br n a) L
-  | case : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩
+  | case : a.WfD Γ ⟨Ty.coprod A B, e⟩
     → s.WfD (⟨A, ⊥⟩::Γ) L
     → t.WfD (⟨B, ⊥⟩::Γ) L
-    → WfD Γ (case e s t) L
+    → WfD Γ (case a s t) L
   | let1 : a.WfD Γ ⟨A, e⟩ → t.WfD (⟨A, ⊥⟩::Γ) L → (let1 a t).WfD Γ L
   | let2 : a.WfD Γ ⟨(Ty.prod A B), e⟩ → t.WfD (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L → (let2 a t).WfD Γ L
   | cfg (n) {G} (R : LCtx α) :
@@ -616,6 +663,99 @@ def Region.WfD.tm {Γ : Ctx α ε} {r : Region φ} {L} (_ : r.WfD Γ L) := r
 
 def Region.WfD.cfg_arity {Γ : Ctx α ε} {β : Region φ} {n G} {L}
   (_ : (Region.cfg β n G).WfD Γ L) : ℕ := n
+
+theorem Region.WfD.toWf {Γ : Ctx α ε} {r : Region φ} {L} : r.WfD Γ L → r.Wf Γ L
+  | WfD.br hℓ da => Wf.br hℓ da.toWf
+  | WfD.case ea es et => Wf.case ea.toWf es.toWf et.toWf
+  | WfD.let1 da dt => Wf.let1 da.toWf dt.toWf
+  | WfD.let2 da dt => Wf.let2 da.toWf dt.toWf
+  | WfD.cfg n R hR dβ dG => Wf.cfg n R hR dβ.toWf (λi => (dG i).toWf)
+
+theorem Region.Wf.nonempty {Γ : Ctx α ε} {r : Region φ} {L} : r.Wf Γ L → Nonempty (r.WfD Γ L)
+  | Wf.br hℓ da => let ⟨da⟩ := da.nonempty; ⟨WfD.br hℓ da⟩
+  | Wf.case ea es et =>
+    let ⟨ea⟩ := ea.nonempty; let ⟨es⟩ := es.nonempty; let ⟨et⟩ := et.nonempty;
+    ⟨WfD.case ea es et⟩
+  | Wf.let1 da dt => let ⟨da⟩ := da.nonempty; let ⟨dt⟩ := dt.nonempty; ⟨WfD.let1 da dt⟩
+  | Wf.let2 da dt => let ⟨da⟩ := da.nonempty; let ⟨dt⟩ := dt.nonempty; ⟨WfD.let2 da dt⟩
+  | Wf.cfg n R hR dβ dG => by
+    let ⟨dβ⟩ := dβ.nonempty;
+    have dG := (λi => (dG i).nonempty);
+    rw [<-Classical.nonempty_pi] at dG;
+    let ⟨dG⟩ := dG
+    exact ⟨WfD.cfg n R hR dβ dG⟩
+
+theorem Region.Wf.nonempty_iff {Γ : Ctx α ε} {r : Region φ} {L} : r.Wf Γ L ↔ Nonempty (r.WfD Γ L)
+  := ⟨Region.Wf.nonempty, λ⟨h⟩ => h.toWf⟩
+
+@[simp]
+theorem Region.Wf.br_iff {Γ : Ctx α ε} {ℓ} {a : Term φ} {L}
+  : (Region.br ℓ a).Wf Γ L ↔ ∃A, L.Trg ℓ A ∧ a.Wf Γ ⟨A, ⊥⟩
+  := ⟨λ| Wf.br hℓ da => ⟨_, hℓ, da⟩, λ⟨_, hℓ, da⟩ => Wf.br hℓ da⟩
+
+@[simp]
+theorem Region.Wf.case_iff {Γ : Ctx α ε} {a : Term φ} {s t : Region φ} {L}
+  : (Region.case a s t).Wf Γ L
+  ↔ ∃A B e, a.Wf Γ ⟨Ty.coprod A B, e⟩ ∧ s.Wf (⟨A, ⊥⟩::Γ) L ∧ t.Wf (⟨B, ⊥⟩::Γ) L
+  := ⟨λ| Wf.case ea es et => ⟨_, _, _, ea, es, et⟩, λ⟨_, _, _, ea, es, et⟩ => Wf.case ea es et⟩
+
+@[simp]
+theorem Region.Wf.let1_iff {Γ : Ctx α ε} {a : Term φ} {t : Region φ} {L}
+  : (Region.let1 a t).Wf Γ L ↔ ∃A e, a.Wf Γ ⟨A, e⟩ ∧ t.Wf (⟨A, ⊥⟩::Γ) L
+  := ⟨λ| Wf.let1 da dt => ⟨_, _, da, dt⟩, λ⟨_, _, da, dt⟩ => Wf.let1 da dt⟩
+
+@[simp]
+theorem Region.Wf.let2_iff {Γ : Ctx α ε} {a : Term φ} {t : Region φ} {L}
+  : (Region.let2 a t).Wf Γ L ↔ ∃A B e, a.Wf Γ ⟨Ty.prod A B, e⟩ ∧ t.Wf (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L
+  := ⟨λ| Wf.let2 da dt => ⟨_, _, _, da, dt⟩, λ⟨_, _, _, da, dt⟩ => Wf.let2 da dt⟩
+
+@[simp]
+theorem Region.Wf.cfg_iff {Γ : Ctx α ε} {n} {G} {β : Region φ} {L}
+  : (Region.cfg β n G).Wf Γ L ↔ ∃R : LCtx α, ∃h : R.length = n,
+    β.Wf Γ (R ++ L) ∧ ∀i : Fin n, (G i).Wf (⟨R.get (i.cast h.symm), ⊥⟩::Γ) (R ++ L)
+  := ⟨λ| Wf.cfg n _ hR dβ dG => ⟨_, hR, dβ, dG⟩, λ⟨_, hR, dβ, dG⟩ => Wf.cfg n _ hR dβ dG⟩
+
+def Region.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
+  := {r : Region φ | r.Wf Γ L}
+
+def Region.toIns {Γ : Ctx α ε} (r : Region φ) {L} (h : r.Wf Γ L) : Region.InS φ Γ L
+  := ⟨r, h⟩
+
+def Region.Wf.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.Wf Γ L) : Region.InS φ Γ L
+  := ⟨r, h⟩
+
+def Region.InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term φ)
+  (hℓ : L.Trg ℓ A) (ha : a.Wf Γ ⟨A, ⊥⟩) : InS φ Γ L
+  := ⟨Region.br ℓ a, Region.Wf.br hℓ ha⟩
+
+def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} (a : Term φ) (A e)
+  (ha : a.Wf Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : InS φ Γ L
+  := ⟨Region.let1 a t.1, Region.Wf.let1 ha t.2⟩
+
+def Region.InS.let2 {Γ : Ctx α ε} {L : LCtx α} (a : Term φ) (A B e)
+  (ha : a.Wf Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) : InS φ Γ L
+  := ⟨Region.let2 a t.1, Region.Wf.let2 ha t.2⟩
+
+def Region.InS.case {Γ : Ctx α ε} {L : LCtx α} (a : Term φ) (A B e)
+  (ha : a.Wf Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
+  := ⟨Region.case a s.1 t.1, Region.Wf.case ha s.2 t.2⟩
+
+def Region.InS.cfg {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α) (dβ : InS φ Γ (R ++ L))
+  (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : InS φ Γ L
+  := ⟨Region.cfg dβ.1 R.length (λi => (dG i).1), Region.Wf.cfg R.length R rfl dβ.2 (λi => (dG i).2)⟩
+
+def Region.InS.cfg' {Γ : Ctx α ε} {L : LCtx α} (n) (R : LCtx α)
+  (hR : R.length = n) (dβ : InS φ Γ (R ++ L))
+  (dG : ∀i : Fin n, InS φ (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
+  : InS φ Γ L
+  := ⟨Region.cfg dβ.1 n (λi => (dG i).1), Region.Wf.cfg n R hR dβ.2 (λi => (dG i).2)⟩
+
+def Region.InD (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
+  := Σr : Region φ, r.WfD Γ L
+
+def Region.InD.toInS {Γ : Ctx α ε} {L : LCtx α} (r : Region.InD φ Γ L) : Region.InS φ Γ L
+  := ⟨r.1, r.2.toWf⟩
 
 -- TODO: normalize region to TRegion; type preservation
 
