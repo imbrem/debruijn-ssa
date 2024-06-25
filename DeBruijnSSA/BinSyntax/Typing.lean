@@ -728,15 +728,15 @@ def Region.InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term φ)
   (hℓ : L.Trg ℓ A) (ha : a.Wf Γ ⟨A, ⊥⟩) : InS φ Γ L
   := ⟨Region.br ℓ a, Region.Wf.br hℓ ha⟩
 
-def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} (a : Term φ) (A e)
+def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e} (a : Term φ)
   (ha : a.Wf Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : InS φ Γ L
   := ⟨Region.let1 a t.1, Region.Wf.let1 ha t.2⟩
 
-def Region.InS.let2 {Γ : Ctx α ε} {L : LCtx α} (a : Term φ) (A B e)
+def Region.InS.let2 {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
   (ha : a.Wf Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) : InS φ Γ L
   := ⟨Region.let2 a t.1, Region.Wf.let2 ha t.2⟩
 
-def Region.InS.case {Γ : Ctx α ε} {L : LCtx α} (a : Term φ) (A B e)
+def Region.InS.case {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
   (ha : a.Wf Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
   := ⟨Region.case a s.1 t.1, Region.Wf.case ha s.2 t.2⟩
 
