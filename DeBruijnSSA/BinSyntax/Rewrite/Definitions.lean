@@ -285,10 +285,10 @@ theorem Wf.Cong.eqv_iff {P : Ctx α ε → LCtx α → Region φ → Region φ �
   | trans _ _ _ _ _ Il Ir => exact Il.trans Ir
 
 theorem Wf.Cong.case_left_eqv
-  {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
-  (e : Term φ) (he : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {r r' s : Region φ}
+  (he : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
   (p : EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
-  (s : Region φ) (hs : s.Wf (⟨B, ⊥⟩::Γ) L)
+  (hs : s.Wf (⟨B, ⊥⟩::Γ) L)
   : EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r' s)
   := by induction p with
   | rel _ _ h => exact EqvGen.rel _ _ (h.case_left he hs)
@@ -297,9 +297,9 @@ theorem Wf.Cong.case_left_eqv
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
 theorem Wf.Cong.case_right_eqv
-  {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
-  (e : Term φ) (he : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
-  (r : Region φ) (hr : r.Wf (⟨A, ⊥⟩::Γ) L)
+  {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {r s s' : Region φ}
+  (he : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (hr : r.Wf (⟨A, ⊥⟩::Γ) L)
   (p : EqvGen (Wf.Cong P (⟨B, ⊥⟩::Γ) L) s s')
   : EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r s')
   := by induction p with
@@ -310,7 +310,7 @@ theorem Wf.Cong.case_right_eqv
 
 theorem Wf.Cong.let1_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
-  (a : Term φ) (ha : a.Wf Γ ⟨A, e⟩)
+  {a : Term φ} (ha : a.Wf Γ ⟨A, e⟩)
   (p : EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
   : EqvGen (Wf.Cong P Γ L) (Region.let1 a r) (Region.let1 a r')
   := by induction p with
@@ -321,7 +321,7 @@ theorem Wf.Cong.let1_eqv
 
 theorem Wf.Cong.let2_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
-  (a : Term φ) (ha : a.Wf Γ ⟨Ty.prod A B, e⟩)
+  {a : Term φ} (ha : a.Wf Γ ⟨Ty.prod A B, e⟩)
   (p : EqvGen (Wf.Cong P (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) r r')
   : EqvGen (Wf.Cong P Γ L) (Region.let2 a r) (Region.let2 a r')
   := by induction p with
@@ -351,12 +351,13 @@ theorem Wf.Cong.cfg_block_eqv
   (i : Fin n)
   (p : EqvGen (Wf.Cong P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) (G i) g')
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L)
+  (toRight : ∀{Γ L r r'}, P Γ L r r' → r'.Wf Γ L)
   : EqvGen (Wf.Cong P Γ L) (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
   := by
   generalize hg : G i = g
   rw [hg] at p
   induction p generalizing G with
-  | rel _ _ h => sorry--exact EqvGen.rel _ _ (h.cfg_block R hR dβ dG i)
+  | rel _ _ h => exact EqvGen.rel _ _ $ (hg ▸ h).cfg_block _ hR dβ dG i
   | refl _ =>
     rw [<-hg, Function.update_eq_self]
     exact EqvGen.refl _
@@ -368,26 +369,148 @@ theorem Wf.Cong.cfg_block_eqv
     if h : k = i then
       cases h
       rw [Function.update_same]
-      sorry
+      apply (eqv_iff toLeft toRight hxy).mpr
+      rw [<-hg]
+      apply dG
     else
       rw [Function.update_noteq h]
       exact dG k
-  | trans _ _ _ _ _ Il Ir =>
-    sorry
+  | trans x y z hxy _ Il Ir =>
+    apply EqvGen.trans _ _ _ (Il dG hg)
+    have h : Function.update G i z = Function.update (Function.update G i y) i z
+      := by simp
+    rw [h]
+    apply Ir _ (by simp)
+    intro k
+    if h : k = i then
+      cases h
+      rw [Function.update_same]
+      apply (eqv_iff toLeft toRight hxy).mp
+      rw [<-hg]
+      apply dG
+    else
+      rw [Function.update_noteq h]
+      exact dG k
 
 def CStep (Γ : Ctx α ε) (L : LCtx α) (r r' : Region φ) : Prop
   := Wf.Cong TStep Γ L r r'
 
+theorem CStep.case_left {Γ : Ctx α ε} {L : LCtx α} {r r' s : Region φ}
+  (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩) (pr : CStep (⟨A, ⊥⟩::Γ) L r r')
+  (ds : s.Wf (⟨B, ⊥⟩::Γ) L)
+  : CStep Γ L (Region.case e r s) (Region.case e r' s)
+  := Wf.Cong.case_left de pr ds
+
+theorem CStep.case_right {Γ : Ctx α ε} {L : LCtx α} {r s s' : Region φ}
+  (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩) (dr : r.Wf (⟨A, ⊥⟩::Γ) L)
+  (ps : CStep (⟨B, ⊥⟩::Γ) L s s')
+  : CStep Γ L (Region.case e r s) (Region.case e r s')
+  := Wf.Cong.case_right de dr ps
+
+theorem CStep.let1 {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (da : a.Wf Γ ⟨A, e⟩) (h : CStep (⟨A, ⊥⟩::Γ) L r r')
+  : CStep Γ L (Region.let1 a r) (Region.let1 a r')
+  := Wf.Cong.let1 da h
+
+theorem CStep.let2 {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (da : a.Wf Γ ⟨Ty.prod A B, e⟩) (h : CStep (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L r r')
+  : CStep Γ L (Region.let2 a r) (Region.let2 a r')
+  := Wf.Cong.let2 da h
+
+theorem CStep.cfg_entry {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β β' G}
+  (hR : R.length = n) (pβ : CStep (φ := φ) Γ (R ++ L) β β')
+  (dG : ∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
+  : CStep Γ L (Region.cfg β n G) (Region.cfg β' n G)
+  := Wf.Cong.cfg_entry R hR pβ dG
+
+theorem CStep.cfg_block {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β G i g'}
+  (hR : R.length = n) (dβ : β.Wf Γ (R ++ L))
+  (dG : ∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
+  (pr : CStep (φ := φ) (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L) (G i) g')
+  : CStep Γ L (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
+  := Wf.Cong.cfg_block R hR dβ dG i pr
+
+theorem CStep.left {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (h : CStep Γ L r r') : r.Wf Γ L
+  := Wf.Cong.left TStep.left h
+
+theorem CStep.right {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (h : CStep Γ L r r') : r'.Wf Γ L
+  := Wf.Cong.right TStep.right h
+
+theorem CStep.case_left_eqv {Γ : Ctx α ε} {L : LCtx α} {r r' s : Region φ}
+  (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (p : EqvGen (CStep (⟨A, ⊥⟩::Γ) L) r r')
+  (ds : s.Wf (⟨B, ⊥⟩::Γ) L)
+  : EqvGen (CStep Γ L) (Region.case e r s) (Region.case e r' s)
+  := Wf.Cong.case_left_eqv de p ds
+
+theorem CStep.case_right_eqv {Γ : Ctx α ε} {L : LCtx α} {r s s' : Region φ}
+  (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (dr : r.Wf (⟨A, ⊥⟩::Γ) L)
+  (ps : EqvGen (CStep (⟨B, ⊥⟩::Γ) L) s s')
+  : EqvGen (CStep Γ L) (Region.case e r s) (Region.case e r s')
+  := Wf.Cong.case_right_eqv de dr ps
+
+theorem CStep.let1_eqv {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (da : a.Wf Γ ⟨A, e⟩) (h : EqvGen (CStep (⟨A, ⊥⟩::Γ) L) r r')
+  : EqvGen (CStep Γ L) (Region.let1 a r) (Region.let1 a r')
+  := Wf.Cong.let1_eqv da h
+
+theorem CStep.let2_eqv {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (da : a.Wf Γ ⟨Ty.prod A B, e⟩) (h : EqvGen (CStep (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) r r')
+  : EqvGen (CStep Γ L) (Region.let2 a r) (Region.let2 a r')
+  := Wf.Cong.let2_eqv da h
+
+theorem CStep.cfg_entry_eqv {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β β' G}
+  (hR : R.length = n) (pβ : EqvGen (CStep (φ := φ) Γ (R ++ L)) β β')
+  (dG : ∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
+  : EqvGen (CStep Γ L) (Region.cfg β n G) (Region.cfg β' n G)
+  := Wf.Cong.cfg_entry_eqv R hR pβ dG
+
+theorem CStep.cfg_block_eqv {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β G i g'}
+  (hR : R.length = n) (dβ : β.Wf Γ (R ++ L))
+  (dG : ∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
+  (pr : EqvGen (CStep (φ := φ) (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) (G i) g')
+  : EqvGen (CStep Γ L) (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
+  := Wf.Cong.cfg_block_eqv R hR β dβ dG i pr TStep.left TStep.right
+
 def InS.CStep {Γ : Ctx α ε} {L : LCtx α} (r r' : InS φ Γ L) : Prop
-  := Region.CStep Γ L r.val r'.val
+  := Region.CStep (φ := φ) Γ L r r'
+
+theorem CStep.toIns {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (hr : r.Wf Γ L) (hr' : r'.Wf Γ L)
+  (h : CStep Γ L r r') : InS.CStep ⟨r, hr⟩ ⟨r', hr'⟩
+  := h
+
+theorem CStep.eqv_toIns {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  (hr : r.Wf Γ L) (hr' : r'.Wf Γ L)
+  (h : EqvGen (CStep Γ L) r r') : EqvGen InS.CStep ⟨r, hr⟩ ⟨r', hr'⟩
+  := sorry
+
+theorem Ins.CStep.eqv_to_region {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  (h : EqvGen InS.CStep r r') : EqvGen (Region.CStep (φ := φ) Γ L) r r'
+  := by induction h with
+  | rel _ _ h => exact EqvGen.rel _ _ h
+  | refl => exact EqvGen.refl _
+  | symm _ _ _ I => exact I.symm
+  | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
+
+theorem Ins.CStep.of_eqv {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  (h : EqvGen (Region.CStep (φ := φ) Γ L) r r') : EqvGen InS.CStep r r'
+  := sorry
+
+theorem Ins.CStep.eqv_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  : EqvGen InS.CStep r r' ↔ EqvGen (Region.CStep (φ := φ) Γ L) r r'
+  := by sorry
 
 instance InS.Setoid (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Setoid (InS φ Γ L)
   := EqvGen.Setoid InS.CStep
 
-theorem InS.let1_congr {Γ : Ctx α ε} {L : LCtx α}
-  {r r' : InS φ _ L} (a : Term φ) (da : a.Wf Γ ⟨A, e⟩)
-  (hr : r ≈ r') : InS.let1 a da r ≈ InS.let1 a da r'
-  := sorry
+-- theorem InS.let1_congr {Γ : Ctx α ε} {L : LCtx α}
+--   {r r' : InS φ _ L} (a : Term φ) (da : a.Wf Γ ⟨A, e⟩)
+--   (hr : r ≈ r') : InS.let1 a da r ≈ InS.let1 a da r'
+--   := sorry
 
 def Eqv (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) := Quotient (InS.Setoid φ Γ L)
 

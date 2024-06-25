@@ -718,6 +718,14 @@ theorem Region.Wf.cfg_iff {Γ : Ctx α ε} {n} {G} {β : Region φ} {L}
 def Region.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
   := {r : Region φ | r.Wf Γ L}
 
+instance Region.inSCoe {Γ : Ctx α ε} {L : LCtx α} : CoeOut (Region.InS φ Γ L) (Region φ)
+  := ⟨λr => r.1⟩
+
+@[ext]
+theorem Region.Ins.ext {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  (h : (r : Region φ) = r') : r = r'
+  := by cases r; cases r'; cases h; rfl
+
 def Region.toIns {Γ : Ctx α ε} (r : Region φ) {L} (h : r.Wf Γ L) : Region.InS φ Γ L
   := ⟨r, h⟩
 
