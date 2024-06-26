@@ -722,11 +722,11 @@ instance Region.inSCoe {Γ : Ctx α ε} {L : LCtx α} : CoeOut (Region.InS φ Γ
   := ⟨λr => r.1⟩
 
 @[ext]
-theorem Region.Ins.ext {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+theorem Region.InS.ext {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   (h : (r : Region φ) = r') : r = r'
   := by cases r; cases r'; cases h; rfl
 
-def Region.toIns {Γ : Ctx α ε} (r : Region φ) {L} (h : r.Wf Γ L) : Region.InS φ Γ L
+def Region.toInS {Γ : Ctx α ε} (r : Region φ) {L} (h : r.Wf Γ L) : Region.InS φ Γ L
   := ⟨r, h⟩
 
 def Region.Wf.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.Wf Γ L) : Region.InS φ Γ L
@@ -740,24 +740,61 @@ def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e} (a : Term φ)
   (ha : a.Wf Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : InS φ Γ L
   := ⟨Region.let1 a t.1, Region.Wf.let1 ha t.2⟩
 
+@[simp]
+theorem Region.InS.coe_let1 {Γ : Ctx α ε} {L : LCtx α} {A e} (a : Term φ)
+  (ha : a.Wf Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : (t.let1 a ha : Region φ) = Region.let1 a t
+  := rfl
+
 def Region.InS.let2 {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
   (ha : a.Wf Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) : InS φ Γ L
   := ⟨Region.let2 a t.1, Region.Wf.let2 ha t.2⟩
 
+@[simp]
+theorem Region.InS.coe_let2 {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
+  (ha : a.Wf Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
+  : (t.let2 a ha : Region φ) = Region.let2 a t
+  := rfl
+
 def Region.InS.case {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
   (ha : a.Wf Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
-  := ⟨Region.case a s.1 t.1, Region.Wf.case ha s.2 t.2⟩
+  := ⟨Region.case a s t, Region.Wf.case ha s.2 t.2⟩
+
+@[simp]
+theorem Region.InS.coe_case {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
+  (ha : a.Wf Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L)
+  : (s.case a ha t : Region φ) = Region.case a s t
+  := rfl
 
 def Region.InS.cfg {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α) (dβ : InS φ Γ (R ++ L))
   (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   : InS φ Γ L
   := ⟨Region.cfg dβ.1 R.length (λi => (dG i).1), Region.Wf.cfg R.length R rfl dβ.2 (λi => (dG i).2)⟩
 
+@[simp]
+theorem Region.InS.coe_cfg {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α) (dβ : InS φ Γ (R ++ L))
+  (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : (Region.InS.cfg R dβ dG : Region φ) = Region.cfg dβ R.length (λi => (dG i))
+  := rfl
+
 def Region.InS.cfg' {Γ : Ctx α ε} {L : LCtx α} (n) (R : LCtx α)
   (hR : R.length = n) (dβ : InS φ Γ (R ++ L))
   (dG : ∀i : Fin n, InS φ (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
   : InS φ Γ L
   := ⟨Region.cfg dβ.1 n (λi => (dG i).1), Region.Wf.cfg n R hR dβ.2 (λi => (dG i).2)⟩
+
+@[simp]
+theorem Region.InS.coe_cfg' {Γ : Ctx α ε} {L : LCtx α} (n) (R : LCtx α)
+  (hR : R.length = n) (dβ : InS φ Γ (R ++ L))
+  (dG : ∀i : Fin n, InS φ (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
+  : (Region.InS.cfg' n R hR dβ dG : Region φ) = Region.cfg dβ n (λi => (dG i))
+  := rfl
+
+theorem Region.InS.coe_update {ι : Type _} [DecidableEq ι] {Γ : ι → Ctx α ε} {L : ι → LCtx α}
+  {G : (i : ι) → InS φ (Γ i) (L i)} {i : ι} {g' : InS φ (Γ i) (L i)}
+  : (λk => (Function.update G i g' k : Region φ)) = Function.update (λi => (G i : Region φ)) i g'
+  := by funext k; simp only [Function.update]; split
+        case isTrue h => cases h; rfl
+        case isFalse h => rfl
 
 def Region.InD (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
   := Σr : Region φ, r.WfD Γ L
