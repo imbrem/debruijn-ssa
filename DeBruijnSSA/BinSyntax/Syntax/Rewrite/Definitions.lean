@@ -238,6 +238,23 @@ def CongD.cfg_block' {P : Region φ → Region φ → Type _}
   := (CongD.cfg_block β n (Function.update G i g) i (by simp only [Function.update_same]; exact p)
     ).cast_trg (by simp)
 
+def CongD.vwk {P : Region φ → Region φ → Type _} {r r' : Region φ}
+  (toVwk : ∀ρ r r', P r r' → P (r.vwk ρ) (r'.vwk ρ)) (ρ)
+  : CongD P r r' → CongD P (r.vwk ρ) (r'.vwk ρ)
+  | let1 e p => let1 (e.wk ρ) (p.vwk toVwk (Nat.liftWk ρ))
+  | let2 e p => let2 (e.wk ρ) (p.vwk toVwk (Nat.liftnWk 2 ρ))
+  | case_left e p s => case_left (e.wk ρ) (p.vwk toVwk (Nat.liftWk ρ)) (s.vwk (Nat.liftWk ρ))
+  | case_right e r p => case_right (e.wk ρ) (r.vwk (Nat.liftWk ρ)) (p.vwk toVwk (Nat.liftWk ρ))
+  | cfg_entry p n G => cfg_entry (p.vwk toVwk _) n _
+  | cfg_block β n G i p => by
+    simp only [Region.vwk]
+    sorry
+  | rel p => rel (toVwk ρ _ _ p)
+
+-- TODO: Cong.vwk
+
+-- TODO: Cong.eqv_vwk...
+
 -- TODO: CongD is effect monotone/antitone iff underlying is
 -- ==> CongD is effect preserving iff underlying is
 
@@ -561,6 +578,10 @@ theorem eqv_let2_eta {e} {r : Region φ}
     ≈ let1 e r
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_eta e r
 
+-- TODO: eqv_vwk
+
+-- TODO: eqv_lwk
+
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
   := by cases d with
   | let2_pair a b r =>
@@ -585,6 +606,13 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
       vwk_liftWk₂_vwk1, wk_liftWk_wk_succ, vwk_liftnWk₂_liftWk_vwk2, vwk_liftnWk₂_vwk1,
       wk_liftnWk_wk_add, Nat.liftWk_comm_liftnWk_apply, Function.comp_apply]
     constructor
+
+theorem Rewrite.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.vwk ρ) (r'.vwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.vwk ρ).rewrite
+
+-- That is, weakenings induce a prefunctor
+
+-- TODO: Rewrite.lwk
 
 inductive ReduceD : Region φ → Region φ → Type _
   | case_inl (e r s) : ReduceD (case (inl e) r s) (let1 e r)
@@ -630,6 +658,10 @@ def ReduceD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : Reduc
 
 def ReduceD.cast {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : ReduceD r₀ r₁) : ReduceD r₀' r₁' := h₁ ▸ h₀ ▸ p
+
+-- TODO: ReduceD.vwk
+
+-- TODO: Reduce.vwk
 
 inductive StepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
   | let1_beta (e r) : e.effect Γ = ⊥ → StepD Γ (let1 e r) (r.vsubst e.subst0)
