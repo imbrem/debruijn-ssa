@@ -181,8 +181,8 @@ def WfD.CongD.right {P : Ctx α ε → LCtx α → Region φ → Region φ → S
 
 inductive TStepD : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → Type _
   -- TODO: do we need to require r.WfD for rw?
-  | step {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → StepD Γ.effect r r' → TStepD Γ L r r'
-  | step_op {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → StepD Γ.effect r' r → TStepD Γ L r r'
+  | step {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → FStepD Γ.effect r r' → TStepD Γ L r r'
+  | step_op {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → FStepD Γ.effect r' r → TStepD Γ L r r'
   | initial {Γ L} : Γ.IsInitial → r.WfD Γ L → r'.WfD Γ L → TStepD Γ L r r'
   | terminal {Γ L} : e.WfD Γ ⟨Ty.unit, ⊥⟩ → e'.WfD Γ ⟨Ty.unit, ⊥⟩ → r.WfD (⟨Ty.unit, ⊥⟩::Γ) L
     → TStepD Γ L (let1 e r) (let1 e' r)
@@ -194,8 +194,8 @@ def TStepD.symm {Γ L} {r r' : Region φ} : TStepD Γ L r r' → TStepD Γ L r' 
   | terminal e e' d => terminal e' e d
 
 inductive TStep : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → Prop
-  | step {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → StepD Γ.effect r r' → TStep Γ L r r'
-  | step_op {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → StepD Γ.effect r' r → TStep Γ L r r'
+  | step {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → FStep Γ.effect r r' → TStep Γ L r r'
+  | step_op {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → FStep Γ.effect r' r → TStep Γ L r r'
   | initial {Γ L} : Γ.IsInitial → r.Wf Γ L → r'.Wf Γ L → TStep Γ L r r'
   | terminal {Γ L} : e.Wf Γ ⟨Ty.unit, ⊥⟩ → e'.Wf Γ ⟨Ty.unit, ⊥⟩ → r.Wf (⟨Ty.unit, ⊥⟩::Γ) L
     → TStep Γ L (let1 e r) (let1 e' r)

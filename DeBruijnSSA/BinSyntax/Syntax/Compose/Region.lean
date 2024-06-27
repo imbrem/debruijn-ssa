@@ -247,8 +247,8 @@ def RewriteD.lsubst_alpha {r₀ r₀'}
     exact hρ
     rw [Subst.vlift_liftn_comm]
     rfl
-  | let2_eta r => by
-    apply cast_src _ (let2_eta _)
+  | let2_eta e r => by
+    apply cast_src _ (let2_eta _ _)
     simp only [lsubst]
     congr
     simp only [vlift_alpha, vwk_vwk, vliftn_alpha, <-Nat.liftWk_comp, vwk1_lsubst_alpha]
