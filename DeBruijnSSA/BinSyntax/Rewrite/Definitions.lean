@@ -1,6 +1,8 @@
 import DeBruijnSSA.BinSyntax.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Rewrite
 
+import Mathlib.Data.Fintype.Quotient
+
 namespace BinSyntax
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
@@ -219,9 +221,9 @@ theorem TStep.right {Γ L} {r r' : Region φ} : TStep Γ L r r' → r'.Wf Γ L
 inductive Wf.Cong (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop)
   : Ctx α ε → LCtx α → Region φ → Region φ → Prop
   | step : P Γ L r r' → Cong P Γ L r r'
-  | case_left : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r' → s.Wf (⟨B, ⊥⟩::Γ) L
+  | case_left : e.Wf Γ ⟨Ty.coprod A B, e'⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r' → s.Wf (⟨B, ⊥⟩::Γ) L
     → Cong P Γ L (Region.case e r s) (Region.case e r' s)
-  | case_right : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩ → r.Wf (⟨A, ⊥⟩::Γ) L → Cong P (⟨B, ⊥⟩::Γ) L s s'
+  | case_right : e.Wf Γ ⟨Ty.coprod A B, e'⟩ → r.Wf (⟨A, ⊥⟩::Γ) L → Cong P (⟨B, ⊥⟩::Γ) L s s'
     → Cong P Γ L (Region.case e r s) (Region.case e r s')
   | let1 : a.Wf Γ ⟨A, e⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r'
     → Cong P Γ L (Region.let1 a r) (Region.let1 a r')
@@ -286,7 +288,7 @@ theorem Wf.Cong.eqv_iff {P : Ctx α ε → LCtx α → Region φ → Region φ �
 
 theorem Wf.Cong.case_left_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {r r' s : Region φ}
-  (he : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (he : e.Wf Γ ⟨Ty.coprod A B, e'⟩)
   (p : EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
   (hs : s.Wf (⟨B, ⊥⟩::Γ) L)
   : EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r' s)
@@ -298,7 +300,7 @@ theorem Wf.Cong.case_left_eqv
 
 theorem Wf.Cong.case_right_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {r s s' : Region φ}
-  (he : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (he : e.Wf Γ ⟨Ty.coprod A B, e'⟩)
   (hr : r.Wf (⟨A, ⊥⟩::Γ) L)
   (p : EqvGen (Wf.Cong P (⟨B, ⊥⟩::Γ) L) s s')
   : EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r s')
@@ -443,14 +445,14 @@ theorem CStep.eqv_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   := Wf.Cong.eqv_iff TStep.left TStep.right h
 
 theorem CStep.case_left_eqv {Γ : Ctx α ε} {L : LCtx α} {r r' s : Region φ}
-  (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (de : e.Wf Γ ⟨Ty.coprod A B, e'⟩)
   (p : EqvGen (CStep (⟨A, ⊥⟩::Γ) L) r r')
   (ds : s.Wf (⟨B, ⊥⟩::Γ) L)
   : EqvGen (CStep Γ L) (Region.case e r s) (Region.case e r' s)
   := Wf.Cong.case_left_eqv de p ds
 
 theorem CStep.case_right_eqv {Γ : Ctx α ε} {L : LCtx α} {r s s' : Region φ}
-  (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
+  (de : e.Wf Γ ⟨Ty.coprod A B, e'⟩)
   (dr : r.Wf (⟨A, ⊥⟩::Γ) L)
   (ps : EqvGen (CStep (⟨B, ⊥⟩::Γ) L) s s')
   : EqvGen (CStep Γ L) (Region.case e r s) (Region.case e r s')
@@ -517,35 +519,35 @@ theorem InS.eqv_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   := ⟨CStep.eqv_to_region, CStep.of_region⟩
 
 theorem InS.let1_congr {Γ : Ctx α ε} {L : LCtx α}
-  {r r' : InS φ _ L} (a : Term φ) (da : a.Wf Γ ⟨A, e⟩)
-    : r ≈ r' → InS.let1 a da r ≈ InS.let1 a da r' := by
+  {r r' : InS φ _ L} (a : Term.InS φ Γ ⟨A, e⟩)
+    : r ≈ r' → InS.let1 a r ≈ InS.let1 a r' := by
   simp only [eqv_iff]
-  apply Region.CStep.let1_eqv da
+  apply Region.CStep.let1_eqv a.prop
 
 theorem InS.let2_congr {Γ : Ctx α ε} {L : LCtx α}
-  {r r' : InS φ _ L} (a : Term φ) (da : a.Wf Γ ⟨Ty.prod A B, e⟩)
-    : r ≈ r' → InS.let2 a da r ≈ InS.let2 a da r' := by
+  {r r' : InS φ _ L} (a : Term.InS φ Γ ⟨Ty.prod A B, e⟩)
+    : r ≈ r' → InS.let2 a r ≈ InS.let2 a r' := by
   simp only [eqv_iff]
-  apply Region.CStep.let2_eqv da
+  apply Region.CStep.let2_eqv a.prop
 
 theorem InS.case_left_congr {Γ : Ctx α ε} {L : LCtx α}
-  {r r' : InS φ _ L} (e : Term φ) (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
-    : r ≈ r' → (s : _) → InS.case e de r s ≈ InS.case e de r' s := by
+  {r r' : InS φ _ L} (e : Term.InS φ Γ ⟨Ty.coprod A B, e⟩)
+    : r ≈ r' → (s : _) → InS.case e r s ≈ InS.case e r' s := by
   simp only [eqv_iff]
   intro pr s
-  apply Region.CStep.case_left_eqv de pr s.prop
+  apply Region.CStep.case_left_eqv e.prop pr s.prop
 
 theorem InS.case_right_congr {Γ : Ctx α ε} {L : LCtx α}
-  {s s' : InS φ _ L} (e : Term φ) (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
-    : (r : _) → s ≈ s' → InS.case e de r s ≈ InS.case e de r s' := by
+  {s s' : InS φ _ L} (e : Term.InS φ Γ ⟨Ty.coprod A B, e'⟩)
+    : (r : _) → s ≈ s' → InS.case e r s ≈ InS.case e r s' := by
   simp only [eqv_iff]
   intro r pr
-  apply Region.CStep.case_right_eqv de r.prop pr
+  apply Region.CStep.case_right_eqv e.prop r.prop pr
 
 theorem InS.case_congr {Γ : Ctx α ε} {L : LCtx α}
-  {r r' s s' : InS φ _ L} (e : Term φ) (de : e.Wf Γ ⟨Ty.coprod A B, ⊥⟩)
-  (hr : r ≈ r') (hs : s ≈ s') : InS.case e de r s ≈ InS.case e de r' s' :=
-  (case_left_congr e de hr s).trans _ _ _ (case_right_congr e de _ hs)
+  {r r' s s' : InS φ _ L} (e : Term.InS φ Γ ⟨Ty.coprod A B, e'⟩)
+  (hr : r ≈ r') (hs : s ≈ s') : InS.case e r s ≈ InS.case e r' s' :=
+  (case_left_congr e hr s).trans _ _ _ (case_right_congr e _ hs)
 
 theorem InS.cfg_entry_congr {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {β β' : InS φ Γ (R ++ L)} {G} (pβ : β ≈ β')
@@ -627,7 +629,124 @@ theorem InS.cfg_congr {Γ : Ctx α ε} {L : LCtx α}
   apply cfg_blocks_congr
   assumption
 
+-- theorem InS.wk_congr {Γ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ}
+--   {r r' : InS φ Δ L} (h : r ≈ r') (hρ : Γ.Wkn Δ ρ) : r.vwk ρ hρ ≈ r'.vwk ρ hρ := by
+--   induction r with
+
 def Eqv (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) := Quotient (InS.Setoid φ Γ L)
+
+def InS.q (a : InS φ Γ L) : Eqv φ Γ L := Quotient.mk _ a
+
+theorem Eqv.sound {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  (h : r ≈ r') : r.q = r'.q := Quotient.sound h
+
+theorem Eqv.eq {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  : r.q = r'.q ↔ r ≈ r' := Quotient.eq
+
+def Eqv.let1 (a : Term.InS φ Γ ⟨A, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Γ) L) : Eqv φ Γ L
+  := Quotient.liftOn r (λr => InS.q (r.let1 a)) (λ_ _ h => Quotient.sound (InS.let1_congr a h))
+
+theorem InS.let1_q {a : Term.InS φ Γ ⟨A, e⟩} {r : InS φ (⟨A, ⊥⟩::Γ) L}
+  : r.q.let1 a = (r.let1 a).q := rfl
+
+def Eqv.let2 (a : Term.InS φ Γ ⟨Ty.prod A B, e⟩) (r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) : Eqv φ Γ L
+  := Quotient.liftOn r (λr => InS.q (r.let2 a)) (λ_ _ h => Quotient.sound (InS.let2_congr a h))
+
+theorem InS.let2_q {a : Term.InS φ Γ ⟨Ty.prod A B, e⟩} {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  : r.q.let2 a = (r.let2 a).q := rfl
+
+def Eqv.case
+  (e : Term.InS φ Γ ⟨Ty.coprod A B, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Γ) L) (s : Eqv φ (⟨B, ⊥⟩::Γ) L)
+  : Eqv φ Γ L := Quotient.liftOn₂ r s (λr s => InS.q (InS.case e r s))
+    (λ_ _ _ _ h1 h2 => Quotient.sound (InS.case_congr e h1 h2))
+
+theorem InS.case_q {e : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
+  {r : InS φ (⟨A, ⊥⟩::Γ) L} {s : InS φ (⟨B, ⊥⟩::Γ) L}
+  : (r.q).case e s.q = (r.case e s).q := rfl
+
+def Eqv.cfg
+  (R : LCtx α)
+  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Eqv φ Γ L := let G' := Quotient.finChoice G; Quotient.liftOn₂ β G'
+    (λβ G => InS.q (InS.cfg R β G)) (λ_ _ _ _ h1 h2 => Quotient.sound (InS.cfg_congr R h1 h2))
+
+theorem InS.cfg_q {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : (β.q).cfg R (λi => (G i).q) = (β.cfg R G).q := by simp [Eqv.cfg, q, Quotient.finChoice_eq]
+
+theorem InS.let1_op {Γ : Ctx α ε} {L : LCtx α}
+  {r r' : InS φ (⟨B, ⊥⟩::Γ) L}
+  (f : φ) (hf : Φ.EFn f A B e)
+  (a : Term.InS φ Γ ⟨A, e⟩)
+    : r.let1 (a.op f hf)
+    ≈ (r.vwk1.let1 ((Term.InS.var 0 (by simp)).op f hf)).let1 a
+  := sorry
+
+-- theorem Eqv.let1_op {Γ : Ctx α ε} {L : LCtx α}
+--   {r r' : Eqv φ (⟨B, ⊥⟩::Γ) L}
+--   (f : φ) (hf : Φ.EFn f A B e)
+--   (a : Term.InS φ Γ ⟨A, e⟩)
+--     : Eqv.let1 (a.op f hf) r = (r.vwk1.let1 ((Term.InS.var 0 (by simp)).op f hf)).let1 a
+--   := sorry
+
+theorem InS.let1_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
+  {r r' : InS φ (⟨Ty.prod A B, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ Γ ⟨B, e⟩)
+    : r.let1 (a.pair b) ≈ (
+      let1 a $
+      let1 (b.wk Nat.succ (by simp)) $
+      let1 ((Term.InS.var 1 (by simp)).pair (e := e') (Term.InS.var 0 (by simp))) $
+      r.vwk1.vwk1)
+  := sorry
+
+theorem InS.let1_inl {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
+  {r r' : InS φ (⟨A.coprod B, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨A, e⟩)
+    : r.let1 a.inl
+    ≈ (r.vwk1.let1 ((Term.InS.var 0 (by simp)).inl (e := e'))).let1 a
+  := sorry
+
+theorem InS.let1_inr {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
+  {r r' : InS φ (⟨A.coprod B, ⊥⟩::Γ) L}
+  (b : Term.InS φ Γ ⟨B, e⟩)
+    : r.let1 b.inr
+    ≈ (r.vwk1.let1 ((Term.InS.var 0 (by simp)).inr (e := e'))).let1 b
+  := sorry
+
+theorem InS.let1_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
+  {r r' : InS φ (⟨A, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨Ty.empty, e⟩)
+    : r.let1 (a.abort _)
+    ≈ (r.vwk1.let1 ((Term.InS.var 0 (by simp)).abort (e := e') _)).let1 a
+  := sorry
+
+theorem InS.let2_op {Γ : Ctx α ε} {L : LCtx α}
+  {r r' : InS φ (⟨C, ⊥⟩::⟨B, ⊥⟩::Γ) L}
+  (f : φ) (hf : Φ.EFn f A (Ty.prod B C) e)
+  (a : Term.InS φ Γ ⟨A, e⟩)
+    : r.let2 (a.op f hf) ≈ (
+      let1 a $
+      let2 ((Term.InS.var 0 (by simp)).op f hf) $
+      r.vwk (ρ := Nat.liftnWk 2 Nat.succ) (by apply Ctx.Wkn.sliftn₂; simp))
+  := sorry
+
+theorem InS.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {r r' : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨A, e⟩)
+  (b : Term.InS φ Γ ⟨B, e⟩)
+    : r.let2 (a.pair b) ≈ (
+      let1 a $
+      let1 (b.wk Nat.succ (by simp)) r)
+  := sorry
+
+theorem InS.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
+  {r r' : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨Ty.empty, e⟩)
+    : r.let2 (a.abort _) ≈ (
+      let1 a $
+      let2 ((Term.InS.var 0 (by simp)).abort (e := e') (A.prod B)) $
+      r.vwk (Nat.liftnWk 2 Nat.succ) (by apply Ctx.Wkn.sliftn₂; simp))
+  := sorry
+
 
 end Region
 

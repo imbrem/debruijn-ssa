@@ -239,6 +239,73 @@ theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
   (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
   : Wf Γ b ⟨B, e⟩ := by cases h with | pair _ hb => exact hb
 
+def Term.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (V : Ty α × ε) : Type _
+  := {a : Term φ | a.Wf Γ V}
+
+instance Term.inSCoe {Γ : Ctx α ε} {V} : CoeOut (Term.InS φ Γ V) (Term φ)
+  := ⟨λt => t.val⟩
+
+def Term.InS.var {Γ : Ctx α ε} {V} (n) (h : Γ.Var n V) : Term.InS φ Γ V
+  := ⟨Term.var n, Wf.var h⟩
+
+@[simp]
+theorem Term.InS.coe_var {Γ : Ctx α ε} {V} {n} (h : Γ.Var n V)
+  : (Term.InS.var (φ := φ) n h : Term φ) = Term.var n
+  := rfl
+
+def Term.InS.op {Γ : Ctx α ε}
+  (f) (hf : Φ.EFn f A B e) (a : Term.InS φ Γ ⟨A, e⟩) : Term.InS φ Γ ⟨B, e⟩
+  := ⟨Term.op f a, Wf.op hf a.2⟩
+
+@[simp]
+theorem Term.InS.coe_op {Γ : Ctx α ε} {f} {hf : Φ.EFn f A B e} {a : Term.InS φ Γ ⟨A, e⟩}
+  : (Term.InS.op f hf a : Term φ) = Term.op f a
+  := rfl
+
+def Term.InS.pair {Γ : Ctx α ε}
+  (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ Γ ⟨B, e⟩) : Term.InS φ Γ ⟨Ty.prod A B, e⟩
+  := ⟨Term.pair a b, Wf.pair a.2 b.2⟩
+
+@[simp]
+theorem Term.InS.coe_pair {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨A, e⟩} {b : Term.InS φ Γ ⟨B, e⟩}
+  : (Term.InS.pair a b : Term φ) = Term.pair a b
+  := rfl
+
+def Term.InS.inl {Γ : Ctx α ε}
+  (a : Term.InS φ Γ ⟨left, e⟩) : Term.InS φ Γ ⟨Ty.coprod left right, e⟩
+  := ⟨Term.inl a, Wf.inl a.2⟩
+
+@[simp]
+theorem Term.InS.coe_inl {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨left, e⟩}
+  : (a.inl (right := right) : Term φ) = Term.inl a
+  := rfl
+
+def Term.InS.inr {Γ : Ctx α ε}
+  (b : Term.InS φ Γ ⟨right, e⟩) : Term.InS φ Γ ⟨Ty.coprod left right, e⟩
+  := ⟨Term.inr b, Wf.inr b.2⟩
+
+@[simp]
+theorem Term.InS.coe_inr {Γ : Ctx α ε} {b : Term.InS φ Γ ⟨right, e⟩}
+  : (b.inr (left := left) : Term φ) = Term.inr b
+  := rfl
+
+def Term.InS.abort {Γ : Ctx α ε}
+  (a : Term.InS φ Γ ⟨Ty.empty, e⟩) (tyOut) : Term.InS φ Γ ⟨tyOut, e⟩
+  := ⟨Term.abort a, Wf.abort a.2⟩
+
+@[simp]
+theorem Term.InS.coe_abort {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨Ty.empty, e⟩}
+  : (a.abort tyOut : Term φ) = Term.abort a
+  := rfl
+
+def Term.InS.unit {Γ : Ctx α ε} (e) : Term.InS φ Γ ⟨Ty.unit, e⟩
+  := ⟨Term.unit, Wf.unit e⟩
+
+@[simp]
+theorem Term.InS.coe_unit {Γ : Ctx α ε} {e}
+  : (Term.InS.unit (φ := φ) (Γ := Γ) e : Term φ) = Term.unit
+  := rfl
+
 /-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | var : Γ.Var n V → WfD Γ (var n) V
@@ -311,7 +378,7 @@ theorem Term.Wf.var_iff {Γ : Ctx α ε} {n V} : Wf (φ := φ) Γ (Term.var n) V
 theorem Term.Wf.op_iff {Γ : Ctx α ε} {a : Term φ} {V}
   : Wf Γ (Term.op f a) V ↔ Φ.trg f ≤ V.1 ∧ Φ.effect f ≤ V.2 ∧ Wf Γ a ⟨Φ.src f, V.2⟩
   := ⟨λ| Wf.op df de => ⟨df.trg, df.effect, de.wk_res ⟨df.src, le_refl _⟩⟩,
-      λ⟨trg, eff, de⟩ => Wf.op ⟨⟨le_refl _, trg⟩, eff⟩ de⟩
+      λ⟨trg, e, de⟩ => Wf.op ⟨⟨le_refl _, trg⟩, e⟩ de⟩
 
 @[simp]
 theorem Term.Wf.pair_iff {Γ : Ctx α ε} {a b : Term φ} {A B}
@@ -736,33 +803,34 @@ def Region.InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term φ)
   (hℓ : L.Trg ℓ A) (ha : a.Wf Γ ⟨A, ⊥⟩) : InS φ Γ L
   := ⟨Region.br ℓ a, Region.Wf.br hℓ ha⟩
 
-def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e} (a : Term φ)
-  (ha : a.Wf Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : InS φ Γ L
-  := ⟨Region.let1 a t.1, Region.Wf.let1 ha t.2⟩
+def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
+  (a : Term.InS φ Γ ⟨A, e⟩)
+  (t : InS φ (⟨A, ⊥⟩::Γ) L) : InS φ Γ L
+  := ⟨Region.let1 a t, Region.Wf.let1 a.prop t.prop⟩
 
 @[simp]
-theorem Region.InS.coe_let1 {Γ : Ctx α ε} {L : LCtx α} {A e} (a : Term φ)
-  (ha : a.Wf Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : (t.let1 a ha : Region φ) = Region.let1 a t
+theorem Region.InS.coe_let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
+  (a : Term.InS φ Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : (t.let1 a : Region φ) = Region.let1 a t
   := rfl
 
-def Region.InS.let2 {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
-  (ha : a.Wf Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) : InS φ Γ L
-  := ⟨Region.let2 a t.1, Region.Wf.let2 ha t.2⟩
+def Region.InS.let2 {Γ : Ctx α ε} {L : LCtx α} {A B e}
+  (a : Term.InS φ Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) : InS φ Γ L
+  := ⟨Region.let2 a t, Region.Wf.let2 a.prop t.prop⟩
 
 @[simp]
-theorem Region.InS.coe_let2 {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
-  (ha : a.Wf Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-  : (t.let2 a ha : Region φ) = Region.let2 a t
+theorem Region.InS.coe_let2 {Γ : Ctx α ε} {L : LCtx α} {A B e}
+  (a : Term.InS φ Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
+  : (t.let2 a : Region φ) = Region.let2 a t
   := rfl
 
-def Region.InS.case {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
-  (ha : a.Wf Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
-  := ⟨Region.case a s t, Region.Wf.case ha s.2 t.2⟩
+def Region.InS.case {Γ : Ctx α ε} {L : LCtx α} {A B e}
+  (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
+  := ⟨Region.case a s t, Region.Wf.case a.prop s.prop t.prop⟩
 
 @[simp]
-theorem Region.InS.coe_case {Γ : Ctx α ε} {L : LCtx α} {A B e} (a : Term φ)
-  (ha : a.Wf Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L)
-  : (s.case a ha t : Region φ) = Region.case a s t
+theorem Region.InS.coe_case {Γ : Ctx α ε} {L : LCtx α} {A B e}
+  (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L)
+  : (s.case a t : Region φ) = Region.case a s t
   := rfl
 
 def Region.InS.cfg {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α) (dβ : InS φ Γ (R ++ L))
@@ -1168,6 +1236,12 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
   | abort da => abort (da.wk h)
   | unit e => unit e
 
+theorem Term.Wf.wk {a : Term φ} (h : Γ.Wkn Δ ρ) (d : Wf Δ a ⟨A, e⟩) : Wf Γ (a.wk ρ) ⟨A, e⟩
+  := have ⟨d⟩ := d.nonempty; (d.wk h).toWf
+
+def Term.InS.wk {Γ Δ : Ctx α ε} (ρ) (h : Γ.Wkn Δ ρ) (d : InS φ Δ ⟨A, e⟩) : InS φ Γ ⟨A, e⟩
+  := ⟨d.1.wk ρ, d.2.wk h⟩
+
 /-- Reverse-weaken a term derivation, given that it is inbounds -/
 def Term.WfD.wk_inv {a : Term φ}
   (h : Γ.EWkn Δ ρ) (d : WfD Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : WfD Δ a ⟨A, e⟩
@@ -1180,6 +1254,10 @@ def Term.WfD.wk_inv {a : Term φ}
   | Term.inr _, inr dr => inr (dr.wk_inv h ha)
   | Term.abort _, abort da => abort (da.wk_inv h ha)
   | Term.unit, unit e => unit e
+
+theorem Term.Wf.wk_inv {a : Term φ}
+  (h : Γ.EWkn Δ ρ) (d : Wf Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : Wf Δ a ⟨A, e⟩
+  := have ⟨d⟩ := d.nonempty; (d.wk_inv h ha).toWf
 
 def Term.WfD.wk1 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.wk1 L
   := dr.wk Ctx.Wkn.wk1
@@ -1347,6 +1425,28 @@ def Region.WfD.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K : LCtx α} {r : Regi
   | cfg n R hR hβ hG =>
     have trg_wk : (R ++ L).Wkn (R ++ K) (Nat.liftnWk n ρ) := hR ▸ h.liftn_append R
     cfg n R hR (hβ.lwk trg_wk) (λi => (hG i).lwk trg_wk)
+
+theorem Region.Wf.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.Wkn Δ ρ)
+  (d : Wf Δ r L) : Wf Γ (r.vwk ρ) L
+  := have ⟨d⟩ := d.nonempty; (d.vwk h).toWf
+
+def Region.InS.vwk {Γ Δ : Ctx α ε} (ρ : ℕ → ℕ) (h : Γ.Wkn Δ ρ) {L} (r : InS φ Δ L) : InS φ Γ L
+  := ⟨(r : Region φ).vwk ρ, r.prop.vwk h⟩
+
+theorem Region.InS.coe_vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {h : Γ.Wkn Δ ρ} {L} {r : InS φ Δ L}
+  : (r.vwk ρ h : Region φ) = (r : Region φ).vwk ρ := rfl
+
+def Region.InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (left::Γ) L) : InS φ (left::right::Γ) L
+  := r.vwk _ Ctx.Wkn.wk1
+
+theorem Region.InS.coe_vwk1 {Γ : Ctx α ε} {L} {r : InS φ (left::Γ) L}
+  : (r.vwk1 (right := right) : Region φ) = r.vwk1 (right := right) := rfl
+
+def Region.InS.vwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L} : InS φ (head::Γ) L
+  := r.vwk _ Ctx.Wkn.succ
+
+theorem Region.InS.coe_vwk0 {Γ : Ctx α ε} {L} (r : InS φ Γ L)
+  : (r.vwk0 (head := head) : Region φ) = r.vwk0 (head := head) := rfl
 
 end Weakening
 
