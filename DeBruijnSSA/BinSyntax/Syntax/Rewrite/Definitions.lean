@@ -23,7 +23,7 @@ open Term
 
 -- TODO: StepD is effect monotonic
 
-inductive CongD (P : Region φ → Region φ → Type _) : Region φ → Region φ → Type _
+inductive CongD (P : Region φ → Region φ → Sort _) : Region φ → Region φ → Sort _
   | let1 (e) : CongD P r r' → CongD P (let1 e r) (let1 e r')
   | let2 (e) : CongD P r r' → CongD P (let2 e r) (let2 e r')
   | case_left (e) : CongD P r r' → (s : Region φ)
@@ -35,7 +35,7 @@ inductive CongD (P : Region φ → Region φ → Type _) : Region φ → Region 
     CongD P (cfg β n G) (cfg β n (Function.update G i g'))
   | rel : P r r' → CongD P r r'
 
-inductive Cong (P : Region φ → Region φ → Prop) : Region φ → Region φ → Prop
+inductive Cong (P : Region φ → Region φ → Sort _) : Region φ → Region φ → Prop
   | let1 (e) : Cong P r r' → Cong P (let1 e r) (let1 e r')
   | let2 (e) : Cong P r r' → Cong P (let2 e r) (let2 e r')
   | case_left (e) : Cong P r r' → (s : Region φ)
@@ -46,12 +46,179 @@ inductive Cong (P : Region φ → Region φ → Prop) : Region φ → Region φ 
   | cfg_block (β n G i) : Cong P (G i) g' → Cong P (cfg β n G) (cfg β n (Function.update G i g'))
   | rel : P r r' → Cong P r r'
 
-theorem CongD.cong_nonempty
-  {P : Region φ → Region φ → Prop} {r r' : Region φ} (p : Cong P r r')
-    : Cong (λr r' => Nonempty (P r r')) r r'
+theorem CongD.cong
+  {P : Region φ → Region φ → Sort _} {r r' : Region φ} (p : CongD P r r')
+    : Cong P r r'
   := by induction p with
-    | rel p => apply Cong.rel; constructor; assumption
+    | rel p => apply Cong.rel; assumption
     | _ => constructor; assumption
+
+def CongD.map {P : Region φ → Region φ → Sort _} {P' : Region φ → Region φ → Sort _}
+  (f : ∀r r', P r r' → P' r r') {r r'} : CongD P r r' → CongD P' r r'
+  | CongD.let1 e p => CongD.let1 e (map f p)
+  | CongD.let2 e p => CongD.let2 e (map f p)
+  | CongD.case_left e p s => CongD.case_left e (map f p) s
+  | CongD.case_right e r p => CongD.case_right e r (map f p)
+  | CongD.cfg_entry p n G => CongD.cfg_entry (map f p) n G
+  | CongD.cfg_block β n G i p => CongD.cfg_block β n G i (map f p)
+  | CongD.rel p => CongD.rel (f _ _ p)
+
+theorem Cong.map {P P' : Region φ → Region φ → Sort _}
+  (f : ∀r r', P r r' → P' r r') {r r'} (d : Cong P r r') : Cong P' r r'
+  := by induction d with
+  | rel p => exact Cong.rel (f _ _ p)
+  | _ => constructor; assumption
+
+theorem Cong.mono {P P' : Region φ → Region φ → Prop}
+  (h : P ≤ P') {r r'} : Cong P r r' ≤ Cong P' r r'
+  := λd => d.map h
+
+theorem Cong.nonempty
+  {P : Region φ → Region φ → Sort _} {r r' : Region φ} (p : Cong P r r')
+    : Nonempty (CongD P r r')
+  := by induction p with
+    | rel p => constructor; apply CongD.rel; assumption
+    | _ => constructor; constructor; apply Classical.choice; assumption
+
+theorem Cong.of_nonempty
+  {P : Region φ → Region φ → Sort _} {r r' : Region φ} (p : Nonempty (CongD P r r'))
+    : Cong P r r'
+  := let ⟨p⟩ := p; p.cong
+
+theorem Cong.nonempty_iff
+  {P : Region φ → Region φ → Sort _} {r r' : Region φ} : Cong P r r' ↔ Nonempty (CongD P r r')
+  := ⟨Cong.nonempty, Cong.of_nonempty⟩
+
+theorem Cong.eqv_let1 (e) {r r' : Region φ} (p : EqvGen (Cong P) r r')
+  : EqvGen (Cong P) (r.let1 e) (r'.let1 e)
+  := by induction p with
+    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.let1 _ p
+    | symm _ _ _ I => exact I.symm _ _
+    | refl => apply EqvGen.refl
+    | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
+
+theorem Cong.eqv_let2 (e) {r r' : Region φ} (p : EqvGen (Cong P) r r')
+  : EqvGen (Cong P) (r.let2 e) (r'.let2 e)
+  := by induction p with
+    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.let2 _ p
+    | symm _ _ _ I => exact I.symm _ _
+    | refl => apply EqvGen.refl
+    | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
+
+theorem Cong.eqv_case_left (e) {r r'} (p : EqvGen (Cong P) r r') (s)
+  : EqvGen (Cong P) (case e r s) (case e r' s)
+  := by induction p with
+    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.case_left _ p s
+    | symm _ _ _ I => exact I.symm _ _
+    | refl => apply EqvGen.refl
+    | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
+
+theorem Cong.eqv_case_right (e r) {s s'} (p : EqvGen (Cong P) s s')
+  : EqvGen (Cong P) (case e r s) (case e r s')
+  := by induction p with
+    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.case_right _ _ p
+    | symm _ _ _ I => exact I.symm _ _
+    | refl => apply EqvGen.refl
+    | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
+
+theorem Cong.eqv_case (e) {r r' s s'} (pr : EqvGen (Cong P) r r') (ps : EqvGen (Cong P) s s')
+  : EqvGen (Cong P) (case e r s) (case e r' s')
+  := EqvGen.trans _ _ _ (eqv_case_left e pr _) (eqv_case_right e _ ps)
+
+theorem Cong.eqv_cfg_entry {r r'} (p : EqvGen (Cong P) r r') (n) (G)
+  : EqvGen (Cong P) (cfg r n G) (cfg r' n G)
+  := by induction p with
+    | rel _ _ p => apply EqvGen.rel; apply Cong.cfg_entry; assumption
+    | symm _ _ _ I => exact I.symm _ _
+    | refl => apply EqvGen.refl
+    | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
+
+theorem Cong.eqv_cfg_block (β n G i) (p : EqvGen (Cong P) (G i) g')
+  : EqvGen (Cong P) (cfg β n G) (cfg β n (Function.update G i g')) := by
+  generalize hg : G i = g
+  rw [hg] at p
+  induction p generalizing G with
+  | rel _ _ p =>
+    cases hg
+    apply EqvGen.rel
+    apply Cong.cfg_block
+    assumption
+  | symm x y _ I =>
+    apply EqvGen.symm
+    have h : β.cfg n G = β.cfg n (Function.update (Function.update G i x) i y) := by cases hg; simp
+    rw [h]
+    apply I
+    simp
+  | refl =>
+    cases hg
+    rw [Function.update_eq_self]
+    apply EqvGen.refl
+  | trans x y z _ _ Il Ir =>
+    apply EqvGen.trans
+    apply Il _ hg
+    have h : Function.update G i z = Function.update (Function.update G i y) i z := by simp
+    rw [h]
+    apply Ir
+    simp
+
+-- TODO: generalize partial update lemma in Discretion.Utils
+-- TODO: only need to require i < k...
+theorem Cong.eqv_cfg_blocks_partial (β n) (G G' : Fin n → Region φ)
+  (p : ∀i, EqvGen (Cong P) (G i) (G' i)) (k : ℕ)
+  : EqvGen (Cong P) (cfg β n G) (cfg β n (λi => if i < k then G' i else G i)) := by
+  induction k with
+  | zero => simp only [Nat.not_lt_zero, ↓reduceIte]; apply EqvGen.refl
+  | succ k I =>
+    apply EqvGen.trans
+    apply I
+    if h : k < n then
+      have h' :
+        (λi : Fin n => if i < k + 1 then G' i else G i)
+        = Function.update (λi : Fin n => if i < k then G' i else G i) ⟨k, h⟩ (G' ⟨k, h⟩)
+        := by funext i; split
+              case isTrue h => cases h with
+                | refl => simp
+                | step h =>
+                  have h := Nat.lt_of_succ_le h
+                  rw [Function.update_noteq]
+                  rw [ite_cond_eq_true]
+                  simp [h]
+                  simp only [ne_eq, Fin.ext_iff]
+                  exact Nat.ne_of_lt h
+              case isFalse h =>
+                have h := Nat.lt_of_succ_le $ Nat.le_of_not_lt h
+                rw [Function.update_noteq]
+                rw [ite_cond_eq_false]
+                simp [Nat.not_lt_of_lt h]
+                simp only [ne_eq, Fin.ext_iff]
+                exact Ne.symm $ Nat.ne_of_lt h
+      rw [h']
+      apply eqv_cfg_block
+      simp only [lt_self_iff_false, ↓reduceIte]
+      exact p ⟨k, h⟩
+    else
+      have h : ∀i : Fin n, i < k := λi => Nat.lt_of_lt_of_le i.prop (Nat.le_of_not_lt h)
+      have h' : ∀i : Fin n, i < (k + 1) := λi => Nat.lt_succ_of_lt (h i)
+      simp only [h, h', ↓reduceIte]
+      apply EqvGen.refl
+
+theorem Cong.eqv_cfg_blocks (β n) (G G' : Fin n → Region φ)
+  (p : ∀i, EqvGen (Cong P) (G i) (G' i))
+  : EqvGen (Cong P) (cfg β n G) (cfg β n G') := by
+  have h : cfg β n G' = cfg β n (λi => if i < n then G' i else G i) := by simp
+  rw [h]
+  apply eqv_cfg_blocks_partial
+  apply p
+
+theorem Cong.eqv_cfg
+  (pβ : EqvGen (Cong P) β β) (n) {G G' : Fin n → Region φ}
+  (pG : ∀i : Fin n, EqvGen (Cong P) (G i) (G' i))
+  : EqvGen (Cong P) (cfg β n G) (cfg β n G') := by
+  apply EqvGen.trans
+  apply eqv_cfg_entry
+  assumption
+  apply eqv_cfg_blocks
+  assumption
 
 def CongD.cast_trg {P : Region φ → Region φ → Type _}
   {r₀ r₁ r₁' : Region φ} (p : CongD P r₀ r₁) (h : r₁ = r₁')
@@ -289,17 +456,114 @@ theorem Rewrite.of_nonempty {r r' : Region φ} (p : Nonempty (RewriteD r r')) : 
 theorem Rewrite.nonempty_iff {r r' : Region φ} : Rewrite r r' ↔ Nonempty (RewriteD r r')
   := ⟨nonempty, of_nonempty⟩
 
-instance instSetoid : Setoid (Region φ) := EqvGen.Setoid Rewrite
+instance instSetoid : Setoid (Region φ) := EqvGen.Setoid (Cong Rewrite)
+
+theorem eqv_let1 (e) (p : r ≈ r') : @let1 φ e r ≈ let1 e r'
+  := Cong.eqv_let1 e p
+
+theorem eqv_let2 (e) (p : r ≈ r') : @let2 φ e r ≈ let2 e r'
+  := Cong.eqv_let2 e p
+
+theorem eqv_case_left (e) (p : r ≈ r') (s) : @case φ e r s ≈ case e r' s
+  := Cong.eqv_case_left e p s
+
+theorem eqv_case_right (e r) (p : s ≈ s') : @case φ e r s ≈ case e r s'
+  := Cong.eqv_case_right e r p
+
+theorem eqv_case (e) (pr : r ≈ r') (ps : s ≈ s') : @case φ e r s ≈ case e r' s'
+  := Cong.eqv_case e pr ps
+
+theorem eqv_cfg_entry (p : r ≈ r') (n) (G) : @cfg φ r n G ≈ cfg r' n G
+  := Cong.eqv_cfg_entry p n G
+
+theorem eqv_cfg_block (β n G i) (p : G i ≈ g')
+  : @cfg φ β n G ≈ cfg β n (Function.update G i g')
+  := Cong.eqv_cfg_block β n G i p
+
+theorem eqv_cfg_blocks (β n G G') (p : G ≈ G')
+  : @cfg φ β n G ≈ cfg β n G'
+  := Cong.eqv_cfg_blocks β n G G' p
+
+theorem eqv_cfg (pβ : β ≈ β) (n) {G G' : Fin n → Region φ} (pG : G ≈ G')
+  : @cfg φ β n G ≈ cfg β n G'
+  := Cong.eqv_cfg pβ n pG
 
 theorem eqv_let1_op {f e r} : @let1 φ (op f e) r ≈ (let1 e $ let1 (op f (var 0)) $ r.vwk1)
-  := EqvGen.rel _ _ $ Rewrite.let1_op f e r
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_op f e r
 
 theorem eqv_let1_pair {a b r}
   : @let1 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
-  := EqvGen.rel _ _ $ Rewrite.let1_pair a b r
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_pair a b r
 
 theorem eqv_let1_inl {e r} : @let1 φ (inl e) r ≈ (let1 e $ let1 (inl (var 0)) $ r.vwk1)
-  := EqvGen.rel _ _ $ Rewrite.let1_inl e r
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_inl e r
+
+theorem eqv_let1_inr {e r} : @let1 φ (inr e) r ≈ (let1 e $ let1 (inr (var 0)) $ r.vwk1)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_inr e r
+
+theorem eqv_let1_abort {e r} : @let1 φ (abort e) r ≈ (let1 e $ let1 (abort (var 0)) $ r.vwk1)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_abort e r
+
+theorem eqv_let2_op {f e r}
+  : @let2 φ (op f e) r ≈ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_op f e r
+
+theorem eqv_let2_pair {a b r}
+  : @let2 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ r)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_pair a b r
+
+theorem eqv_let2_abort {e r}
+  : @let2 φ (abort e) r ≈ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_abort e r
+
+theorem eqv_case_op {f e r s}
+  : @case φ (op f e) r s ≈ (let1 e $ case (op f (var 0)) (r.vwk1) (s.vwk1))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_op f e r s
+
+theorem eqv_case_abort {e r s}
+  : @case φ (abort e) r s ≈ (let1 e $ case (abort (var 0)) (r.vwk1) (s.vwk1))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_abort e r s
+
+theorem eqv_let1_case {a b r s}
+  : (@let1 φ a $ case (b.wk Nat.succ) r s)
+  ≈ case b (let1 (a.wk Nat.succ) r) (let1 (a.wk Nat.succ) s)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_case a b r s
+
+theorem eqv_let2_case {a b r s}
+  : (@let2 φ a $ case (b.wk (· + 2)) r s)
+  ≈ case b (let2 (a.wk Nat.succ) r) (let2 (a.wk Nat.succ) s)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_case a b r s
+
+theorem eqv_cfg_br_lt {ℓ e n G} (h : ℓ < n)
+  : @cfg φ (br ℓ e) n G ≈ cfg ((G ⟨ℓ, h⟩).let1 e) n G
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_br_lt ℓ e n G h
+
+theorem eqv_cfg_let1 {a β n G}
+  : @cfg φ (let1 a β) n G ≈ (let1 a $ cfg β n (vwk1 ∘ G))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let1 a β n G
+
+theorem eqv_cfg_let2 {a β n G}
+  : @cfg φ (let2 a β) n G ≈ (let2 a $ cfg β n (vwk (· + 2) ∘ G))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let2 a β n G
+
+theorem eqv_cfg_case {e r s n G}
+  : @cfg φ (case e r s) n G
+    ≈ case e (cfg r n (vwk Nat.succ ∘ G)) (cfg s n (vwk Nat.succ ∘ G))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_case e r s n G
+
+theorem eqv_cfg_cfg {β n G n' G'}
+  : @cfg φ (cfg β n G) n' G' ≈ cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G'))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_cfg β n G n' G'
+
+theorem eqv_cfg_fuse {β n G k} (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ)
+  : @cfg φ (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G)
+    ≈ cfg β k (G ∘ ρ)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_fuse β n G k ρ hρ
+
+theorem eqv_let2_eta {r : Region φ}
+  : @let2 φ (Term.var 0) (let1 ((Term.var 1).pair (Term.var 0)) r.vwk1.vwk1)
+    ≈ let1 (Term.var 0) r
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_eta r
 
 inductive ReduceD : Region φ → Region φ → Type _
   | case_inl (e r s) : ReduceD (case (inl e) r s) (let1 e r)
@@ -351,6 +615,24 @@ inductive StepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
   | reduce {r r'} : ReduceD r r' → StepD Γ r r'
   | rw {r r'} : RewriteD r r' → StepD Γ r r'
   | rw_op {r r'} : RewriteD r r' → StepD Γ r' r
+
+-- TODO: separate beta relation? Then step is just the inf...
+
+inductive Step (Γ : ℕ → ε) : Region φ → Region φ → Prop
+  | let1_beta (e r) : e.effect Γ = ⊥ → Step Γ (let1 e r) (r.vsubst e.subst0)
+  | reduce {r r'} : Reduce r r' → Step Γ r r'
+  | rw {r r'} : Rewrite r r' → Step Γ r r'
+  | rw_op {r r'} : Rewrite r r' → Step Γ r' r
+
+inductive FStepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
+  | let1_beta (e r) : e.effect Γ = ⊥ → FStepD Γ (let1 e r) (r.vsubst e.subst0)
+  | reduce {r r'} : ReduceD r r' → FStepD Γ r r'
+  | rw {r r'} : RewriteD r r' → FStepD Γ r r'
+
+inductive FStep (Γ : ℕ → ε) : Region φ → Region φ → Prop
+  | let1_beta (e r) : e.effect Γ = ⊥ → FStep Γ (let1 e r) (r.vsubst e.subst0)
+  | reduce {r r'} : Reduce r r' → FStep Γ r r'
+  | rw {r r'} : Rewrite r r' → FStep Γ r r'
 
 @[match_pattern]
 def StepD.case_inl {Γ : ℕ → ε} (e : Term φ) (r s)
