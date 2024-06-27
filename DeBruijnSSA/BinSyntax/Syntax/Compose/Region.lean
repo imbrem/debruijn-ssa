@@ -317,7 +317,7 @@ def StepD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀' : Region φ}
 def BCongD.lsubst_alpha {Γ : ℕ → ε} {r₀ r₀'}
   (p : BCongD StepD Γ r₀ r₀') (n) (r₁ : Region φ)
   : RWD StepD Γ (r₀.lsubst (alpha n r₁)) (r₀'.lsubst (alpha n r₁)) := match p with
-  | BCongD.step s => RWD.single (BCongD.step (s.lsubst_alpha n r₁))
+  | BCongD.rel s => RWD.single (BCongD.rel (s.lsubst_alpha n r₁))
   | BCongD.let1 e p => by
     simp only [lsubst_alpha_let1]
     apply RWD.let1 e

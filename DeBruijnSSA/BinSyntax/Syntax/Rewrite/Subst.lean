@@ -6,8 +6,8 @@ variable {φ : Type u} {ε : Type v} [Φ: EffectSet φ ε] [SemilatticeSup ε] [
 
 namespace Region
 
-inductive SCongD.SubstCong (P : Region φ → Region φ → Type _) : Subst φ → Subst φ → Type _
-  | step (n) : SCongD P r r' → SubstCong P (Function.update σ n r) (Function.update σ' n r')
+inductive CongD.SubstCong (P : Region φ → Region φ → Type _) : Subst φ → Subst φ → Type _
+  | step (n) : CongD P r r' → SubstCong P (Function.update σ n r) (Function.update σ' n r')
 
 inductive BCongD.SubstCong (P : (ℕ → ε) → Region φ → Region φ → Type _)
   : (ℕ → ε) → Subst φ → Subst φ → Type _
