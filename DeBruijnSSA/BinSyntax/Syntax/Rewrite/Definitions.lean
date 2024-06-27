@@ -220,25 +220,25 @@ theorem Cong.eqv_cfg
   apply eqv_cfg_blocks
   assumption
 
-def CongD.cast_trg {P : Region φ → Region φ → Type _}
+def CongD.cast_trg {P : Region φ → Region φ → Sort _}
   {r₀ r₁ r₁' : Region φ} (p : CongD P r₀ r₁) (h : r₁ = r₁')
   : CongD P r₀ r₁' := h ▸ p
 
-def CongD.cast_src {P : Region φ → Region φ → Type _}
+def CongD.cast_src {P : Region φ → Region φ → Sort _}
   {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : CongD P r₀ r₁)
   : CongD P r₀' r₁ := h ▸ p
 
-def CongD.cast {P : Region φ → Region φ → Type _}
+def CongD.cast {P : Region φ → Region φ → Sort _}
   {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : CongD P r₀ r₁) : CongD P r₀' r₁' := h₁ ▸ h₀ ▸ p
 
-def CongD.cfg_block' {P : Region φ → Region φ → Type _}
+def CongD.cfg_block' {P : Region φ → Region φ → Sort _}
   (β n G i) (p : CongD P g g')
   : CongD P (cfg β n (Function.update G i g)) (cfg β n (Function.update G i g'))
   := (CongD.cfg_block β n (Function.update G i g) i (by simp only [Function.update_same]; exact p)
     ).cast_trg (by simp)
 
-def CongD.vwk {P : Region φ → Region φ → Type _} {r r' : Region φ}
+def CongD.vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (toVwk : ∀ρ r r', P r r' → P (r.vwk ρ) (r'.vwk ρ)) (ρ)
   : CongD P r r' → CongD P (r.vwk ρ) (r'.vwk ρ)
   | let1 e p => let1 (e.wk ρ) (p.vwk toVwk (Nat.liftWk ρ))
@@ -247,13 +247,23 @@ def CongD.vwk {P : Region φ → Region φ → Type _} {r r' : Region φ}
   | case_right e r p => case_right (e.wk ρ) (r.vwk (Nat.liftWk ρ)) (p.vwk toVwk (Nat.liftWk ρ))
   | cfg_entry p n G => cfg_entry (p.vwk toVwk _) n _
   | cfg_block β n G i p => by
-    simp only [Region.vwk]
-    sorry
+    simp only [Region.vwk, Function.update_comp_apply]
+    exact cfg_block _ _ _ _ (p.vwk toVwk (Nat.liftWk ρ))
   | rel p => rel (toVwk ρ _ _ p)
 
--- TODO: Cong.vwk
+theorem Cong.vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (toVwk : ∀ρ r r', P r r' → P (r.vwk ρ) (r'.vwk ρ)) (ρ) (p : Cong P r r')
+  : Cong P (r.vwk ρ) (r'.vwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.vwk toVwk ρ).cong
 
--- TODO: Cong.eqv_vwk...
+theorem Cong.eqv_vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (toVwk : ∀ρ r r', P r r' → P (r.vwk ρ) (r'.vwk ρ)) (ρ) (p : EqvGen (Cong P) r r')
+  : EqvGen (Cong P) (r.vwk ρ) (r'.vwk ρ)
+  := by induction p with
+  | rel => apply EqvGen.rel; apply Cong.vwk <;> assumption
+  | symm => apply EqvGen.symm; assumption
+  | refl => apply EqvGen.refl
+  | trans => apply EqvGen.trans <;> assumption
 
 -- TODO: CongD is effect monotone/antitone iff underlying is
 -- ==> CongD is effect preserving iff underlying is
@@ -578,10 +588,6 @@ theorem eqv_let2_eta {e} {r : Region φ}
     ≈ let1 e r
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_eta e r
 
--- TODO: eqv_vwk
-
--- TODO: eqv_lwk
-
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
   := by cases d with
   | let2_pair a b r =>
@@ -610,9 +616,18 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
 theorem Rewrite.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.vwk ρ) (r'.vwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.vwk ρ).rewrite
 
+theorem eqv_vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : r ≈ r') : r.vwk ρ ≈ r'.vwk ρ
+  := Cong.eqv_vwk (λρ _ _ p => p.vwk ρ) ρ p
+
 -- That is, weakenings induce a prefunctor
 
+-- TODO: RewriteD.lwk
+
 -- TODO: Rewrite.lwk
+
+-- That is, label weakenings induce a prefunctor
+
+-- TODO: eqv_lwk
 
 inductive ReduceD : Region φ → Region φ → Type _
   | case_inl (e r s) : ReduceD (case (inl e) r s) (let1 e r)
@@ -659,9 +674,18 @@ def ReduceD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : Reduc
 def ReduceD.cast {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : ReduceD r₀ r₁) : ReduceD r₀' r₁' := h₁ ▸ h₀ ▸ p
 
--- TODO: ReduceD.vwk
+def ReduceD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.vwk ρ) (r'.vwk ρ)
+  := by cases d with
+  | dead_cfg_left β n G m G' =>
+    simp only [Region.vwk, wk, Function.comp_apply, vwk_lwk, Fin.comp_addCases_apply]
+    rw [<-Function.comp.assoc, vwk_comp_lwk, Function.comp.assoc]
+    apply dead_cfg_left
+  | _ =>
+    simp only [Region.vwk, wk, Function.comp_apply, vwk_lwk]
+    constructor
 
--- TODO: Reduce.vwk
+theorem Reduce.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.vwk ρ) (r'.vwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.vwk ρ).reduce
 
 inductive StepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
   | let1_beta (e r) : e.effect Γ = ⊥ → StepD Γ (let1 e r) (r.vsubst e.subst0)
@@ -677,6 +701,35 @@ inductive Step (Γ : ℕ → ε) : Region φ → Region φ → Prop
   | rw {r r'} : Rewrite r r' → Step Γ r r'
   | rw_op {r r'} : Rewrite r r' → Step Γ r' r
 
+theorem StepD.step {Γ : ℕ → ε} {r r' : Region φ} : StepD Γ r r' → Step Γ r r'
+  | let1_beta e r he => Step.let1_beta e r he
+  | reduce p => Step.reduce p.reduce
+  | rw p => Step.rw p.rewrite
+  | rw_op p => Step.rw_op p.rewrite
+
+theorem Step.nonempty {Γ : ℕ → ε} {r r' : Region φ} : Step Γ r r' → Nonempty (StepD Γ r r')
+  | let1_beta e r he => ⟨StepD.let1_beta e r he⟩
+  | reduce p => let ⟨d⟩ := p.nonempty; ⟨StepD.reduce d⟩
+  | rw p => let ⟨d⟩ := p.nonempty; ⟨StepD.rw d⟩
+  | rw_op p => let ⟨d⟩ := p.nonempty; ⟨StepD.rw_op d⟩
+
+theorem Step.nonempty_iff {Γ : ℕ → ε} {r r' : Region φ} : Step Γ r r' ↔ Nonempty (StepD Γ r r')
+  := ⟨Step.nonempty, λ⟨d⟩ => d.step⟩
+
+def StepD.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
+  : StepD (Γ ∘ ρ) r r' → StepD Γ (r.vwk ρ) (r'.vwk ρ)
+  | let1_beta e r he => by
+    simp only [Region.vwk, vsubst_subst0_vwk]
+    apply let1_beta
+    rw [Term.effect_wk]
+    assumption
+  | reduce p => reduce $ p.vwk ρ
+  | rw p => rw $ p.vwk ρ
+  | rw_op p => rw_op $ p.vwk ρ
+
+theorem Step.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ) (p : Step (Γ ∘ ρ) r r')
+  : Step Γ (r.vwk ρ) (r'.vwk ρ) := let ⟨d⟩ := p.nonempty; (d.vwk ρ).step
+
 inductive FStepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
   | let1_beta (e r) : e.effect Γ = ⊥ → FStepD Γ (let1 e r) (r.vsubst e.subst0)
   | reduce {r r'} : ReduceD r r' → FStepD Γ r r'
@@ -686,6 +739,32 @@ inductive FStep (Γ : ℕ → ε) : Region φ → Region φ → Prop
   | let1_beta (e r) : e.effect Γ = ⊥ → FStep Γ (let1 e r) (r.vsubst e.subst0)
   | reduce {r r'} : Reduce r r' → FStep Γ r r'
   | rw {r r'} : Rewrite r r' → FStep Γ r r'
+
+theorem FStepD.step {Γ : ℕ → ε} {r r' : Region φ} : FStepD Γ r r' → FStep Γ r r'
+  | let1_beta e r he => FStep.let1_beta e r he
+  | reduce p => FStep.reduce p.reduce
+  | rw p => FStep.rw p.rewrite
+
+theorem FStep.nonempty {Γ : ℕ → ε} {r r' : Region φ} : FStep Γ r r' → Nonempty (FStepD Γ r r')
+  | let1_beta e r he => ⟨FStepD.let1_beta e r he⟩
+  | reduce p => let ⟨d⟩ := p.nonempty; ⟨FStepD.reduce d⟩
+  | rw p => let ⟨d⟩ := p.nonempty; ⟨FStepD.rw d⟩
+
+theorem FStep.nonempty_iff {Γ : ℕ → ε} {r r' : Region φ} : FStep Γ r r' ↔ Nonempty (FStepD Γ r r')
+  := ⟨FStep.nonempty, λ⟨d⟩ => d.step⟩
+
+def FStepD.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
+  : FStepD (Γ ∘ ρ) r r' → FStepD Γ (r.vwk ρ) (r'.vwk ρ)
+  | let1_beta e r he => by
+    simp only [Region.vwk, vsubst_subst0_vwk]
+    apply let1_beta
+    rw [Term.effect_wk]
+    assumption
+  | reduce p => reduce $ p.vwk ρ
+  | rw p => rw $ p.vwk ρ
+
+theorem FStep.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ) (p : FStep (Γ ∘ ρ) r r')
+  : FStep Γ (r.vwk ρ) (r'.vwk ρ) := let ⟨d⟩ := p.nonempty; (d.vwk ρ).step
 
 @[match_pattern]
 def StepD.case_inl {Γ : ℕ → ε} (e : Term φ) (r s)
