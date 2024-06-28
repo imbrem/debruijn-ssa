@@ -302,6 +302,142 @@ theorem Cong.fv_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
     rw [Function.update_eq_self]
   | _ => simp [*]
 
+theorem Cong.fvs_le {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fvsLe : ∀r r', P r r' → r.fvs ⊆ r'.fvs)
+  (p : Cong P r r') : r.fvs ⊆ r'.fvs := by
+  induction p with
+  | rel p => exact (fvsLe _ _ p)
+  | let1 =>
+    simp only [fvs, Set.union_subset_iff, Set.subset_union_left, true_and]
+    apply Set.subset_union_of_subset_right
+    apply Set.liftFv_mono
+    assumption
+  | let2 =>
+    simp only [fvs, Set.union_subset_iff, Set.subset_union_left, true_and]
+    apply Set.subset_union_of_subset_right
+    apply Set.liftnFv_mono
+    assumption
+  | case_left =>
+    simp only [fvs, Set.union_subset_iff, Set.subset_union_right, and_true]
+    constructor
+    apply Set.subset_union_of_subset_left
+    apply Set.subset_union_of_subset_left
+    rfl
+    apply Set.subset_union_of_subset_left
+    apply Set.subset_union_of_subset_right
+    apply Set.liftFv_mono
+    assumption
+  | case_right =>
+    simp only [fvs, Set.union_subset_iff, Set.subset_union_left, true_and]
+    apply Set.subset_union_of_subset_right
+    apply Set.liftFv_mono
+    assumption
+  | cfg_entry =>
+    simp only [fvs, Set.union_subset_iff, Set.subset_union_right, and_true]
+    apply Set.subset_union_of_subset_left
+    assumption
+  | cfg_block _ _ G i _ I =>
+    simp only [fvs, Set.union_subset_iff, Set.subset_union_left, Set.iUnion_subset_iff, true_and]
+    intro k
+    apply Set.subset_union_of_subset_right
+    apply Set.subset_iUnion_of_subset k
+    apply Set.liftFv_mono
+    if h : k = i then
+      cases h
+      simp [I]
+    else
+      simp only [ne_eq, h, not_false_eq_true, Function.update_noteq]
+      apply le_refl
+
+theorem Cong.fvs_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fvsEq : ∀r r', P r r' → r.fvs = r'.fvs)
+  (p : Cong P r r') : r.fvs = r'.fvs := by
+  induction p with
+  | rel p => exact (fvsEq _ _ p)
+  | cfg_block β _ G i _ I =>
+    simp only [fvs]
+    apply congrArg
+    apply congrArg
+    funext k
+    if h : k = i then
+      cases h
+      simp [I]
+    else
+      simp [h]
+  | _ => simp [*]
+
+theorem Cong.fvi_le {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fviLe : ∀r r', P r r' → r.fvi ≤ r'.fvi)
+  (p : Cong P r r') : r.fvi ≤ r'.fvi := by
+  induction p with
+  | rel p => exact (fviLe _ _ p)
+  | let1 =>
+    apply max_le_max_left
+    apply tsub_le_tsub_right
+    assumption
+  | let2 =>
+    apply max_le_max_left
+    apply tsub_le_tsub_right
+    assumption
+  | case_left =>
+    apply max_le_max_left
+    apply max_le_max <;>
+    apply tsub_le_tsub_right <;>
+    simp [*]
+  | case_right =>
+    apply max_le_max_left
+    apply max_le_max <;>
+    apply tsub_le_tsub_right <;>
+    simp [*]
+  | cfg_entry =>
+    apply max_le_max_right
+    assumption
+  | cfg_block _ _ G i _ I =>
+    apply max_le_max_left
+    apply Finset.sup_le
+    intro k hk
+    apply Finset.le_sup_of_le hk
+    apply tsub_le_tsub_right
+    if h : k = i then
+      cases h
+      simp [I]
+    else
+      simp [h]
+
+theorem Cong.fvi_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fviLe : ∀r r', P r r' → r.fvi = r'.fvi)
+  (p : Cong P r r') : r.fvi = r'.fvi := by
+  induction p with
+  | rel p => exact (fviLe _ _ p)
+  | cfg_block _ _ G i _ I =>
+    simp only [fvi]
+    congr
+    funext k
+    if h : k = i then
+      cases h
+      simp [I]
+    else
+      simp [h]
+  | _ => simp [*]
+
+theorem Cong.eqv_fv_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fvEq : ∀r r', P r r' → r.fv = r'.fv)
+  (p : EqvGen (Cong P) r r') : r.fv = r'.fv := by
+  induction p with
+  | rel _ _ p => exact p.fv_eq fvEq
+  | symm _ _ _ I => exact I.symm
+  | refl => rfl
+  | trans _ _ _ _ _ Il Ir => rw [Il, Ir]
+
+theorem Cong.eqv_fvi_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fviEq : ∀r r', P r r' → r.fvi = r'.fvi)
+  (p : EqvGen (Cong P) r r') : r.fvi = r'.fvi := by
+  induction p with
+  | rel _ _ p => exact p.fvi_eq fviEq
+  | symm _ _ _ I => exact I.symm
+  | refl => rfl
+  | trans _ _ _ _ _ Il Ir => rw [Il, Ir]
+
 -- TODO: CongD is effect monotone/antitone iff underlying is
 -- ==> CongD is effect preserving iff underlying is
 
@@ -515,6 +651,71 @@ theorem Rewrite.of_nonempty {r r' : Region φ} (p : Nonempty (RewriteD r r')) : 
 
 theorem Rewrite.nonempty_iff {r r' : Region φ} : Rewrite r r' ↔ Nonempty (RewriteD r r')
   := ⟨nonempty, of_nonempty⟩
+
+theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs := by cases p with
+  | let2_pair =>
+    simp only [fvs, Term.fvs, Set.union_assoc, fvs_wk, Nat.succ_eq_add_one,
+      Set.liftnFv_of_union, Set.liftnFv_map_add]
+    rw [Set.liftnFv_succ]
+  | let1_case a b r s =>
+    simp only [fvs, fvs_wk, Nat.succ_eq_add_one, Set.liftnFv_of_union, Set.liftnFv_map_add,
+      <-Set.union_assoc]
+    rw [Set.union_comm a.fvs]
+    simp only [Set.union_assoc (b.fvs ∪ a.fvs)]
+    rw [Set.union_comm (Set.liftnFv 1 _) a.fvs]
+    simp only [<-Set.union_assoc (b.fvs ∪ a.fvs)]
+    rw [Set.union_assoc b.fvs a.fvs a.fvs, Set.union_self]
+  | let2_case a b r s =>
+    simp only [fvs, fvs_wk, Set.liftnFv_of_union, Set.liftnFv_map_add, Nat.succ_eq_add_one,
+      <-Set.union_assoc]
+    rw [Set.union_comm a.fvs]
+    simp only [Set.union_assoc (b.fvs ∪ a.fvs)]
+    rw [Set.union_comm (Set.liftnFv 1 _) a.fvs]
+    simp only [<-Set.union_assoc (b.fvs ∪ a.fvs)]
+    rw [Set.union_assoc b.fvs a.fvs a.fvs, Set.union_self]
+    congr
+    rw [Set.liftnFv_succ, Set.liftnFv_one, Set.liftnFv_succ']
+    rw [Set.liftnFv_succ, Set.liftnFv_one, Set.liftnFv_succ']
+  | cfg_br_lt ℓ e n G h =>
+    simp only [fvs]
+    rw [Set.union_assoc]
+    congr
+    apply Eq.symm
+    apply Set.union_eq_self_of_subset_left
+    apply Set.subset_iUnion_of_subset ⟨ℓ, h⟩
+    rfl
+  | cfg_let1 =>
+    simp only [fvs, Function.comp_apply, fvs_vwk1, Set.liftFv_map_liftWk, Nat.succ_eq_add_one,
+      Set.map_add_liftnFv, Set.liftnFv_of_union]
+    rw [<-Set.union_assoc]
+    congr
+    sorry -- TODO: Set.liftnFv_iUnion, liftFv_iUnion, liftnFv_iInter, liftFv_iInter..
+  | cfg_let2 =>
+    sorry
+  | cfg_case => sorry
+  | cfg_cfg =>
+    sorry -- TODO: addCases lore, lwk lore
+  | cfg_fuse =>
+    sorry -- TODO: lwk lore
+  | let2_eta =>
+    simp only [fvs, Term.fvs, Set.union_singleton, fvs_vwk1, Set.liftFv_map_liftWk,
+      Nat.succ_eq_add_one, Set.map_add_liftnFv, Set.liftnFv_of_union, Nat.ofNat_pos,
+      Set.liftnFv_insert_lt, Nat.one_lt_ofNat, Set.liftnFv_singleton_lt, Set.empty_union]
+    congr
+    ext k
+    rw [Set.mem_liftnFv, Set.mem_liftFv]
+    simp only [Set.mem_inter_iff, Set.mem_image, Set.mem_Ici, le_add_iff_nonneg_left, zero_le,
+      and_true]
+    constructor
+    intro ⟨x, hx, hx'⟩
+    cases x with
+    | zero => cases hx'
+    | succ x =>
+      cases hx'
+      exact hx
+    intro hk
+    exact ⟨k + 1, hk, rfl⟩
+  | _ => stop simp [fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.union_assoc]
 
 instance instSetoid : Setoid (Region φ) := EqvGen.Setoid (Cong Rewrite)
 

@@ -1,12 +1,14 @@
 import Discretion.Wk.Nat
 import Discretion.Wk.Fin
 import Discretion.Wk.Multiset
-import Discretion.Wk.Multiset
+import Discretion.Wk.Set
 import Mathlib.Data.ENat.Basic
 
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 
 namespace BinSyntax
+
+-- TODO: loop-aware fv...
 
 /-! ### Free variables and labels
 
@@ -27,6 +29,23 @@ def Term.fv : Term φ → Multiset ℕ
 
 theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ := by
   induction t <;> simp [*]
+
+/-- Get the set of free variables of a term -/
+@[simp]
+def Term.fvs : Term φ → Set ℕ
+  | var x => {x}
+  | op _ x => x.fvs
+  | pair x y => x.fvs ∪ y.fvs
+  | inl a => a.fvs
+  | inr a => a.fvs
+  | abort a => a.fvs
+  | _ => ∅
+
+theorem Term.fvs_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fvs = ρ '' t.fvs := by
+  induction t <;> simp [Set.image_union, *]
+
+theorem Term.fvs_wk1 (r : Term φ) : r.wk1.fvs = Nat.liftWk Nat.succ '' r.fvs := by
+  simp [wk1, fvs_wk]
 
 /-- Get the index of the highest free variable in this term, plus one -/
 @[simp]
@@ -297,7 +316,25 @@ def Region.fv : Region φ → Multiset ℕ
   | case e s t => e.fv + s.fv.liftFv + t.fv.liftFv
   | let1 e t => e.fv + t.fv.liftFv
   | let2 e t => e.fv + t.fv.liftnFv 2
-  | cfg β _ f => β.fv + Finset.sum Finset.univ (λi => (f i).fv.liftnFv 1)
+  | cfg β _ f => β.fv + Finset.sum Finset.univ (λi => (f i).fv.liftFv)
+
+theorem Region.fv_vwk (ρ : ℕ → ℕ) (r : Region φ) : (r.vwk ρ).fv = r.fv.map ρ := by
+  induction r generalizing ρ <;> simp [Multiset.map_finsum, Term.fv_wk, *]
+
+/-- The free variables in this region -/
+@[simp]
+def Region.fvs : Region φ → Set ℕ
+  | br _ e => e.fvs
+  | case e s t => e.fvs ∪ s.fvs.liftFv ∪ t.fvs.liftFv
+  | let1 e t => e.fvs ∪ t.fvs.liftFv
+  | let2 e t => e.fvs ∪ t.fvs.liftnFv 2
+  | cfg β _ f => β.fvs ∪ Set.iUnion (λi => (f i).fvs.liftFv)
+
+theorem Region.fvs_vwk (ρ : ℕ → ℕ) (r : Region φ) : (r.vwk ρ).fvs = ρ '' r.fvs := by
+  induction r generalizing ρ <;> simp [Set.image_union, Set.image_iUnion, Term.fvs_wk, *]
+
+theorem Region.fvs_vwk1 (r : Region φ) : r.vwk1.fvs = Nat.liftWk Nat.succ '' r.fvs := by
+  simp [vwk1, fvs_vwk]
 
 /-- The highest free variable in this region, plus one -/
 @[simp]
