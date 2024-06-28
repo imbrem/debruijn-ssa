@@ -84,6 +84,22 @@ theorem Ty.LE.eq [d : DiscreteOrder α] {A B : Ty α} : LE A B → A = B
 instance [DiscreteOrder α] : DiscreteOrder (Ty α) where
   le_eq _ _ := Ty.LE.eq
 
+theorem Ty.IsInitial.mono {A B : Ty α} (h : A ≤ B) (hi : IsInitial A) : IsInitial B
+  := by induction h with
+  | prod _ _ Il Ir => cases hi with
+    | prod_left hl => exact prod_left (Il hl)
+    | prod_right hr => exact prod_right (Ir hr)
+  | coprod _ _ Il Ir => cases hi with | coprod hl hr => exact coprod (Il hl) (Ir hr)
+  | _ => cases hi <;> constructor
+
+theorem Ty.IsInitial.anti {A B : Ty α} (h : A ≤ B) (hi : IsInitial B) : IsInitial A
+  := by induction h with
+  | prod _ _ Il Ir => cases hi with
+    | prod_left hl => exact prod_left (Il hl)
+    | prod_right hr => exact prod_right (Ir hr)
+  | coprod _ _ Il Ir => cases hi with | coprod hl hr => exact coprod (Il hl) (Ir hr)
+  | _ => cases hi <;> constructor
+
 -- TODO: Ty.LE is decidable if ≤ on α is
 
 def Ctx (α ε) := List (Ty α × ε)
@@ -108,12 +124,12 @@ theorem Ctx.Var.shead {head : Ty α × ε} {Γ : Ctx α ε}
 theorem Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
   := ⟨by simp [h.length], by simp [h.get]⟩
 
-theorem Ctx.Var.of_step {Γ : Ctx α ε} {n} (h : Var (V'::Γ) (n+1) V) : Var Γ n V
+theorem Ctx.Var.tail {Γ : Ctx α ε} {n} (h : Var (V'::Γ) (n+1) V) : Var Γ n V
   := ⟨Nat.lt_of_succ_lt_succ h.length, h.get⟩
 
 @[simp]
 theorem Ctx.Var.step_iff {V V' : Ty α × ε} {Γ : Ctx α ε} {n} : Var (V'::Γ) (n+1) V ↔ Var Γ n V
-  := ⟨Ctx.Var.of_step, Ctx.Var.step⟩
+  := ⟨Ctx.Var.tail, Ctx.Var.step⟩
 
 def Ctx.effect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
 
@@ -902,7 +918,7 @@ theorem Ctx.Wkn.lift {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).lift hV)
 
 theorem Ctx.Wkn.lift_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
-  : Wkn Γ Δ ρ := λi hi => Var.of_step (h (i + 1) (Nat.succ_lt_succ hi))
+  : Wkn Γ Δ ρ := λi hi => Var.tail (h (i + 1) (Nat.succ_lt_succ hi))
 
 theorem Ctx.Wkn.lift_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
   : head ≤ head'
@@ -922,7 +938,7 @@ theorem Ctx.Wkn.lift_id {V V' : Ty α × ε} (hV : V ≤ V') (h : Γ.Wkn Δ _roo
   := Nat.liftWk_id ▸ h.lift hV
 
 theorem Ctx.Wkn.lift_id_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) _root_.id)
-  : Wkn Γ Δ _root_.id := λi hi => (h (i + 1) (Nat.succ_lt_succ hi)).of_step
+  : Wkn Γ Δ _root_.id := λi hi => (h (i + 1) (Nat.succ_lt_succ hi)).tail
 
 theorem Ctx.Wkn.lift_id_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) _root_.id)
   : head ≤ head'
@@ -949,7 +965,7 @@ theorem Ctx.Wkn.step {head : Ty α × ε} (h : Γ.Wkn Δ ρ) : Wkn (head::Γ) Δ
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).step _)
 
 theorem Ctx.Wkn.step_tail {head : Ty α × ε} (h : Wkn (head::Γ) Δ (Nat.stepWk ρ))
-  : Wkn Γ Δ ρ := λi hi => (h i hi).of_step
+  : Wkn Γ Δ ρ := λi hi => (h i hi).tail
 
 @[simp]
 theorem Ctx.Wkn.step_iff {head : Ty α × ε} {Γ Δ}
@@ -1157,6 +1173,43 @@ theorem Ctx.EWkn.stepn_append (Ξ) (h : Γ.EWkn Δ ρ)
 theorem Ctx.EWkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
   : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk n ρ)
   := hn ▸ stepn_append Ξ h
+
+theorem Ctx.Var.mem {Γ : Ctx α ε} {n V} (h : Var Γ n V) : ∃V', V' ∈ Γ ∧ V' ≤ V
+  := by induction n generalizing Γ with
+  | zero =>
+    cases Γ with
+    | nil => cases h.length
+    | cons H Γ => exact ⟨H, List.Mem.head _, h.get⟩
+  | succ n I =>
+    cases Γ with
+    | nil => cases h.length
+    | cons H Γ =>
+      have ⟨V', hV', hV⟩ := I h.tail;
+      exact ⟨V', List.Mem.tail _ hV', hV⟩
+
+theorem Ctx.Var.exists_of_mem {Γ : Ctx α ε} {V} (h : V ∈ Γ)
+  : ∃n, ∃h : Var Γ n V, Γ.get ⟨n, h.length⟩ = V
+  := by induction h with
+  | head => exact ⟨0, by simp, rfl⟩
+  | tail _ _ I =>
+    have ⟨n, hn, hn'⟩ := I;
+    exact ⟨n + 1, hn.step, by simp [hn']⟩
+
+theorem Ctx.mem_wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (hV : V ∈ Δ) : ∃V', V' ∈ Γ ∧ V' ≤ V
+  :=
+  have ⟨n, hn, hn'⟩ := Var.exists_of_mem hV;
+  have hρn := h n hn.length;
+  have ⟨V', hV', hV⟩ := Var.mem hρn;
+  ⟨V', hV', hn' ▸ hV⟩
+
+theorem Ctx.IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) : IsInitial Δ → IsInitial Γ
+  | ⟨_, hV, hI⟩ =>
+    have ⟨V', hV', hV⟩ := mem_wk h hV;
+    ⟨V', hV', hI.anti hV.1⟩
+
+theorem Ctx.Wkn.effect {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (i : ℕ) (hi : i < Δ.length)
+  : (Γ.effect (ρ i)) ≤ Δ.effect i
+  := by simp [Ctx.effect, (h i hi).length, hi, (h i hi).get.2]
 
 -- theorem Ctx.EWkn.id_len_le : Γ.EWkn Δ _root_.id → Δ.length ≤ Γ.length := by
 --   apply List.NEWkn.id_len_le

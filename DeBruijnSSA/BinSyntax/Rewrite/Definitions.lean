@@ -24,7 +24,6 @@ structure HaveTrg (Γ : Ctx α ε) (L : LCtx α) (r r' : Region φ) where
 
 inductive WfD.CongD (P : Ctx α ε → LCtx α → Region φ → Region φ → Sort _)
   : Ctx α ε → LCtx α → Region φ → Region φ → Sort _
-  | step : P Γ L r r' → CongD P Γ L r r'
   | case_left : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩ → CongD P (⟨A, ⊥⟩::Γ) L r r' → s.WfD (⟨B, ⊥⟩::Γ) L
     → CongD P Γ L (Region.case e r s) (Region.case e r' s)
   | case_right : e.WfD Γ ⟨Ty.coprod A B, ⊥⟩ → r.WfD (⟨A, ⊥⟩::Γ) L → CongD P (⟨B, ⊥⟩::Γ) L s s'
@@ -45,10 +44,10 @@ inductive WfD.CongD (P : Ctx α ε → LCtx α → Region φ → Region φ → S
     (i : Fin n) →
     CongD P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L) (G i) g' →
     CongD P Γ L (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
+  | rel : P Γ L r r' → CongD P Γ L r r'
 
 def WfD.CongD.left {P : Ctx α ε → LCtx α → Region φ → Region φ → Sort _} {Γ L r r'}
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.WfD Γ L) : CongD P Γ L r r' → r.WfD Γ L
-  | step p => toLeft p
   | case_left de pr ds => case de (pr.left toLeft) ds
   | case_right de dr ps => case de dr (ps.left toLeft)
   | let1 de pr => WfD.let1 de (pr.left toLeft)
@@ -61,10 +60,10 @@ def WfD.CongD.left {P : Ctx α ε → LCtx α → Region φ → Region φ → So
     else
       exact dG k
   )
+  | rel p => toLeft p
 
 def WfD.CongD.right {P : Ctx α ε → LCtx α → Region φ → Region φ → Sort _} {Γ L r r'}
   (toRight : ∀{Γ L r r'}, P Γ L r r' → r'.WfD Γ L) : CongD P Γ L r r' → r'.WfD Γ L
-  | step p => toRight p
   | case_left de pr ds => case de (pr.right toRight) ds
   | case_right de dr ps => case de dr (ps.right toRight)
   | let1 de pr => WfD.let1 de (pr.right toRight)
@@ -79,6 +78,7 @@ def WfD.CongD.right {P : Ctx α ε → LCtx α → Region φ → Region φ → S
       simp only [ne_eq, h, not_false_eq_true, Function.update_noteq]
       exact dG k
   )
+  | rel p => toRight p
 
 -- TODO: therefore, a prefunctor to HaveTrg lifts via CongD...
 
@@ -218,9 +218,15 @@ theorem TStep.right {Γ L} {r r' : Region φ} : TStep Γ L r r' → r'.Wf Γ L
   | TStep.initial _ _ d => d
   | TStep.terminal _ de dr => dr.let1 de
 
+theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
+  : TStep (φ := φ) Δ L r r' → TStep Γ L (r.vwk ρ) (r'.vwk ρ)
+  | TStep.step d d' p => TStep.step (d.vwk hρ) (d'.vwk hρ) (sorry /-p.vwk ρ-/)
+  | TStep.step_op d d' p => TStep.step_op (d.vwk hρ) (d'.vwk hρ) (sorry/-p.vwk ρ-/)
+  | TStep.initial di d d' => TStep.initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
+  | TStep.terminal de de' dr => TStep.terminal (de.wk hρ) (de'.wk hρ) (dr.vwk hρ.slift)
+
 inductive Wf.Cong (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop)
   : Ctx α ε → LCtx α → Region φ → Region φ → Prop
-  | step : P Γ L r r' → Cong P Γ L r r'
   | case_left : e.Wf Γ ⟨Ty.coprod A B, e'⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r' → s.Wf (⟨B, ⊥⟩::Γ) L
     → Cong P Γ L (Region.case e r s) (Region.case e r' s)
   | case_right : e.Wf Γ ⟨Ty.coprod A B, e'⟩ → r.Wf (⟨A, ⊥⟩::Γ) L → Cong P (⟨B, ⊥⟩::Γ) L s s'
@@ -241,32 +247,32 @@ inductive Wf.Cong (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
     (i : Fin n) →
     Cong P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L) (G i) g' →
     Cong P Γ L (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
+  | rel : P Γ L r r' → Cong P Γ L r r'
 
 theorem Wf.Cong.left {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L) : Wf.Cong P Γ L r r' → r.Wf Γ L
-  | Wf.Cong.step p => toLeft p
-  | Wf.Cong.case_left de pr ds => case de (pr.left toLeft) ds
-  | Wf.Cong.case_right de dr ps => case de dr (ps.left toLeft)
-  | Wf.Cong.let1 de pr => Wf.let1 de (pr.left toLeft)
-  | Wf.Cong.let2 de pr => Wf.let2 de (pr.left toLeft)
-  | Wf.Cong.cfg_entry R hR pβ dG => Wf.cfg _ R hR (pβ.left toLeft) dG
-  | Wf.Cong.cfg_block R hR dβ dG i pr => Wf.cfg _ R hR dβ (λk => by
+  | case_left de pr ds => case de (pr.left toLeft) ds
+  | case_right de dr ps => case de dr (ps.left toLeft)
+  | let1 de pr => Wf.let1 de (pr.left toLeft)
+  | let2 de pr => Wf.let2 de (pr.left toLeft)
+  | cfg_entry R hR pβ dG => Wf.cfg _ R hR (pβ.left toLeft) dG
+  | cfg_block R hR dβ dG i pr => Wf.cfg _ R hR dβ (λk => by
     if h : k = i then
       cases h
       exact (pr.left toLeft)
     else
       exact dG k
   )
+  | rel p => toLeft p
 
 theorem Wf.Cong.right {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
   (toRight : ∀{Γ L r r'}, P Γ L r r' → r'.Wf Γ L) : Wf.Cong P Γ L r r' → r'.Wf Γ L
-  | Wf.Cong.step p => toRight p
-  | Wf.Cong.case_left de pr ds => case de (pr.right toRight) ds
-  | Wf.Cong.case_right de dr ps => case de dr (ps.right toRight)
-  | Wf.Cong.let1 de pr => Wf.let1 de (pr.right toRight)
-  | Wf.Cong.let2 de pr => Wf.let2 de (pr.right toRight)
-  | Wf.Cong.cfg_entry R hR pβ dG => Wf.cfg _ R hR (pβ.right toRight) dG
-  | Wf.Cong.cfg_block R hR dβ dG i pr => Wf.cfg _ R hR dβ (λk => by
+  | case_left de pr ds => case de (pr.right toRight) ds
+  | case_right de dr ps => case de dr (ps.right toRight)
+  | let1 de pr => Wf.let1 de (pr.right toRight)
+  | let2 de pr => Wf.let2 de (pr.right toRight)
+  | cfg_entry R hR pβ dG => Wf.cfg _ R hR (pβ.right toRight) dG
+  | cfg_block R hR dβ dG i pr => Wf.cfg _ R hR dβ (λk => by
     if h : k = i then
       cases h
       simp only [Function.update_same]
@@ -275,6 +281,22 @@ theorem Wf.Cong.right {P : Ctx α ε → LCtx α → Region φ → Region φ →
       simp only [ne_eq, h, not_false_eq_true, Function.update_noteq]
       exact dG k
   )
+  | rel p => toRight p
+
+theorem Wf.Cong.vwk {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
+  (toVwk : ∀Γ Δ L r r' ρ, Γ.Wkn Δ ρ → P Δ L r r' → P Γ L (r.vwk ρ) (r'.vwk ρ))
+  {Γ L r r'}
+  {ρ : ℕ → ℕ} (hρ : Γ.Wkn Δ ρ)
+  : Wf.Cong P Δ L r r' → Wf.Cong P Γ L (r.vwk ρ) (r'.vwk ρ)
+  | case_left de pr ds => case_left (de.wk hρ) (pr.vwk toVwk hρ.slift) (ds.vwk hρ.slift)
+  | case_right de dr ps => case_right (de.wk hρ) (dr.vwk hρ.slift) (ps.vwk toVwk hρ.slift)
+  | let1 de pr => let1 (de.wk hρ) (pr.vwk toVwk hρ.slift)
+  | let2 de pr => let2 (de.wk hρ) (pr.vwk toVwk hρ.sliftn₂)
+  | cfg_entry R hR pβ dG => cfg_entry R hR (pβ.vwk toVwk hρ) (λi => (dG i).vwk hρ.slift)
+  | cfg_block R hR dβ dG i pr => by
+    simp only [Region.vwk, Function.comp_update_apply]
+    exact cfg_block R hR (dβ.vwk hρ) (λi => (dG i).vwk hρ.slift) i (pr.vwk toVwk hρ.slift)
+  | rel p => rel $ toVwk _ _ _ _ _ _ hρ p
 
 theorem Wf.Cong.eqv_iff {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L)
@@ -431,6 +453,11 @@ theorem CStep.cfg_block {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β G i g
   (pr : CStep (φ := φ) (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L) (G i) g')
   : CStep Γ L (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
   := Wf.Cong.cfg_block R hR dβ dG i pr
+
+theorem CStep.vwk {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  {ρ : ℕ → ℕ} (hρ : Γ.Wkn Δ ρ)
+  (p : CStep Δ L r r') : CStep Γ L (r.vwk ρ) (r'.vwk ρ)
+  := Wf.Cong.vwk sorry hρ p
 
 theorem CStep.left {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   (h : CStep Γ L r r') : r.Wf Γ L

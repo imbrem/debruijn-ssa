@@ -1,11 +1,13 @@
 import Mathlib.Combinatorics.Quiver.Path
 import Mathlib.Combinatorics.Quiver.Symmetric
 import Mathlib.CategoryTheory.PathCategory
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 import Discretion.Correspondence.Definitions
 
 import DeBruijnSSA.BinSyntax.Syntax.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Subst
+import DeBruijnSSA.BinSyntax.Syntax.Fv
 
 namespace BinSyntax
 
@@ -247,7 +249,7 @@ def CongD.vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   | case_right e r p => case_right (e.wk ρ) (r.vwk (Nat.liftWk ρ)) (p.vwk toVwk (Nat.liftWk ρ))
   | cfg_entry p n G => cfg_entry (p.vwk toVwk _) n _
   | cfg_block β n G i p => by
-    simp only [Region.vwk, Function.update_comp_apply]
+    simp only [Region.vwk, Function.comp_update_apply]
     exact cfg_block _ _ _ _ (p.vwk toVwk (Nat.liftWk ρ))
   | rel p => rel (toVwk ρ _ _ p)
 
@@ -264,6 +266,41 @@ theorem Cong.eqv_vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   | symm => apply EqvGen.symm; assumption
   | refl => apply EqvGen.refl
   | trans => apply EqvGen.trans <;> assumption
+
+theorem Cong.fv_le {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fvLe : ∀r r', P r r' → r.fv ≤ r'.fv)
+  (p : Cong P r r') : r.fv ≤ r'.fv := by
+  induction p with
+  | rel p => exact (fvLe _ _ p)
+  | cfg_block _ _ G i _ I =>
+    simp only [fv, add_le_add_iff_left]
+    apply Finset.sum_le_sum
+    intro k _
+    apply Multiset.liftnFv_mono
+    if h : k = i then
+      cases h
+      simp [I]
+    else
+      simp [h]
+  | _ =>
+    simp only [fv, add_le_add_iff_right, add_le_add_iff_left, Multiset.liftFv, *] <;>
+    apply Multiset.liftnFv_mono <;>
+    assumption
+
+theorem Cong.fv_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fvEq : ∀r r', P r r' → r.fv = r'.fv)
+  (p : Cong P r r') : r.fv = r'.fv := by
+  induction p with
+  | rel p => exact (fvEq _ _ p)
+  | cfg_block _ _ G _ _ I =>
+    simp only [fv, add_right_inj, Function.comp_update_apply, <-I]
+    congr
+    funext k
+    simp only [<-Function.comp_apply (f := Multiset.liftnFv 1)]
+    simp only [<-Function.comp_apply (g := G)]
+    rw [Function.comp.assoc]
+    rw [Function.update_eq_self]
+  | _ => simp [*]
 
 -- TODO: CongD is effect monotone/antitone iff underlying is
 -- ==> CongD is effect preserving iff underlying is
