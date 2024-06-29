@@ -336,6 +336,10 @@ theorem Region.fvs_vwk (ρ : ℕ → ℕ) (r : Region φ) : (r.vwk ρ).fvs = ρ 
 theorem Region.fvs_vwk1 (r : Region φ) : r.vwk1.fvs = Nat.liftWk Nat.succ '' r.fvs := by
   simp [vwk1, fvs_vwk]
 
+@[simp]
+theorem Region.fvs_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fvs = r.fvs := by
+  induction r generalizing ρ <;> simp [*]
+
 /-- The highest free variable in this region, plus one -/
 @[simp]
 def Region.fvi : Region φ → ℕ

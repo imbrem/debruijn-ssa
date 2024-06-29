@@ -438,6 +438,15 @@ theorem Cong.eqv_fvi_eq {P : Region φ → Region φ → Sort _} {r r' : Region 
   | refl => rfl
   | trans _ _ _ _ _ Il Ir => rw [Il, Ir]
 
+theorem Cong.eqv_fvs_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (fvsEq : ∀r r', P r r' → r.fvs = r'.fvs)
+  (p : EqvGen (Cong P) r r') : r.fvs = r'.fvs := by
+  induction p with
+  | rel _ _ p => exact p.fvs_eq fvsEq
+  | symm _ _ _ I => exact I.symm
+  | refl => rfl
+  | trans _ _ _ _ _ Il Ir => rw [Il, Ir]
+
 -- TODO: CongD is effect monotone/antitone iff underlying is
 -- ==> CongD is effect preserving iff underlying is
 
@@ -684,19 +693,19 @@ theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs :=
     apply Set.union_eq_self_of_subset_left
     apply Set.subset_iUnion_of_subset ⟨ℓ, h⟩
     rfl
-  | cfg_let1 =>
-    simp only [fvs, Function.comp_apply, fvs_vwk1, Set.liftFv_map_liftWk, Nat.succ_eq_add_one,
-      Set.map_add_liftnFv, Set.liftnFv_of_union]
-    rw [<-Set.union_assoc]
-    congr
-    sorry -- TODO: Set.liftnFv_iUnion, liftFv_iUnion, liftnFv_iInter, liftFv_iInter..
-  | cfg_let2 =>
-    sorry
-  | cfg_case => sorry
-  | cfg_cfg =>
-    sorry -- TODO: addCases lore, lwk lore
-  | cfg_fuse =>
-    sorry -- TODO: lwk lore
+  | cfg_case e r s G =>
+    simp only [fvs, Set.union_assoc, Function.comp_apply, fvs_vwk1, Set.liftFv_map_liftWk,
+      Nat.succ_eq_add_one, Set.map_add_liftnFv, Set.liftnFv_of_union, Set.liftnFv_iUnion,
+      Set.liftnFv_of_inter, le_refl, Set.liftnFv_Ici, Set.inter_univ]
+    apply congrArg
+    apply congrArg
+    rw [Set.union_comm (s.fvs.liftnFv 1), <-Set.union_assoc, Set.union_self]
+  | cfg_cfg => simp [fvs, Set.union_assoc, Fin.comp_addCases_apply, Set.iUnion_addCases]
+  | cfg_fuse β n G k ρ hρ =>
+    simp only [fvs, fvs_lwk]
+    rw [Set.iUnion_congr_of_surjective _ hρ]
+    intro i
+    simp
   | let2_eta =>
     simp only [fvs, Term.fvs, Set.union_singleton, fvs_vwk1, Set.liftFv_map_liftWk,
       Nat.succ_eq_add_one, Set.map_add_liftnFv, Set.liftnFv_of_union, Nat.ofNat_pos,
@@ -715,7 +724,7 @@ theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs :=
       exact hx
     intro hk
     exact ⟨k + 1, hk, rfl⟩
-  | _ => stop simp [fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.union_assoc]
+  | _ => simp [fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.liftnFv_iUnion, Set.union_assoc]
 
 instance instSetoid : Setoid (Region φ) := EqvGen.Setoid (Cong Rewrite)
 
