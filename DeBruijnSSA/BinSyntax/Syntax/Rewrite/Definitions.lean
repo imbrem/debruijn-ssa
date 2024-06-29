@@ -912,6 +912,24 @@ theorem Reduce.of_nonempty {r r' : Region φ} (p : Nonempty (ReduceD r r')) : Re
 theorem Reduce.nonempty_iff {r r' : Region φ} : Reduce r r' ↔ Nonempty (ReduceD r r')
   := ⟨Reduce.nonempty, Reduce.of_nonempty⟩
 
+theorem Reduce.fvs_le {r r' : Region φ} (p : Reduce r r') : r'.fvs ⊆ r.fvs := by cases p with
+  | case_inl e r s => simp
+  | case_inr e r s =>
+    simp only [fvs, Term.fvs, Set.union_subset_iff, Set.subset_union_right, and_true]
+    rw [Set.union_assoc]
+    simp
+  | wk_cfg β n G k ρ =>
+    simp only [fvs, Function.comp_apply, fvs_lwk, Set.union_subset_iff, Set.subset_union_left,
+      Set.iUnion_subset_iff, true_and]
+    intro i
+    apply Set.subset_union_of_subset_right
+    apply Set.subset_iUnion_of_subset (ρ i)
+    rfl
+  | dead_cfg_left β n G m G' =>
+    simp only [fvs, fvs_lwk, Fin.comp_addCases_apply, Set.iUnion_addCases, Function.comp_apply]
+    apply Set.union_subset_union_right
+    apply Set.subset_union_right
+
 def ReduceD.cast_trg {r₀ r₁ r₁' : Region φ} (p : ReduceD r₀ r₁) (h : r₁ = r₁')
   : ReduceD r₀ r₁' := h ▸ p
 
