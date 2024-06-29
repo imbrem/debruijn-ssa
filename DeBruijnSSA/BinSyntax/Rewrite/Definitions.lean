@@ -874,13 +874,13 @@ theorem InS.let2_case {Γ : Ctx α ε} {L : LCtx α}
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
--- theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
---   (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
---   (R : LCtx α)  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
---   (hℓ : (R ++ L).Trg ℓ A) (hℓ' : ℓ < R.length)
---   : (InS.br ℓ a hℓ).cfg R G ≈ (let1 a $ G ⟨ℓ, hℓ'⟩).cfg R G
---   := EqvGen.rel _ _ $ Wf.Cong.rel $
---   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
+  (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
+  (R : LCtx α)  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  (hℓ : (R ++ L).Trg ℓ A) (hℓ' : ℓ < R.length)
+  : (InS.br ℓ a hℓ).cfg R G ≈ (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id sorry).cfg R G
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
 theorem InS.cfg_let1 {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.InS φ Γ ⟨A, ea⟩)
@@ -909,16 +909,52 @@ theorem InS.cfg_case {Γ : Ctx α ε} {L : LCtx α}
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
-theorem InS.cfg_cfg {Γ : Ctx α ε} {L : LCtx α}
-  (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
-    : β.cfg R G ≈ sorry
-  := sorry
+theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
+  (R S : LCtx α) (β : InS φ Γ (R ++ (S ++ L)))
+  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ (S ++ L)))
+  (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
+    : (β.cfg R G).cfg S G'
+    ≈ (β.cast rfl (by rw [List.append_assoc])).cfg'
+      (R.length + S.length) (R ++ S) (by rw [List.length_append])
+      (Fin.addCases (λi => (G i).cast (by sorry) (by rw [List.append_assoc]))
+                    (λi => ((G' i).lwk (· + n) sorry).cast sorry (by rw [List.append_assoc])))
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by
+    simp only [Set.mem_setOf_eq, coe_cfg, id_eq, eq_mpr_eq_cast, coe_cfg', coe_cast]
+    apply Rewrite.cast_trg
+    apply Rewrite.cfg_cfg
+    congr
+    funext i
+    sorry
+    ))
 
 theorem InS.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
   (β : InS φ Γ L)
   : β.cfg [] (λi => i.elim0) ≈ β
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+
+-- TODO: let2_eta
+
+theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
+  (R S : LCtx α) (β : InS φ Γ (R ++ L))
+  (G : (i : Fin S.length) → InS φ ((List.get S i, ⊥)::Γ) (R ++ L))
+  (ρ : Fin R.length → Fin S.length)
+  (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
+  : cfg S (β.lwk (Fin.toNatWk ρ) hρ) (λi => (G i).lwk (Fin.toNatWk ρ) hρ)
+  ≈ cfg R β (λi => (G (ρ i)).vwk_id sorry)
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (FStep.reduce (by constructor))
+
+-- TODO: case_inl
+
+-- TODO: case_inr
+
+-- TODO: dead_cfg_left
+
+-- TODO: initial
+
+-- TODO: terminal
 
 end Region
 

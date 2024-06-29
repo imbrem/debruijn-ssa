@@ -671,6 +671,12 @@ theorem Rewrite.of_nonempty {r r' : Region φ} (p : Nonempty (RewriteD r r')) : 
 theorem Rewrite.nonempty_iff {r r' : Region φ} : Rewrite r r' ↔ Nonempty (RewriteD r r')
   := ⟨nonempty, of_nonempty⟩
 
+theorem Rewrite.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀ = r₀') (p : Rewrite r₀ r₁)
+  : Rewrite r₀' r₁ := h ▸ p
+
+theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (h : r₁ = r₁')
+  : Rewrite r₀ r₁' := h ▸ p
+
 theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs := by cases p with
   | let2_pair =>
     simp only [fvs, Term.fvs, Set.union_assoc, fvs_wk, Nat.succ_eq_add_one,

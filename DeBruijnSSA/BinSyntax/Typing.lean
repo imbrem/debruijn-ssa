@@ -829,9 +829,9 @@ def Region.toInS {Γ : Ctx α ε} (r : Region φ) {L} (h : r.Wf Γ L) : Region.I
 def Region.Wf.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.Wf Γ L) : Region.InS φ Γ L
   := ⟨r, h⟩
 
-def Region.InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term φ)
-  (hℓ : L.Trg ℓ A) (ha : a.Wf Γ ⟨A, ⊥⟩) : InS φ Γ L
-  := ⟨Region.br ℓ a, Region.Wf.br hℓ ha⟩
+def Region.InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
+  (hℓ : L.Trg ℓ A) : InS φ Γ L
+  := ⟨Region.br ℓ a, Region.Wf.br hℓ a.2⟩
 
 def Region.InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
   (a : Term.InS φ Γ ⟨A, e⟩)
