@@ -1018,6 +1018,12 @@ theorem FStep.nonempty {Γ : ℕ → ε} {r r' : Region φ} : FStep Γ r r' → 
 theorem FStep.nonempty_iff {Γ : ℕ → ε} {r r' : Region φ} : FStep Γ r r' ↔ Nonempty (FStepD Γ r r')
   := ⟨FStep.nonempty, λ⟨d⟩ => d.step⟩
 
+theorem FStep.fvs_le {Γ : ℕ → ε} {r r' : Region φ} (p : FStep Γ r r')
+  : r'.fvs ⊆ r.fvs := by cases p with
+  | let1_beta e r he => apply fvs_vsubst0_le
+  | reduce p => exact p.fvs_le
+  | rw p => rw [p.fvs_eq]
+
 def FStepD.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
   : FStepD (Γ ∘ ρ) r r' → FStepD Γ (r.vwk ρ) (r'.vwk ρ)
   | let1_beta e r he => by
@@ -1030,6 +1036,20 @@ def FStepD.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
 
 theorem FStep.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ) (p : FStep (Γ ∘ ρ) r r')
   : FStep Γ (r.vwk ρ) (r'.vwk ρ) := let ⟨d⟩ := p.nonempty; (d.vwk ρ).step
+
+def FStepD.wk_eff {Γ Δ : ℕ → ε} {r r' : Region φ}
+  (h : ∀i ∈ r.fvs, Γ i ≤ Δ i) : FStepD Δ r r' → FStepD Γ r r'
+  | let1_beta e r he => let1_beta e r (by
+    have he' := e.effect_le (λi hi => h i (Or.inl hi));
+    rw [he] at he'
+    simp only [le_bot_iff] at he'
+    exact he')
+  | reduce p => reduce p
+  | rw p => rw p
+
+theorem FStep.wk_eff {Γ Δ : ℕ → ε} {r r' : Region φ}
+  (h : ∀i ∈ r.fvs, Γ i ≤ Δ i) (p : FStep Δ r r') : FStep Γ r r'
+  := let ⟨d⟩ := p.nonempty; (d.wk_eff h).step
 
 @[match_pattern]
 def StepD.case_inl {Γ : ℕ → ε} (e : Term φ) (r s)

@@ -2,6 +2,7 @@ import Discretion.Wk.Order
 import Discretion.Wk.Multiset
 
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
+import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 import DeBruijnSSA.InstSet
 
 namespace BinSyntax
@@ -334,16 +335,20 @@ section Monotone
 
 variable [Φ : EffectSet φ ε] [Bot ε] [SemilatticeSup ε]
 
-theorem Term.effect_mono {Γ : ℕ → ε} {e : Term φ} {Δ : ℕ → ε}
-  (H : Γ ≤ Δ) : e.effect Γ ≤ e.effect Δ := by
+theorem Term.effect_le {Γ Δ : ℕ → ε} (e : Term φ) (H : ∀i ∈ e.fvs, Γ i ≤ Δ i)
+  : e.effect Γ ≤ e.effect Δ := by
   induction e with
-  | var => exact H _
-  | op f e I => exact sup_le_sup_left I _
-  | pair a b Ia Ib => exact sup_le_sup Ia Ib
-  | inl _ I => exact I
-  | inr _ I => exact I
-  | abort _ I => exact I
+  | var => exact H _ rfl
+  | op f e I => exact sup_le_sup_left (I H) _
+  | pair a b Ia Ib
+    => exact sup_le_sup (Ia (λi hi => H i (Or.inl hi))) (Ib (λi hi => H i (Or.inr hi)))
+  | inl _ I => exact (I H)
+  | inr _ I => exact (I H)
+  | abort _ I => exact (I H)
   | _ => exact le_refl _
+
+theorem Term.effect_mono {Γ : ℕ → ε} {e : Term φ} {Δ : ℕ → ε}
+  (H : Γ ≤ Δ) : e.effect Γ ≤ e.effect Δ := Term.effect_le _ (λi _ => H i)
 
 theorem Body.effect_mono {Γ : ℕ → ε} {b : Body φ} {Δ : ℕ → ε}
   (H : Γ ≤ Δ) : b.effect Γ ≤ b.effect Δ := by
@@ -437,6 +442,33 @@ theorem TRegion.control_effect_mono {Γ : ℕ → ε} {r : TRegion φ} {Δ : ℕ
       apply I
       intro k Γ' Δ' H'
       apply IG k.succ H'
+
+theorem Region.effect_le {Γ Δ : ℕ → ε} (r : Region φ) (H : ∀i ∈ r.fvs, Γ i ≤ Δ i)
+  : r.effect Γ ≤ r.effect Δ := by
+  induction r generalizing Γ Δ with
+  | br _ e => exact e.effect_le H
+  | let1 e r I => exact sup_le_sup (e.effect_le (λi hi => H i (Or.inl hi))) (I sorry)
+  | let2 e r I => exact sup_le_sup (e.effect_le (λi hi => H i (Or.inl hi))) (I sorry)
+  | case e s t Is It =>
+    exact sup_le_sup
+      (sup_le_sup (e.effect_le (λi hi => H i (Or.inl $ Or.inl hi)))
+      (Is sorry))
+      (It sorry)
+  | cfg β n G Iβ IG =>
+    apply sup_le_sup (Iβ (λi hi => H i (Or.inl hi)))
+    -- TODO: Fin.sup_le_sup not working here for some reason...
+    induction n with
+    | zero => simp
+    | succ n I =>
+      rw [Fin.sup_succ, Fin.sup_succ]
+      apply sup_le_sup
+      apply IG 0 sorry
+      apply I
+      intro k Γ' Δ' H'
+      apply IG k.succ H'
+      intro i hi
+      apply H
+      sorry
 
 theorem Region.effect_mono {Γ : ℕ → ε} {r : Region φ} {Δ : ℕ → ε}
   (H : Γ ≤ Δ) : r.effect Γ ≤ r.effect Δ := by

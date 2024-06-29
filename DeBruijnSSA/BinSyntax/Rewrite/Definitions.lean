@@ -220,8 +220,18 @@ theorem TStep.right {Γ L} {r r' : Region φ} : TStep Γ L r r' → r'.Wf Γ L
 
 theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   : TStep (φ := φ) Δ L r r' → TStep Γ L (r.vwk ρ) (r'.vwk ρ)
-  | TStep.step d d' p => TStep.step (d.vwk hρ) (d'.vwk hρ) (sorry /-p.vwk ρ-/)
-  | TStep.step_op d d' p => TStep.step_op (d.vwk hρ) (d'.vwk hρ) (sorry/-p.vwk ρ-/)
+  | TStep.step d d' p => TStep.step (d.vwk hρ) (d'.vwk hρ)
+    ((p.wk_eff (λi hi => by
+      have hi : i < Δ.length := d.fvs hi
+      have hρ := hρ i hi
+      simp [Ctx.effect, hρ.length, hi, hρ.get.2]
+      )).vwk ρ)
+  | TStep.step_op d d' p => TStep.step_op (d.vwk hρ) (d'.vwk hρ)
+    ((p.wk_eff (λi hi => by
+      have hi : i < Δ.length := d'.fvs hi
+      have hρ := hρ i hi
+      simp [Ctx.effect, hρ.length, hi, hρ.get.2]
+      )).vwk ρ)
   | TStep.initial di d d' => TStep.initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
   | TStep.terminal de de' dr => TStep.terminal (de.wk hρ) (de'.wk hρ) (dr.vwk hρ.slift)
 
@@ -457,7 +467,7 @@ theorem CStep.cfg_block {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β G i g
 theorem CStep.vwk {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   {ρ : ℕ → ℕ} (hρ : Γ.Wkn Δ ρ)
   (p : CStep Δ L r r') : CStep Γ L (r.vwk ρ) (r'.vwk ρ)
-  := Wf.Cong.vwk sorry hρ p
+  := Wf.Cong.vwk (λ_ _ _ _ _ _ hρ p => p.vwk hρ) hρ p
 
 theorem CStep.left {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   (h : CStep Γ L r r') : r.Wf Γ L
@@ -507,6 +517,15 @@ theorem CStep.cfg_block_eqv {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {n β G
   (pr : EqvGen (CStep (φ := φ) (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) (G i) g')
   : EqvGen (CStep Γ L) (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
   := Wf.Cong.cfg_block_eqv R hR β dβ dG i pr TStep.left TStep.right
+
+theorem CStep.vwk_eqv {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
+  {ρ : ℕ → ℕ} (hρ : Γ.Wkn Δ ρ)
+  (p : EqvGen (CStep Δ L) r r') : EqvGen (CStep Γ L) (r.vwk ρ) (r'.vwk ρ)
+  := by induction p with
+  | rel _ _ p => exact EqvGen.rel _ _ (p.vwk hρ)
+  | symm _ _ _ I => exact I.symm
+  | refl => exact EqvGen.refl _
+  | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
 def InS.CStep {Γ : Ctx α ε} {L : LCtx α} (r r' : InS φ Γ L) : Prop
   := Region.CStep (φ := φ) Γ L r r'
@@ -656,6 +675,12 @@ theorem InS.cfg_congr {Γ : Ctx α ε} {L : LCtx α}
   apply cfg_blocks_congr
   assumption
 
+theorem InS.vwk_congr {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : InS φ Δ L}
+  (ρ : ℕ → ℕ) (hρ : Γ.Wkn Δ ρ) : r ≈ r' → r.vwk ρ hρ ≈ r'.vwk ρ hρ := by
+  simp only [eqv_iff]
+  apply CStep.vwk_eqv
+  assumption
+
 -- theorem InS.wk_congr {Γ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ}
 --   {r r' : InS φ Δ L} (h : r ≈ r') (hρ : Γ.Wkn Δ ρ) : r.vwk ρ hρ ≈ r'.vwk ρ hρ := by
 --   induction r with
@@ -696,6 +721,12 @@ def Eqv.cfg
   (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   : Eqv φ Γ L := let G' := Quotient.finChoice G; Quotient.liftOn₂ β G'
     (λβ G => InS.q (InS.cfg R β G)) (λ_ _ _ _ h1 h2 => Quotient.sound (InS.cfg_congr R h1 h2))
+
+def Eqv.vwk
+  {Γ Δ : Ctx α ε} {L : LCtx α} (ρ : ℕ → ℕ) (hρ : Γ.Wkn Δ ρ) (r : Eqv φ Δ L)
+  : Eqv φ Γ L := Quotient.liftOn r
+    (λr => InS.q (r.vwk ρ hρ))
+    (λ_ _ h => Quotient.sound (InS.vwk_congr ρ hρ h))
 
 theorem InS.cfg_q {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : (β.q).cfg R (λi => (G i).q) = (β.cfg R G).q := by simp [Eqv.cfg, q, Quotient.finChoice_eq]

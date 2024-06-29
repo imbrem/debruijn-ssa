@@ -1312,6 +1312,11 @@ theorem Term.Wf.wk_inv {a : Term φ}
   (h : Γ.EWkn Δ ρ) (d : Wf Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : Wf Δ a ⟨A, e⟩
   := have ⟨d⟩ := d.nonempty; (d.wk_inv h ha).toWf
 
+theorem Term.Wf.fvs {a : Term φ} (h : Wf Γ a V) : a.fvs ⊆ Set.Iio Γ.length
+  := by induction h with
+  | var dv => simp [dv.length]
+  | _ => simp [*]
+
 def Term.WfD.wk1 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.wk1 L
   := dr.wk Ctx.Wkn.wk1
 
@@ -1453,6 +1458,34 @@ def Region.WfD.vwk_inv {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ
     => let2 (ha.wk_inv h (fvi_let2_le_bind hr)) (ht.vwk_inv h.liftn₂ (fvi_let2_le_rest hr))
   | Region.cfg _ _ _,cfg n R hR dr hG => cfg n R hR (dr.vwk_inv h (fvi_cfg_le_entry hr))
                                           (λi => (hG i).vwk_inv h.lift (fvi_cfg_le_blocks hr i))
+
+theorem Region.Wf.fvs {r : Region φ} (h : Wf Γ r L) : r.fvs ⊆ Set.Iio Γ.length
+  := by induction h with
+  | br _ ha => simp [ha.fvs]
+  | case he hs ht Is It =>
+    simp only [Region.fvs, Set.union_subset_iff, he.fvs, true_and]
+    constructor <;>
+    intro k <;>
+    rw [Set.mem_liftFv] <;>
+    intro hk <;>
+    apply Nat.lt_of_succ_lt_succ
+    exact Is hk
+    exact It hk
+  | let1 ha ht It =>
+    simp only [Region.fvs, Set.union_subset_iff, ha.fvs, true_and]
+    intro k
+    rw [Set.mem_liftFv]
+    exact λhk => Nat.lt_of_succ_lt_succ $ It hk
+  | let2 ha ht It =>
+    simp only [Region.fvs, Set.union_subset_iff, ha.fvs, true_and]
+    intro k
+    rw [Set.mem_liftnFv]
+    exact λhk => Nat.lt_of_add_lt_add_right (n := 2) $ It hk
+  | cfg n R hR hr hG Iβ IG =>
+    simp only [Region.fvs, Set.union_subset_iff, Iβ, Set.iUnion_subset_iff, true_and]
+    intro i k
+    rw [Set.mem_liftFv]
+    exact λhk => Nat.lt_of_succ_lt_succ $ IG _ hk
 
 def Region.WfD.vwk1 {Γ : Ctx α ε} {L} {r : Region φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.vwk1 L
   := dr.vwk Ctx.Wkn.wk1
