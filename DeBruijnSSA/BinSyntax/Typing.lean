@@ -804,6 +804,20 @@ def Region.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : 
 instance Region.inSCoe {Γ : Ctx α ε} {L : LCtx α} : CoeOut (Region.InS φ Γ L) (Region φ)
   := ⟨λr => r.1⟩
 
+@[simp]
+theorem Region.InS.coe_wf {Γ : Ctx α ε} {L : LCtx α} {r : Region.InS φ Γ L} : (r : Region φ).Wf Γ L
+  := r.2
+
+def Region.InS.cast {Γ Γ' : Ctx α ε} {L L' : LCtx α} (hΓ : Γ = Γ') (hL : L = L') (r : InS φ Γ L)
+  : Region.InS φ Γ' L'
+  := ⟨r, hΓ ▸ hL ▸ r.2⟩
+
+@[simp]
+theorem Region.InS.coe_cast {Γ Γ' : Ctx α ε} {L L' : LCtx α}
+  (hΓ : Γ = Γ') (hL : L = L') (r : InS φ Γ L)
+  : (r.cast hΓ hL : Region φ) = (r : Region φ)
+  := rfl
+
 @[ext]
 theorem Region.InS.ext {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   (h : (r : Region φ) = r') : r = r'
@@ -985,6 +999,24 @@ theorem Ctx.Wkn.succ {head} {Γ : Ctx α ε}
 theorem Ctx.Wkn.wk1 {head inserted} {Γ : Ctx α ε}
   : Wkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
   := succ.slift
+
+theorem Ctx.Wkn.swap01 {left right : Ty α × ε} {Γ : Ctx α ε}
+  : Wkn (left::right::Γ) (right::left::Γ) (Nat.swap0 1)
+  | 0, _ => by simp
+  | 1, _ => by simp
+  | n + 2, hn => ⟨hn, by simp⟩
+
+theorem Ctx.Wkn.swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
+  : Wkn (first::second::third::Γ) (third::first::second::Γ) (Nat.swap0 2)
+  | 0, _ => by simp
+  | 1, _ => by simp
+  | 2, _ => by simp
+  | n + 3, hn => ⟨hn, by simp⟩
+
+@[simp]
+theorem Ctx.Wkn.add2 {first second} {Γ : Ctx α ε}
+  : Wkn (first::second::Γ) Γ (· + 2)
+  := λn hn => ⟨by simp [hn], by simp⟩
 
 theorem Ctx.Wkn.lift₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (h : Γ.Wkn Δ ρ)
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftWk (Nat.liftWk ρ))
@@ -1516,11 +1548,30 @@ theorem Region.Wf.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ}
   (d : Wf Δ r L) : Wf Γ (r.vwk ρ) L
   := have ⟨d⟩ := d.nonempty; (d.vwk h).toWf
 
+theorem Region.Wf.vwk_id {Γ Δ : Ctx α ε} {L} {r : Region φ} (h : Γ.Wkn Δ id)
+  (d : Wf Δ r L) : Wf Γ r L
+  := have ⟨d⟩ := d.nonempty; (d.vwk_id h).toWf
+
+theorem Region.Wf.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K} {r : Region φ} (h : L.Wkn K ρ)
+  (d : Wf Γ r L) : Wf Γ (r.lwk ρ) K
+  := have ⟨d⟩ := d.nonempty; (d.lwk h).toWf
+
+theorem Region.Wf.lwk_id {Γ : Ctx α ε} {L} {r : Region φ} (h : L.Wkn K id)
+  (d : Wf Γ r L) : Wf Γ r K
+  := r.lwk_id ▸ d.lwk h
+
 def Region.InS.vwk {Γ Δ : Ctx α ε} (ρ : ℕ → ℕ) (h : Γ.Wkn Δ ρ) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨(r : Region φ).vwk ρ, r.prop.vwk h⟩
 
 theorem Region.InS.coe_vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {h : Γ.Wkn Δ ρ} {L} {r : InS φ Δ L}
   : (r.vwk ρ h : Region φ) = (r : Region φ).vwk ρ := rfl
+
+def Region.InS.vwk_id {Γ Δ : Ctx α ε} (h : Γ.Wkn Δ id) {L} (r : InS φ Δ L) : InS φ Γ L
+  := ⟨r, r.2.vwk_id h⟩
+
+@[simp]
+theorem Region.InS.coe_vwk_id {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {L} {r : InS φ Δ L}
+  : (r.vwk_id h : Region φ) = (r : Region φ) := rfl
 
 def Region.InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (left::Γ) L) : InS φ (left::right::Γ) L
   := r.vwk _ Ctx.Wkn.wk1
@@ -1533,6 +1584,20 @@ def Region.InS.vwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L} : InS φ (head::Γ) L
 
 theorem Region.InS.coe_vwk0 {Γ : Ctx α ε} {L} (r : InS φ Γ L)
   : (r.vwk0 (head := head) : Region φ) = r.vwk0 (head := head) := rfl
+
+def Region.InS.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ) (h : L.Wkn K ρ) (r : InS φ Γ L) : InS φ Γ K
+  := ⟨(r : Region φ).lwk ρ, r.2.lwk h⟩
+
+@[simp]
+theorem Region.coe_lwk {Γ : Ctx α ε} {L K : LCtx α} {ρ} {h : L.Wkn K ρ} {r : InS φ Γ L}
+  : (r.lwk ρ h : Region φ) = (r : Region φ).lwk ρ := rfl
+
+def Region.InS.lwk_id {Γ : Ctx α ε} {L} (h : L.Wkn K id) (r : InS φ Γ L) : InS φ Γ K
+  := ⟨r, r.2.lwk_id h⟩
+
+@[simp]
+theorem Region.InS.coe_lwk_id {Γ : Ctx α ε} {L} {r : InS φ Γ L} {h : L.Wkn K id}
+  : (r.lwk_id h : Region φ) = (r : Region φ) := rfl
 
 end Weakening
 

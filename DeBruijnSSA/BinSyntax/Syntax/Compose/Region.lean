@@ -164,7 +164,7 @@ def RewriteD.lsubst_alpha {r₀ r₀'}
   | case_abort e r s
     => cast_trg (case_abort _ _ _) (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
   | let1_case a b r s => cast_trg (let1_case _ _ _ _)
-    (by simp [vlift_alpha, <-vwk1_lsubst_alpha_vwk1])
+    sorry
   | let2_case a b r s => cast_trg (let2_case _ _ _ _) (by
     --TODO: factor more nicely...
     simp only [vliftn_alpha, vwk_lsubst, vwk_lift_alpha, vwk_vwk, lsubst, vlift_alpha, vwk1]
