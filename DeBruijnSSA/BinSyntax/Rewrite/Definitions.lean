@@ -236,6 +236,12 @@ theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   | TStep.initial di d d' => TStep.initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
   | TStep.terminal de de' dr => TStep.terminal (de.wk hρ) (de'.wk hρ) (dr.vwk hρ.slift)
 
+theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
+  : TStep (φ := φ) Γ L r r' → TStep Γ K (r.lwk ρ) (r'.lwk ρ)
+  | TStep.step d d' p => TStep.step (d.lwk hρ) (d'.lwk hρ) (p.lwk ρ)
+  | TStep.initial di d d' => TStep.initial di (d.lwk hρ) (d'.lwk hρ)
+  | TStep.terminal de de' dr => TStep.terminal de de' (dr.lwk hρ)
+
 inductive Wf.Cong (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop)
   : Ctx α ε → LCtx α → Region φ → Region φ → Prop
   | case_left : e.Wf Γ ⟨Ty.coprod A B, e'⟩ → Cong P (⟨A, ⊥⟩::Γ) L r r' → s.Wf (⟨B, ⊥⟩::Γ) L
@@ -308,6 +314,8 @@ theorem Wf.Cong.vwk {P : Ctx α ε → LCtx α → Region φ → Region φ → P
     simp only [Region.vwk, Function.comp_update_apply]
     exact cfg_block R hR (dβ.vwk hρ) (λi => (dG i).vwk hρ.slift) i (pr.vwk toVwk hρ.slift)
   | rel p => rel $ toVwk _ _ _ _ _ _ hρ p
+
+-- TODO: Wf.Cong.lwk
 
 theorem Wf.Cong.eqv_iff {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L)
@@ -528,6 +536,8 @@ theorem CStep.vwk_eqv {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   | refl => exact EqvGen.refl _
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
+-- TODO: lwk_eqv
+
 def InS.CStep {Γ : Ctx α ε} {L : LCtx α} (r r' : InS φ Γ L) : Prop
   := Region.CStep (φ := φ) Γ L r r'
 
@@ -689,6 +699,8 @@ theorem InS.vwk_congr {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : InS φ Δ L}
   apply CStep.vwk_eqv
   assumption
 
+-- TODO: InS.lwk_congr
+
 -- theorem InS.wk_congr {Γ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ}
 --   {r r' : InS φ Δ L} (h : r ≈ r') (hρ : Γ.Wkn Δ ρ) : r.vwk ρ hρ ≈ r'.vwk ρ hρ := by
 --   induction r with
@@ -782,6 +794,10 @@ def Eqv.vwk_id
       simp only [InS.vwk, Set.mem_setOf_eq, vwk_of_id, id_eq, InS.vwk_id] at *
       exact h
       ))
+
+-- TODO: Eqv.lwk, Eqv.lwk_id
+
+-- TODO: Eqv.vwk_vwk, lwk_lwk, lwk_vwk, vwk_lwk, etc...
 
 @[simp]
 theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ} {r : InS φ Δ L}

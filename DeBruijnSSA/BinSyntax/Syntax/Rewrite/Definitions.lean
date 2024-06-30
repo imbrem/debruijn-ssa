@@ -267,6 +267,33 @@ theorem Cong.eqv_vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   | refl => apply EqvGen.refl
   | trans => apply EqvGen.trans <;> assumption
 
+def CongD.lwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (toLwk : ∀ρ r r', P r r' → P (r.lwk ρ) (r'.lwk ρ)) (ρ)
+  : CongD P r r' → CongD P (r.lwk ρ) (r'.lwk ρ)
+  | let1 e p => let1 e (p.lwk toLwk ρ)
+  | let2 e p => let2 e (p.lwk toLwk ρ)
+  | case_left e p s => case_left e (p.lwk toLwk ρ) (s.lwk ρ)
+  | case_right e r p => case_right e (r.lwk ρ) (p.lwk toLwk ρ)
+  | cfg_entry p n G => cfg_entry (p.lwk toLwk _) n _
+  | cfg_block β n G i p => by
+    simp only [Region.lwk, Function.comp_update_apply]
+    exact cfg_block _ _ _ _ (p.lwk toLwk _)
+  | rel p => rel (toLwk ρ _ _ p)
+
+theorem Cong.lwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (toLwk : ∀ρ r r', P r r' → P (r.lwk ρ) (r'.lwk ρ)) (ρ) (p : Cong P r r')
+  : Cong P (r.lwk ρ) (r'.lwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.lwk toLwk ρ).cong
+
+theorem Cong.eqv_lwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
+  (toLwk : ∀ρ r r', P r r' → P (r.lwk ρ) (r'.lwk ρ)) (ρ) (p : EqvGen (Cong P) r r')
+  : EqvGen (Cong P) (r.lwk ρ) (r'.lwk ρ)
+  := by induction p with
+  | rel => apply EqvGen.rel; apply Cong.lwk <;> assumption
+  | symm => apply EqvGen.symm; assumption
+  | refl => apply EqvGen.refl
+  | trans => apply EqvGen.trans <;> assumption
+
 theorem Cong.fv_le {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (fvLe : ∀r r', P r r' → r.fv ≤ r'.fv)
   (p : Cong P r r') : r.fv ≤ r'.fv := by
@@ -872,7 +899,13 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     simp only [Region.vwk, Region.vwk_lwk, Function.comp_apply]
     constructor
     assumption
-  | let1_case => sorry
+  | let1_case =>
+    simp only [Region.vwk, wk_liftWk_wk_succ]
+    apply cast_trg
+    apply let1_case
+    simp only [vwk_vwk]
+    congr <;>
+    sorry
   | let2_case => sorry
   | let2_eta e r =>
     simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
@@ -893,7 +926,17 @@ theorem eqv_vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : r ≈ r') : r.vwk ρ 
 
 -- That is, weakenings induce a prefunctor
 
--- TODO: RewriteD.lwk
+def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.lwk ρ) (r'.lwk ρ)
+  := by cases d with
+  | cfg_br_lt => sorry
+  | cfg_cfg => sorry
+  | cfg_fuse => sorry
+  | _ =>
+    simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
+    constructor
+
+theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
 
 -- TODO: Rewrite.lwk
 
@@ -976,6 +1019,17 @@ def ReduceD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : Reduc
 
 theorem Reduce.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.vwk ρ) (r'.vwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.vwk ρ).reduce
+
+def ReduceD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.lwk ρ) (r'.lwk ρ)
+  := by cases d with
+  | dead_cfg_left β n G m G' => sorry
+  | wk_cfg => sorry
+  | _ =>
+    simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk]
+    constructor
+
+theorem Reduce.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.lwk ρ) (r'.lwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.lwk ρ).reduce
 
 inductive StepD (Γ : ℕ → ε) : Region φ → Region φ → Type _
   | let1_beta (e r) : e.effect Γ = ⊥ → StepD Γ (let1 e r) (r.vsubst e.subst0)
@@ -1075,6 +1129,15 @@ def FStepD.wk_eff {Γ Δ : ℕ → ε} {r r' : Region φ}
 theorem FStep.wk_eff {Γ Δ : ℕ → ε} {r r' : Region φ}
   (h : ∀i ∈ r.fvs, Γ i ≤ Δ i) (p : FStep Δ r r') : FStep Γ r r'
   := let ⟨d⟩ := p.nonempty; (d.wk_eff h).step
+
+def FStepD.lwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
+  : FStepD Γ r r' → FStepD Γ (r.lwk ρ) (r'.lwk ρ)
+  | let1_beta e r he => sorry
+  | reduce p => reduce $ p.lwk ρ
+  | rw p => rw $ p.lwk ρ
+
+theorem FStep.lwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ) (p : FStep Γ r r')
+  : FStep Γ (r.lwk ρ) (r'.lwk ρ) := let ⟨d⟩ := p.nonempty; (d.lwk ρ).step
 
 @[match_pattern]
 def StepD.case_inl {Γ : ℕ → ε} (e : Term φ) (r s)

@@ -744,6 +744,10 @@ theorem Region.lwk_comp_vwk : @lwk φ ρ ∘ vwk σ = vwk σ ∘ lwk ρ := funex
 
 theorem Region.vwk_comp_lwk : @vwk φ σ ∘ lwk ρ = lwk ρ ∘ vwk σ := funext Region.vwk_lwk
 
+theorem Region.lwk_vwk1 (t : Region φ) : t.vwk1.lwk ρ = (t.lwk ρ).vwk1 := lwk_vwk t
+
+theorem Region.vwk1_lwk (t : Region φ) : (t.lwk ρ).vwk1 = t.vwk1.lwk ρ := t.lwk_vwk1.symm
+
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 
 @[simp]
