@@ -1638,6 +1638,13 @@ theorem Region.InS.vwk_lwk {Γ Δ : Ctx α ε} {L K} {ρ σ : ℕ → ℕ} {hρ 
   : (r.lwk σ hσ).vwk ρ hρ = (r.vwk ρ hρ).lwk σ hσ := by
   cases r; simp [lwk, vwk, Region.lwk_vwk]
 
+theorem Region.InS.lwk_vwk1 {Γ : Ctx α ε} {L K} {ρ} {hρ : L.Wkn K ρ} {r : InS φ (left::Γ) L}
+  : (r.vwk1 (right := right)).lwk ρ hρ = (r.lwk ρ hρ).vwk1 := by
+  rw [vwk1, lwk_vwk]; rfl
+
+theorem Region.InS.vwk1_lwk {Γ : Ctx α ε} {L K} {ρ} {hρ : L.Wkn K ρ} {r : InS φ (left::Γ) L}
+  : (r.lwk ρ hρ).vwk1 = (r.vwk1 (right := right)).lwk ρ hρ := by rw [lwk_vwk1]
+
 def Region.InS.lwk_id {Γ : Ctx α ε} {L} (h : L.Wkn K id) (r : InS φ Γ L) : InS φ Γ K
   := ⟨r, r.2.lwk_id h⟩
 
