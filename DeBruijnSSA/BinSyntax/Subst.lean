@@ -17,8 +17,16 @@ def Term.Subst.Wf (Γ Δ : Ctx α ε) (σ : Subst φ) : Prop
 
 def Term.Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ Δ : Ctx α ε) : Type _ := {σ : Subst φ | σ.Wf Γ Δ}
 
-instance Term.Subst.inSCoe {Γ Δ : Ctx α ε} : CoeOut (Term.Subst.InS φ Γ Δ) (Subst φ)
+instance Term.Subst.instCoeOut {Γ Δ : Ctx α ε} : CoeOut (Term.Subst.InS φ Γ Δ) (Subst φ)
   := ⟨λr => r.1⟩
+
+instance Term.Subst.instSetoid {Γ Δ : Ctx α ε} : Setoid (Term.Subst.InS φ Γ Δ) where
+  r σ τ := ∀i, i < Δ.length → σ.val i = τ.val i
+  iseqv := {
+    refl := (λ_ _ _ => rfl)
+    symm := (λh _ hi => (h _ hi).symm)
+    trans := (λhl hr _ hi => (hl _ hi).trans (hr _ hi))
+  }
 
 theorem Term.Subst.Wf.nonempty (hσ : σ.Wf Γ Δ) : Nonempty (σ.WfD Γ Δ)
   := ⟨λi => Classical.choice (hσ i).nonempty⟩
@@ -37,6 +45,11 @@ theorem Term.Subst.Wf.lift (h : V ≤ V') (hσ : σ.Wf Γ Δ) : σ.lift.Wf (V::�
 
 def Term.Subst.InS.lift (h : V ≤ V') (σ : InS φ Γ Δ) : InS φ (V::Γ) (V'::Δ)
   := ⟨Subst.lift σ, σ.prop.lift h⟩
+
+@[simp]
+theorem Term.Subst.coe_lift {h : V ≤ V'} {σ : InS φ Γ Δ}
+  : (σ.lift h : Subst φ) = Subst.lift σ
+  := rfl
 
 def Term.Subst.WfD.slift {head} (hσ : σ.WfD Γ Δ) : σ.lift.WfD (head::Γ) (head::Δ)
   := hσ.lift (le_refl head)
@@ -130,11 +143,31 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
 theorem Term.Wf.subst {a : Term φ} (hσ : σ.Wf Γ Δ) (h : a.Wf Δ V) : (a.subst σ).Wf Γ V
   := let ⟨d⟩ := h.nonempty; let ⟨hσ⟩ := hσ.nonempty; (d.subst hσ).toWf
 
+def Term.InS.subst (σ : Subst.InS φ Γ Δ) (a : InS φ Δ V) : InS φ Γ V
+  := ⟨(a : Term φ).subst σ, a.prop.subst σ.prop⟩
+
+@[simp]
+theorem Term.InS.coe_subst {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V}
+  : (a.subst σ : Term φ) = (a : Term φ).subst σ
+  := rfl
+
+theorem Term.InS.subst_equiv {σ τ : Subst.InS φ Γ Δ} (a : InS φ Δ V)
+  (h : σ ≈ τ) : a.subst σ = a.subst τ
+  := sorry
+
 def Term.WfD.subst0 {a : Term φ} (ha : a.WfD Δ V) : a.subst0.WfD Δ (V::Δ)
   := λi => i.cases ha (λi => Term.WfD.var ⟨by simp, by simp⟩)
 
 theorem Term.Wf.subst0 {a : Term φ} (ha : a.Wf Δ V) : a.subst0.Wf Δ (V::Δ)
   := λi => i.cases ha (λi => Term.Wf.var ⟨by simp, by simp⟩)
+
+def Term.InS.subst0 (a : InS φ Γ V) : Subst.InS φ Γ (V::Γ)
+  := ⟨(a : Term φ).subst0, a.prop.subst0⟩
+
+@[simp]
+theorem Term.InS.coe_subst0 {a : InS φ Γ V}
+  : (a.subst0 : Subst φ) = (a : Term φ).subst0
+  := rfl
 
 def Term.Subst.WfD.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.Subst φ}
   (hσ : σ.WfD Γ Δ) (hτ : τ.WfD Δ Ξ) : (σ.comp τ).WfD Γ Ξ
@@ -183,6 +216,18 @@ def Region.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : Region φ} (hσ : σ.WfD Γ 
 theorem Region.Wf.vsubst {Γ Δ : Ctx α ε} {σ} {r : Region φ} (hσ : σ.Wf Γ Δ) (h : r.Wf Δ L)
   : (r.vsubst σ).Wf Γ L
   := let ⟨d⟩ := h.nonempty; let ⟨hσ⟩ := hσ.nonempty; (d.vsubst hσ).toWf
+
+def Region.InS.vsubst {Γ Δ : Ctx α ε} (σ : Term.Subst.InS φ Γ Δ) (r : InS φ Δ L) : InS φ Γ L
+  := ⟨(r : Region φ).vsubst σ, r.prop.vsubst σ.prop⟩
+
+@[simp]
+theorem Region.InS.coe_vsubst {Γ Δ : Ctx α ε} {σ : Term.Subst.InS φ Γ Δ} {r : InS φ Δ L}
+  : (r.vsubst σ : Region φ) = (r : Region φ).vsubst σ
+  := rfl
+
+theorem Region.InS.vsubst_equiv {Γ Δ : Ctx α ε} {σ τ : Term.Subst.InS φ Γ Δ}
+  (r : InS φ Δ L) (h : σ ≈ τ) : r.vsubst σ = r.vsubst τ
+  := sorry
 
 end Subst
 
