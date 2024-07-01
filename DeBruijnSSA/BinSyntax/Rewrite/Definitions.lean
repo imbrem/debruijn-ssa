@@ -694,10 +694,10 @@ theorem InS.cfg_congr' {Γ : Ctx α ε} {L : LCtx α}
   apply cfg_congr <;> assumption
 
 theorem InS.vwk_congr {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : InS φ Δ L}
-  (ρ : ℕ → ℕ) (hρ : Γ.Wkn Δ ρ) : r ≈ r' → r.vwk ρ hρ ≈ r'.vwk ρ hρ := by
+  (ρ : Γ.InS Δ) : r ≈ r' → r.vwk ρ ≈ r'.vwk ρ := by
   simp only [eqv_iff]
   apply CStep.vwk_eqv
-  assumption
+  exact ρ.prop
 
 -- TODO: InS.lwk_congr
 
@@ -807,24 +807,24 @@ theorem Eqv.cfg_quot
   : cfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.cfg R β G⟧ := InS.cfg_q
 
 def Eqv.vwk
-  {Γ Δ : Ctx α ε} {L : LCtx α} (ρ : ℕ → ℕ) (hρ : Γ.Wkn Δ ρ) (r : Eqv φ Δ L)
+  {Γ Δ : Ctx α ε} {L : LCtx α} (ρ : Γ.InS Δ) (r : Eqv φ Δ L)
   : Eqv φ Γ L := Quotient.liftOn r
-    (λr => InS.q (r.vwk ρ hρ))
-    (λ_ _ h => Quotient.sound (InS.vwk_congr ρ hρ h))
+    (λr => InS.q (r.vwk ρ))
+    (λ_ _ h => Quotient.sound (InS.vwk_congr ρ h))
 
 def Eqv.vwk_id
   {Γ Δ : Ctx α ε} {L : LCtx α} (hρ : Γ.Wkn Δ id) (r : Eqv φ Δ L)
   : Eqv φ Γ L := Quotient.liftOn r
     (λr => InS.q (r.vwk_id hρ))
     (λ_ _ h => Quotient.sound (by
-      have h := InS.vwk_congr id hρ h;
+      have h := InS.vwk_congr ⟨id, hρ⟩ h;
       simp only [InS.vwk, Set.mem_setOf_eq, vwk_of_id, id_eq, InS.vwk_id] at *
       exact h
       ))
 
-def Eqv.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ : ℕ → ℕ) (hρ : L.Wkn K ρ) (r : Eqv φ Γ L)
+def Eqv.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ : L.InS K) (r : Eqv φ Γ L)
   : Eqv φ Γ K := Quotient.liftOn r
-    (λr => InS.q (r.lwk ρ hρ))
+    (λr => InS.q (r.lwk ρ))
     (λ_ _ h => Quotient.sound sorry)
 
 def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ Γ L)
@@ -833,12 +833,12 @@ def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ �
     (λ_ _ h => Quotient.sound sorry)
 
 @[simp]
-theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ} {r : InS φ Δ L}
-  (hρ : Γ.Wkn Δ ρ) : (r.q).vwk ρ hρ = (r.vwk ρ hρ).q := rfl
+theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ Δ L}
+   : (r.q).vwk ρ = (r.vwk ρ).q := rfl
 
 @[simp]
-theorem Eqv.vwk_quot {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ} {r : InS φ Δ L}
-  (hρ : Γ.Wkn Δ ρ) : Eqv.vwk ρ hρ ⟦r⟧ = ⟦r.vwk ρ hρ⟧ := rfl
+theorem Eqv.vwk_quot {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ Δ L}
+   : Eqv.vwk ρ ⟦r⟧ = ⟦r.vwk ρ⟧ := rfl
 
 @[simp]
 theorem InS.vwk_id_q {Γ Δ : Ctx α ε} {L : LCtx α} {r : InS φ Δ L}
@@ -849,17 +849,17 @@ theorem Eqv.vwk_id_quot {Γ Δ : Ctx α ε} {L : LCtx α} {r : InS φ Δ L}
   (hρ : Γ.Wkn Δ id) : Eqv.vwk_id hρ ⟦r⟧ = ⟦r.vwk_id hρ⟧ := rfl
 
 theorem Eqv.vwk_vwk {Γ Δ Ξ : Ctx α ε} {L : LCtx α} {r : Eqv φ Ξ L}
-  {ρ : ℕ → ℕ} {σ : ℕ → ℕ} (hρ : Γ.Wkn Δ ρ) (hσ : Δ.Wkn Ξ σ)
-  : Eqv.vwk ρ hρ (Eqv.vwk σ hσ r) = Eqv.vwk _ (hρ.comp hσ) r := by
+  (ρ : Γ.InS Δ) (σ : Δ.InS Ξ)
+  : Eqv.vwk ρ (Eqv.vwk σ r) = Eqv.vwk (ρ.comp σ) r := by
   induction r using Quotient.inductionOn; simp [InS.vwk_vwk]
 
 @[simp]
-theorem InS.lwk_q {Γ : Ctx α ε} {L K : LCtx α} {ρ : ℕ → ℕ} {r : InS φ Γ L}
-  (hρ : L.Wkn K ρ) : (r.q).lwk ρ hρ = (r.lwk ρ hρ).q := rfl
+theorem InS.lwk_q {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : InS φ Γ L}
+   : (r.q).lwk ρ = (r.lwk ρ).q := rfl
 
 @[simp]
-theorem Eqv.lwk_quot {Γ : Ctx α ε} {L K : LCtx α} {ρ : ℕ → ℕ} {r : InS φ Γ L}
-  (hρ : L.Wkn K ρ) : Eqv.lwk ρ hρ ⟦r⟧ = ⟦r.lwk ρ hρ⟧ := rfl
+theorem Eqv.lwk_quot {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : InS φ Γ L}
+   : Eqv.lwk ρ ⟦r⟧ = ⟦r.lwk ρ⟧ := rfl
 
 @[simp]
 theorem InS.lwk_id_q {Γ : Ctx α ε} {L K : LCtx α} {r : InS φ Γ L}
@@ -870,26 +870,26 @@ theorem InS.lwk_id_quot {Γ : Ctx α ε} {L K : LCtx α} {r : InS φ Γ L}
   (hρ : L.Wkn K id) : Eqv.lwk_id hρ ⟦r⟧ = ⟦r.lwk_id hρ⟧ := rfl
 
 theorem Eqv.lwk_lwk {Γ : Ctx α ε} {L K J : LCtx α}
-  {ρ : ℕ → ℕ} {σ : ℕ → ℕ} (hρ : L.Wkn K ρ) (hσ : K.Wkn J σ)
+  {ρ : L.InS K} {σ : K.InS J}
   {r : Eqv φ Γ L}
-  : (r.lwk ρ hρ).lwk σ hσ = r.lwk _ (hσ.comp hρ) := by
+  : (r.lwk ρ).lwk σ = r.lwk (σ.comp ρ) := by
   induction r using Quotient.inductionOn; simp [InS.lwk_lwk]
 
 theorem Eqv.lwk_vwk {Γ Δ : Ctx α ε} {L K : LCtx α}
-  {ρ : ℕ → ℕ} {σ : ℕ → ℕ} {hρ : L.Wkn K ρ} {hσ : Γ.Wkn Δ σ}
+  {ρ : L.InS K} {σ : Γ.InS Δ}
   {r : Eqv φ Δ L}
-  : (r.vwk σ hσ).lwk ρ hρ = (r.lwk ρ hρ).vwk σ hσ := by
+  : (r.vwk σ).lwk ρ = (r.lwk ρ).vwk σ := by
   induction r using Quotient.inductionOn; simp [InS.lwk_vwk]
 
 theorem Eqv.vwk_lwk {Γ Δ : Ctx α ε} {L K : LCtx α}
-  {ρ : ℕ → ℕ} {σ : ℕ → ℕ} {hρ : Γ.Wkn Δ ρ} {hσ : K.Wkn L σ}
-  {r : Eqv φ Δ K}
-  : (r.lwk σ hσ).vwk ρ hρ = (r.vwk ρ hρ).lwk σ hσ := by
+  {ρ : L.InS K} {σ : Γ.InS Δ}
+  {r : Eqv φ Δ L}
+  : (r.lwk ρ).vwk σ = (r.vwk σ).lwk ρ := by
   induction r using Quotient.inductionOn; simp [InS.vwk_lwk]
 
 def Eqv.vwk1
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (head::Γ) L)
-  : Eqv φ (head::inserted::Γ) L := Eqv.vwk (Nat.liftWk Nat.succ) (by simp) r
+  : Eqv φ (head::inserted::Γ) L := Eqv.vwk ⟨Nat.liftWk Nat.succ, by simp⟩ r
 
 @[simp]
 theorem InS.vwk1_q {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (head::Γ) L}
@@ -899,14 +899,14 @@ theorem InS.vwk1_q {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (head::Γ) L}
 theorem Eqv.vwk1_quot {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (head::Γ) L}
   : Eqv.vwk1 (inserted := inserted) ⟦r⟧ = ⟦r.vwk1⟧ := rfl
 
-theorem Eqv.lwk_vwk1 {Γ : Ctx α ε} {L K : LCtx α} {ρ} {hρ : L.Wkn K ρ}
+theorem Eqv.lwk_vwk1 {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
   {r : Eqv φ (head::Γ) L}
-  : (r.vwk1 (inserted := inserted)).lwk ρ hρ = (r.lwk ρ hρ).vwk1 := by
+  : (r.vwk1 (inserted := inserted)).lwk ρ = (r.lwk ρ).vwk1 := by
   induction r using Quotient.inductionOn; simp [InS.lwk_vwk1]
 
-theorem Eqv.vwk1_lwk {Γ : Ctx α ε} {L K : LCtx α} {ρ} {hρ : L.Wkn K ρ}
+theorem Eqv.vwk1_lwk {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
   {r : Eqv φ (head::Γ) L}
-  : (r.lwk ρ hρ).vwk1 = (r.vwk1 (inserted := inserted)).lwk ρ hρ := by
+  : (r.lwk ρ).vwk1 = (r.vwk1 (inserted := inserted)).lwk ρ := by
   induction r using Quotient.inductionOn; simp [InS.vwk1_lwk]
 
 theorem InS.let1_op {Γ : Ctx α ε} {L : LCtx α}
@@ -1018,7 +1018,7 @@ theorem InS.let2_op {Γ : Ctx α ε} {L : LCtx α}
     : r.let2 (a.op f hf) ≈ (
       let1 a $
       let2 ((Term.InS.var 0 (by simp)).op f hf) $
-      r.vwk (ρ := Nat.liftnWk 2 Nat.succ) (by apply Ctx.Wkn.sliftn₂; simp))
+      r.vwk (ρ := ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1029,7 +1029,7 @@ theorem Eqv.let2_op {Γ : Ctx α ε} {L : LCtx α}
     : Eqv.let2 (a.op f hf) r = (
       let1 a $
       let2 ((Term.InS.var 0 (by simp)).op f hf) $
-      r.vwk (ρ := Nat.liftnWk 2 Nat.succ) (by apply Ctx.Wkn.sliftn₂; simp))
+      r.vwk (ρ := ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩))
   := by induction r using Quotient.inductionOn with
   | h r =>
     simp only [let2_quot, vwk_quot, let1_quot]
@@ -1066,7 +1066,7 @@ theorem InS.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
     : r.let2 (a.abort _) ≈ (
       let1 a $
       let2 ((Term.InS.var 0 (by simp)).abort (e := e') (A.prod B)) $
-      r.vwk (Nat.liftnWk 2 Nat.succ) (by apply Ctx.Wkn.sliftn₂; simp))
+      r.vwk ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩)
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1076,7 +1076,7 @@ theorem Eqv.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
     : Eqv.let2 (a.abort _) r = (
       let1 a $
       let2 ((Term.InS.var 0 (by simp)).abort (e := e') (A.prod B)) $
-      r.vwk (Nat.liftnWk 2 Nat.succ) (by apply Ctx.Wkn.sliftn₂; simp))
+      r.vwk ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩)
   := by induction r using Quotient.inductionOn with
   | h r =>
     simp only [let2_quot, vwk_quot, let1_quot]
@@ -1130,8 +1130,8 @@ theorem InS.let1_case {Γ : Ctx α ε} {L : LCtx α}
   (s : InS φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) L)
     : (let1 a $ case (b.wk Nat.succ (by simp)) r s) ≈
       case b
-        (let1 (a.wk Nat.succ (by simp)) (r.vwk (Nat.swap0 1) Ctx.Wkn.swap01))
-        (let1 (a.wk Nat.succ (by simp)) (s.vwk (Nat.swap0 1) Ctx.Wkn.swap01))
+        (let1 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
+        (let1 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1142,8 +1142,8 @@ theorem Eqv.let1_case {Γ : Ctx α ε} {L : LCtx α}
   (s : Eqv φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) L)
     : (Eqv.let1 a $ Eqv.case (b.wk Nat.succ (by simp)) r s) =
       Eqv.case b
-        (Eqv.let1 (a.wk Nat.succ (by simp)) (r.vwk (Nat.swap0 1) Ctx.Wkn.swap01))
-        (Eqv.let1 (a.wk Nat.succ (by simp)) (s.vwk (Nat.swap0 1) Ctx.Wkn.swap01))
+        (Eqv.let1 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
+        (Eqv.let1 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
   := by induction r using Quotient.inductionOn with
   | h r =>
     induction s using Quotient.inductionOn with
@@ -1159,8 +1159,8 @@ theorem InS.let2_case {Γ : Ctx α ε} {L : LCtx α}
   (s : InS φ (⟨D, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
     : (let2 a $ case (b.wk (· + 2) (by simp)) r s) ≈
       case b
-        (let2 (a.wk Nat.succ (by simp)) (r.vwk (Nat.swap0 2) Ctx.Wkn.swap02))
-        (let2 (a.wk Nat.succ (by simp)) (s.vwk (Nat.swap0 2) Ctx.Wkn.swap02))
+        (let2 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
+        (let2 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1171,8 +1171,8 @@ theorem Eqv.let2_case {Γ : Ctx α ε} {L : LCtx α}
   (s : Eqv φ (⟨D, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
     : (Eqv.let2 a $ Eqv.case (b.wk (· + 2) (by simp)) r s) =
       Eqv.case b
-        (Eqv.let2 (a.wk Nat.succ (by simp)) (r.vwk (Nat.swap0 2) Ctx.Wkn.swap02))
-        (Eqv.let2 (a.wk Nat.succ (by simp)) (s.vwk (Nat.swap0 2) Ctx.Wkn.swap02))
+        (Eqv.let2 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
+        (Eqv.let2 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
   := by induction r using Quotient.inductionOn with
   | h r =>
     induction s using Quotient.inductionOn with
@@ -1340,7 +1340,7 @@ theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
         rw [List.get_append]
         -- TODO: put in discretion
         ) (by rw [List.append_assoc]))
-                    (λi => ((G' i).lwk (· + R.length) sorry).cast sorry
+                    (λi => ((G' i).lwk ⟨(· + R.length), sorry⟩).cast sorry
                       (by rw [List.append_assoc])))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by
@@ -1392,7 +1392,7 @@ theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   (G : (i : Fin S.length) → InS φ ((List.get S i, ⊥)::Γ) (R ++ L))
   (ρ : Fin R.length → Fin S.length)
   (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
-  : cfg S (β.lwk (Fin.toNatWk ρ) hρ) (λi => (G i).lwk (Fin.toNatWk ρ) hρ)
+  : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
   ≈ cfg R β (λi => (G (ρ i)).vwk_id (by
     have hρ := hρ i sorry;
     rw [List.get_append] at hρ
@@ -1448,10 +1448,10 @@ theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
   (R S : LCtx α) (β : InS φ Γ (S ++ L))
   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ S ++ L))
   (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
-  : (β.lwk (· + R.length) sorry).cfg' (R.length + S.length) (R ++ S) (by rw [List.length_append])
+  : (β.lwk ⟨(· + R.length), sorry⟩).cfg' (R.length + S.length) (R ++ S) (by rw [List.length_append])
       (Fin.addCases
         (λi => (G i).cast sorry rfl)
-        (λi => ((G' i).cast sorry rfl).lwk (· + R.length) sorry))
+        (λi => ((G' i).cast sorry rfl).lwk ⟨(· + R.length), sorry⟩))
     ≈ β.cfg S G'
   := sorry
 

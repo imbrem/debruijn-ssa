@@ -12,18 +12,52 @@ variable
 def Term.Subst.WfD (Γ Δ : Ctx α ε) (σ : Subst φ) : Type _
   := ∀i : Fin Δ.length, (σ i).WfD Γ (Δ.get i)
 
+def Term.Subst.Wf (Γ Δ : Ctx α ε) (σ : Subst φ) : Prop
+  := ∀i : Fin Δ.length, (σ i).Wf Γ (Δ.get i)
+
+def Term.Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ Δ : Ctx α ε) : Type _ := {σ : Subst φ | σ.Wf Γ Δ}
+
+instance Term.Subst.inSCoe {Γ Δ : Ctx α ε} : CoeOut (Term.Subst.InS φ Γ Δ) (Subst φ)
+  := ⟨λr => r.1⟩
+
+theorem Term.Subst.Wf.nonempty (hσ : σ.Wf Γ Δ) : Nonempty (σ.WfD Γ Δ)
+  := ⟨λi => Classical.choice (hσ i).nonempty⟩
+
+theorem Term.Subst.WfD.toWf (hσ : σ.WfD Γ Δ) : σ.Wf Γ Δ
+  := λi => (hσ i).toWf
+
+theorem Term.Subst.Wf.nonempty_iff : σ.Wf Γ Δ ↔ Nonempty (σ.WfD Γ Δ)
+  := ⟨Term.Subst.Wf.nonempty, λ⟨h⟩ => h.toWf⟩
+
 def Term.Subst.WfD.lift (h : V ≤ V') (hσ : σ.WfD Γ Δ) : σ.lift.WfD (V::Γ) (V'::Δ)
   := λi => i.cases (Term.WfD.var (Ctx.Var.head h _)) (λi => (hσ i).wk Ctx.Wkn.id.step)
 
+theorem Term.Subst.Wf.lift (h : V ≤ V') (hσ : σ.Wf Γ Δ) : σ.lift.Wf (V::Γ) (V'::Δ)
+  := λi => i.cases (Term.Wf.var (Ctx.Var.head h _)) (λi => (hσ i).wk Ctx.Wkn.id.step)
+
+def Term.Subst.InS.lift (h : V ≤ V') (σ : InS φ Γ Δ) : InS φ (V::Γ) (V'::Δ)
+  := ⟨Subst.lift σ, σ.prop.lift h⟩
+
 def Term.Subst.WfD.slift {head} (hσ : σ.WfD Γ Δ) : σ.lift.WfD (head::Γ) (head::Δ)
+  := hσ.lift (le_refl head)
+
+theorem Term.Subst.Wf.slift {head} (hσ : σ.Wf Γ Δ) : σ.lift.Wf (head::Γ) (head::Δ)
   := hσ.lift (le_refl head)
 
 def Term.Subst.WfD.lift₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ : σ.WfD Γ Δ)
   : σ.lift.lift.WfD (V₁::V₂::Γ) (V₁'::V₂'::Δ)
   := (hσ.lift h₂).lift h₁
 
+theorem Term.Subst.Wf.lift₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ : σ.Wf Γ Δ)
+  : σ.lift.lift.Wf (V₁::V₂::Γ) (V₁'::V₂'::Δ)
+  := (hσ.lift h₂).lift h₁
+
 def Term.Subst.WfD.slift₂ {left right} (hσ : σ.WfD Γ Δ)
   : σ.lift.lift.WfD (left::right::Γ) (left::right::Δ)
+  := hσ.lift₂ (le_refl _) (le_refl _)
+
+theorem Term.Subst.Wf.slift₂ {left right} (hσ : σ.Wf Γ Δ)
+  : σ.lift.lift.Wf (left::right::Γ) (left::right::Δ)
   := hσ.lift₂ (le_refl _) (le_refl _)
 
 -- TODO: version with nicer defeq?
@@ -32,16 +66,33 @@ def Term.Subst.WfD.liftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ)
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
   | A::Ξ => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append Ξ).slift
 
+theorem Term.Subst.Wf.liftn_append (Ξ : Ctx α ε) (hσ : σ.Wf Γ Δ)
+  : (σ.liftn Ξ.length).Wf (Ξ ++ Γ) (Ξ ++ Δ) := match Ξ with
+  | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
+  | A::Ξ => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append Ξ).slift
+
 def Term.Subst.WfD.liftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ Δ)
   : (σ.liftn n).WfD (Ξ ++ Γ) (Ξ ++ Δ)
+  := hn ▸ hσ.liftn_append Ξ
+
+theorem Term.Subst.Wf.liftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.Wf Γ Δ)
+  : (σ.liftn n).Wf (Ξ ++ Γ) (Ξ ++ Δ)
   := hn ▸ hσ.liftn_append Ξ
 
 def Term.Subst.WfD.liftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ Δ)
   : (σ.liftn (Ξ.length + 1)).WfD (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
   := liftn_append (V::Ξ) hσ
 
+theorem Term.Subst.Wf.liftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.Wf Γ Δ)
+  : (σ.liftn (Ξ.length + 1)).Wf (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
+  := liftn_append (V::Ξ) hσ
+
 def Term.Subst.WfD.liftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.length + 1) (hσ : σ.WfD Γ Δ)
   : (σ.liftn n).WfD (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
+  := hn ▸ hσ.liftn_append_cons V Ξ
+
+theorem Term.Subst.Wf.liftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.length + 1) (hσ : σ.Wf Γ Δ)
+  : (σ.liftn n).Wf (V::(Ξ ++ Γ)) (V::(Ξ ++ Δ))
   := hn ▸ hσ.liftn_append_cons V Ξ
 
 -- TODO: version with nicer defeq?
@@ -49,11 +100,22 @@ def Term.Subst.WfD.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ
   : (σ.liftn 2).WfD (V₁::V₂::Γ) (V₁'::V₂'::Δ)
   := Subst.liftn_eq_iterate_lift 2 ▸ hσ.lift₂ h₁ h₂
 
+theorem Term.Subst.Wf.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ : σ.Wf Γ Δ)
+  : (σ.liftn 2).Wf (V₁::V₂::Γ) (V₁'::V₂'::Δ)
+  := Subst.liftn_eq_iterate_lift 2 ▸ hσ.lift₂ h₁ h₂
+
 def Term.Subst.WfD.sliftn₂ {left right} (hσ : σ.WfD Γ Δ)
   : (σ.liftn 2).WfD (left::right::Γ) (left::right::Δ)
   := hσ.liftn₂ (le_refl _) (le_refl _)
 
+theorem Term.Subst.Wf.sliftn₂ {left right} (hσ : σ.Wf Γ Δ)
+  : (σ.liftn 2).Wf (left::right::Γ) (left::right::Δ)
+  := hσ.liftn₂ (le_refl _) (le_refl _)
+
 def Ctx.Var.subst (hσ : σ.WfD Γ Δ) (h : Δ.Var n V) : (σ n).WfD Γ V
+  := (hσ ⟨n, h.length⟩).wk_res h.get
+
+theorem Ctx.Var.subst' (hσ : σ.Wf Γ Δ) (h : Δ.Var n V) : (σ n).Wf Γ V
   := (hσ ⟨n, h.length⟩).wk_res h.get
 
 def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst σ).WfD Γ V
@@ -65,11 +127,21 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
   | abort d => abort (d.subst hσ)
   | unit e => unit e
 
+theorem Term.Wf.subst {a : Term φ} (hσ : σ.Wf Γ Δ) (h : a.Wf Δ V) : (a.subst σ).Wf Γ V
+  := let ⟨d⟩ := h.nonempty; let ⟨hσ⟩ := hσ.nonempty; (d.subst hσ).toWf
+
 def Term.WfD.subst0 {a : Term φ} (ha : a.WfD Δ V) : a.subst0.WfD Δ (V::Δ)
   := λi => i.cases ha (λi => Term.WfD.var ⟨by simp, by simp⟩)
 
+theorem Term.Wf.subst0 {a : Term φ} (ha : a.Wf Δ V) : a.subst0.Wf Δ (V::Δ)
+  := λi => i.cases ha (λi => Term.Wf.var ⟨by simp, by simp⟩)
+
 def Term.Subst.WfD.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.Subst φ}
   (hσ : σ.WfD Γ Δ) (hτ : τ.WfD Δ Ξ) : (σ.comp τ).WfD Γ Ξ
+  := λi => (hτ i).subst hσ
+
+theorem Term.Subst.Wf.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.Subst φ}
+  (hσ : σ.Wf Γ Δ) (hτ : τ.Wf Δ Ξ) : (σ.comp τ).Wf Γ Ξ
   := λi => (hτ i).subst hσ
 
 def Body.WfD.subst {Γ Δ : Ctx α ε} {σ} {b : Body φ} (hσ : σ.WfD Γ Δ)
@@ -107,6 +179,10 @@ def Region.WfD.vsubst {Γ Δ : Ctx α ε} {σ} {r : Region φ} (hσ : σ.WfD Γ 
   | let1 da dt => let1 (da.subst hσ) (dt.vsubst hσ.slift)
   | let2 da dt => let2 (da.subst hσ) (dt.vsubst hσ.sliftn₂)
   | cfg n R hR hr hG => cfg n R hR (hr.vsubst hσ) (λi => (hG i).vsubst hσ.slift)
+
+theorem Region.Wf.vsubst {Γ Δ : Ctx α ε} {σ} {r : Region φ} (hσ : σ.Wf Γ Δ) (h : r.Wf Δ L)
+  : (r.vsubst σ).Wf Γ L
+  := let ⟨d⟩ := h.nonempty; let ⟨hσ⟩ := hσ.nonempty; (d.vsubst hσ).toWf
 
 end Subst
 
