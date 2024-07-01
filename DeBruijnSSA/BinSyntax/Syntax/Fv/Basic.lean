@@ -47,6 +47,14 @@ theorem Term.fvs_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fvs = ρ '' t.f
 theorem Term.fvs_wk1 (r : Term φ) : r.wk1.fvs = Nat.liftWk Nat.succ '' r.fvs := by
   simp [wk1, fvs_wk]
 
+theorem Term.fvs_eq (t : Term φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ t.fvs, ρ i = ρ' i)
+  : t.wk ρ = t.wk ρ' := by
+  induction t with
+  | var x => simp [h x]
+  | pair l r Il Ir => simp [Il (λi hi => h i (by simp [hi])), Ir (λi hi => h i (by simp [hi]))]
+  | op _ a Ia | inl a Ia | inr a Ia | abort a Ia => simp [Ia h]
+  | _ => rfl
+
 /-- Get the index of the highest free variable in this term, plus one -/
 @[simp]
 def Term.fvi : Term φ → ℕ
@@ -340,6 +348,31 @@ theorem Region.fvs_vwk1 (r : Region φ) : r.vwk1.fvs = Nat.liftWk Nat.succ '' r.
 theorem Region.fvs_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fvs = r.fvs := by
   induction r generalizing ρ <;> simp [*]
 
+theorem Region.fvs_eq (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ r.fvs, ρ i = ρ' i)
+  : r.vwk ρ = r.vwk ρ' := by
+  induction r generalizing ρ ρ' with
+  | br n e => simp [e.fvs_eq _ _ h]
+  | case e s t Is It =>
+    simp only [vwk, e.fvs_eq _ _ (λi hi => h i (by simp [hi]))]
+    rw [Is, It]
+    sorry
+    sorry
+  | let1 e t It =>
+    simp only [vwk, e.fvs_eq _ _ (λi hi => h i (by simp [hi]))]
+    rw [It]
+    sorry
+  | let2 e t It =>
+    simp only [vwk, e.fvs_eq _ _ (λi hi => h i (by simp [hi]))]
+    rw [It]
+    sorry
+  | cfg β n G Iβ IG =>
+    simp only [vwk]
+    congr 1
+    exact Iβ _ _ sorry
+    funext i
+    apply IG
+    sorry
+
 /-- The highest free variable in this region, plus one -/
 @[simp]
 def Region.fvi : Region φ → ℕ
@@ -447,6 +480,37 @@ def CFG.fv (cfg : CFG φ) : Multiset ℕ := Finset.sum Finset.univ (λi => (cfg.
 /-- The free label variables in this control-flow graph -/
 @[simp]
 def CFG.fl (cfg : CFG φ) : Multiset ℕ := Finset.sum Finset.univ (λi => (cfg.targets i).fl)
+
+/-- The free label variables in this region -/
+@[simp]
+def Region.fls : Region φ → Set ℕ
+  | br n _ => {n}
+  | case _ s t => s.fls ∪ t.fls
+  | let1 _ t => t.fls
+  | let2 _ t => t.fls
+  | cfg β n f => β.fls.liftnFv n ∪ Set.iUnion (λi => (f i).fls.liftnFv n)
+
+theorem Region.fls_vwk (ρ : ℕ → ℕ) (r : Region φ) : (r.vwk ρ).fls = r.fls := by
+  induction r generalizing ρ <;> simp [Set.image_union, Set.image_iUnion, *]
+
+theorem Region.fls_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fls = ρ '' r.fls := by
+  induction r generalizing ρ <;> simp [Set.image_union, Set.image_iUnion, *]
+
+theorem Region.fls_eq (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ r.fls, ρ i = ρ' i)
+  : r.lwk ρ = r.lwk ρ' := by
+  induction r generalizing ρ ρ' with
+  | br ℓ e => simp [h ℓ]
+  | case e s t Is It => simp [lwk,
+    Is ρ ρ' (λi hi => h i (by simp [hi])),
+    It ρ ρ' (λi hi => h i (by simp [hi]))]
+  | let1 e t It | let2 e t It => simp [lwk, It ρ ρ' h]
+  | cfg β n G Iβ IG =>
+    simp only [lwk]
+    congr 1
+    exact Iβ _ _ sorry
+    funext i
+    apply IG
+    sorry
 
 end Definitions
 

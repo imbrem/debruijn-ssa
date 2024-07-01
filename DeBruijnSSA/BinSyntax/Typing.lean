@@ -920,6 +920,14 @@ def Ctx.InS (Γ Δ : Ctx α ε) : Type _ := {ρ : ℕ → ℕ | Γ.Wkn Δ ρ}
 instance Ctx.inSCoe : CoeOut (Ctx.InS Γ Δ) (ℕ → ℕ)
   := ⟨λt => t.val⟩
 
+instance Ctx.InS.instSetoid : Setoid (Ctx.InS Γ Δ) where
+  r ρ σ := ∀i, i < Δ.length → (ρ : ℕ → ℕ) i = (σ : ℕ → ℕ) i
+  iseqv := {
+    refl := (λ_ _ _ => rfl)
+    symm := (λh i hi => (h i hi).symm)
+    trans := (λh h' i hi => (h i hi).trans (h' i hi))
+  }
+
 def Ctx.InS.cast {Γ Δ Γ' Δ' : Ctx α ε} (hΓ : Γ = Γ') (hΔ : Δ = Δ') (ρ : InS Γ Δ) : InS Γ' Δ'
   := ⟨ρ, hΓ ▸ hΔ ▸ ρ.2⟩
 
@@ -1356,8 +1364,12 @@ def Term.WfD.wk {a : Term φ} (h : Γ.Wkn Δ ρ) : WfD Δ a ⟨A, e⟩ → WfD �
 theorem Term.Wf.wk {a : Term φ} (h : Γ.Wkn Δ ρ) (d : Wf Δ a ⟨A, e⟩) : Wf Γ (a.wk ρ) ⟨A, e⟩
   := have ⟨d⟩ := d.nonempty; (d.wk h).toWf
 
-def Term.InS.wk {Γ Δ : Ctx α ε} (ρ) (h : Γ.Wkn Δ ρ) (d : InS φ Δ ⟨A, e⟩) : InS φ Γ ⟨A, e⟩
-  := ⟨d.1.wk ρ, d.2.wk h⟩
+def Term.InS.wk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) (d : InS φ Δ ⟨A, e⟩) : InS φ Γ ⟨A, e⟩
+  := ⟨(d : Term φ).wk ρ, d.prop.wk ρ.prop⟩
+
+theorem Term.InS.wk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} (d : InS φ Δ ⟨A, e⟩) (h : ρ ≈ ρ')
+  : d.wk ρ = d.wk ρ'
+  := sorry
 
 /-- Reverse-weaken a term derivation, given that it is inbounds -/
 def Term.WfD.wk_inv {a : Term φ}
@@ -1416,6 +1428,14 @@ def LCtx.InS (L K : LCtx α) : Type _ := {ρ : ℕ → ℕ | L.Wkn K ρ}
 
 instance LCtx.inSCoe : CoeOut (LCtx.InS L K) (ℕ → ℕ)
   := ⟨λt => t.val⟩
+
+instance LCtx.InS.instSetoid : Setoid (LCtx.InS L K) where
+  r ρ σ := ∀i, i < L.length → (ρ : ℕ → ℕ) i = (σ : ℕ → ℕ) i
+  iseqv := {
+    refl := (λ_ _ _ => rfl)
+    symm := (λh i hi => (h i hi).symm)
+    trans := (λh h' i hi => (h i hi).trans (h' i hi))
+  }
 
 def LCtx.InS.cast {L L' K K' : LCtx α} (hL : L = L') (hK : K = K') (ρ : L.InS K) : L'.InS K'
   := ⟨ρ, hL ▸ hK ▸ ρ.2⟩
@@ -1619,6 +1639,10 @@ theorem Region.Wf.lwk_id {Γ : Ctx α ε} {L} {r : Region φ} (h : L.Wkn K id)
 def Region.InS.vwk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨(r : Region φ).vwk ρ, r.prop.vwk ρ.prop⟩
 
+theorem Region.InS.vwk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} {L} (r : InS φ Δ L) (h : ρ ≈ ρ')
+  : r.vwk ρ = r.vwk ρ'
+  := sorry
+
 theorem Region.InS.coe_vwk {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {r : InS φ Δ L}
   : (r.vwk ρ : Region φ) = (r : Region φ).vwk ρ := rfl
 
@@ -1663,6 +1687,10 @@ theorem Region.InS.coe_vwk0 {Γ : Ctx α ε} (r : InS φ Γ L)
 
 def Region.InS.lwk {Γ : Ctx α ε} (ρ : L.InS K) (r : InS φ Γ L) : InS φ Γ K
   := ⟨(r : Region φ).lwk ρ, r.2.lwk ρ.prop⟩
+
+theorem Region.InS.lwk_equiv {Γ : Ctx α ε} {ρ ρ' : L.InS K} (r : InS φ Γ L) (h : ρ ≈ ρ')
+  : r.lwk ρ = r.lwk ρ'
+  := sorry
 
 @[simp]
 theorem Region.coe_lwk {Γ : Ctx α ε} {ρ : L.InS K} {r : InS φ Γ L}

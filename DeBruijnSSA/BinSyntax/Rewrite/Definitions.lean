@@ -934,7 +934,7 @@ theorem InS.let1_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
   (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ Γ ⟨B, e⟩)
     : r.let1 (a.pair b) ≈ (
       let1 a $
-      let1 (b.wk Nat.succ (by simp)) $
+      let1 (b.wk ⟨Nat.succ, (by simp)⟩) $
       let1 ((Term.InS.var 1 (by simp)).pair (e := e') (Term.InS.var 0 (by simp))) $
       r.vwk1.vwk1)
   := EqvGen.rel _ _ $ Wf.Cong.rel $
@@ -945,7 +945,7 @@ theorem Eqv.let1_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
   (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ Γ ⟨B, e⟩)
     : Eqv.let1 (a.pair b) r = (
       let1 a $
-      let1 (b.wk Nat.succ (by simp)) $
+      let1 (b.wk ⟨Nat.succ, (by simp)⟩) $
       let1 ((Term.InS.var 1 (by simp)).pair (e := e') (Term.InS.var 0 (by simp))) $
       r.vwk1.vwk1)
   := by induction r using Quotient.inductionOn with
@@ -1042,7 +1042,7 @@ theorem InS.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   (b : Term.InS φ Γ ⟨B, e⟩)
     : r.let2 (a.pair b) ≈ (
       let1 a $
-      let1 (b.wk Nat.succ (by simp)) r)
+      let1 (b.wk ⟨Nat.succ, (by simp)⟩) r)
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1052,7 +1052,7 @@ theorem Eqv.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   (b : Term.InS φ Γ ⟨B, e⟩)
     : Eqv.let2 (a.pair b) r = (
       let1 a $
-      let1 (b.wk Nat.succ (by simp)) r)
+      let1 (b.wk ⟨Nat.succ, (by simp)⟩) r)
   := by induction r using Quotient.inductionOn with
   | h r =>
     have h : ⟦r⟧ = r.q := rfl
@@ -1128,10 +1128,10 @@ theorem InS.let1_case {Γ : Ctx α ε} {L : LCtx α}
   (b : Term.InS φ Γ ⟨B.coprod C, eb⟩)
   {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   (s : InS φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (let1 a $ case (b.wk Nat.succ (by simp)) r s) ≈
+    : (let1 a $ case (b.wk ⟨Nat.succ, (by simp)⟩) r s) ≈
       case b
-        (let1 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
-        (let1 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
+        (let1 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
+        (let1 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1140,10 +1140,10 @@ theorem Eqv.let1_case {Γ : Ctx α ε} {L : LCtx α}
   (b : Term.InS φ Γ ⟨B.coprod C, eb⟩)
   {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   (s : Eqv φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (Eqv.let1 a $ Eqv.case (b.wk Nat.succ (by simp)) r s) =
+    : (Eqv.let1 a $ Eqv.case (b.wk ⟨Nat.succ, (by simp)⟩) r s) =
       Eqv.case b
-        (Eqv.let1 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
-        (Eqv.let1 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
+        (Eqv.let1 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
+        (Eqv.let1 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
   := by induction r using Quotient.inductionOn with
   | h r =>
     induction s using Quotient.inductionOn with
@@ -1157,10 +1157,10 @@ theorem InS.let2_case {Γ : Ctx α ε} {L : LCtx α}
   (b : Term.InS φ Γ ⟨C.coprod D, eb⟩)
   {r : InS φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   (s : InS φ (⟨D, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (let2 a $ case (b.wk (· + 2) (by simp)) r s) ≈
+    : (let2 a $ case (b.wk ⟨(· + 2), (by simp)⟩) r s) ≈
       case b
-        (let2 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
-        (let2 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
+        (let2 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
+        (let2 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1169,10 +1169,10 @@ theorem Eqv.let2_case {Γ : Ctx α ε} {L : LCtx α}
   (b : Term.InS φ Γ ⟨C.coprod D, eb⟩)
   {r : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   (s : Eqv φ (⟨D, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (Eqv.let2 a $ Eqv.case (b.wk (· + 2) (by simp)) r s) =
+    : (Eqv.let2 a $ Eqv.case (b.wk ⟨(· + 2), (by simp)⟩) r s) =
       Eqv.case b
-        (Eqv.let2 (a.wk Nat.succ (by simp)) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
-        (Eqv.let2 (a.wk Nat.succ (by simp)) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
+        (Eqv.let2 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
+        (Eqv.let2 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
   := by induction r using Quotient.inductionOn with
   | h r =>
     induction s using Quotient.inductionOn with
