@@ -12,8 +12,6 @@ section Basic
 
 -- Can we even do centrality? Propositional parametrization?
 
-variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
-
 inductive Ty (α : Type u) where
   | base : α → Ty α
   | prod : Ty α → Ty α → Ty α
@@ -21,6 +19,8 @@ inductive Ty (α : Type u) where
   | unit : Ty α
   | empty : Ty α
   deriving Repr, DecidableEq
+
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
 
 inductive Ty.IsInitial : Ty α → Prop
   | prod_left : ∀{A}, IsInitial A → IsInitial (prod A B)
@@ -122,7 +122,8 @@ theorem Ctx.Var.shead {head : Ty α × ε} {Γ : Ctx α ε}
   : Var (head::Γ) 0 head := Var.head (le_refl _) Γ
 
 theorem Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
-  := ⟨by simp [h.length], by simp [h.get]⟩
+  := ⟨by simp [h.length], by simp only [List.length_cons, List.get_eq_getElem,
+    List.getElem_cons_succ, ge_iff_le]; exact h.get⟩
 
 theorem Ctx.Var.tail {Γ : Ctx α ε} {n} (h : Var (V'::Γ) (n+1) V) : Var Γ n V
   := ⟨Nat.lt_of_succ_lt_succ h.length, h.get⟩
@@ -439,7 +440,7 @@ theorem Term.Wf.unit' {Γ : Ctx α ε} {e} : Wf (φ := φ) Γ Term.unit ⟨Ty.un
 -- def Term.WfD.toInfTy {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨a.infTy Γ, e⟩
 --   := match h with
 --   | var dv => var (by
---     constructor <;> simp only [infTy, dv.length, ↓reduceDite]
+--     constructor <;> simp only [infTy, dv.length, ↓reduceDIte]
 --     exact ⟨le_refl _, dv.get.2⟩
 --     )
 --   | op df de => op ⟨df.src, le_refl _, df.effect⟩ de
@@ -1265,7 +1266,8 @@ theorem Ctx.Var.exists_of_mem {Γ : Ctx α ε} {V} (h : V ∈ Γ)
   | head => exact ⟨0, by simp, rfl⟩
   | tail _ _ I =>
     have ⟨n, hn, hn'⟩ := I;
-    exact ⟨n + 1, hn.step, by simp [hn']⟩
+    exact ⟨n + 1, hn.step, by simp only [List.length_cons, List.get_eq_getElem,
+      List.getElem_cons_succ]; exact hn'⟩
 
 theorem Ctx.mem_wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (hV : V ∈ Δ) : ∃V', V' ∈ Γ ∧ V' ≤ V
   :=
@@ -1281,7 +1283,9 @@ theorem Ctx.IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ �
 
 theorem Ctx.Wkn.effect {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (i : ℕ) (hi : i < Δ.length)
   : (Γ.effect (ρ i)) ≤ Δ.effect i
-  := by simp [Ctx.effect, (h i hi).length, hi, (h i hi).get.2]
+  := by
+    simp only [Ctx.effect, (h i hi).length, ↓reduceDIte, List.get_eq_getElem, hi]
+    exact (h i hi).get.2
 
 -- theorem Ctx.EWkn.id_len_le : Γ.EWkn Δ _root_.id → Δ.length ≤ Γ.length := by
 --   apply List.NEWkn.id_len_le
@@ -1476,6 +1480,15 @@ def LCtx.InS.comp {L K J : LCtx α} (ρ : LCtx.InS K J) (σ : LCtx.InS L K) : LC
 theorem LCtx.InS.coe_comp {L K J : LCtx α} (ρ : LCtx.InS K J) (σ : LCtx.InS L K)
   : (ρ.comp σ : ℕ → ℕ) = (ρ : ℕ → ℕ) ∘ (σ : ℕ → ℕ)
   := rfl
+
+theorem LCtx.Wkn.add_left_append (original added : LCtx α)
+  : original.Wkn (added ++ original) (· + added.length)
+  := λi hi => ⟨
+    by rw [List.length_append]; simp [i.add_comm, hi],
+    by rw [List.get_append_right] <;> simp [hi]⟩
+
+def LCtx.InS.add_left_append (original added : LCtx α) : InS original (added ++ original)
+  := ⟨(· + added.length), Wkn.add_left_append original added⟩
 
 theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
@@ -1765,7 +1778,8 @@ def Term.WfD.var1_pure {head ty} {Γ : Ctx α ε} {effect}
 theorem Term.WfD.effect_le
   {Γ : Ctx α ε} {a : Term φ} {A e} (h : WfD Γ a ⟨A, e⟩) : a.effect Γ.effect ≤ e
   := match h with
-  | var dv => by simp [Ctx.effect, effect, dv.length, dv.get.right]
+  | var dv => by
+    simp only [effect, Ctx.effect, dv.length, ↓reduceDIte, List.get_eq_getElem]; exact dv.get.2
   | op df de => sup_le_iff.mpr ⟨df.effect, de.effect_le⟩
   | pair dl dr => sup_le_iff.mpr ⟨dl.effect_le, dr.effect_le⟩
   | inl dl => dl.effect_le

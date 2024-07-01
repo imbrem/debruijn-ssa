@@ -294,7 +294,10 @@ def Terminator.Subst.WfD.vliftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.l
   := hn ▸ hσ.vliftn_append_cons V Ξ
 
 def LCtx.Trg.subst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
-  := (hσ ⟨n, h.length⟩).vwk_id (Ctx.Wkn.id.lift_id (by simp [h.get]))
+  := (hσ ⟨n, h.length⟩).vwk_id (Ctx.Wkn.id.lift_id (by
+    simp only [List.get_eq_getElem, Prod.mk_le_mk, le_refl, and_true]
+    exact h.get
+  ))
 
 def LCtx.Trg.subst0
   {a : Term φ} (hσ : σ.WfD Γ L K) (h : L.Trg n A) (ha : a.WfD Γ ⟨A, ⊥⟩)
@@ -394,7 +397,10 @@ def Region.Subst.WfD.vliftn_append_cons' (V) {Ξ : Ctx α ε} (hn : n = Ξ.lengt
   := hn ▸ hσ.vliftn_append_cons V Ξ
 
 def LCtx.Trg.rsubst (hσ : σ.WfD Γ L K) (h : L.Trg n A) : (σ n).WfD (⟨A, ⊥⟩::Γ)  K
-  := (hσ ⟨n, h.length⟩).vwk_id (Ctx.Wkn.id.lift_id (by simp [h.get]))
+  := (hσ ⟨n, h.length⟩).vwk_id (Ctx.Wkn.id.lift_id (by
+    simp only [List.get_eq_getElem, Prod.mk_le_mk, le_refl, and_true]
+    exact h.get
+    ))
 
 def LCtx.Trg.rsubst0
   {a : Term φ} (hσ : σ.WfD Γ L K) (h : L.Trg n A) (ha : a.WfD Γ ⟨A, ⊥⟩)

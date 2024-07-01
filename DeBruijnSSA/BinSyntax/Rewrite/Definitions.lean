@@ -225,7 +225,9 @@ theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
     ((p.wk_eff (λi hi => by
       have hi : i < Δ.length := d.fvs hi
       have hρ := hρ i hi
-      simp [Ctx.effect, hρ.length, hi, hρ.get.2]
+      simp only [Function.comp_apply, Ctx.effect, hρ.length, ↓reduceDIte, List.get_eq_getElem, hi,
+        ge_iff_le]
+      exact hρ.get.2
       )).vwk ρ)
   -- | TStep.step_op d d' p => TStep.step_op (d.vwk hρ) (d'.vwk hρ)
   --   ((p.wk_eff (λi hi => by
@@ -832,6 +834,11 @@ def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ �
     (λr => InS.q (r.lwk_id hρ))
     (λ_ _ h => Quotient.sound sorry)
 
+def Eqv.vsubst {Γ Δ : Ctx α ε} {L : LCtx α} (σ : Term.Subst.InS φ Γ Δ) (r : Eqv φ Δ L)
+  : Eqv φ Γ L := Quotient.liftOn r
+    (λr => InS.q (r.vsubst σ))
+    (λ_ _ h => Quotient.sound sorry)
+
 @[simp]
 theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ Δ L}
    : (r.q).vwk ρ = (r.vwk ρ).q := rfl
@@ -1186,7 +1193,8 @@ theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α)  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   (hℓ : (R ++ L).Trg ℓ A) (hℓ' : ℓ < R.length)
   : (InS.br ℓ a hℓ).cfg R G
-  ≈ (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (by simp [List.get_append ℓ hℓ' ▸ hℓ.get])).cfg R G
+  ≈ (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (by simp only [Ctx.Wkn.lift_id_iff,
+    Prod.mk_le_mk, le_refl, and_true, Ctx.Wkn.id]; exact List.get_append ℓ hℓ' ▸ hℓ.get)).cfg R G
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
@@ -1195,7 +1203,8 @@ theorem Eqv.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α)  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   (hℓ : (R ++ L).Trg ℓ A) (hℓ' : ℓ < R.length)
   : (InS.br ℓ a hℓ).q.cfg R G
-  = (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (by simp [List.get_append ℓ hℓ' ▸ hℓ.get])).cfg R G
+  = (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (by simp only [Ctx.Wkn.lift_id_iff,
+    Prod.mk_le_mk, le_refl, and_true, Ctx.Wkn.id]; exact List.get_append ℓ hℓ' ▸ hℓ.get)).cfg R G
   := by
   simp only [cfg]
   generalize hG : Quotient.finChoice G = G'
@@ -1448,16 +1457,34 @@ theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
   (R S : LCtx α) (β : InS φ Γ (S ++ L))
   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ S ++ L))
   (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
-  : (β.lwk ⟨(· + R.length), sorry⟩).cfg' (R.length + S.length) (R ++ S) (by rw [List.length_append])
+  : (β.lwk ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))).cfg'
+    (R.length + S.length) (R ++ S) (by rw [List.length_append])
       (Fin.addCases
         (λi => (G i).cast sorry rfl)
-        (λi => ((G' i).cast sorry rfl).lwk ⟨(· + R.length), sorry⟩))
+        (λi => ((G' i).cast sorry rfl).lwk
+          ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))))
     ≈ β.cfg S G'
   := sorry
 
 -- TODO: Eqv.dead_cfg_left; after Eqv.lwk
 
--- TODO: let1 β
+theorem InS.let1_beta {Γ : Ctx α ε} {L : LCtx α}
+  (a : Term.InS φ Γ ⟨A, ⊥⟩)
+  (r : InS φ (⟨A, ⊥⟩::Γ) L)
+    : let1 a r ≈ r.vsubst a.subst0
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (by
+    constructor
+    sorry
+  )
+
+theorem Eqv.let1_beta {Γ : Ctx α ε} {L : LCtx α}
+  (a : Term.InS φ Γ ⟨A, ⊥⟩)
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) L)
+    : let1 a r = r.vsubst a.subst0
+  := by
+  induction r using Quotient.inductionOn
+  exact Eqv.sound (InS.let1_beta a _)
 
 theorem InS.initial {Γ : Ctx α ε} {L : LCtx α} (hi : Γ.IsInitial) (r r' : InS φ Γ L) : r ≈ r'
   := EqvGen.rel _ _ $ Wf.Cong.rel (TStep.initial hi r.2 r'.2)
