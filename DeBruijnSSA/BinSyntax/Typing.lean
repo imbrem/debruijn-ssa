@@ -1086,6 +1086,12 @@ theorem Ctx.Wkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
 theorem Ctx.Wkn.id_len_le : Γ.Wkn Δ _root_.id → Δ.length ≤ Γ.length := by
   rw [Wkn_iff]; apply List.NWkn.id_len_le
 
+theorem Ctx.Wkn.comp {Γ Δ Ξ : Ctx α ε} {ρ σ}
+  : Γ.Wkn Δ ρ → Δ.Wkn Ξ σ → Γ.Wkn Ξ (ρ ∘ σ)
+  := by
+  simp only [Wkn_iff]
+  apply List.NWkn.comp
+
 def Ctx.EWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
   := List.NEWkn Γ Δ ρ
 
@@ -1401,6 +1407,12 @@ theorem LCtx.Wkn.liftn_append {L K : LCtx α} {ρ : ℕ → ℕ} (R : LCtx α) (
   rw [<-LCtx.Wkn_iff]
   exact h
 
+theorem LCtx.Wkn.comp {L K J : LCtx α} {ρ σ}
+  : K.Wkn J ρ → L.Wkn K σ → L.Wkn J (ρ ∘ σ)
+  := by
+  simp only [LCtx.Wkn_iff]
+  apply List.NWkn.comp
+
 theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
   get := le_trans hK.get (h n hK.length).2
@@ -1566,12 +1578,30 @@ def Region.InS.vwk {Γ Δ : Ctx α ε} (ρ : ℕ → ℕ) (h : Γ.Wkn Δ ρ) {L}
 theorem Region.InS.coe_vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {h : Γ.Wkn Δ ρ} {L} {r : InS φ Δ L}
   : (r.vwk ρ h : Region φ) = (r : Region φ).vwk ρ := rfl
 
+theorem Region.InS.vwk_vwk {Γ Δ Ξ : Ctx α ε} {ρ σ : ℕ → ℕ} {hρ : Γ.Wkn Δ ρ} {hσ : Δ.Wkn Ξ σ}
+  {L} {r : InS φ Ξ L}
+  : (r.vwk σ hσ).vwk ρ hρ = r.vwk (ρ ∘ σ) (hρ.comp hσ) := by
+  cases r; simp [vwk, Region.vwk_vwk]
+
 def Region.InS.vwk_id {Γ Δ : Ctx α ε} (h : Γ.Wkn Δ id) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨r, r.2.vwk_id h⟩
 
 @[simp]
 theorem Region.InS.coe_vwk_id {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {L} {r : InS φ Δ L}
   : (r.vwk_id h : Region φ) = (r : Region φ) := rfl
+
+theorem Region.InS.vwk_id_eq_vwk {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {L} {r : InS φ Δ L}
+  : r.vwk_id h = r.vwk id h := by simp [vwk, vwk_id]
+
+theorem Region.InS.vwk_vwk_id {Γ Δ Ξ : Ctx α ε} {ρ : ℕ → ℕ} {hρ : Γ.Wkn Δ ρ} {h : Δ.Wkn Ξ id}
+  {L} {r : InS φ Ξ L}
+  : (r.vwk_id h).vwk ρ hρ = r.vwk ρ (hρ.comp h) := by
+  cases r; simp [vwk, vwk_id, Region.vwk_vwk]
+
+theorem Region.InS.vwk_id_vwk {Γ Δ Ξ : Ctx α ε} {ρ : ℕ → ℕ} {h : Γ.Wkn Δ id} {hρ : Δ.Wkn Ξ ρ}
+  {L} {r : InS φ Ξ L}
+  : (r.vwk ρ hρ).vwk_id h = r.vwk ρ (h.comp hρ) := by
+  cases r; simp [vwk, vwk_id, Region.vwk_vwk]
 
 def Region.InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (left::Γ) L) : InS φ (left::right::Γ) L
   := r.vwk _ Ctx.Wkn.wk1
@@ -1592,12 +1622,41 @@ def Region.InS.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ) (h : L.Wkn K ρ) (r : I
 theorem Region.coe_lwk {Γ : Ctx α ε} {L K : LCtx α} {ρ} {h : L.Wkn K ρ} {r : InS φ Γ L}
   : (r.lwk ρ h : Region φ) = (r : Region φ).lwk ρ := rfl
 
+theorem Region.InS.lwk_lwk {Γ : Ctx α ε} {L K J} {ρ σ : ℕ → ℕ}
+  {hρ : L.Wkn K ρ} {hσ : K.Wkn J σ}
+  {r : InS φ Γ L}
+  : (r.lwk ρ hρ).lwk σ hσ = r.lwk _ (hσ.comp hρ) := by
+  cases r; simp [lwk, Region.lwk_lwk]
+
+theorem Region.InS.lwk_vwk {Γ Δ : Ctx α ε} {L K} {ρ σ : ℕ → ℕ} {hρ : Γ.Wkn Δ ρ} {hσ : L.Wkn K σ}
+  {r : InS φ Δ L}
+  : (r.vwk ρ hρ).lwk σ hσ = (r.lwk σ hσ).vwk ρ hρ := by
+  cases r; simp [lwk, vwk, Region.lwk_vwk]
+
+theorem Region.InS.vwk_lwk {Γ Δ : Ctx α ε} {L K} {ρ σ : ℕ → ℕ} {hρ : Γ.Wkn Δ ρ} {hσ : L.Wkn K σ}
+  {r : InS φ Δ L}
+  : (r.lwk σ hσ).vwk ρ hρ = (r.vwk ρ hρ).lwk σ hσ := by
+  cases r; simp [lwk, vwk, Region.lwk_vwk]
+
 def Region.InS.lwk_id {Γ : Ctx α ε} {L} (h : L.Wkn K id) (r : InS φ Γ L) : InS φ Γ K
   := ⟨r, r.2.lwk_id h⟩
 
 @[simp]
 theorem Region.InS.coe_lwk_id {Γ : Ctx α ε} {L} {r : InS φ Γ L} {h : L.Wkn K id}
   : (r.lwk_id h : Region φ) = (r : Region φ) := rfl
+
+theorem Region.InS.lwk_id_eq_lwk {Γ : Ctx α ε} {L K} {r : InS φ Γ L} {h : L.Wkn K id}
+  : r.lwk_id h = r.lwk id h := by simp [lwk, lwk_id]
+
+theorem Region.InS.lwk_id_lwk {Γ : Ctx α ε} {L K J} {ρ} {h : L.Wkn K id} {hρ : K.Wkn J ρ}
+  {r : InS φ Γ L}
+  : (r.lwk_id h).lwk ρ hρ = r.lwk _ (hρ.comp h) := by
+  cases r; simp [lwk, lwk_id, Region.lwk_lwk]
+
+theorem Region.InS.lwk_lwk_id {Γ : Ctx α ε} {L K J} {ρ} {hρ : L.Wkn K ρ} {h : K.Wkn J id}
+  {r : InS φ Γ L}
+  : (r.lwk ρ hρ).lwk_id h = r.lwk _ (h.comp hρ) := by
+  cases r; simp [lwk, lwk_id, Region.lwk_lwk]
 
 end Weakening
 

@@ -795,7 +795,15 @@ def Eqv.vwk_id
       exact h
       ))
 
--- TODO: Eqv.lwk, Eqv.lwk_id
+def Eqv.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ : ℕ → ℕ) (hρ : L.Wkn K ρ) (r : Eqv φ Γ L)
+  : Eqv φ Γ K := Quotient.liftOn r
+    (λr => InS.q (r.lwk ρ hρ))
+    (λ_ _ h => Quotient.sound sorry)
+
+def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ Γ L)
+  : Eqv φ Γ K := Quotient.liftOn r
+    (λr => InS.q (r.lwk_id hρ))
+    (λ_ _ h => Quotient.sound sorry)
 
 -- TODO: Eqv.vwk_vwk, lwk_lwk, lwk_vwk, vwk_lwk, etc...
 
@@ -806,6 +814,14 @@ theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : ℕ → ℕ} {r : InS 
 @[simp]
 theorem InS.vwk_id_q {Γ Δ : Ctx α ε} {L : LCtx α} {r : InS φ Δ L}
   (hρ : Γ.Wkn Δ id) : (r.q).vwk_id hρ = (r.vwk_id hρ).q := rfl
+
+theorem Eqv.vwk_vwk {Γ Δ Ξ : Ctx α ε} {L : LCtx α} {r : Eqv φ Ξ L}
+  {ρ : ℕ → ℕ} {σ : ℕ → ℕ} (hρ : Γ.Wkn Δ ρ) (hσ : Δ.Wkn Ξ σ)
+  : Eqv.vwk ρ hρ (Eqv.vwk σ hσ r) = Eqv.vwk _ (hρ.comp hσ) r := by
+  induction r using Quotient.inductionOn with
+  | h r =>
+    have h : ⟦r⟧ = r.q := rfl
+    simp only [h, InS.vwk_q, InS.vwk_vwk]
 
 def Eqv.vwk1
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (head::Γ) L)
