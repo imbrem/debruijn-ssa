@@ -102,31 +102,36 @@ theorem Ty.IsInitial.anti {A B : Ty α} (h : A ≤ B) (hi : IsInitial B) : IsIni
 
 -- TODO: Ty.LE is decidable if ≤ on α is
 
-def Ctx (α ε) := List (Ty α × ε)
+abbrev Ctx (α ε) := List (Ty α × ε)
+
+-- instance Ctx.instGetElemNatLtLength
+--   : GetElem (Ctx α ε) ℕ (Ty α × ε) (λΓ => (· < Γ.length))
+--   := List.instGetElemNatLtLength
 
 def Ctx.reverse (Γ : Ctx α ε) : Ctx α ε := List.reverse Γ
 
 structure Ctx.Var (Γ : Ctx α ε) (n : ℕ) (V : Ty α × ε) : Prop where
   length : n < Γ.length
-  get : Γ.get ⟨n, length⟩ ≤ V
+  getElem : Γ[n] ≤ V
+
+theorem Ctx.Var.get {Γ : Ctx α ε} {n V} (h : Var Γ n V) : Γ.get ⟨n, h.length⟩ ≤ V := h.getElem
 
 theorem Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   length := by simp
-  get := h
+  getElem := h
 
 @[simp]
 theorem Ctx.Var.head_iff {V V' : Ty α × ε} {Γ : Ctx α ε} : Var (V::Γ) 0 V' ↔ V ≤ V'
-  := ⟨λh => h.get, λh => Ctx.Var.head h Γ⟩
+  := ⟨λh => h.getElem, λh => Ctx.Var.head h Γ⟩
 
 theorem Ctx.Var.shead {head : Ty α × ε} {Γ : Ctx α ε}
   : Var (head::Γ) 0 head := Var.head (le_refl _) Γ
 
 theorem Ctx.Var.step {Γ : Ctx α ε} (h : Var Γ n V) : Var (V'::Γ) (n+1) V
-  := ⟨by simp [h.length], by simp only [List.length_cons, List.get_eq_getElem,
-    List.getElem_cons_succ, ge_iff_le]; exact h.get⟩
+  := ⟨by simp [h.length], by simp [h.getElem]⟩
 
 theorem Ctx.Var.tail {Γ : Ctx α ε} {n} (h : Var (V'::Γ) (n+1) V) : Var Γ n V
-  := ⟨Nat.lt_of_succ_lt_succ h.length, h.get⟩
+  := ⟨Nat.lt_of_succ_lt_succ h.length, h.getElem⟩
 
 @[simp]
 theorem Ctx.Var.step_iff {V V' : Ty α × ε} {Γ : Ctx α ε} {n} : Var (V'::Γ) (n+1) V ↔ Var Γ n V
@@ -209,7 +214,7 @@ theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV
   := by induction h generalizing V' with
   | var dv =>
     constructor
-    exact ⟨dv.length, dv.get.trans hV⟩
+    exact ⟨dv.length, dv.getElem.trans hV⟩
   | op hf _ I =>
     cases V'
     constructor
@@ -561,11 +566,13 @@ theorem Body.WfD.toWf {Γ : Ctx α ε} {b : Body φ} {Δ} (h : WfD Γ b Δ) : Wf
   | Body.WfD.let1 a b => Wf.let1 a.toWf b.toWf
   | Body.WfD.let2 a b => Wf.let2 a.toWf b.toWf
 
-def LCtx (α) := List (Ty α)
+abbrev LCtx (α) := List (Ty α)
 
 structure LCtx.Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
   length : n < L.length
-  get : A ≤ L.get ⟨n, length⟩
+  getElem : A ≤ L[n]
+
+def LCtx.Trg.get (L : LCtx α) {n A} (h : L.Trg n A) : A ≤ L.get ⟨n, h.length⟩ := h.getElem
 
 instance : Append (LCtx α) := (inferInstance : Append (List (Ty α)))
 
@@ -939,7 +946,8 @@ theorem Ctx.Wkn_def' (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔
   ∀i : Fin Δ.length, Γ.Var (ρ i) (Δ.get i) := ⟨λh ⟨i, hi⟩ => h i hi, λh i hi => h ⟨i, hi⟩⟩
 
 theorem Ctx.Wkn_iff (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Γ.Wkn Δ ρ ↔ List.NWkn Γ Δ ρ
-  := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
+  := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.getElem⟩,
+      λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
 
 @[simp]
 theorem Ctx.Wkn.id {Γ : Ctx α ε} : Γ.Wkn Γ id := λ_ hi => ⟨hi, le_refl _⟩
@@ -959,7 +967,7 @@ theorem Ctx.Wkn.lift_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head':
 
 theorem Ctx.Wkn.lift_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
   : head ≤ head'
-  := (h 0 (by simp)).get
+  := (h 0 (by simp)).getElem
 
 @[simp]
 theorem Ctx.Wkn.lift_iff {head head' : Ty α × ε} {Γ Δ}
@@ -979,7 +987,7 @@ theorem Ctx.Wkn.lift_id_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (hea
 
 theorem Ctx.Wkn.lift_id_head {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) _root_.id)
   : head ≤ head'
-  := (h 0 (by simp)).get
+  := (h 0 (by simp)).getElem
 
 @[simp]
 theorem Ctx.Wkn.lift_id_iff {head head' : Ty α × ε} {Γ Δ}
@@ -1310,7 +1318,7 @@ theorem Ctx.WknTy.id_len_le : Γ.WknTy Δ _root_.id → Δ.length ≤ Γ.length
 
 theorem Ctx.Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
-  get := le_trans hΓ.get h
+  getElem := le_trans hΓ.get h
 
 theorem Ctx.Var.wk_res₂ (hA : A ≤ A') (he : e ≤ e') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨A', e⟩
   := hΓ.wk_res (by simp [hA, he])
@@ -1323,7 +1331,7 @@ theorem Ctx.Var.wk_eff (h : e ≤ e') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨
 
 theorem Ctx.Var.wk (h : Γ.Wkn Δ ρ) (hΓ : Δ.Var n ⟨A, e⟩) : Γ.Var (ρ n) ⟨A, e⟩ where
   length := (h n hΓ.length).1
-  get := le_trans (h n hΓ.length).2 hΓ.get
+  getElem := le_trans (h n hΓ.length).2 hΓ.get
 
 /-- Weaken the effect of a term derivation -/
 def Term.WfD.wk_eff {a : Term φ} {A e} (h : e ≤ e') : WfD Γ a ⟨A, e⟩ → WfD Γ a ⟨A, e'⟩
@@ -1426,7 +1434,7 @@ def Body.WfD.wk_id {Γ Δ : Ctx α ε} {b : Body φ} (h : Γ.Wkn Δ id) : WfD Δ
 variable {L K : LCtx α}
 
 def LCtx.Wkn (L K : LCtx α) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
-  := ∀i, (h : i < L.length) → K.Trg (ρ i) (L.get ⟨i, h⟩)
+  := ∀i, (h : i < L.length) → K.Trg (ρ i) L[i]
 
 def LCtx.InS (L K : LCtx α) : Type _ := {ρ : ℕ → ℕ | L.Wkn K ρ}
 
@@ -1485,14 +1493,14 @@ theorem LCtx.Wkn.add_left_append (original added : LCtx α)
   : original.Wkn (added ++ original) (· + added.length)
   := λi hi => ⟨
     by rw [List.length_append]; simp [i.add_comm, hi],
-    by rw [List.get_append_right] <;> simp [hi]⟩
+    by rw [List.getElem_append_right] <;> simp [hi]⟩
 
 def LCtx.InS.add_left_append (original added : LCtx α) : InS original (added ++ original)
   := ⟨(· + added.length), Wkn.add_left_append original added⟩
 
 theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
-  get := le_trans hK.get (h n hK.length).2
+  getElem := le_trans hK.get (h n hK.length).2
 
 def Terminator.WfD.vwk {Γ Δ : Ctx α ε} {ρ} {t : Terminator φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ t L → WfD Γ (t.vwk ρ) L

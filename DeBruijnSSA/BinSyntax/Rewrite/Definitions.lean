@@ -1344,13 +1344,18 @@ theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
     : (β.cfg R G).cfg S G'
     ≈ (β.cast rfl (by rw [List.append_assoc])).cfg'
       (R.length + S.length) (R ++ S) (by rw [List.length_append])
-      (Fin.addCases (λi => (G i).cast (by
-        simp only [Fin.cast, Fin.coe_castAdd]
-        rw [List.get_append]
-        -- TODO: put in discretion
-        ) (by rw [List.append_assoc]))
-                    (λi => ((G' i).lwk ⟨(· + R.length), sorry⟩).cast sorry
-                      (by rw [List.append_assoc])))
+      (Fin.addCases
+        (λi => (G i).cast (by
+          simp only [List.get_eq_getElem, Fin.cast, Fin.coe_castAdd]
+          rw [List.getElem_append]
+          -- TODO: put in discretion
+          ) (by rw [List.append_assoc]))
+        (λi => ((G' i).lwk (LCtx.InS.add_left_append (S ++ L) R)).cast (by
+          simp only [List.get_eq_getElem, Fin.cast, Fin.coe_natAdd]
+          -- TODO: put in discretion
+          sorry
+        )
+          (by rw [List.append_assoc])))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by
     simp only [Set.mem_setOf_eq, coe_cfg, id_eq, coe_cfg', coe_cast]
@@ -1404,9 +1409,9 @@ theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
   ≈ cfg R β (λi => (G (ρ i)).vwk_id (by
     have hρ := hρ i sorry;
-    rw [List.get_append] at hρ
-    have hρ := hρ.get
-    rw [List.get_append] at hρ
+    rw [List.getElem_append] at hρ
+    have hρ := hρ.getElem
+    rw [List.getElem_append] at hρ
     simp
     sorry
     sorry
