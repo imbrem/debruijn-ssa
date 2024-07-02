@@ -1407,18 +1407,29 @@ theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   (ρ : Fin R.length → Fin S.length)
   (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
   : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
-  ≈ cfg R β (λi => (G (ρ i)).vwk_id (by
-    have hρ := hρ i sorry;
-    rw [List.getElem_append] at hρ
-    have hρ := hρ.getElem
-    rw [List.getElem_append] at hρ
-    simp
-    sorry
-    sorry
-    simp
-  ))
+  ≈ cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
   := EqvGen.rel _ _ $ Wf.Cong.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.reduce (by constructor))
+
+theorem Eqv.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
+  (R S : LCtx α) (β : Eqv φ Γ (R ++ L))
+  (G : (i : Fin S.length) → Eqv φ ((List.get S i, ⊥)::Γ) (R ++ L))
+  (ρ : Fin R.length → Fin S.length)
+  (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
+  : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
+  = cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
+  := by
+  induction β using Quotient.inductionOn with
+  | h β =>
+    simp only [cfg]
+    generalize hG : Quotient.finChoice G = G'
+    induction G' using Quotient.inductionOn with
+    | h G' =>
+      have hG := Quotient.forall_of_finChoice_eq hG
+      simp only [Set.mem_setOf_eq, lwk_quot, List.get_eq_getElem, hG, Fin.getElem_fin, vwk_id_quot,
+        Quotient.finChoice_eq, Eqv.cfg_inner_quot]
+      apply Eqv.sound
+      apply InS.wk_cfg
 
 theorem InS.case_inl {Γ : Ctx α ε} {L : LCtx α}
   (e : Term.InS φ Γ ⟨A, ea⟩)

@@ -1457,10 +1457,10 @@ theorem LCtx.Wkn.id (L : LCtx α) : L.Wkn L id := λ_ hi => ⟨hi, le_refl _⟩
 def LCtx.InS.id (L : LCtx α) : InS L L := ⟨_root_.id, Wkn.id _⟩
 
 theorem LCtx.Wkn_def (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
-  ∀i, (h : i < L.length) → K.Trg (ρ i) (L.get ⟨i, h⟩) := Iff.rfl
+  ∀i, (h : i < L.length) → K.Trg (ρ i) L[i] := Iff.rfl
 
 theorem LCtx.Wkn_def' (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔
-  ∀i : Fin L.length, K.Trg (ρ i) (L.get i) := ⟨λh ⟨i, hi⟩ => h i hi, λh i hi => h ⟨i, hi⟩⟩
+  ∀i : Fin L.length, K.Trg (ρ i) L[i] := ⟨λh ⟨i, hi⟩ => h i hi, λh i hi => h ⟨i, hi⟩⟩
 
 theorem LCtx.Wkn_iff (L K : LCtx α) (ρ : ℕ → ℕ) : L.Wkn K ρ ↔ @List.NWkn (Ty α)ᵒᵈ _ K L ρ
   := ⟨λh i hi => have h' := h i hi; ⟨h'.length, h'.get⟩, λh i hi => have h' := h i hi; ⟨h'.1, h'.2⟩⟩
@@ -1501,6 +1501,22 @@ def LCtx.InS.add_left_append (original added : LCtx α) : InS original (added ++
 theorem LCtx.Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
   getElem := le_trans hK.get (h n hK.length).2
+
+theorem LCtx.Wkn.toFinWk_append {L L' R S : LCtx α} {ρ : Fin R.length → Fin S.length}
+  (hρ : (R ++ L).Wkn (S ++ L') (Fin.toNatWk ρ)) (i : Fin R.length)
+  : R[i] ≤ S[ρ i] := by
+  have hρ := hρ i (Nat.lt_of_lt_of_le i.prop (by simp));
+  rw [List.getElem_append _ (by simp), Fin.toNatWk_coe] at hρ
+  have hρ := hρ.getElem
+  rw [List.getElem_append _ (by simp)] at hρ
+  simp [hρ]
+
+theorem Ctx.Wkn.toFinWk_id  {L L' R S : LCtx α} {ρ : Fin R.length → Fin S.length}
+  (hρ : (R ++ L).Wkn (S ++ L') (Fin.toNatWk ρ)) (i : Fin R.length)
+  (h : Γ.Wkn Δ _root_.id)
+  : Wkn (⟨R[i], e⟩::Γ) (⟨S[ρ i], e⟩::Δ) _root_.id := by
+  simp only [Fin.getElem_fin, lift_id_iff, ge_iff_le, Prod.mk_le_mk, le_refl, and_true, h]
+  exact hρ.toFinWk_append i
 
 def Terminator.WfD.vwk {Γ Δ : Ctx α ε} {ρ} {t : Terminator φ} (h : Γ.Wkn Δ ρ)
   : WfD Δ t L → WfD Γ (t.vwk ρ) L
