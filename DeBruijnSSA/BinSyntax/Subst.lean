@@ -17,10 +17,13 @@ def Term.Subst.Wf (Γ Δ : Ctx α ε) (σ : Subst φ) : Prop
 
 def Term.Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ Δ : Ctx α ε) : Type _ := {σ : Subst φ | σ.Wf Γ Δ}
 
-instance Term.Subst.instCoeOut {Γ Δ : Ctx α ε} : CoeOut (Term.Subst.InS φ Γ Δ) (Subst φ)
+instance Term.Subst.InS.instCoeOut {Γ Δ : Ctx α ε} : CoeOut (Term.Subst.InS φ Γ Δ) (Subst φ)
   := ⟨λr => r.1⟩
 
-instance Term.Subst.instSetoid {Γ Δ : Ctx α ε} : Setoid (Term.Subst.InS φ Γ Δ) where
+theorem Term.Subst.InS.eq_of_coe_eq {σ τ : Term.Subst.InS φ Γ Δ} (h : (σ : Subst φ) = τ) : σ = τ
+  := by cases σ; cases τ; cases h; rfl
+
+instance Term.Subst.InS.instSetoid {Γ Δ : Ctx α ε} : Setoid (Term.Subst.InS φ Γ Δ) where
   r σ τ := ∀i, i < Δ.length → σ.val i = τ.val i
   iseqv := {
     refl := (λ_ _ _ => rfl)
@@ -176,6 +179,27 @@ def Term.Subst.WfD.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.S
 theorem Term.Subst.Wf.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.Subst φ}
   (hσ : σ.Wf Γ Δ) (hτ : τ.Wf Δ Ξ) : (σ.comp τ).Wf Γ Ξ
   := λi => (hτ i).subst hσ
+
+def Term.Subst.InS.comp {Γ Δ Ξ : Ctx α ε} (σ : Term.Subst.InS φ Γ Δ) (τ : Term.Subst.InS φ Δ Ξ)
+  : Term.Subst.InS φ Γ Ξ
+  := ⟨Subst.comp σ τ, σ.prop.comp τ.prop⟩
+
+@[simp]
+theorem Term.Subst.InS.coe_comp {Γ Δ Ξ : Ctx α ε}
+  {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
+  : (σ.comp τ : Subst φ) = Subst.comp σ τ
+  := rfl
+
+theorem Term.InS.subst_subst {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
+  (a : InS φ Ξ V) : (a.subst τ).subst σ = a.subst (σ.comp τ)
+  := by ext; simp [Term.subst_subst]
+
+-- TODO: Term.Subst.InS.comp_id, id_comp ==> this is a category!
+
+theorem Term.Subst.InS.comp_assoc {Γ Δ Ξ Ω : Ctx α ε}
+  {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ} {υ : Term.Subst.InS φ Ξ Ω}
+  : (σ.comp τ).comp υ = σ.comp (τ.comp υ)
+  := by apply eq_of_coe_eq; simp [Subst.comp_assoc]
 
 def Body.WfD.subst {Γ Δ : Ctx α ε} {σ} {b : Body φ} (hσ : σ.WfD Γ Δ)
   : b.WfD Δ V → (b.subst σ).WfD Γ V
@@ -345,10 +369,42 @@ variable
 def Region.Subst.WfD (Γ : Ctx α ε) (L K : LCtx α) (σ : Region.Subst φ) : Type _
   := ∀i : Fin L.length, (σ i).WfD (⟨L.get i, ⊥⟩::Γ) K
 
+def Region.Subst.Wf (Γ : Ctx α ε) (L K : LCtx α) (σ : Region.Subst φ) : Prop
+  := ∀i : Fin L.length, (σ i).Wf (⟨L.get i, ⊥⟩::Γ) K
+
+def Region.Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L K : LCtx α) : Type _
+  := {σ : Region.Subst φ | σ.Wf Γ L K}
+
+def Region.Subst.InS.get (r : Region.Subst.InS φ Γ L K) (i : Fin L.length)
+  : Region.InS φ (⟨L.get i, ⊥⟩::Γ) K
+  := ⟨r.1 i, r.2 i⟩
+
+instance Region.Subst.InS.instCoeOut {Γ : Ctx α ε} {L K : LCtx α}
+  : CoeOut (Region.Subst.InS φ Γ L K) (Region.Subst φ)
+  := ⟨λr => r.1⟩
+
+theorem Region.Subst.Wf.nonempty (hσ : σ.Wf Γ L K) : Nonempty (σ.WfD Γ L K)
+  := ⟨λi => Classical.choice (hσ i).nonempty⟩
+
+theorem Region.Subst.WfD.toWf (hσ : σ.WfD Γ L K) : σ.Wf Γ L K
+  := λi => (hσ i).toWf
+
+theorem Region.Subst.Wf.nonempty_iff : σ.Wf Γ L K ↔ Nonempty (σ.WfD Γ L K)
+  := ⟨Region.Subst.Wf.nonempty, λ⟨h⟩ => h.toWf⟩
+
 def Region.Subst.WfD.lift (h : A ≤ A') (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A'::K)
   := λi => i.cases
     (Region.WfD.br ⟨by simp, h⟩ (Term.WfD.var (Ctx.Var.head (le_refl _) _))) -- TODO: factor
     (λi => (hσ i).lwk (LCtx.Wkn.id _).step)
+
+theorem Region.Subst.Wf.lift (h : A ≤ A') (hσ : σ.Wf Γ L K) : σ.lift.Wf Γ (A::L) (A'::K)
+  := λi => i.cases
+    (Region.Wf.br ⟨by simp, h⟩ (Term.Wf.var (Ctx.Var.head (le_refl _) _))) -- TODO: factor
+    (λi => (hσ i).lwk (LCtx.Wkn.id _).step)
+
+def Region.Subst.InS.lift (h : A ≤ A') (σ : Region.Subst.InS φ Γ L K)
+  : Region.Subst.InS φ Γ (A::L) (A'::K)
+  := ⟨Subst.lift σ, σ.prop.lift h⟩
 
 def Region.Subst.WfD.slift (A) (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A::K)
   := hσ.lift (le_refl A)
@@ -372,6 +428,9 @@ def Region.Subst.WfD.liftn_append_cons' (V : Ty α) {J : LCtx α} (hn : n = J.le
   := hn ▸ hσ.liftn_append_cons V J
 
 def Region.Subst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
+  := λi => (hσ i).vwk (Ctx.Wkn.id.step.slift)
+
+theorem Region.Subst.Wf.vlift (V) (hσ : σ.Wf Γ L K) : σ.vlift.Wf (V::Γ) L K
   := λi => (hσ i).vwk (Ctx.Wkn.id.step.slift)
 
 def Region.Subst.WfD.vlift₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : σ.vlift.vlift.WfD (V₁::V₂::Γ) L K
@@ -417,8 +476,19 @@ def Region.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.WfD Γ
     (hr.lsubst (hσ.liftn_append' hR.symm))
     (λi => (hG i).lsubst ((hσ.liftn_append' hR.symm).vlift _))
 
+theorem Region.Wf.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.Wf Γ L K) (h : r.Wf Γ L)
+  : (r.lsubst σ).Wf Γ K
+  := let ⟨d⟩ := h.nonempty; let ⟨hσ⟩ := hσ.nonempty; (d.lsubst hσ).toWf
+
+def Region.InS.lsubst {Γ : Ctx α ε} (σ : Region.Subst.InS φ Γ L K) (r : InS φ Γ L) : InS φ Γ K
+  := ⟨(r : Region φ).lsubst σ, r.prop.lsubst σ.prop⟩
+
 def Region.Subst.WfD.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
   (hσ : σ.WfD Γ K J) (hτ : τ.WfD Γ L K) : (σ.comp τ).WfD Γ L J
+  := λi => (hτ i).lsubst (hσ.vlift _)
+
+theorem Region.Subst.Wf.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
+  (hσ : σ.Wf Γ K J) (hτ : τ.Wf Γ L K) : (σ.comp τ).Wf Γ L J
   := λi => (hτ i).lsubst (hσ.vlift _)
 
 end RegionSubst

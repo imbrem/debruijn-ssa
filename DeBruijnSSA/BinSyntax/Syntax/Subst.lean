@@ -200,6 +200,9 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ)
 theorem subst_comp (σ τ : Subst φ) (t : Term φ) : t.subst (σ.comp τ) = (t.subst τ).subst σ
   := by induction t <;> simp only [subst, Subst.liftn_comp, Subst.comp, *]
 
+theorem subst_subst (σ τ : Subst φ) (t : Term φ)
+  : (t.subst τ).subst σ = t.subst (σ.comp τ) := by rw [subst_comp]
+
 @[simp]
 theorem Subst.comp_id (σ : Subst φ) : σ.comp Subst.id = σ := by funext n; rfl
 

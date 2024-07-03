@@ -120,6 +120,8 @@ theorem Ctx.Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   length := by simp
   getElem := h
 
+theorem Ctx.Var.refl {Γ : Ctx α ε} {n} (h : n < Γ.length) : Var Γ n Γ[n] := ⟨h, le_refl _⟩
+
 @[simp]
 theorem Ctx.Var.head_iff {V V' : Ty α × ε} {Γ : Ctx α ε} : Var (V::Γ) 0 V' ↔ V ≤ V'
   := ⟨λh => h.getElem, λh => Ctx.Var.head h Γ⟩
@@ -266,6 +268,10 @@ def Term.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (V : Ty α × ε) 
 
 instance Term.inSCoe {Γ : Ctx α ε} {V} : CoeOut (Term.InS φ Γ V) (Term φ)
   := ⟨λt => t.val⟩
+
+@[ext]
+theorem Term.InS.ext {Γ : Ctx α ε} {V} {a b : Term.InS φ Γ V} (h : a.val = b.val) : a = b := by
+  cases a; cases b; cases h; rfl
 
 def Term.InS.var {Γ : Ctx α ε} {V} (n) (h : Γ.Var n V) : Term.InS φ Γ V
   := ⟨Term.var n, Wf.var h⟩
@@ -1073,6 +1079,15 @@ theorem Ctx.Wkn.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤
   : Wkn (V₁::V₂::Γ) (V₁'::V₂'::Δ) (Nat.liftnWk 2 ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn₂ hV₁ hV₂)
 
+def Ctx.InS.liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (ρ : Ctx.InS Γ Δ)
+  : Ctx.InS (V₁::V₂::Γ) (V₁'::V₂'::Δ)
+  := ⟨Nat.liftnWk 2 ρ, ρ.prop.liftn₂ hV₁ hV₂⟩
+
+theorem Ctx.InS.lift_lift
+  {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (ρ : Ctx.InS Γ Δ)
+  : (ρ.lift hV₂).lift hV₁ = ρ.liftn₂ hV₁ hV₂
+  := by cases ρ; simp [lift, liftn₂, Nat.liftnWk_two]
+
 theorem Ctx.Wkn.sliftn₂ {left right : Ty α × ε} (h : Γ.Wkn Δ ρ)
   : Wkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
   := h.liftn₂ (le_refl _) (le_refl _)
@@ -1089,6 +1104,10 @@ theorem Ctx.Wkn.sliftn_id₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ _root_.id)
 theorem Ctx.Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
   := (Wkn_iff _ _ _).mpr (((Wkn_iff _ _ _).mp h).liftn_append Ξ)
+
+def Ctx.InS.liftn_append (Ξ) (ρ : Ctx.InS Γ Δ)
+  : Ctx.InS (Ξ ++ Γ) (Ξ ++ Δ)
+  := ⟨Nat.liftnWk Ξ.length ρ, ρ.prop.liftn_append Ξ⟩
 
 theorem Ctx.Wkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
@@ -1134,6 +1153,15 @@ def Ctx.InS.comp {Γ Δ Ξ : Ctx α ε} (ρ : Ctx.InS Γ Δ) (σ : Ctx.InS Δ Ξ
 theorem Ctx.InS.coe_comp {Γ Δ Ξ : Ctx α ε} (ρ : Ctx.InS Γ Δ) (σ : Ctx.InS Δ Ξ)
   : (ρ.comp σ : ℕ → ℕ) = (ρ : ℕ → ℕ) ∘ (σ : ℕ → ℕ)
   := rfl
+
+-- TODO: comp is compatible with setoid operation
+
+theorem Ctx.Wkn.drop {ρ : ℕ → ℕ} : Γ.Wkn [] ρ
+  := λi hi => by cases hi
+
+def Ctx.InS.drop : Ctx.InS Γ [] := ⟨_root_.id, Ctx.Wkn.drop⟩
+
+-- TODO: all drops are equivalent by setoid...
 
 def Ctx.EWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
   := List.NEWkn Γ Δ ρ

@@ -1,136 +1,136 @@
--- import DeBruijnSSA.BinSyntax.Syntax.Subst
--- import DeBruijnSSA.BinSyntax.Syntax.Rewrite
+import DeBruijnSSA.BinSyntax.Syntax.Subst
+import DeBruijnSSA.BinSyntax.Syntax.Rewrite
 
--- namespace BinSyntax
+namespace BinSyntax
 
--- namespace Region
+namespace Region
 
--- variable {φ : Type u} {ε : Type v} [Φ: EffectSet φ ε] [SemilatticeSup ε] [OrderBot ε]
+variable {φ : Type u} {ε : Type v} [Φ: EffectSet φ ε] [SemilatticeSup ε] [OrderBot ε]
 
--- def lsubst0 (r : Region φ) : Subst φ
---   | 0 => r
---   | ℓ + 1 => br ℓ (Term.var 0)
+def lsubst0 (r : Region φ) : Subst φ
+  | 0 => r
+  | ℓ + 1 => br ℓ (Term.var 0)
 
--- def alpha (ℓ : ℕ) (r : Region φ) : Subst φ
---   := Function.update Subst.id ℓ r
+def alpha (ℓ : ℕ) (r : Region φ) : Subst φ
+  := Function.update Subst.id ℓ r
 
--- def ret (e : Term φ) := br 0 e
+def ret (e : Term φ) := br 0 e
 
--- def nil : Region φ := ret (Term.var 0)
+def nil : Region φ := ret (Term.var 0)
 
--- @[simp]
--- theorem nil_vwk1 : nil.vwk1 = @nil φ := rfl
+@[simp]
+theorem nil_vwk1 : nil.vwk1 = @nil φ := rfl
 
--- @[simp]
--- theorem alpha0_nil : alpha 0 nil = @Subst.id φ := by
---   rw [alpha, Function.update_eq_self_iff]
---   rfl
+@[simp]
+theorem alpha0_nil : alpha 0 nil = @Subst.id φ := by
+  rw [alpha, Function.update_eq_self_iff]
+  rfl
 
--- theorem vlift_alpha (n : ℕ) (r : Region φ) : (alpha n r).vlift = alpha n r.vwk1 := by
---   simp only [Subst.vlift, alpha, Function.comp_update]
---   rfl
+theorem vlift_alpha (n : ℕ) (r : Region φ) : (alpha n r).vlift = alpha n r.vwk1 := by
+  simp only [Subst.vlift, alpha, Function.comp_update]
+  rfl
 
--- theorem vliftn_alpha (n m : ℕ) (r : Region φ) : (alpha n r).vliftn m = alpha n (r.vwk (Nat.liftWk (· + m))) := by
---   simp only [Subst.vliftn, alpha, Function.comp_update]
---   rfl
+theorem vliftn_alpha (n m : ℕ) (r : Region φ) : (alpha n r).vliftn m = alpha n (r.vwk (Nat.liftWk (· + m))) := by
+  simp only [Subst.vliftn, alpha, Function.comp_update]
+  rfl
 
--- theorem lift_alpha (n) (r : Region φ) : (alpha n r).lift = alpha (n + 1) (r.lwk Nat.succ) := by
---   funext i; cases i; rfl;
---   simp only [Subst.lift, alpha, Function.update, eq_rec_constant, Subst.id, dite_eq_ite,
---     add_left_inj]
---   split <;> rfl
+theorem lift_alpha (n) (r : Region φ) : (alpha n r).lift = alpha (n + 1) (r.lwk Nat.succ) := by
+  funext i; cases i; rfl;
+  simp only [Subst.lift, alpha, Function.update, eq_rec_constant, Subst.id, dite_eq_ite,
+    add_left_inj]
+  split <;> rfl
 
--- theorem liftn_alpha (n m) (r : Region φ) : (alpha n r).liftn m = alpha (n + m) (r.lwk (· + m)) := by
---   rw [Subst.liftn_eq_iterate_lift]
---   induction m generalizing n r with
---   | zero => simp
---   | succ m I =>
---     simp only [Function.iterate_succ, Function.comp_apply, lift_alpha, I, lwk_lwk]
---     apply congrArg₂
---     simp_arith
---     apply congrFun
---     apply congrArg
---     funext i
---     simp_arith
+theorem liftn_alpha (n m) (r : Region φ) : (alpha n r).liftn m = alpha (n + m) (r.lwk (· + m)) := by
+  rw [Subst.liftn_eq_iterate_lift]
+  induction m generalizing n r with
+  | zero => simp
+  | succ m I =>
+    simp only [Function.iterate_succ, Function.comp_apply, lift_alpha, I, lwk_lwk]
+    apply congrArg₂
+    simp_arith
+    apply congrFun
+    apply congrArg
+    funext i
+    simp_arith
 
--- theorem vwk_lift_alpha (n : ℕ) (r : Region φ)
---   : vwk (Nat.liftWk ρ) ∘ (alpha n r) = alpha n (r.vwk (Nat.liftWk ρ)) := by
---   simp [alpha, Function.comp_update]
+theorem vwk_lift_alpha (n : ℕ) (r : Region φ)
+  : vwk (Nat.liftWk ρ) ∘ (alpha n r) = alpha n (r.vwk (Nat.liftWk ρ)) := by
+  simp [alpha, Function.comp_update]
 
--- def append (r r' : Region φ) : Region φ := r.lsubst (r'.vwk1.alpha 0)
+def append (r r' : Region φ) : Region φ := r.lsubst (r'.vwk1.alpha 0)
 
--- instance : Append (Region φ) := ⟨Region.append⟩
+instance : Append (Region φ) := ⟨Region.append⟩
 
--- theorem append_def (r r' : Region φ) : r ++ r' = r.lsubst (r'.vwk1.alpha 0) := rfl
+theorem append_def (r r' : Region φ) : r ++ r' = r.lsubst (r'.vwk1.alpha 0) := rfl
 
--- @[simp]
--- theorem append_nil (r : Region φ) : r ++ nil = r := by simp [append_def]
+@[simp]
+theorem append_nil (r : Region φ) : r ++ nil = r := by simp [append_def]
 
--- @[simp]
--- theorem nil_append (r : Region φ) : nil ++ r = r := by
---   simp only [append_def, lsubst, Subst.vlift, vwk1, alpha, Function.comp_apply, Function.update_same]
---   rw [<-vsubst_fromWk_apply, <-vsubst_comp_apply, <-vsubst_id r]
---   congr <;> simp
+@[simp]
+theorem nil_append (r : Region φ) : nil ++ r = r := by
+  simp only [append_def, lsubst, Subst.vlift, vwk1, alpha, Function.comp_apply, Function.update_same]
+  rw [<-vsubst_fromWk_apply, <-vsubst_comp_apply, <-vsubst_id r]
+  congr <;> simp
 
--- theorem lsubst_alpha_let1 (k) (e : Term φ) (r r' : Region φ)
---   : (r.let1 e).lsubst (r'.alpha k) = (r.lsubst (r'.vwk1.alpha k)).let1 e
---   := by simp [vlift_alpha]
+theorem lsubst_alpha_let1 (k) (e : Term φ) (r r' : Region φ)
+  : (r.let1 e).lsubst (r'.alpha k) = (r.lsubst (r'.vwk1.alpha k)).let1 e
+  := by simp [vlift_alpha]
 
--- theorem let1_append (e : Term φ) (r r' : Region φ) : r.let1 e ++ r' = (r ++ r'.vwk1).let1 e
---   := lsubst_alpha_let1 0 e _ _
+theorem let1_append (e : Term φ) (r r' : Region φ) : r.let1 e ++ r' = (r ++ r'.vwk1).let1 e
+  := lsubst_alpha_let1 0 e _ _
 
--- theorem lsubst_alpha_let2 (k) (e : Term φ) (r r' : Region φ)
---   : (r.let2 e).lsubst (r'.alpha k) = (r.lsubst ((r'.vwk (Nat.liftWk (· + 2))).alpha k)).let2 e
---   := by simp only [append_def, lsubst, vlift_alpha, vliftn_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
+theorem lsubst_alpha_let2 (k) (e : Term φ) (r r' : Region φ)
+  : (r.let2 e).lsubst (r'.alpha k) = (r.lsubst ((r'.vwk (Nat.liftWk (· + 2))).alpha k)).let2 e
+  := by simp only [append_def, lsubst, vlift_alpha, vliftn_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
 
--- theorem let2_append (e : Term φ) (r r' : Region φ) : r.let2 e ++ r' = (r ++ (r'.vwk (Nat.liftWk (· + 2)))).let2 e
---   := by
---   simp only [append_def, lsubst, vlift_alpha, vliftn_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
---   rfl
+theorem let2_append (e : Term φ) (r r' : Region φ) : r.let2 e ++ r' = (r ++ (r'.vwk (Nat.liftWk (· + 2)))).let2 e
+  := by
+  simp only [append_def, lsubst, vlift_alpha, vliftn_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
+  rfl
 
--- theorem lsubst_alpha_case (k) (e : Term φ) (s t r : Region φ)
---   : (case e s t).lsubst (r.alpha k) = (case e (s.lsubst (r.vwk1.alpha k)) (t.lsubst (r.vwk1.alpha k)))
---   := by
---   simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
+theorem lsubst_alpha_case (k) (e : Term φ) (s t r : Region φ)
+  : (case e s t).lsubst (r.alpha k) = (case e (s.lsubst (r.vwk1.alpha k)) (t.lsubst (r.vwk1.alpha k)))
+  := by
+  simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
 
--- theorem case_append (e : Term φ) (s t r : Region φ) : case e s t ++ r = case e (s ++ r.vwk1) (t ++ r.vwk1)
---   := by simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
+theorem case_append (e : Term φ) (s t r : Region φ) : case e s t ++ r = case e (s ++ r.vwk1) (t ++ r.vwk1)
+  := by simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
 
--- theorem lsubst_alpha_cfg (β n G k) (r : Region φ)
---   : (cfg β n G).lsubst (r.alpha k) = cfg
---     (β.lsubst ((r.lwk (· + n)).alpha (k + n))) n
---     (lsubst ((r.lwk (· + n)).vwk1.alpha (k + n)) ∘ G)
---   := by
---   simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp, liftn_alpha]
---   rfl
+theorem lsubst_alpha_cfg (β n G k) (r : Region φ)
+  : (cfg β n G).lsubst (r.alpha k) = cfg
+    (β.lsubst ((r.lwk (· + n)).alpha (k + n))) n
+    (lsubst ((r.lwk (· + n)).vwk1.alpha (k + n)) ∘ G)
+  := by
+  simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp, liftn_alpha]
+  rfl
 
--- theorem vwk_liftWk_lsubst_alpha
---   : (lsubst (alpha n r₁) r₀).vwk (Nat.liftWk ρ)
---   = lsubst (alpha n (r₁.vwk (Nat.liftnWk 2 ρ))) (r₀.vwk (Nat.liftWk ρ))
---   := by simp [vwk_lsubst, vwk_lift_alpha, Nat.liftnWk_eq_iterate_liftWk]
+theorem vwk_liftWk_lsubst_alpha
+  : (lsubst (alpha n r₁) r₀).vwk (Nat.liftWk ρ)
+  = lsubst (alpha n (r₁.vwk (Nat.liftnWk 2 ρ))) (r₀.vwk (Nat.liftWk ρ))
+  := by simp [vwk_lsubst, vwk_lift_alpha, Nat.liftnWk_eq_iterate_liftWk]
 
--- theorem vwk1_lsubst_alpha {r₀ r₁ : Region φ}
---   : (lsubst (alpha n r₁) r₀).vwk1 = lsubst (alpha n (r₁.vwk (Nat.liftnWk 2 Nat.succ))) r₀.vwk1 := by
---   rw [vwk1, vwk_lsubst, vwk_lift_alpha, Nat.liftnWk_eq_iterate_liftWk]
---   rfl
+theorem vwk1_lsubst_alpha {r₀ r₁ : Region φ}
+  : (lsubst (alpha n r₁) r₀).vwk1 = lsubst (alpha n (r₁.vwk (Nat.liftnWk 2 Nat.succ))) r₀.vwk1 := by
+  rw [vwk1, vwk_lsubst, vwk_lift_alpha, Nat.liftnWk_eq_iterate_liftWk]
+  rfl
 
--- theorem vwk_liftWk_lsubst_alpha_vwk1 {r₀ r₁ : Region φ}
---   : (lsubst (alpha n r₁.vwk1) r₀).vwk (Nat.liftWk ρ)
---   = lsubst (alpha n ((r₁.vwk (Nat.liftWk ρ)).vwk1)) (r₀.vwk (Nat.liftWk ρ)) := by
---   rw [vwk_liftWk_lsubst_alpha]
---   congr
---   apply congrArg
---   simp [vwk1, vwk_vwk, Nat.liftnWk_eq_iterate_liftWk, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
+theorem vwk_liftWk_lsubst_alpha_vwk1 {r₀ r₁ : Region φ}
+  : (lsubst (alpha n r₁.vwk1) r₀).vwk (Nat.liftWk ρ)
+  = lsubst (alpha n ((r₁.vwk (Nat.liftWk ρ)).vwk1)) (r₀.vwk (Nat.liftWk ρ)) := by
+  rw [vwk_liftWk_lsubst_alpha]
+  congr
+  apply congrArg
+  simp [vwk1, vwk_vwk, Nat.liftnWk_eq_iterate_liftWk, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
 
--- theorem vwk1_lsubst_alpha_vwk1 {r₀ r₁ : Region φ}
---   : (lsubst (alpha n r₁.vwk1) r₀).vwk1 = lsubst (alpha n (r₁.vwk1.vwk1)) r₀.vwk1 := by
---   rw [vwk1_lsubst_alpha]
---   simp only [vwk1, vwk_vwk]
---   apply congrFun
---   apply congrArg
---   apply congrArg
---   congr
---   funext k; cases k <;> rfl
+theorem vwk1_lsubst_alpha_vwk1 {r₀ r₁ : Region φ}
+  : (lsubst (alpha n r₁.vwk1) r₀).vwk1 = lsubst (alpha n (r₁.vwk1.vwk1)) r₀.vwk1 := by
+  rw [vwk1_lsubst_alpha]
+  simp only [vwk1, vwk_vwk]
+  apply congrFun
+  apply congrArg
+  apply congrArg
+  congr
+  funext k; cases k <;> rfl
 
 -- def RewriteD.lsubst_alpha {r₀ r₀'}
 --   (p : RewriteD r₀ r₀') (n) (r₁ : Region φ)
@@ -359,34 +359,34 @@
 --   : RWD StepD Γ (r₀ ++ r₁) (r₀' ++ r₁)
 --   := p.lsubst_alpha 0 _
 
--- @[simp]
--- theorem Subst.vwk_liftWk_comp_id : vwk (Nat.liftWk ρ) ∘ id = @id φ := rfl
+@[simp]
+theorem Subst.vwk_liftWk_comp_id : vwk (Nat.liftWk ρ) ∘ id = @id φ := rfl
 
--- @[simp]
--- theorem Subst.vwk_liftnWk_comp_id (n : ℕ) : vwk (Nat.liftnWk (n + 1) ρ) ∘ id = @id φ := by
---   rw [Nat.liftnWk_succ']
---   rfl
+@[simp]
+theorem Subst.vwk_liftnWk_comp_id (n : ℕ) : vwk (Nat.liftnWk (n + 1) ρ) ∘ id = @id φ := by
+  rw [Nat.liftnWk_succ']
+  rfl
 
--- theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r'')
---   := by
---   simp only [append_def, lsubst_lsubst]
---   congr
---   funext ℓ
---   simp only [
---     Subst.comp, Subst.vlift, vwk1, alpha, Function.comp_apply, Function.comp_update,
---     Subst.vwk_liftWk_comp_id, vwk_vwk
---   ]
---   cases ℓ with
---   | zero =>
---     simp only [
---       Function.update_same, vwk_lsubst, Function.comp_update, Subst.vwk_liftWk_comp_id, vwk_vwk]
---     apply congrFun
---     apply congrArg
---     apply congrArg
---     congr
---     funext n
---     cases n <;> rfl
---   | succ => rfl
+theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r'')
+  := by
+  simp only [append_def, lsubst_lsubst]
+  congr
+  funext ℓ
+  simp only [
+    Subst.comp, Subst.vlift, vwk1, alpha, Function.comp_apply, Function.comp_update,
+    Subst.vwk_liftWk_comp_id, vwk_vwk
+  ]
+  cases ℓ with
+  | zero =>
+    simp only [
+      Function.update_same, vwk_lsubst, Function.comp_update, Subst.vwk_liftWk_comp_id, vwk_vwk]
+    apply congrFun
+    apply congrArg
+    apply congrArg
+    congr
+    funext n
+    cases n <;> rfl
+  | succ => rfl
 
 -- def lappend (r r' : Region φ) : Region φ := r ++ r'.let1V0
 
