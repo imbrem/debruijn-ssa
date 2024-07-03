@@ -30,6 +30,31 @@ def Eqv.lsubst {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K) (r : 
     (λσ r => (r.lsubst σ).q)
     sorry
 
+def Subst.Eqv.vlift {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K)
+  : Subst.Eqv φ (head::Γ) L K
+  := Quotient.liftOn σ
+    (λσ => ⟦σ.vlift⟧)
+    sorry
+
+@[simp]
+theorem Subst.Eqv.vlift_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
+  : vlift (head := head) ⟦σ⟧ = ⟦σ.vlift⟧ := rfl
+
+def Subst.Eqv.vliftn₂ {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K)
+  : Subst.Eqv φ (left::right::Γ) L K
+  := Quotient.liftOn σ
+    (λσ => ⟦σ.vliftn₂⟧)
+    sorry
+
+@[simp]
+theorem Subst.Eqv.vliftn₂_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
+  : vliftn₂ (left := left) (right := right) ⟦σ⟧ = ⟦σ.vliftn₂⟧ := rfl
+
+theorem Subst.Eqv.vliftn₂_eq_vlift_vlift {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K)
+  : σ.vliftn₂ (left := left) (right := right) = σ.vlift.vlift := by
+  induction σ using Quotient.inductionOn;
+  simp [Subst.InS.vliftn₂_eq_vlift_vlift]
+
 @[simp]
 theorem InS.lsubst_q {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K} {r : InS φ Γ L}
    : (r.q).lsubst ⟦σ⟧ = (r.lsubst σ).q := rfl
@@ -37,5 +62,26 @@ theorem InS.lsubst_q {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
 @[simp]
 theorem Eqv.lsubst_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K} {r : InS φ Γ L}
    : lsubst ⟦σ⟧ ⟦r⟧ = ⟦r.lsubst σ⟧ := rfl
+
+@[simp]
+theorem Eqv.lsubst_let1 {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  {a : Term.InS φ Γ ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L}
+  : (let1 a r).lsubst σ = let1 a (r.lsubst σ.vlift) := by
+  induction r using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.lsubst_let2 {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  {a : Term.InS φ Γ ⟨A.prod B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  : (let2 a r).lsubst σ = let2 a (r.lsubst σ.vliftn₂) := by
+  induction r using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.lsubst_case {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  {a : Term.InS φ Γ ⟨A.coprod B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L} {s : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  : (case a r s).lsubst σ = case a (r.lsubst σ.vlift) (s.lsubst σ.vlift) := by
+  induction r using Quotient.inductionOn; induction s using Quotient.inductionOn;
+  induction σ using Quotient.inductionOn; rfl
+
+-- TODO: lsubst_cfg
 
 end Region

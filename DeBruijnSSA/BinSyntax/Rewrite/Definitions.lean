@@ -908,6 +908,33 @@ theorem InS.vsubst_q {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.InS φ �
 theorem Eqv.vsubst_quot {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.InS φ Γ Δ} {r : InS φ Δ L}
    : Eqv.vsubst σ ⟦r⟧ = ⟦r.vsubst σ⟧ := rfl
 
+theorem Eqv.vsubst_vsubst {Γ Δ Ξ : Ctx α ε} {L : LCtx α} {r : Eqv φ Ξ L}
+  {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
+  : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ) := by
+  induction r using Quotient.inductionOn;
+  simp [InS.vsubst_vsubst]
+
+@[simp]
+theorem Eqv.vsubst_let1 {Γ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {a : Term.InS φ Δ ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Δ) L}
+  : Eqv.vsubst σ (Eqv.let1 a r) = Eqv.let1 (a.subst σ) (Eqv.vsubst (σ.lift (le_refl _)) r) := by
+  induction r using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.vsubst_let2 {Γ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {a : Term.InS φ Δ ⟨Ty.prod A B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ) L}
+  : Eqv.vsubst σ (Eqv.let2 a r)
+  = Eqv.let2 (a.subst σ) (Eqv.vsubst (σ.liftn₂ (le_refl _) (le_refl _)) r) := by
+  induction r using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.vsubst_case {Γ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {e : Term.InS φ Δ ⟨Ty.coprod A B, e⟩}
+  {r : Eqv φ (⟨A, ⊥⟩::Δ) L} {s : Eqv φ (⟨B, ⊥⟩::Δ) L}
+  : Eqv.vsubst σ (Eqv.case e r s)
+  = Eqv.case (e.subst σ) (Eqv.vsubst (σ.lift (le_refl _)) r) (Eqv.vsubst (σ.lift (le_refl _)) s)
+  := by induction r using Quotient.inductionOn; induction s using Quotient.inductionOn; rfl
+
 @[simp]
 theorem InS.lwk_id_q {Γ : Ctx α ε} {L K : LCtx α} {r : InS φ Γ L}
   (hρ : L.Wkn K id) : (r.q).lwk_id hρ = (r.lwk_id hρ).q := rfl
@@ -1451,7 +1478,22 @@ theorem Eqv.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
   : β.cfg [] (λi => i.elim0) = β
   := by induction β using Quotient.inductionOn with | h β => exact Eqv.sound $ β.cfg_zero
 
--- TODO: let2_eta
+theorem InS.let2_eta {Γ : Ctx α ε} {L : LCtx α}
+  (a : Term.InS φ Γ ⟨Ty.prod A B, ea⟩)
+  (r : InS φ (⟨A.prod B, ⊥⟩::Γ) L)
+    : (let2 a $
+        let1 ((Term.InS.var 1 ⟨by simp, le_refl _⟩).pair (Term.InS.var 0 (by simp))) r.vwk1.vwk1)
+    ≈ let1 a r
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+
+theorem Eqv.let2_eta {Γ : Ctx α ε} {L : LCtx α}
+  (a : Term.InS φ Γ ⟨Ty.prod A B, ea⟩)
+  (r : Eqv φ (⟨A.prod B, ⊥⟩::Γ) L)
+    : (let2 a $
+        let1 ((Term.InS.var 1 ⟨by simp, le_refl _⟩).pair (Term.InS.var 0 (by simp))) r.vwk1.vwk1)
+    = let1 a r
+  := by induction r using Quotient.inductionOn with | h r => exact Eqv.sound $ InS.let2_eta a r
 
 theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   (R S : LCtx α) (β : InS φ Γ (R ++ L))

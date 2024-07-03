@@ -120,6 +120,14 @@ theorem Term.Subst.Wf.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (
   : (σ.liftn 2).Wf (V₁::V₂::Γ) (V₁'::V₂'::Δ)
   := Subst.liftn_eq_iterate_lift 2 ▸ hσ.lift₂ h₁ h₂
 
+def Term.Subst.InS.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (σ : Subst.InS φ Γ Δ)
+  : Subst.InS φ (V₁::V₂::Γ) (V₁'::V₂'::Δ)
+  := ⟨Subst.liftn 2 σ, σ.prop.liftn₂ h₁ h₂⟩
+
+theorem Term.Subst.InS.lift_lift (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (σ : Subst.InS φ Γ Δ)
+  : (σ.lift h₂).lift h₁ = (σ.liftn₂ h₁ h₂)
+  := by simp [lift, liftn₂, Subst.liftn_succ]
+
 def Term.Subst.WfD.sliftn₂ {left right} (hσ : σ.WfD Γ Δ)
   : (σ.liftn 2).WfD (left::right::Γ) (left::right::Δ)
   := hσ.liftn₂ (le_refl _) (le_refl _)
@@ -146,12 +154,51 @@ def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst 
 theorem Term.Wf.subst {a : Term φ} (hσ : σ.Wf Γ Δ) (h : a.Wf Δ V) : (a.subst σ).Wf Γ V
   := let ⟨d⟩ := h.nonempty; let ⟨hσ⟩ := hσ.nonempty; (d.subst hσ).toWf
 
+
 def Term.InS.subst (σ : Subst.InS φ Γ Δ) (a : InS φ Δ V) : InS φ Γ V
   := ⟨(a : Term φ).subst σ, a.prop.subst σ.prop⟩
 
 @[simp]
 theorem Term.InS.coe_subst {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V}
   : (a.subst σ : Term φ) = (a : Term φ).subst σ
+  := rfl
+
+def Term.Subst.InS.get (n) (h : Δ.Var n V) (σ : Subst.InS φ Γ Δ) : Term.InS φ Γ V
+  := ⟨σ.val n, h.subst' σ.prop⟩
+
+@[simp]
+theorem Term.InS.subst_var (σ : Subst.InS φ Γ Δ) (h : Δ.Var n V) :
+  (var n h).subst σ = σ.get n h
+  := rfl
+
+@[simp]
+theorem Term.InS.subst_op (σ : Subst.InS φ Γ Δ) (df : Φ.EFn f A B e) (de : InS φ Δ ⟨A, e⟩) :
+  (op f df de).subst σ = op f df (de.subst σ)
+  := rfl
+
+@[simp]
+theorem Term.InS.subst_pair (σ : Subst.InS φ Γ Δ) (dl : InS φ Δ ⟨A, e⟩) (dr : InS φ Δ ⟨B, e⟩) :
+  (pair dl dr).subst σ = pair (dl.subst σ) (dr.subst σ)
+  := rfl
+
+@[simp]
+theorem Term.InS.subst_inl (σ : Subst.InS φ Γ Δ) (d : InS φ Δ ⟨A, e⟩) :
+  (inl (right := right) d).subst σ = inl (d.subst σ)
+  := rfl
+
+@[simp]
+theorem Term.InS.subst_inr (σ : Subst.InS φ Γ Δ) (d : InS φ Δ ⟨B, e⟩) :
+  (inr (left := left) d).subst σ = inr (d.subst σ)
+  := rfl
+
+@[simp]
+theorem Term.InS.subst_abort (σ : Subst.InS φ Γ Δ) (d : InS φ Δ ⟨Ty.empty, e⟩) :
+  (abort (tyOut := tyOut) d).subst σ = abort (tyOut := tyOut) (d.subst σ)
+  := rfl
+
+@[simp]
+theorem Term.InS.subst_unit (σ : Subst.InS φ Γ Δ) (e : ε) :
+  (unit e).subst σ = unit e
   := rfl
 
 theorem Term.InS.subst_equiv {σ τ : Subst.InS φ Γ Δ} (a : InS φ Δ V)
@@ -170,6 +217,18 @@ def Term.InS.subst0 (a : InS φ Γ V) : Subst.InS φ Γ (V::Γ)
 @[simp]
 theorem Term.InS.coe_subst0 {a : InS φ Γ V}
   : (a.subst0 : Subst φ) = (a : Term φ).subst0
+  := rfl
+
+@[simp]
+theorem Term.Subst.InS.get_0_subst0 (a : Term.InS φ Δ ty)
+  : a.subst0.get 0 (by simp) = a
+  := rfl
+
+@[simp]
+theorem Term.Subst.InS.get_succ_lift (n)
+  (h : Ctx.Var _ (n + 1) ty) (σ : Subst.InS φ Γ Δ)
+  (hv : lo ≤ hi)
+  : (σ.lift hv).get (n + 1) h = (σ.get n h.tail).wk ⟨Nat.succ, by simp⟩
   := rfl
 
 def Term.Subst.WfD.comp {Γ Δ Ξ : Ctx α ε} {σ : Term.Subst φ} {τ : Term.Subst φ}
@@ -248,6 +307,11 @@ def Region.InS.vsubst {Γ Δ : Ctx α ε} (σ : Term.Subst.InS φ Γ Δ) (r : In
 theorem Region.InS.coe_vsubst {Γ Δ : Ctx α ε} {σ : Term.Subst.InS φ Γ Δ} {r : InS φ Δ L}
   : (r.vsubst σ : Region φ) = (r : Region φ).vsubst σ
   := rfl
+
+theorem Region.InS.vsubst_vsubst {Γ Δ Ξ : Ctx α ε}
+  {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
+  (r : InS φ Ξ L) : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ)
+  := by ext; simp [Region.vsubst_vsubst]
 
 theorem Region.InS.vsubst_equiv {Γ Δ : Ctx α ε} {σ τ : Term.Subst.InS φ Γ Δ}
   (r : InS φ Δ L) (h : σ ≈ τ) : r.vsubst σ = r.vsubst τ
@@ -427,17 +491,30 @@ def Region.Subst.WfD.liftn_append_cons' (V : Ty α) {J : LCtx α} (hn : n = J.le
   : (σ.liftn n).WfD Γ (V::(J ++ L)) (V::(J ++ K))
   := hn ▸ hσ.liftn_append_cons V J
 
-def Region.Subst.WfD.vlift (V) (hσ : σ.WfD Γ L K) : σ.vlift.WfD (V::Γ) L K
+def Region.Subst.WfD.vlift (hσ : σ.WfD Γ L K) : σ.vlift.WfD (head::Γ) L K
   := λi => (hσ i).vwk (Ctx.Wkn.id.step.slift)
 
-theorem Region.Subst.Wf.vlift (V) (hσ : σ.Wf Γ L K) : σ.vlift.Wf (V::Γ) L K
+theorem Region.Subst.Wf.vlift (hσ : σ.Wf Γ L K) : σ.vlift.Wf (head::Γ) L K
   := λi => (hσ i).vwk (Ctx.Wkn.id.step.slift)
 
-def Region.Subst.WfD.vlift₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : σ.vlift.vlift.WfD (V₁::V₂::Γ) L K
-  := (hσ.vlift _).vlift _
+def Region.Subst.InS.vlift (σ : Region.Subst.InS φ Γ L K) : InS φ (head::Γ) L K
+  := ⟨Subst.vlift σ, σ.prop.vlift⟩
 
-def Region.Subst.WfD.vliftn₂ (V₁ V₂) (hσ : σ.WfD Γ L K) : (σ.vliftn 2).WfD (V₁::V₂::Γ) L K
-  := Region.Subst.vliftn_eq_iterate_vlift 2 ▸ hσ.vlift₂ _ _
+def Region.Subst.WfD.vlift₂ (hσ : σ.WfD Γ L K) : σ.vlift.vlift.WfD (left::right::Γ) L K
+  := hσ.vlift.vlift
+
+def Region.Subst.WfD.vliftn₂ (hσ : σ.WfD Γ L K) : (σ.vliftn 2).WfD (left::right::Γ) L K
+  := Region.Subst.vliftn_eq_iterate_vlift 2 ▸ hσ.vlift₂
+
+theorem Region.Subst.Wf.vliftn₂ (hσ : σ.Wf Γ L K) : (σ.vliftn 2).Wf (left::right::Γ) L K
+  := let ⟨d⟩ := hσ.nonempty; (d.vliftn₂).toWf
+
+def Region.Subst.InS.vliftn₂ (σ : Region.Subst.InS φ Γ L K) : InS φ (left::right::Γ) L K
+  := ⟨Subst.vliftn 2 σ, σ.prop.vliftn₂⟩
+
+theorem Region.Subst.InS.vliftn₂_eq_vlift_vlift (σ : Region.Subst.InS φ Γ L K)
+  : σ.vliftn₂ (left := left) (right := right) = σ.vlift.vlift
+  := by simp [vliftn₂, vlift, vliftn_succ]
 
 def Region.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
   : (σ.vliftn Ξ.length).WfD (Ξ ++ Γ) L K
@@ -469,12 +546,12 @@ def LCtx.Trg.rsubst0
 def Region.WfD.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.WfD Γ L K)
   : r.WfD Γ L → (r.lsubst σ).WfD Γ K
   | br hL ha => hL.rsubst0 hσ ha
-  | case he hs ht => case he (hs.lsubst (hσ.vlift _)) (ht.lsubst (hσ.vlift _))
-  | let1 da dt => let1 da (dt.lsubst (hσ.vlift _))
-  | let2 da dt => let2 da (dt.lsubst (hσ.vliftn₂ _ _))
+  | case he hs ht => case he (hs.lsubst hσ.vlift) (ht.lsubst hσ.vlift)
+  | let1 da dt => let1 da (dt.lsubst hσ.vlift)
+  | let2 da dt => let2 da (dt.lsubst hσ.vliftn₂)
   | cfg n R hR hr hG => cfg n R hR
     (hr.lsubst (hσ.liftn_append' hR.symm))
-    (λi => (hG i).lsubst ((hσ.liftn_append' hR.symm).vlift _))
+    (λi => (hG i).lsubst (hσ.liftn_append' hR.symm).vlift)
 
 theorem Region.Wf.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.Wf Γ L K) (h : r.Wf Γ L)
   : (r.lsubst σ).Wf Γ K
@@ -485,11 +562,11 @@ def Region.InS.lsubst {Γ : Ctx α ε} (σ : Region.Subst.InS φ Γ L K) (r : In
 
 def Region.Subst.WfD.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
   (hσ : σ.WfD Γ K J) (hτ : τ.WfD Γ L K) : (σ.comp τ).WfD Γ L J
-  := λi => (hτ i).lsubst (hσ.vlift _)
+  := λi => (hτ i).lsubst hσ.vlift
 
 theorem Region.Subst.Wf.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
   (hσ : σ.Wf Γ K J) (hτ : τ.Wf Γ L K) : (σ.comp τ).Wf Γ L J
-  := λi => (hτ i).lsubst (hσ.vlift _)
+  := λi => (hτ i).lsubst hσ.vlift
 
 end RegionSubst
 

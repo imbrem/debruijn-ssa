@@ -1149,6 +1149,18 @@ theorem Ctx.Wkn.comp {Γ Δ Ξ : Ctx α ε} {ρ σ}
 def Ctx.InS.comp {Γ Δ Ξ : Ctx α ε} (ρ : Ctx.InS Γ Δ) (σ : Ctx.InS Δ Ξ) : Ctx.InS Γ Ξ
   := ⟨(ρ : ℕ → ℕ) ∘ (σ : ℕ → ℕ), ρ.2.comp σ.2⟩
 
+theorem Ctx.InS.lift_comp_lift {Γ Δ Ξ : Ctx α ε} (ρ : Ctx.InS Γ Δ) (σ : Ctx.InS Δ Ξ)
+  {lo hi : Ty α × ε} (hρ : lo ≤ mid) (hσ : mid ≤ hi)
+  : (ρ.lift hρ).comp (σ.lift hσ) = (ρ.comp σ).lift (le_trans hρ hσ)
+  := by
+    cases ρ; cases σ
+    simp only [comp, lift, Nat.liftWk_comp]
+
+theorem Ctx.InS.liftn₂_comp_liftn₂ {Γ Δ Ξ : Ctx α ε} (ρ : Ctx.InS Γ Δ) (σ : Ctx.InS Δ Ξ)
+  (hρ : lo ≤ mid) (hσ : mid ≤ hi) (hρ' : lo' ≤ mid') (hσ' : mid' ≤ hi')
+  : (ρ.liftn₂ hρ hρ').comp (σ.liftn₂ hσ hσ') = (ρ.comp σ).liftn₂ (le_trans hρ hσ) (le_trans hρ' hσ')
+  := by simp [<-lift_lift, lift_comp_lift]
+
 @[simp]
 theorem Ctx.InS.coe_comp {Γ Δ Ξ : Ctx α ε} (ρ : Ctx.InS Γ Δ) (σ : Ctx.InS Δ Ξ)
   : (ρ.comp σ : ℕ → ℕ) = (ρ : ℕ → ℕ) ∘ (σ : ℕ → ℕ)
@@ -1410,6 +1422,43 @@ def Term.InS.wk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) (d : InS φ Δ ⟨A, e⟩) 
 theorem Term.InS.wk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} (d : InS φ Δ ⟨A, e⟩) (h : ρ ≈ ρ')
   : d.wk ρ = d.wk ρ'
   := sorry
+
+@[simp]
+theorem Term.InS.wk_var {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {n} (h : Δ.Var n A)
+  : (var (φ := φ) n h).wk ρ = var (ρ.val n) (h.wk ρ.prop)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_op {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  {df : Φ.EFn f A B e} {de : Term.InS φ Δ ⟨A, e⟩}
+  : (op f df de).wk ρ = op f df (de.wk ρ)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_pair {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  {dl : Term.InS φ Δ ⟨A, e⟩} {dr : Term.InS φ Δ ⟨B, e⟩}
+  : (pair dl dr).wk ρ = pair (dl.wk ρ) (dr.wk ρ)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_inl {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {dl : Term.InS φ Δ ⟨A, e⟩}
+  : (inl (right := right) dl).wk ρ = inl (dl.wk ρ)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_inr {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {dr : Term.InS φ Δ ⟨B, e⟩}
+  : (inr (left := left) dr).wk ρ = inr (dr.wk ρ)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_abort {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {da : Term.InS φ Δ ⟨Ty.empty, e⟩}
+  : (abort (tyOut := tyOut) da).wk ρ = abort (tyOut := tyOut) (da.wk ρ)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_unit {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {e}
+  : (unit (φ := φ) e).wk ρ = unit e
+  := rfl
 
 /-- Reverse-weaken a term derivation, given that it is inbounds -/
 def Term.WfD.wk_inv {a : Term φ}
