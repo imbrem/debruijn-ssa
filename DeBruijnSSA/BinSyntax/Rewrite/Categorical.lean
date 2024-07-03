@@ -207,12 +207,14 @@ theorem InS.seq_q {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : left.q ;; right.q = (left ++ right).q
   := rfl
 
+@[simp]
 theorem Eqv.seq_nil {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   : left ;; Eqv.nil = left := by
   induction left using Quotient.inductionOn;
   simp [nil]
 
+@[simp]
 theorem Eqv.nil_seq {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   : Eqv.nil ;; left = left := by
@@ -389,6 +391,244 @@ theorem Eqv.ltimes_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (r ;; s) ⋉ tyRight = (r ⋉ tyRight) ;; (s ⋉ tyRight) := by
   simp only [<-swap_rtimes_swap, rtimes_seq, seq_assoc]
   rw [<-seq_assoc swap swap, swap_swap, nil_seq]
+
+-- TODO: centrality lore...
+
+-- TODO: purity lore...
+
+def Eqv.runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨ty.prod Ty.unit, ⊥⟩::Γ) (ty::L)
+  := let2 (var 0 Ctx.Var.shead) (ret $ var 1 (by simp))
+
+def Eqv.runit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨ty, ⊥⟩::Γ) (ty.prod Ty.unit::L)
+  := ret $ (pair (var 0 Ctx.Var.shead) (unit _))
+
+theorem Eqv.runit_seq_runit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : runit (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit_inv = nil
+  := sorry
+
+theorem Eqv.runit_inv_seq_runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : runit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit = nil
+  := sorry
+
+-- TODO: naturality
+
+def Eqv.lunit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨Ty.unit.prod ty, ⊥⟩::Γ) (ty::L)
+  := let2 (var 0 Ctx.Var.shead) (ret $ var 0 (by simp))
+
+def Eqv.lunit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨ty, ⊥⟩::Γ) (Ty.unit.prod ty::L)
+  := ret $ (pair (unit _) (var 0 Ctx.Var.shead))
+
+theorem Eqv.lunit_seq_lunit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : lunit (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; lunit_inv = nil
+  := sorry
+
+theorem Eqv.lunit_inv_seq_lunit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : lunit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; lunit = nil
+  := sorry
+
+-- TODO: naturality
+
+def Eqv.assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨(A.prod B).prod C, ⊥⟩::Γ) (A.prod (B.prod C)::L)
+  := sorry
+
+def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨A.prod (B.prod C), ⊥⟩::Γ) ((A.prod B).prod C::L)
+  := sorry
+
+theorem Eqv.assoc_seq_assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; assoc_inv = nil
+  := sorry
+
+theorem Eqv.assoc_inv_seq_assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : assoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; assoc = nil
+  := sorry
+
+-- TODO: associator naturality
+
+-- TODO: hexagon, pentagon, triangle
+
+def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (C::L)
+  := case (var 0 Ctx.Var.shead) l.vwk1 r.vwk1
+
+theorem Eqv.coprod_seq {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) (s : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))
+  : (coprod l r) ;; s = coprod (l ;; s) (r ;; s)
+  := by simp [coprod, case_seq, vwk1_seq]
+
+def Eqv.join {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : Eqv φ (⟨A.coprod A, ⊥⟩::Γ) (A::L)
+  := coprod nil nil
+
+def Eqv.zero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A::L)
+  := ret $ (abort (var 0 Ctx.Var.shead) A)
+
+theorem Eqv.zero_eq {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (r s : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A::L))
+  : r = s
+  := by apply Eqv.initial; exact ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty⟩
+
+theorem Eqv.zero_seq {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  : Eqv.zero ;; r = Eqv.zero
+  := zero_eq _ _
+
+def Eqv.lzero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : Eqv φ (⟨Ty.empty.coprod A, ⊥⟩::Γ) (A::L)
+  := coprod zero nil
+
+def Eqv.rzero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : Eqv φ (⟨A.coprod Ty.empty, ⊥⟩::Γ) (A::L)
+  := coprod nil zero
+
+def Eqv.ret_inl {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨A, ⊥⟩::Γ) (A.coprod B::L)
+  := ret $ (inl (var 0 Ctx.Var.shead))
+
+def Eqv.ret_inr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨B, ⊥⟩::Γ) (A.coprod B::L)
+  := ret $ (inr (var 0 Ctx.Var.shead))
+
+def Eqv.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
+  : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ((C.coprod D)::L)
+  := coprod (l ;; ret_inl) (r ;; ret_inr)
+
+theorem Eqv.coprod_inl_inr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : coprod ret_inl ret_inr = Eqv.nil (φ := φ) (ty := A.coprod B) (rest := Γ) (targets := L) := by
+  -- TODO: case_eta
+  sorry
+
+theorem Eqv.sum_nil {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : sum (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) nil nil = nil := coprod_inl_inr
+
+theorem Eqv.ret_inl_seq_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : ret_inl ;; coprod l r = l := by
+  rw [ret_inl, coprod, ret_seq, vwk1, vwk_case, vsubst_case]
+  simp only [Set.mem_setOf_eq, wk_var, Nat.liftWk_zero, subst_var, Term.Subst.InS.get_0_subst0]
+  rw [case_inl, let1_beta, vwk1, vwk_vwk, vsubst_vsubst]
+  -- TODO: vwk_vsubst, lore...
+  sorry
+
+theorem Eqv.ret_inr_seq_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : ret_inr ;; coprod l r = r := by
+  rw [ret_inr, coprod, ret_seq, vwk1, vwk_case, vsubst_case]
+  simp only [Set.mem_setOf_eq, wk_var, Nat.liftWk_zero, subst_var, Term.Subst.InS.get_0_subst0]
+  rw [case_inr, let1_beta, vwk1, vwk_vwk, vsubst_vsubst]
+  -- TODO: vwk_vsubst, lore...
+  sorry
+
+theorem Eqv.ret_inl_seq_rzero
+  : ret_inl ;; rzero = nil (φ := φ) (ty := A) (rest := Γ) (targets := L) := by
+  rw [rzero, ret_inl_seq_coprod]
+
+theorem Eqv.ret_inr_seq_lzero
+  : ret_inr ;; lzero = nil (φ := φ) (ty := A) (rest := Γ) (targets := L) := by
+  rw [lzero, ret_inr_seq_coprod]
+
+theorem Eqv.rzero_seq_ret_inl {A : Ty α}
+  : rzero ;; ret_inl = nil (φ := φ) (ty := A.coprod Ty.empty) (rest := Γ) (targets := L) := by
+  rw [rzero, coprod_seq, <-sum_nil, sum]
+  congr 1
+  apply zero_eq
+
+theorem Eqv.lzero_seq_ret_inr {A : Ty α}
+  : lzero ;; ret_inr = nil (φ := φ) (ty := Ty.empty.coprod A) (rest := Γ) (targets := L) := by
+  rw [lzero, coprod_seq, <-sum_nil, sum]
+  congr 1
+  apply zero_eq
+
+-- TODO: naturality
+
+theorem Eqv.ret_inl_seq_join {Γ : Ctx α ε} {L : LCtx α}
+  : ret_inl ;; join (φ := φ) (A := A) (Γ := Γ) (L := L) = nil := by
+  rw [join, ret_inl_seq_coprod]
+
+theorem Eqv.ret_inr_seq_join {Γ : Ctx α ε} {L : LCtx α}
+  : ret_inr ;; join (φ := φ) (A := A) (Γ := Γ) (L := L) = nil := by
+  rw [join, ret_inr_seq_coprod]
+
+theorem Eqv.ret_inl_seq_sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
+  : ret_inl ;; (sum l r) = l ;; ret_inl := by rw [sum, ret_inl_seq_coprod]
+
+theorem Eqv.ret_inr_seq_sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
+  : ret_inr ;; (sum l r) = r ;; ret_inr := by rw [sum, ret_inr_seq_coprod]
+
+theorem Eqv.sum_seq_coprod {A B C D E : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
+  (s : Eqv φ (⟨C, ⊥⟩::Γ) (E::L)) (t : Eqv φ (⟨D, ⊥⟩::Γ) (E::L))
+  : (sum l r) ;; (coprod s t) = coprod (l ;; s) (r ;; t) := by
+  rw [sum, coprod_seq, seq_assoc, ret_inl_seq_coprod, seq_assoc, ret_inr_seq_coprod]
+
+theorem Eqv.sum_seq_sum {A B C D E F : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
+  (s : Eqv φ (⟨C, ⊥⟩::Γ) (E::L)) (t : Eqv φ (⟨D, ⊥⟩::Γ) (F::L))
+  : (sum l r) ;; (sum s t) = sum (l ;; s) (r ;; t) := by
+  rw [sum, coprod_seq, seq_assoc, ret_inl_seq_sum, seq_assoc, ret_inr_seq_sum]
+  simp only [<-seq_assoc]; rfl
+
+theorem Eqv.sum_seq_join {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : (sum l r) ;; join = coprod l r := by simp [join, sum_seq_coprod]
+
+theorem Eqv.sum_self_seq_join {A B} {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  : sum r r ;; join = join ;; r := by rw [sum_seq_join, join, coprod_seq]; simp
+
+def Eqv.aswap {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (B.coprod A::L)
+  := coprod ret_inr ret_inl
+
+theorem Eqv.aswap_seq_aswap {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : aswap (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) ;; aswap = nil := by
+  simp only [aswap, coprod_seq, ret_inl_seq_coprod, ret_inr_seq_coprod, coprod_inl_inr]
+
+-- TODO: naturality
+
+def Eqv.aassoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨(A.coprod B).coprod C, ⊥⟩::Γ) (A.coprod (B.coprod C)::L)
+  := sorry
+
+def Eqv.aassoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨A.coprod (B.coprod C), ⊥⟩::Γ) ((A.coprod B).coprod C::L)
+  := sorry
+
+theorem Eqv.aassoc_seq_aassoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : aassoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; aassoc_inv = nil
+  := sorry
+
+theorem Eqv.aassoc_inv_seq_aassoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : aassoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; aassoc = nil
+  := sorry
+
+-- TODO: naturality
+
+-- TODO: hexagon, pentagon, triangle
+
+-- TODO: distributivity
+
+-- TODO: Elgot operator
+
+-- TODO: fixpoint
+
+-- TODO: naturality, dinaturality, codiagonal
+
+-- TODO: uniformity -- this is going to be fun...
+
+-- TODO: strength
+
+-- ^ FREE THEOREM ^
 
 end Region
 
