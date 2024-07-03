@@ -24,6 +24,16 @@ theorem InS.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : (InS.ret (targets := targets) t).vwk ρ = InS.ret (t.wk ρ) := rfl
 
+theorem InS.vwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (InS.ret (targets := targets) t).vwk1 (right := right)
+  = InS.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := rfl
+
+theorem InS.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
+  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (InS.ret (targets := targets) t).vsubst σ = InS.ret (t.subst σ) := rfl
+
 abbrev Eqv.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : Eqv φ (⟨tyIn, ⊥⟩::rest) (tyOut::targets) := ⟦InS.ret t⟧
@@ -32,6 +42,16 @@ theorem Eqv.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (ρ : Ctx.InS (⟨tyIn, ⊥⟩::rest') _)
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : (Eqv.ret (targets := targets) t).vwk ρ = Eqv.ret (t.wk ρ) := rfl
+
+theorem Eqv.vwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (Eqv.ret (targets := targets) t).vwk1 (inserted := inserted)
+  = Eqv.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := rfl
+
+theorem Eqv.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
+  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (Eqv.ret (targets := targets) t).vsubst σ = Eqv.ret (t.subst σ) := rfl
 
 theorem Wf.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   : Region.nil.Wf (φ := φ) (⟨ty, ⊥⟩::rest) (ty::targets) := Wf.ret (by simp)
@@ -307,6 +327,45 @@ theorem Eqv.vsubst_liftn₂_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α
 
 open Term.InS
 
+-- TODO: centrality lore...
+
+inductive PureTree : (Γ : ℕ → ε) → Region φ → Prop
+  | ret a : PureTree Γ (ret a)
+  | case e l r
+    : e.effect Γ = ⊥
+      → PureTree (Nat.liftBot Γ) l
+      → PureTree (Nat.liftBot Γ) r
+      → PureTree Γ (case e l r)
+  | let1 e r
+    : e.effect Γ = ⊥
+      → PureTree (Nat.liftBot Γ) r
+      → PureTree Γ (let1 e r)
+  | let2 e r
+    : e.effect Γ = ⊥
+      → PureTree (Nat.liftBot Γ) r
+      → PureTree Γ (let2 e r)
+
+def InS.PureTree {Γ : Ctx α ε} {L : LCtx α} (r : InS φ Γ L) : Prop
+  := Region.PureTree (φ := φ) Γ.effect r
+
+-- TODO: ret, case, let1, let2
+
+-- TODO: closed under vwk, lwk (lift), vsubst, lsubst (pure), append...
+
+def Eqv.IsPure {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ L) : Prop
+  := ∃r' : InS φ Γ L, ⟦r'⟧ = r ∧ r'.PureTree
+
+-- TODO: ret, case, let1, let2
+
+-- TODO: closed under vwk, lwk (lift), vsubst, lsubst (pure), ltimes, rtimes...
+
+theorem Eqv.IsPure.nil {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv.IsPure (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L)) := sorry
+
+theorem Eqv.IsPure.seq {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {s : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  (hr : r.IsPure) (hs : s.IsPure) : (r ;; s).IsPure := sorry
+
 def Eqv.rtimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (tyLeft : Ty α) (r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L))
   : Eqv φ (⟨tyLeft.prod tyIn, ⊥⟩::Γ) ((tyLeft.prod tyOut)::L)
@@ -314,10 +373,19 @@ def Eqv.rtimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   r.vwk1.vwk1 ;;
   ret (pair (var 1 (by simp)) (var 0 (by simp)))
 
+infixl:70 " ⋊ "  => Eqv.rtimes
+
+theorem Eqv.IsPure.rtimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (tyLeft : Ty α) {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)}
+  : Eqv.IsPure r → Eqv.IsPure (tyLeft ⋊ r) := sorry
+
 def Eqv.swap {left right : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨left.prod right, ⊥⟩::Γ) ((right.prod left)::L)
   := Eqv.let2 (var 0 Ctx.Var.shead) $
   ret (pair (var 0 (by simp)) (var 1 (by simp)))
+
+theorem Eqv.IsPure.swap {left right : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv.IsPure (Eqv.swap (φ := φ) (left := left) (right := right) (Γ := Γ) (L := L)) := sorry
 
 theorem Eqv.repack {left right : Ty α} {rest : Ctx α ε} {targets : LCtx α}
   : Eqv.let2 (Term.InS.var 0 ⟨by simp, le_refl _⟩)
@@ -335,8 +403,6 @@ theorem Eqv.swap_swap {left right : Ty α}
     subst_pair, subst_var, Term.Subst.InS.get_0_subst0, let2_pair, let1_beta, vsubst_vsubst
   ]
   apply Eqv.repack
-
-infixl:70 " ⋊ "  => Eqv.rtimes
 
 theorem Eqv.rtimes_nil {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (tyLeft : Ty α)
@@ -366,6 +432,10 @@ def Eqv.ltimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 infixl:70 " ⋉ "  => Eqv.ltimes
 
+theorem Eqv.IsPure.ltimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)} (hr : r.IsPure) (tyRight : Ty α)
+  : IsPure (r ⋉ tyRight) := seq (seq swap (hr.rtimes _)) swap
+
 theorem Eqv.swap_rtimes_swap {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   : Eqv.swap ;; C ⋊ r ;; Eqv.swap = r ⋉ C
@@ -382,6 +452,11 @@ theorem Eqv.swap_ltimes_swap {Γ : Ctx α ε} {L : LCtx α}
   := by rw [
     ltimes, seq_assoc, seq_assoc, swap_swap, seq_assoc, seq_nil, <-seq_assoc, swap_swap, nil_seq]
 
+theorem Eqv.swap_rtimes {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  : Eqv.swap ;; C ⋊ r = r ⋉ C ;; Eqv.swap
+  := by rw [<-swap_ltimes_swap, <-seq_assoc, <-seq_assoc, swap_swap, nil_seq]
+
 theorem Eqv.ltimes_nil {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.nil ⋉ tyRight = (Eqv.nil (φ := φ) (ty := ty.prod tyRight) (rest := Γ) (targets := L))
   := by rw [<-swap_rtimes_swap, rtimes_nil, seq_nil, swap_swap]
@@ -392,10 +467,6 @@ theorem Eqv.ltimes_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp only [<-swap_rtimes_swap, rtimes_seq, seq_assoc]
   rw [<-seq_assoc swap swap, swap_swap, nil_seq]
 
--- TODO: centrality lore...
-
--- TODO: purity lore...
-
 def Eqv.runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨ty.prod Ty.unit, ⊥⟩::Γ) (ty::L)
   := let2 (var 0 Ctx.Var.shead) (ret $ var 1 (by simp))
@@ -404,15 +475,35 @@ def Eqv.runit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨ty, ⊥⟩::Γ) (ty.prod Ty.unit::L)
   := ret $ (pair (var 0 Ctx.Var.shead) (unit _))
 
+theorem Eqv.IsPure.runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (runit (φ := φ) (ty := ty) (Γ := Γ) (L := L)).IsPure := sorry
+
+theorem Eqv.IsPure.runit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (runit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L)).IsPure := sorry
+
+theorem Eqv.runit_seq_runit_inv_helper {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : runit (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit_inv
+  = let2 (var 0 ⟨by simp, le_refl _⟩)
+    (let1 (unit ⊥) (ret $ pair (var 2 (by simp)) (var 0 (by simp)))) := by
+  rw [let1_beta]
+  rfl
+
 theorem Eqv.runit_seq_runit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : runit (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit_inv = nil
-  := sorry
+  : runit (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit_inv = nil := by
+  rw [runit_seq_runit_inv_helper, terminal _ (var 0 (by simp)), let1_beta]
+  apply repack
 
 theorem Eqv.runit_inv_seq_runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : runit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit = nil
-  := sorry
+  : runit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit = nil := by
+  simp only [runit_inv, runit, ret_seq]
+  rw [vwk1, vwk_let2, vsubst_let2, wk_var, subst_var]
+  simp only [Nat.liftWk_zero, Term.Subst.InS.get_0_subst0, Set.mem_setOf_eq]
+  rw [let2_pair, let1_beta, let1_beta]
+  rfl
 
--- TODO: naturality
+theorem Eqv.ltimes_seq_runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  : r ⋉ Ty.unit ;; runit = runit ;; r := sorry
 
 def Eqv.lunit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨Ty.unit.prod ty, ⊥⟩::Γ) (ty::L)
@@ -422,6 +513,12 @@ def Eqv.lunit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨ty, ⊥⟩::Γ) (Ty.unit.prod ty::L)
   := ret $ (pair (unit _) (var 0 Ctx.Var.shead))
 
+theorem Eqv.IsPure.lunit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (lunit (φ := φ) (ty := ty) (Γ := Γ) (L := L)).IsPure := sorry
+
+theorem Eqv.IsPure.lunit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (lunit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L)).IsPure := sorry
+
 theorem Eqv.lunit_seq_lunit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : lunit (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; lunit_inv = nil
   := sorry
@@ -430,15 +527,47 @@ theorem Eqv.lunit_inv_seq_lunit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : lunit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; lunit = nil
   := sorry
 
--- TODO: naturality
+-- TODO: swap ;; lunit = runit, lunit_inv ;; swap = runit_inv, and vice versa...
+
+theorem Eqv.rtimes_seq_lunit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  : Ty.unit ⋊ r ;; lunit = lunit ;; r
+  := sorry
+
+theorem Eqv.IsPure.central_left {A A' B B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L)}
+  (hl : l.IsPure)
+  (r : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L))
+  : (l ⋉ B) ;; (A' ⋊ r) = (A ⋊ r) ;; (l ⋉ B') := sorry
+
+theorem Eqv.IsPure.central_right {A A' B B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L))
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L)}
+  (hr : r.IsPure)
+  : (A ⋊ r) ;; (l ⋉ B') = (l ⋉ B) ;; (A' ⋊ r) := by
+  rw [
+    <-swap_rtimes_swap, <-seq_assoc, <-seq_assoc, <-swap_ltimes, seq_assoc Eqv.swap,
+    hr.central_left, <-seq_assoc, swap_rtimes, seq_assoc (l ⋉ B), swap_ltimes,
+    seq_assoc, seq_assoc (A' ⋊ r), swap_swap, seq_nil
+  ]
 
 def Eqv.assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : Eqv φ (⟨(A.prod B).prod C, ⊥⟩::Γ) (A.prod (B.prod C)::L)
-  := sorry
+  : Eqv φ (⟨(A.prod B).prod C, ⊥⟩::Γ) (A.prod (B.prod C)::L) :=
+  let2 (var 0 ⟨by simp, le_refl _⟩) $
+  let2 (var 1 ⟨by simp, le_refl _⟩) $
+  ret $ pair (var 1 (by simp)) (pair (var 0 (by simp)) (var 2 (by simp)))
 
 def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : Eqv φ (⟨A.prod (B.prod C), ⊥⟩::Γ) ((A.prod B).prod C::L)
-  := sorry
+  : Eqv φ (⟨A.prod (B.prod C), ⊥⟩::Γ) ((A.prod B).prod C::L) :=
+  let2 (var 0 ⟨by simp, le_refl _⟩) $
+  let2 (var 0 ⟨by simp, le_refl _⟩) $
+  ret $ pair (pair (var 3 (by simp)) (var 1 (by simp))) (var 0 (by simp))
+
+theorem Eqv.IsPure.assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).IsPure := sorry
+
+theorem Eqv.IsPure.assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (assoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).IsPure := sorry
 
 theorem Eqv.assoc_seq_assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; assoc_inv = nil
@@ -448,14 +577,41 @@ theorem Eqv.assoc_inv_seq_assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; assoc = nil
   := sorry
 
--- TODO: associator naturality
+theorem Eqv.assoc_left_nat {A B C A' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L))
+  : (l ⋉ B) ⋉ C ;; assoc = assoc ;; l ⋉ (B.prod C) := sorry
 
--- TODO: hexagon, pentagon, triangle
+theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (m : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L))
+  : (A ⋊ m) ⋉ C ;; assoc = assoc ;; A ⋊ (m ⋉ C) := sorry
+
+theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨C, ⊥⟩::Γ) (C'::L))
+  : (A.prod B) ⋊ r ;; assoc = assoc ;; A ⋊ (B ⋊ r) := sorry
+
+theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : assoc (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Ty.unit) (C := Y) ;; X ⋊ lunit
+  = runit ⋉ Y := sorry
+
+theorem Eqv.pentagon {W X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : assoc (φ := φ) (Γ := Γ) (L := L) (A := W.prod X) (B := Y) (C := Z) ;; assoc
+  = assoc ⋉ Z ;; assoc ;; W ⋊ assoc
+  := sorry
+
+theorem Eqv.hexagon {X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : assoc (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Y) (C := Z) ;; swap ;; assoc
+  = swap ⋉ Z ;; assoc ;; Y ⋊ swap
+  := sorry
 
 def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (C::L)
   := case (var 0 Ctx.Var.shead) l.vwk1 r.vwk1
+
+theorem Eqv.IsPure.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} (hl : l.IsPure)
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)} (hr : r.IsPure)
+  : (coprod l r).IsPure := sorry
 
 theorem Eqv.coprod_seq {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) (s : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))
@@ -496,10 +652,27 @@ def Eqv.ret_inr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨B, ⊥⟩::Γ) (A.coprod B::L)
   := ret $ (inr (var 0 Ctx.Var.shead))
 
+theorem Eqv.IsPure.lzero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : (lzero (φ := φ) (Γ := Γ) (L := L) (A := A)).IsPure := sorry
+
+theorem Eqv.IsPure.rzero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : (rzero (φ := φ) (Γ := Γ) (L := L) (A := A)).IsPure := sorry
+
+theorem Eqv.IsPure.ret_inl {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (ret_inl (φ := φ) (Γ := Γ) (L := L) (A := A) (B := B)).IsPure := sorry
+
+theorem Eqv.IsPure.ret_inr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (ret_inr (φ := φ) (Γ := Γ) (L := L) (A := A) (B := B)).IsPure := sorry
+
 def Eqv.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ((C.coprod D)::L)
   := coprod (l ;; ret_inl) (r ;; ret_inr)
+
+theorem Eqv.IsPure.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} (hl : l.IsPure)
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L)} (hr : r.IsPure)
+  : (sum l r).IsPure := coprod (seq hl ret_inl) (seq hr ret_inr)
 
 theorem Eqv.coprod_inl_inr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : coprod ret_inl ret_inr = Eqv.nil (φ := φ) (ty := A.coprod B) (rest := Γ) (targets := L) := by
@@ -590,11 +763,22 @@ def Eqv.aswap {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (B.coprod A::L)
   := coprod ret_inr ret_inl
 
+theorem Eqv.IsPure.aswap {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (aswap (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).IsPure := coprod ret_inr ret_inl
+
 theorem Eqv.aswap_seq_aswap {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : aswap (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) ;; aswap = nil := by
   simp only [aswap, coprod_seq, ret_inl_seq_coprod, ret_inr_seq_coprod, coprod_inl_inr]
 
--- TODO: naturality
+theorem Eqv.aswap_seq_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : aswap ;; (coprod l r) = coprod r l := by
+  rw [aswap, coprod_seq, ret_inl_seq_coprod, ret_inr_seq_coprod]
+
+theorem Eqv.aswap_seq_sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
+  : aswap ;; (sum l r) = sum r l ;; aswap := by
+  rw [sum, aswap_seq_coprod, aswap, sum_seq_coprod]
 
 def Eqv.aassoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨(A.coprod B).coprod C, ⊥⟩::Γ) (A.coprod (B.coprod C)::L)
@@ -604,6 +788,12 @@ def Eqv.aassoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.coprod (B.coprod C), ⊥⟩::Γ) ((A.coprod B).coprod C::L)
   := sorry
 
+theorem Eqv.IsPure.aassoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (aassoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).IsPure := sorry
+
+theorem Eqv.IsPure.aassoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (aassoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).IsPure := sorry
+
 theorem Eqv.aassoc_seq_aassoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : aassoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; aassoc_inv = nil
   := sorry
@@ -612,23 +802,90 @@ theorem Eqv.aassoc_inv_seq_aassoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : aassoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; aassoc = nil
   := sorry
 
--- TODO: naturality
+theorem Eqv.aassoc_left_nat {A B C A' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L))
+  : (l.sum (nil (ty := B))).sum (nil (ty := C)) ;; aassoc
+  = aassoc ;; l.sum (nil (ty := B.coprod C)) := sorry
 
--- TODO: hexagon, pentagon, triangle
+theorem Eqv.aassoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (m : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L))
+  : (A ⋊ m) ⋉ C ;; assoc = assoc ;; A ⋊ (m ⋉ C) := sorry
 
--- TODO: distributivity
+theorem Eqv.aassoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (r : Eqv φ (⟨C, ⊥⟩::Γ) (C'::L))
+  : (A.prod B) ⋊ r ;; assoc = assoc ;; A ⋊ (B ⋊ r) := sorry
 
--- TODO: Elgot operator
+theorem Eqv.atriangle {X Y : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : aassoc (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Ty.empty) (C := Y) ;; nil.sum lzero
+  = rzero.sum nil := sorry
 
--- TODO: fixpoint
+theorem Eqv.apentagon {W X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : aassoc (φ := φ) (Γ := Γ) (L := L) (A := W.coprod X) (B := Y) (C := Z) ;; aassoc
+  = aassoc.sum nil ;; aassoc ;; nil.sum aassoc
+  := sorry
 
--- TODO: naturality, dinaturality, codiagonal
+theorem Eqv.ahexagon {X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : aassoc (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Y) (C := Z) ;; aswap ;; aassoc
+  = aswap.sum nil ;; aassoc ;; nil.sum aswap
+  := sorry
 
--- TODO: uniformity -- this is going to be fun...
+def Eqv.distl {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨(A.prod B).coprod (A.prod C), ⊥⟩::Γ) (A.prod (B.coprod C)::L) :=
+  coprod (A ⋊ ret_inl) (A ⋊ ret_inr)
 
--- TODO: strength
+def Eqv.distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨A.prod (B.coprod C), ⊥⟩::Γ) ((A.prod B).coprod (A.prod C)::L) :=
+  let2 (var 0 Ctx.Var.shead) $
+  case (var 0 Ctx.Var.shead)
+    (ret $ inl (pair (var 2 (by simp)) (var 0 Ctx.Var.shead)))
+    (ret $ inr (pair (var 2 (by simp)) (var 0 Ctx.Var.shead)))
 
--- ^ FREE THEOREM ^
+theorem Eqv.IsPure.distl {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (distl (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).IsPure := sorry
+
+theorem Eqv.IsPure.distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).IsPure := sorry
+
+-- TODO: "naturality"
+
+def Eqv.control {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (B::A::L) :=
+  case (var 0 Ctx.Var.shead)
+    (InS.br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩).q
+    (ret (var 0 (by simp)))
+
+def Eqv.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
+  : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)
+  := cfg [A] nil (λ| ⟨0, _⟩ => (f.vwk1.lwk ⟨Nat.liftWk Nat.succ, sorry⟩) ;; control)
+
+theorem Eqv.fixpoint_iter {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
+  : fixpoint f = f ;; coprod nil (fixpoint f) := sorry
+
+theorem Eqv.fixpoint_naturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
+  (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : fixpoint (f ;; sum g nil) = (fixpoint f) ;; g := sorry
+
+theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
+  (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
+  : fixpoint (f ;; coprod ret_inl g) = f ;; coprod nil (fixpoint (g ;; coprod ret_inl f)) := sorry
+
+theorem Eqv.fixpoint_codiagonal {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) (((B.coprod A).coprod A)::L))
+  : fixpoint (f ;; coprod nil ret_inr) = fixpoint (fixpoint f) := sorry
+
+theorem Eqv.fixpoint_uniformity {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)) (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod C)::L))
+  (h : Eqv φ (⟨C, ⊥⟩::Γ) (A::L)) (hh : h.IsPure)
+  (hfg : h ;; f = g ;; sum nil h)
+  : h ;; (fixpoint f) = fixpoint g := sorry
+
+theorem Eqv.fixpoint_strong_left {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
+  : X ⋊ fixpoint f = fixpoint (X ⋊ f ;; distl_inv) := sorry
 
 end Region
 
