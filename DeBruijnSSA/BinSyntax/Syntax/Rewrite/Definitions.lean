@@ -572,20 +572,23 @@ def RewriteD.cast {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h�
 
 theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r') : r.effect Γ = r'.effect Γ := by
   cases p with
-  | let1_let1 => sorry
-  | let1_op =>
+  | let1_let1 | let1_op =>
     simp only [Region.effect, Term.effect, Nat.liftBot_zero, ge_iff_le, bot_le, sup_of_le_left]
     rw [<-sup_assoc]
     apply congr
     rw [sup_comm]
     rw [vwk1, effect_vwk, Nat.liftBot_comp_liftWk]
     rfl
-  | let1_let2 => sorry
+  | let1_let2 =>
+    simp only [Region.effect, Term.effect, Nat.liftBot_zero, ge_iff_le, bot_le, sup_of_le_left]
+    rw [<-sup_assoc]
+    apply congrArg
+    simp only [vwk1, effect_vwk, Nat.liftnBot_two, Nat.liftBot_comp_liftWk]
+    rfl
   | let1_case_t => sorry
   | let2_bind => sorry
   | case_bind => sorry
   | let1_case a b r s =>
-    stop
     simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
     have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
       intro x y z w
@@ -594,9 +597,13 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
         sup_assoc y, sup_assoc y]
       apply congrArg
       simp only [sup_assoc, sup_comm]
-    rw [h]
+    have h' : Nat.liftBot (Nat.liftBot Γ) ∘ Nat.swap0 1 = Nat.liftBot (Nat.liftBot Γ) := by
+      funext i
+      cases i with
+      | zero => rfl
+      | succ i => cases i <;> rfl
+    simp only [h, h', Region.effect_vwk]
   | let2_case =>
-    stop
     simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
     have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
       intro x y z w
@@ -606,7 +613,15 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
       apply congrArg
       simp only [sup_assoc, sup_comm]
     rw [h]
-    simp [Nat.liftnBot_two]
+    have h' : Nat.liftBot (Nat.liftBot (Nat.liftBot Γ)) ∘ Nat.swap0 2
+      = Nat.liftBot (Nat.liftBot (Nat.liftBot Γ)) := by
+      funext i
+      cases i with
+      | zero => rfl
+      | succ i => cases i with
+        | zero => rfl
+        | succ i => cases i <;> rfl
+    simp [Nat.liftnBot_two, Region.effect_vwk, h']
   | cfg_br_lt ℓ e n G h =>
     simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
     rw [sup_assoc]
@@ -938,8 +953,22 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     apply let1_case
     simp only [vwk_vwk]
     congr <;>
-    sorry
-  | let2_case => sorry
+    funext i <;>
+    cases i with
+    | zero => rfl
+    | succ i => cases i <;> rfl
+  | let2_case =>
+    simp only [Region.vwk, wk_liftnWk_wk_add, wk_liftWk_wk_succ]
+    apply cast_trg
+    apply let2_case
+    simp only [vwk_vwk]
+    congr <;>
+    funext i <;>
+    cases i with
+    | zero => rfl
+    | succ i => cases i with
+      | zero => rfl
+      | succ i => cases i <;> rfl
   | let2_eta e r =>
     simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
       Nat.liftWk_comm_liftnWk_apply, vwk_liftnWk₂_vwk1, vwk_liftWk₂_vwk1]
