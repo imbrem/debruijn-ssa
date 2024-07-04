@@ -10,6 +10,8 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 
 namespace Region
 
+open Term
+
 inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop)
   : Ctx α ε → LCtx α → Region φ → Region φ → Prop
   | refl : ∀ x, Uniform P Γ L x x
@@ -19,6 +21,9 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
     : e.Wf (⟨A, ⊥⟩::Γ) (B, ⊥)
     → r.Wf (⟨B, ⊥⟩::Γ) ((C.coprod B)::L)
     → s.Wf (⟨A, ⊥⟩::Γ) ((C.coprod A)::L)
-    → Uniform P (⟨A, ⊥⟩::Γ) ((C.coprod B)::L) (r.vsubst e.subst0) (s.lsubst (ret sorry).lsubst0)
+    → Uniform P (⟨A, ⊥⟩::Γ)
+      ((C.coprod B)::L)
+      (r.vsubst e.subst0)
+      (s.lsubst (ret (sum Term.nil e)).lsubst0)
     → Uniform P (⟨A, ⊥⟩::Γ) (C::L) r s
   | rel : P Γ L x y → Uniform P Γ L x y
