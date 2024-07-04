@@ -299,6 +299,15 @@ theorem Term.InS.coe_op {Γ : Ctx α ε} {f} {hf : Φ.EFn f A B e} {a : Term.InS
   : (Term.InS.op f hf a : Term φ) = Term.op f a
   := rfl
 
+def Term.InS.let1 {Γ : Ctx α ε}
+  (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩) : Term.InS φ Γ ⟨B, e⟩
+  := ⟨Term.let1 a b, Wf.let1 a.2 b.2⟩
+
+@[simp]
+theorem Term.InS.coe_let1 {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨A, e⟩} {b : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : (Term.InS.let1 a b : Term φ) = Term.let1 a b
+  := rfl
+
 def Term.InS.pair {Γ : Ctx α ε}
   (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ Γ ⟨B, e⟩) : Term.InS φ Γ ⟨Ty.prod A B, e⟩
   := ⟨Term.pair a b, Wf.pair a.2 b.2⟩
@@ -306,6 +315,16 @@ def Term.InS.pair {Γ : Ctx α ε}
 @[simp]
 theorem Term.InS.coe_pair {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨A, e⟩} {b : Term.InS φ Γ ⟨B, e⟩}
   : (Term.InS.pair a b : Term φ) = Term.pair a b
+  := rfl
+
+def Term.InS.let2 {Γ : Ctx α ε}
+  (a : Term.InS φ Γ ⟨A.prod B, e⟩) (c : Term.InS φ (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) ⟨C, e⟩) : Term.InS φ Γ ⟨C, e⟩
+  := ⟨Term.let2 a c, Wf.let2 a.2 c.2⟩
+
+@[simp]
+theorem InS.coe_let2 {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨A.prod B, e⟩}
+  {c : Term.InS φ (⟨A, ⊥⟩::⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : (a.let2 c : Term φ) = Term.let2 a c
   := rfl
 
 def Term.InS.inl {Γ : Ctx α ε}
@@ -324,6 +343,18 @@ def Term.InS.inr {Γ : Ctx α ε}
 @[simp]
 theorem Term.InS.coe_inr {Γ : Ctx α ε} {b : Term.InS φ Γ ⟨right, e⟩}
   : (b.inr (left := left) : Term φ) = Term.inr b
+  := rfl
+
+def Term.InS.case {Γ : Ctx α ε}
+  (a : Term.InS φ Γ ⟨Ty.coprod left right, e⟩)
+  (l : Term.InS φ (⟨left, ⊥⟩::Γ) ⟨C, e⟩)
+  (r : Term.InS φ (⟨right, ⊥⟩::Γ) ⟨C, e⟩) : Term.InS φ Γ ⟨C, e⟩
+  := ⟨Term.case a l r, Wf.case a.2 l.2 r.2⟩
+
+@[simp]
+theorem Term.InS.coe_case {Γ : Ctx α ε} {a : Term.InS φ Γ ⟨Ty.coprod left right, e⟩}
+  {l : Term.InS φ (⟨left, ⊥⟩::Γ) ⟨C, e⟩} {r : Term.InS φ (⟨right, ⊥⟩::Γ) ⟨C, e⟩}
+  : (a.case l r : Term φ) = Term.case a l r
   := rfl
 
 def Term.InS.abort {Γ : Ctx α ε}

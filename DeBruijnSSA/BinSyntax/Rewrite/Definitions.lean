@@ -1015,6 +1015,24 @@ theorem Eqv.let1_op {Γ : Ctx α ε} {L : LCtx α}
     apply Eqv.sound
     apply InS.let1_op
 
+theorem InS.let1_let1 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {r : InS φ (⟨B, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩)
+    : let1 (a.let1 b) r
+    ≈ (let1 a $ let1 b $ r.vwk1)
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+
+theorem Eqv.let1_let1 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩)
+    : Eqv.let1 (a.let1 b) r = (let1 a $ let1 b $ r.vwk1)
+  := by induction r using Quotient.inductionOn with
+  | h r =>
+    simp only [let1_quot, vwk1_quot]
+    apply Eqv.sound
+    apply InS.let1_let1
+
 theorem InS.let1_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
   {r : InS φ (⟨Ty.prod A B, ⊥⟩::Γ) L}
   (a : Term.InS φ Γ ⟨A, e⟩) (b : Term.InS φ Γ ⟨B, e⟩)
@@ -1078,6 +1096,28 @@ theorem Eqv.let1_inr {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
     apply Eqv.sound
     apply InS.let1_inr
 
+theorem InS.let1_case_t {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {s : InS φ (⟨C, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩)
+  (l : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩)
+  (r : Term.InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩)
+    : let1 (a.case l r) s
+    ≈ case a (let1 l s.vwk1) (let1 r s.vwk1)
+  := EqvGen.rel _ _ $ Wf.Cong.rel $
+  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+
+theorem Eqv.let1_case_t {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {s : Eqv φ (⟨C, ⊥⟩::Γ) L}
+  (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩)
+  (l : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩)
+  (r : Term.InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩)
+    : Eqv.let1 (a.case l r) s = case a (Eqv.let1 l s.vwk1) (Eqv.let1 r s.vwk1)
+  := by induction s using Quotient.inductionOn with
+  | h s =>
+    simp only [let1_quot, vwk1_quot]
+    apply Eqv.sound
+    apply InS.let1_case_t
+
 theorem InS.let1_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
   {r : InS φ (⟨A, ⊥⟩::Γ) L}
   (a : Term.InS φ Γ ⟨Ty.empty, e⟩)
@@ -1105,8 +1145,9 @@ theorem InS.let2_op {Γ : Ctx α ε} {L : LCtx α}
       let1 a $
       let2 ((Term.InS.var 0 (by simp)).op f hf) $
       r.vwk (ρ := ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩))
-  := EqvGen.rel _ _ $ Wf.Cong.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+  := sorry
+  -- := EqvGen.rel _ _ $ Wf.Cong.rel $
+  -- TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
 theorem Eqv.let2_op {Γ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::Γ) L}
@@ -1129,8 +1170,9 @@ theorem InS.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
     : r.let2 (a.pair b) ≈ (
       let1 a $
       let1 (b.wk ⟨Nat.succ, (by simp)⟩) r)
-  := EqvGen.rel _ _ $ Wf.Cong.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+  := sorry
+  -- := EqvGen.rel _ _ $ Wf.Cong.rel $
+  -- TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
 theorem Eqv.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
@@ -1153,8 +1195,9 @@ theorem InS.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
       let1 a $
       let2 ((Term.InS.var 0 (by simp)).abort (e := e') (A.prod B)) $
       r.vwk ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩)
-  := EqvGen.rel _ _ $ Wf.Cong.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+    := sorry
+  -- := EqvGen.rel _ _ $ Wf.Cong.rel $
+  -- TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
 theorem Eqv.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
   {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
@@ -1174,8 +1217,9 @@ theorem InS.case_op {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.InS φ Γ ⟨A, e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) L) (s : InS φ (⟨C, ⊥⟩::Γ) L)
   : r.case (a.op f hf) s ≈
     (let1 a $ case (Term.InS.op f hf (Term.InS.var 0 (by simp))) r.vwk1 s.vwk1)
-  := EqvGen.rel _ _ $ Wf.Cong.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+  := sorry
+  -- := EqvGen.rel _ _ $ Wf.Cong.rel $
+  -- TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
 theorem Eqv.case_op {Γ : Ctx α ε} {L : LCtx α}
   (f : φ) (hf : Φ.EFn f A (B.coprod C) e)
@@ -1194,8 +1238,9 @@ theorem InS.case_abort {Γ : Ctx α ε} {L : LCtx α} (e' := ⊥)
   (a : Term.InS φ Γ ⟨Ty.empty, e⟩) (r : InS φ (⟨A, ⊥⟩::Γ) L) (s : InS φ (⟨B, ⊥⟩::Γ) L)
   : r.case (a.abort _) s ≈
     (let1 a $ case (Term.InS.abort (e := e') (Term.InS.var 0 (by simp)) (A.coprod B)) r.vwk1 s.vwk1)
-  := EqvGen.rel _ _ $ Wf.Cong.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+  := sorry
+  -- := EqvGen.rel _ _ $ Wf.Cong.rel $
+  -- TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
 theorem Eqv.case_abort {Γ : Ctx α ε} {L : LCtx α} (e' := ⊥)
   (a : Term.InS φ Γ ⟨Ty.empty, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Γ) L) (s : Eqv φ (⟨B, ⊥⟩::Γ) L)

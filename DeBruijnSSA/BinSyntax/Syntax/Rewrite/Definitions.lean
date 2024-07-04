@@ -522,29 +522,10 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let1 (Term.case a l r) s) (case a (let1 l $ s.vwk1) (let1 r $ s.vwk1))
   | let1_abort (e r) :
     RewriteD (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
-  | let2_op (f e r) :
-    RewriteD (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  | let2_let1 (a b r) :
-    RewriteD (let2 (Term.let1 a b) r) (let1 a $ let2 b $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  | let2_pair (a b r) : RewriteD (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
-  | let2_let2 (a b r) :
-    RewriteD (let2 (Term.let2 a b) r)
-      (let2 a $ let2 b $ (r.vwk (Nat.liftnWk 2 Nat.succ)).vwk (Nat.liftnWk 2 Nat.succ))
-  | let2_case_t (a l r s) :
-    RewriteD (let2 (Term.case a l r) s)
-      (case a (let2 l $ s.vwk (Nat.liftnWk 2 Nat.succ)) (let2 r $ s.vwk (Nat.liftnWk 2 Nat.succ)))
-  | let2_abort (e r) :
-    RewriteD (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  | case_op (f e r s) :
-    RewriteD (case (op f e) r s)
-      (let1 e $ case (op f (var 0))
-      (r.vwk1)
-      (s.vwk1))
-  | case_abort (e r s) :
-    RewriteD (case (abort e) r s)
-      (let1 e $ case (abort (var 0))
-      (r.vwk1)
-      (s.vwk1))
+  | let2_bind (e r) :
+    RewriteD (let2 e r) (let1 e $ (let2 (Term.var 0) (r.vwk (Nat.liftnWk 2 Nat.succ))))
+  | case_bind (e r s) :
+    RewriteD (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   | let1_case (a b r s) :
     RewriteD (let1 a $ case (b.wk Nat.succ) r s)
     (case b
@@ -571,11 +552,13 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD
       (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
       (cfg β k (G ∘ ρ))
+  | let1_eta (e) (r : Region φ) :
+    RewriteD (let1 e (let1 (Term.var 0) r.vwk1)) (let1 e r)
   | let2_eta (e) (r : Region φ) :
     RewriteD (let2 e (let1 ((Term.var 1).pair (Term.var 0)) r.vwk1.vwk1))
       (let1 e r)
   | case_eta (e r) :
-    RewriteD (case e (let1 (Term.var 0).inl r) (let1 (Term.var 0).inr r))
+    RewriteD (case e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1))
       (let1 e r)
 
 def RewriteD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀ = r₀') (p : RewriteD r₀ r₁)
@@ -599,24 +582,8 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     rfl
   | let1_let2 => sorry
   | let1_case_t => sorry
-  | let2_op =>
-    simp only [Region.effect, Term.effect, Nat.liftBot, ge_iff_le, bot_le, sup_of_le_left,
-      effect_liftnBot_vwk_liftnWk, Nat.liftBot_comp_succ]
-    rw [<-sup_assoc]
-    simp only [sup_comm]
-  | let2_let1 => sorry
-  | let2_pair => simp [Nat.liftBot, sup_assoc, Nat.liftnBot_iterate]
-  | let2_let2 => sorry
-  | let2_case_t => sorry
-  | let2_abort =>
-    simp [Nat.liftnBot_iterate, Nat.liftBot, Nat.liftnWk_two,
-      Region.effect_liftBot_vwk_liftWk, Nat.liftBot_comp_liftWk]
-  | case_op =>
-    simp only [Region.effect, Term.effect, Nat.liftBot, ge_iff_le, bot_le, sup_of_le_left,
-      effect_liftBot2_vwk1]
-    rw [<-sup_assoc, <-sup_assoc]
-    simp only [sup_comm]
-  | case_abort => simp [Nat.liftBot, effect_liftBot2_vwk1, sup_assoc]
+  | let2_bind => sorry
+  | case_bind => sorry
   | let1_case a b r s =>
     stop
     simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
@@ -667,6 +634,7 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
     apply congrArg
     rw [Fin.sup_comp_surj _ hρ]
+  | let1_eta => sorry
   | let2_eta =>
     simp only [Region.effect, Term.effect, Nat.liftnBot, Nat.lt_succ_self, ↓reduceIte,
       Nat.zero_lt_succ, ge_iff_le, le_refl, sup_of_le_left, vwk1, effect_vwk, bot_le,
@@ -695,29 +663,10 @@ inductive Rewrite : Region φ → Region φ → Prop
     Rewrite (let1 (Term.case a l r) s) (case a (let1 l $ s.vwk1) (let1 r $ s.vwk1))
   | let1_abort (e r) :
     Rewrite (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
-  | let2_op (f e r) :
-    Rewrite (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  | let2_let1 (a b r) :
-    Rewrite (let2 (Term.let1 a b) r) (let1 a $ let2 b $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  | let2_pair (a b r) : Rewrite (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
-  | let2_let2 (a b r) :
-    Rewrite (let2 (Term.let2 a b) r)
-      (let2 a $ let2 b $ (r.vwk (Nat.liftnWk 2 Nat.succ)).vwk (Nat.liftnWk 2 Nat.succ))
-  | let2_case_t (a l r s) :
-    Rewrite (let2 (Term.case a l r) s)
-      (case a (let2 l $ s.vwk (Nat.liftnWk 2 Nat.succ)) (let2 r $ s.vwk (Nat.liftnWk 2 Nat.succ)))
-  | let2_abort (e r) :
-    Rewrite (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  | case_op (f e r s) :
-    Rewrite (case (op f e) r s)
-      (let1 e $ case (op f (var 0))
-      (r.vwk1)
-      (s.vwk1))
-  | case_abort (e r s) :
-    Rewrite (case (abort e) r s)
-      (let1 e $ case (abort (var 0))
-      (r.vwk1)
-      (s.vwk1))
+  | let2_bind (e r) :
+    Rewrite (let2 e r) (let1 e $ (let2 (Term.var 0) (r.vwk (Nat.liftnWk 2 Nat.succ))))
+  | case_bind (e r s) :
+    Rewrite (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   | let1_case (a b r s) :
     Rewrite (let1 a $ case (b.wk Nat.succ) r s)
     (case b
@@ -744,11 +693,13 @@ inductive Rewrite : Region φ → Region φ → Prop
     Rewrite
       (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
       (cfg β k (G ∘ ρ))
+  | let1_eta (e) (r : Region φ) :
+    Rewrite (let1 e (let1 (Term.var 0) r.vwk1)) (let1 e r)
   | let2_eta (e) (r : Region φ) :
     Rewrite (let2 e (let1 ((Term.var 1).pair (Term.var 0)) r.vwk1.vwk1))
       (let1 e r)
   | case_eta (e r) :
-    Rewrite (case e (let1 (Term.var 0).inl r) (let1 (Term.var 0).inr r))
+    Rewrite (case e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1))
       (let1 e r)
 
 theorem RewriteD.rewrite {r r' : Region φ} (p : RewriteD r r') : Rewrite r r'
@@ -771,16 +722,7 @@ theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (
   : Rewrite r₀ r₁' := h ▸ p
 
 theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs := by cases p with
-  | let1_let1 => sorry
-  | let1_let2 => sorry
   | let1_case_t => sorry
-  | let2_let1 => sorry
-  | let2_pair =>
-    simp only [fvs, Term.fvs, Set.union_assoc, fvs_wk, Nat.succ_eq_add_one,
-      Set.liftnFv_of_union, Set.liftnFv_map_add]
-    rw [Set.liftnFv_succ]
-  | let2_let2 => sorry
-  | let2_case_t => sorry
   | let1_case a b r s =>
     simp only [fvs, fvs_wk, Nat.succ_eq_add_one, Set.liftnFv_of_union, Set.liftnFv_map_add,
       <-Set.union_assoc]
@@ -884,9 +826,15 @@ theorem eqv_cfg (pβ : β ≈ β) (n) {G G' : Fin n → Region φ} (pG : G ≈ G
 theorem eqv_let1_op {f e r} : @let1 φ (op f e) r ≈ (let1 e $ let1 (op f (var 0)) $ r.vwk1)
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_op f e r
 
+theorem eqv_let1_let1 {a b r} : @let1 φ (a.let1 b) r ≈ (let1 a $ let1 b $ r.vwk1)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_let1 a b r
+
 theorem eqv_let1_pair {a b r}
   : @let1 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_pair a b r
+
+theorem eqv_let1_let2 {a b r} : @let1 φ (a.let2 b) r ≈ (let2 a $ let1 b $ r.vwk1.vwk1)
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_let2 a b r
 
 theorem eqv_let1_inl {e r} : @let1 φ (inl e) r ≈ (let1 e $ let1 (inl (var 0)) $ r.vwk1)
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_inl e r
@@ -897,25 +845,32 @@ theorem eqv_let1_inr {e r} : @let1 φ (inr e) r ≈ (let1 e $ let1 (inr (var 0))
 theorem eqv_let1_abort {e r} : @let1 φ (abort e) r ≈ (let1 e $ let1 (abort (var 0)) $ r.vwk1)
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_abort e r
 
-theorem eqv_let2_op {f e r}
-  : @let2 φ (op f e) r ≈ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_op f e r
+theorem eqv_let2_bind {e r} : @let2 φ e r ≈ (let1 e $ let2 (var 0) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_bind e r
 
-theorem eqv_let2_pair {a b r}
-  : @let2 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ r)
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_pair a b r
+theorem eqv_case_bind {e r s}
+  : @case φ e r s ≈ (let1 e $ case (var 0) (r.vwk1) (s.vwk1))
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_bind e r s
 
-theorem eqv_let2_abort {e r}
-  : @let2 φ (abort e) r ≈ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_abort e r
+-- theorem eqv_let2_op {f e r}
+--   : @let2 φ (op f e) r ≈ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+--   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_op f e r
 
-theorem eqv_case_op {f e r s}
-  : @case φ (op f e) r s ≈ (let1 e $ case (op f (var 0)) (r.vwk1) (s.vwk1))
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_op f e r s
+-- theorem eqv_let2_pair {a b r}
+--   : @let2 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ r)
+--   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_pair a b r
 
-theorem eqv_case_abort {e r s}
-  : @case φ (abort e) r s ≈ (let1 e $ case (abort (var 0)) (r.vwk1) (s.vwk1))
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_abort e r s
+-- theorem eqv_let2_abort {e r}
+--   : @let2 φ (abort e) r ≈ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
+--   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_abort e r
+
+-- theorem eqv_case_op {f e r s}
+--   : @case φ (op f e) r s ≈ (let1 e $ case (op f (var 0)) (r.vwk1) (s.vwk1))
+--   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_op f e r s
+
+-- theorem eqv_case_abort {e r s}
+--   : @case φ (abort e) r s ≈ (let1 e $ case (abort (var 0)) (r.vwk1) (s.vwk1))
+--   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_abort e r s
 
 theorem eqv_let1_case {a b r s}
   : (@let1 φ a $ case (b.wk Nat.succ) r s)
@@ -953,23 +908,22 @@ theorem eqv_cfg_fuse {β n G k} (ρ : Fin k → Fin n) (hρ : Function.Surjectiv
     ≈ cfg β k (G ∘ ρ)
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_fuse β n G k ρ hρ
 
+theorem eqv_let1_eta {e} {r : Region φ}
+  : @let1 φ e (let1 (Term.var 0) r.vwk1) ≈ let1 e r
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_eta e r
+
 theorem eqv_let2_eta {e} {r : Region φ}
   : @let2 φ e (let1 ((Term.var 1).pair (Term.var 0)) r.vwk1.vwk1)
     ≈ let1 e r
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_eta e r
 
+theorem eqv_case_eta {e r}
+  : @case φ e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1)
+    ≈ let1 e r
+  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_eta e r
+
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
   := by cases d with
-  | let1_let1 => sorry
-  | let1_let2 => sorry
-  | let2_let1 => sorry
-  | let1_case_t => sorry
-  | let2_pair a b r =>
-    simp only [
-      Region.vwk, wk, Nat.liftWk, vwk_liftWk₂_vwk1, wk_liftWk_wk_succ, Nat.liftnWk_two]
-    constructor
-  | let2_let2 => sorry
-  | let2_case_t => sorry
   | cfg_cfg β n G n' G' =>
     simp only [Region.vwk, wk, Fin.comp_addCases_apply]
     rw [<-Function.comp.assoc, Region.vwk_comp_lwk, Function.comp.assoc]
@@ -990,7 +944,6 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
       Nat.liftWk_comm_liftnWk_apply, vwk_liftnWk₂_vwk1, vwk_liftWk₂_vwk1]
     constructor
-  | case_eta => sorry
   | _ =>
     simp only [
       Region.vwk, wk, Nat.liftWk,
@@ -1298,65 +1251,6 @@ def StepD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
   := StepD.rw_op $ RewriteD.let1_abort e r
 
 @[match_pattern]
-def StepD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
-  : StepD Γ (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := StepD.rw $ RewriteD.let2_op f e r
-
-@[match_pattern]
-def StepD.let2_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
-  : StepD Γ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-    (let2 (op f e) r)
-  := StepD.rw_op $ RewriteD.let2_op f e r
-
-@[match_pattern]
-def StepD.let2_pair {Γ : ℕ → ε} (a b) (r : Region φ)
-  : StepD Γ (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
-  := StepD.rw $ RewriteD.let2_pair a b r
-
-@[match_pattern]
-def StepD.let2_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
-  : StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ r)
-    (let2 (pair a b) r)
-  := StepD.rw_op $ RewriteD.let2_pair a b r
-
-@[match_pattern]
-def StepD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
-  : StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := StepD.rw $ RewriteD.let2_abort e r
-
-@[match_pattern]
-def StepD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
-  : StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-    (let2 (abort e) r)
-  := StepD.rw_op $ RewriteD.let2_abort e r
-
-@[match_pattern]
-def StepD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
-  : StepD Γ (case (op f e) r s)
-    (let1 e $ case (op f (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
-  )
-  := StepD.rw $ RewriteD.case_op f e r s
-
-@[match_pattern]
-def StepD.case_op_op {Γ : ℕ → ε} (f e) (r s : Region φ)
-  : StepD Γ (let1 e $ case (op f (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
-    (case (op f e) r s)
-  := StepD.rw_op $ RewriteD.case_op f e r s
-
-@[match_pattern]
-def StepD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
-  : StepD Γ (case (abort e) r s)
-    (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
-  )
-  := StepD.rw $ RewriteD.case_abort e r s
-
-@[match_pattern]
-def StepD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
-  : StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
-    (case (abort e) r s)
-  := StepD.rw_op $ RewriteD.case_abort e r s
-
-@[match_pattern]
 def StepD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   : StepD Γ (let1 a $ case (b.wk Nat.succ) r s)
     (case b
@@ -1617,55 +1511,6 @@ def RWD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
   : RWD StepD Γ (let1 e $ let1 (abort (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
     (let1 (abort e) r)
   := single $ BCongD.rel $ StepD.let1_abort_op e r
-
-def RWD.let2_op {Γ : ℕ → ε} (f e) (r : Region φ)
-  : RWD StepD Γ (let2 (op f e) r) (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := single $ BCongD.rel $ StepD.let2_op f e r
-
-def RWD.let2_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
-  : RWD StepD Γ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-    (let2 (op f e) r)
-  := single $ BCongD.rel $ StepD.let2_op_op f e r
-
-def RWD.let2_pair {Γ : ℕ → ε} (a b) (r : Region φ)
-  : RWD StepD Γ (let2 (pair a b) r) (let1 a $ let1 (b.wk Nat.succ) $ r)
-  := single $ BCongD.rel (StepD.let2_pair a b r)
-
-def RWD.let2_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
-  : RWD StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ r)
-    (let2 (pair a b) r)
-  := single $ BCongD.rel $ StepD.let2_pair_op a b r
-
-def RWD.let2_abort {Γ : ℕ → ε} (e) (r : Region φ)
-  : RWD StepD Γ (let2 (abort e) r) (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-  := single $ BCongD.rel $ StepD.let2_abort e r
-
-def RWD.let2_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
-  : RWD StepD Γ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
-    (let2 (abort e) r)
-  := single $ BCongD.rel $ StepD.let2_abort_op e r
-
-def RWD.case_op {Γ : ℕ → ε} (f e) (r s : Region φ)
-  : RWD StepD Γ (case (op f e) r s)
-    (let1 e $ case (op f (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
-  )
-  := single $ BCongD.rel $ StepD.case_op f e r s
-
-def RWD.case_op_op {Γ : ℕ → ε} (f e) (r s : Region φ)
-  : RWD StepD Γ (let1 e $ case (op f (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
-    (case (op f e) r s)
-  := single $ BCongD.rel $ StepD.case_op_op f e r s
-
-def RWD.case_abort {Γ : ℕ → ε} (e) (r s : Region φ)
-  : RWD StepD Γ (case (abort e) r s)
-    (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ))
-  )
-  := single $ BCongD.rel $ StepD.case_abort e r s
-
-def RWD.case_abort_op {Γ : ℕ → ε} (e) (r s : Region φ)
-  : RWD StepD Γ (let1 e $ case (abort (var 0)) (r.vwk (Nat.liftWk Nat.succ)) (s.vwk (Nat.liftWk Nat.succ)))
-    (case (abort e) r s)
-  := single $ BCongD.rel $ StepD.case_abort_op e r s
 
 def RWD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
   : RWD StepD Γ (let1 a $ case (b.wk Nat.succ) r s)
