@@ -1,6 +1,3 @@
-import DeBruijnSSA.BinSyntax.Syntax.Rewrite.Definitions
-import DeBruijnSSA.BinSyntax.Syntax.Rewrite.Subst
-
 namespace BinSyntax
 namespace Region
 

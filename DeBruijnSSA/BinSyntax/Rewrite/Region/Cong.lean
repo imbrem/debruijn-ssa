@@ -1,5 +1,4 @@
-import DeBruijnSSA.BinSyntax.Typing.Region
-import DeBruijnSSA.BinSyntax.Syntax.Rewrite
+import DeBruijnSSA.BinSyntax.Typing.Region.Basic
 
 import Discretion.Utils.Quotient
 

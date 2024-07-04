@@ -1,5 +1,6 @@
 import DeBruijnSSA.BinSyntax.Syntax.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Rewrite
+import DeBruijnSSA.InstSet
 
 namespace BinSyntax
 

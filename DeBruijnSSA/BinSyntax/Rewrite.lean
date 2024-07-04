@@ -1,3 +1,3 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Definitions
-import DeBruijnSSA.BinSyntax.Rewrite.Subst
-import DeBruijnSSA.BinSyntax.Rewrite.Categorical
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Equiv
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Subst
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Categorical
