@@ -990,17 +990,68 @@ theorem eqv_vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : r ≈ r') : r.vwk ρ 
 
 def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.lwk ρ) (r'.lwk ρ)
   := by cases d with
-  | cfg_br_lt => sorry
-  | cfg_cfg => sorry
-  | cfg_fuse => sorry
+  | cfg_br_lt ℓ e n G hℓ =>
+    simp only [Region.lwk, Nat.liftnWk, hℓ, ↓reduceIte]
+    apply cfg_br_lt
+  | cfg_cfg β n G n' G' =>
+    simp only [Region.lwk]
+    apply cast_trg
+    apply cfg_cfg
+    congr
+    . rw [Nat.liftnWk_add]; rfl
+    . funext i
+      simp only [Fin.comp_addCases_apply]
+      simp only [Fin.addCases]
+      split
+      . simp [Nat.liftnWk_add, *]
+      . simp only [Function.comp_apply, eq_rec_constant, Region.lwk_lwk]
+        congr
+        funext k
+        simp only [Function.comp_apply, Nat.liftnWk]
+        split
+        case isTrue h =>
+          rw [ite_cond_eq_true]
+          simp_arith [Nat.succ_le_of_lt h]
+        case isFalse h =>
+          rw [ite_cond_eq_false]
+          rw [Nat.sub_add_eq]
+          simp only [add_tsub_cancel_right]
+          rw [Nat.add_comm n n', <-Nat.add_assoc]
+          rw [Nat.add_comm]
+          simp [Nat.le_of_not_lt h]
+  | cfg_fuse β n G k σ hσ =>
+    have hσk := Fintype.card_le_of_surjective _ hσ
+    simp only [Fintype.card_fin] at hσk
+    simp only [Region.lwk, Function.comp_apply]
+    apply cast ?left ?right
+    apply cfg_fuse (β.lwk (Nat.liftnWk n ρ)) _ _ _ σ
+    case left =>
+      simp only [Region.lwk, Function.comp_apply, cfg.injEq, lwk_lwk]
+      constructor
+      . congr
+        funext j
+        simp only [Function.comp_apply, Fin.toNatWk, Nat.liftnWk]
+        split
+        case isTrue h =>
+          have h' : j < k := Nat.lt_of_lt_of_le h hσk
+          simp [h']
+        case isFalse h =>
+          if h : j < k then
+            simp [h]
+            sorry
+          else
+            sorry
+      . sorry
+    case right =>
+      sorry
+    all_goals sorry
   | _ =>
+    stop
     simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
     constructor
 
 theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
-
--- TODO: Rewrite.lwk
 
 -- That is, label weakenings induce a prefunctor
 
