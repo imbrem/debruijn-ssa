@@ -298,6 +298,8 @@ theorem Term.comp_wk (ρ σ)
 theorem Term.wk_comp (ρ σ)
   : @wk φ (ρ ∘ σ) = wk ρ ∘ wk σ := (comp_wk ρ σ).symm
 
+def Term.wk0 : Term φ → Term φ := wk Nat.succ
+
 def Term.wk1 : Term φ → Term φ := wk (Nat.liftWk Nat.succ)
 
 theorem Term.wk_wk1 (r : Term φ) : r.wk1.wk ρ = r.wk (ρ ∘ Nat.liftWk Nat.succ)
@@ -694,6 +696,8 @@ theorem Region.comp_vwk (ρ σ)
 theorem Region.vwk_comp (ρ σ)
   : @vwk φ (ρ ∘ σ) = vwk ρ ∘ vwk σ := Eq.symm $ funext (Region.vwk_vwk ρ σ)
 
+def Region.vwk0 : Region φ → Region φ := vwk Nat.succ
+
 def Region.vwk1 : Region φ → Region φ := vwk (Nat.liftWk Nat.succ)
 
 theorem Region.vwk_vwk1 (r : Region φ) : r.vwk1.vwk ρ = r.vwk (ρ ∘ Nat.liftWk Nat.succ)
@@ -720,7 +724,7 @@ theorem Region.vwk_liftnWk₂_liftWk_vwk2 (r : Region φ)
   = (r.vwk (Nat.liftnWk 2 ρ)).vwk (Nat.liftnWk 2 Nat.succ)
   := by simp only [vwk_vwk, <-Nat.liftnWk_comp, Nat.liftWk_comp_succ]
 
-def Region.vwkn (n : ℕ) : Region φ → Region φ := vwk (Nat.liftWk (· + n))
+def Region.vwk1n (n : ℕ) : Region φ → Region φ := vwk (Nat.liftWk (· + n))
 
 theorem Region.lwk_id (r : Region φ) : r.lwk id = r := by induction r <;> simp [*]
 
@@ -753,6 +757,16 @@ theorem Region.vwk_comp_lwk : @vwk φ σ ∘ lwk ρ = lwk ρ ∘ vwk σ := funex
 theorem Region.lwk_vwk1 (t : Region φ) : t.vwk1.lwk ρ = (t.lwk ρ).vwk1 := lwk_vwk t
 
 theorem Region.vwk1_lwk (t : Region φ) : (t.lwk ρ).vwk1 = t.vwk1.lwk ρ := t.lwk_vwk1.symm
+
+def Region.lwk1 : Region φ → Region φ := lwk (Nat.liftWk Nat.succ)
+
+theorem Region.lwk1_vwk1 (r : Region φ) : r.vwk1.lwk1= r.lwk1.vwk1 := by rw [vwk1, lwk1, vwk_lwk]
+
+theorem Region.vwk1_lwk1 (r : Region φ) : r.lwk1.vwk1 = r.vwk1.lwk1 := r.lwk1_vwk1.symm
+
+theorem Region.lwk1_vwk (r : Region φ) : (r.vwk ρ).lwk1 = r.lwk1.vwk ρ := by rw [lwk1, vwk_lwk]
+
+theorem Region.vwk_lwk1 (r : Region φ) : r.lwk1.vwk ρ = (r.vwk ρ).lwk1 := r.lwk1_vwk.symm
 
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 

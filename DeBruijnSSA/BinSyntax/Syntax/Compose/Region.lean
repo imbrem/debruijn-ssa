@@ -490,83 +490,82 @@ theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r''
 --   comp (let1_beta _ _ rfl) $
 --   let1_beta _ _ rfl
 
--- def proj_left : Region φ :=
---   let2 (Term.var 0) $
---   ret (Term.var 0)
+def proj_left : Region φ :=
+  let2 (Term.var 0) $
+  ret (Term.var 0)
 
--- def proj_right : Region φ :=
---   let2 (Term.var 0) $
---   ret (Term.var 1)
+def proj_right : Region φ :=
+  let2 (Term.var 0) $
+  ret (Term.var 1)
 
--- def left_unitor_inv : Region φ := ret (Term.pair Term.unit (Term.var 0))
+def left_unitor_inv : Region φ := ret (Term.pair Term.unit (Term.var 0))
 
--- def right_unitor_inv : Region φ := ret (Term.pair (Term.var 0) Term.unit)
+def right_unitor_inv : Region φ := ret (Term.pair (Term.var 0) Term.unit)
 
--- def inl : Region φ := ret (Term.var 0).inl
+def inj_l : Region φ := ret (Term.var 0).inl
 
--- def inr : Region φ := ret (Term.var 0).inr
+def inj_r : Region φ := ret (Term.var 0).inr
 
--- def swap : Region φ :=
---   let2 (Term.var 0) $
---   ret (Term.pair (Term.var 1) (Term.var 0))
+def swap : Region φ :=
+  ret (Term.let2 (Term.var 0) $ Term.pair (Term.var 1) (Term.var 0))
 
--- def let_eta : Region φ :=
---   let1 (Term.var 0) $
---   ret (Term.var 0)
+def let_eta : Region φ :=
+  let1 (Term.var 0) $
+  ret (Term.var 0)
 
--- def let2_eta : Region φ :=
---   let2 (Term.var 0) $
---   ret (Term.pair (Term.var 0) (Term.var 1))
+def let2_eta : Region φ :=
+  let2 (Term.var 0) $
+  ret (Term.pair (Term.var 0) (Term.var 1))
 
--- def case_eta : Region φ := case (Term.var 0) (ret (Term.var 0).inl) (ret (Term.var 0).inr)
+def case_eta : Region φ := case (Term.var 0) (ret (Term.var 0).inl) (ret (Term.var 0).inr)
 
--- def drop : Region φ :=
---   let1 (Term.var 0) $
---   ret Term.unit
+def drop : Region φ :=
+  let1 (Term.var 0) $
+  ret Term.unit
 
--- def join (r r' : Region φ) : Region φ := case (Term.var 0)
---   (r.vwk (Nat.liftWk Nat.succ))
---   (r'.lwk (Nat.liftWk Nat.succ))
+def join (r r' : Region φ) : Region φ := case (Term.var 0)
+  (r.vwk (Nat.liftWk Nat.succ))
+  (r'.lwk (Nat.liftWk Nat.succ))
 
--- def abort : Region φ := ret (Term.var 0).abort
+def zero : Region φ := ret (Term.var 0).abort
 
--- def left_distributor : Region φ :=
---   case (Term.var 0)
---     (ret (Term.pair (Term.var 0) (Term.var 2).inl))
---     (ret (Term.pair (Term.var 0) (Term.var 2).inr))
+def left_distributor : Region φ :=
+  case (Term.var 0)
+    (ret (Term.pair (Term.var 0) (Term.var 2).inl))
+    (ret (Term.pair (Term.var 0) (Term.var 2).inr))
 
--- def left_distributor_inv : Region φ :=
---   let2 (Term.var 0) $
---   case (Term.var 1)
---     (ret (Term.pair (Term.var 0) (Term.var 1)))
---     (ret (Term.pair (Term.var 0) (Term.var 1)))
+def left_distributor_inv : Region φ :=
+  let2 (Term.var 0) $
+  case (Term.var 1)
+    (ret (Term.pair (Term.var 0) (Term.var 1)))
+    (ret (Term.pair (Term.var 0) (Term.var 1)))
 
--- def right_distributor : Region φ :=
---   case (Term.var 0)
---     (ret (Term.pair (Term.var 2).inl (Term.var 0)))
---     (ret (Term.pair (Term.var 2).inr (Term.var 0)))
+def right_distributor : Region φ :=
+  case (Term.var 0)
+    (ret (Term.pair (Term.var 2).inl (Term.var 0)))
+    (ret (Term.pair (Term.var 2).inr (Term.var 0)))
 
--- def right_distributor_inv : Region φ :=
---   let2 (Term.var 0) $
---   case (Term.var 0)
---     (ret (Term.pair (Term.var 2) (Term.var 0)))
---     (ret (Term.pair (Term.var 2) (Term.var 0)))
+def right_distributor_inv : Region φ :=
+  let2 (Term.var 0) $
+  case (Term.var 0)
+    (ret (Term.pair (Term.var 2) (Term.var 0)))
+    (ret (Term.pair (Term.var 2) (Term.var 0)))
 
--- def swap_sum : Region φ := case (Term.var 0) (ret (Term.var 0).inr) (ret (Term.var 0).inl)
+def swap_sum : Region φ := case (Term.var 0) (ret (Term.var 0).inr) (ret (Term.var 0).inl)
 
--- def right_exit : Region φ :=
---   case (Term.var 0)
---     (br 0 (Term.var 0))
---     (br 1 (Term.var 0))
+def left_exit : Region φ :=
+  case (Term.var 0)
+    (br 1 (Term.var 0))
+    (br 0 (Term.var 0))
 
--- def left_exit : Region φ :=
---   case (Term.var 0)
---     (br 1 (Term.var 0))
---     (br 0 (Term.var 0))
+def right_exit : Region φ :=
+  case (Term.var 0)
+    (br 0 (Term.var 0))
+    (br 1 (Term.var 0))
 
--- def fixpoint (r : Region φ) : Region φ := cfg nil 1 (λ_ => r ++ left_exit)
+def fixpoint (r : Region φ) : Region φ := cfg nil 1 (λ_ => r ++ left_exit)
 
--- def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
+def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
 
 -- end Region
 
