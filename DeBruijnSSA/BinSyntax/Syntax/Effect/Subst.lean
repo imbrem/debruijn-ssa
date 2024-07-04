@@ -32,7 +32,8 @@ theorem effect_liftnBot_liftn (Γ : ℕ → ε) (σ : Subst φ)
 end Subst
 
 theorem effect_subst (Γ : ℕ → ε) (σ : Subst φ) (e : Term φ)
-  : (e.subst σ).effect Γ = e.effect (σ.effect Γ) := by induction e <;> simp [*]
+  : (e.subst σ).effect Γ = e.effect (σ.effect Γ) := by induction e generalizing σ Γ
+  <;> simp [Subst.effect_liftBot_lift, Subst.effect_liftnBot_liftn, *]
 
 theorem effect_effect (Γ : ℕ → ε) (σ : Subst φ) (e : Term φ)
   : e.effect (σ.effect Γ) = (e.subst σ).effect Γ := (effect_subst Γ σ e).symm

@@ -14,21 +14,27 @@ section Definitions
 inductive Term (φ : Type _) where
   | var : ℕ → Term φ
   | op : φ → Term φ → Term φ
+  | let1 : Term φ → Term φ → Term φ
   | pair : Term φ → Term φ → Term φ
   | unit : Term φ
+  | let2 : Term φ → Term φ → Term φ
   | inl : Term φ → Term φ
   | inr : Term φ → Term φ
+  | case: Term φ → Term φ → Term φ → Term φ
   | abort : Term φ → Term φ
 
 /-- Rename the variables in a `Term` using `ρ` -/
 @[simp]
 def Term.wk (ρ : ℕ → ℕ) : Term φ → Term φ
   | var x => var (ρ x)
-  | op f e => op f (wk ρ e)
+  | op f a => op f (wk ρ a)
+  | let1 a e => let1 (wk ρ a) (wk (Nat.liftWk ρ) e)
   | pair l r => pair (wk ρ l) (wk ρ r)
   | unit => unit
+  | let2 a e => let2 (wk ρ a) (wk (Nat.liftnWk 2 ρ) e)
   | inl a => inl (wk ρ a)
   | inr a => inr (wk ρ a)
+  | case a l r => case (wk ρ a) (wk (Nat.liftWk ρ) l) (wk (Nat.liftWk ρ) r)
   | abort a => abort (wk ρ a)
 
 /-- A basic block body, which consists of a sequence of variable definitions -/
@@ -283,8 +289,8 @@ theorem Term.wk_id' : (t : Term φ) -> t.wk (λx => x) = t := wk_id
 @[simp]
 theorem Term.wk_of_id' : @wk φ (λx => x) = id := funext wk_id
 
-theorem Term.wk_wk (ρ : ℕ → ℕ) (σ : ℕ → ℕ) (t : Term φ)
-  : (t.wk σ).wk ρ  = t.wk (ρ ∘ σ) := by induction t <;> simp [*]
+theorem Term.wk_wk (ρ : ℕ → ℕ) (σ : ℕ → ℕ) (t : Term φ) : (t.wk σ).wk ρ  = t.wk (ρ ∘ σ)
+  := by induction t generalizing σ ρ <;> simp [Nat.liftWk_comp, Nat.liftnWk_comp, *]
 
 theorem Term.comp_wk (ρ σ)
   : wk ρ ∘ wk σ = @wk φ (ρ ∘ σ) := funext (Term.wk_wk ρ σ)

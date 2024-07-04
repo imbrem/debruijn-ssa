@@ -21,28 +21,34 @@ section Definitions
 def Term.fv : Term φ → Multiset ℕ
   | var x => {x}
   | op _ x => x.fv
+  | let1 a e => a.fv + e.fv.liftFv
   | pair x y => x.fv + y.fv
+  | let2 a e => a.fv + e.fv.liftnFv 2
   | inl a => a.fv
   | inr a => a.fv
+  | case a l r => a.fv + l.fv.liftFv + r.fv.liftFv
   | abort a => a.fv
   | _ => 0
 
 theorem Term.fv_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fv = t.fv.map ρ := by
-  induction t <;> simp [*]
+  induction t generalizing ρ <;> simp [*]
 
 /-- Get the set of free variables of a term -/
 @[simp]
 def Term.fvs : Term φ → Set ℕ
   | var x => {x}
   | op _ x => x.fvs
+  | let1 a e => a.fvs ∪ e.fvs.liftFv
   | pair x y => x.fvs ∪ y.fvs
+  | let2 a e => a.fvs ∪ e.fvs.liftnFv 2
   | inl a => a.fvs
   | inr a => a.fvs
+  | case a l r => a.fvs ∪ l.fvs.liftFv ∪ r.fvs.liftFv
   | abort a => a.fvs
   | _ => ∅
 
 theorem Term.fvs_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fvs = ρ '' t.fvs := by
-  induction t <;> simp [Set.image_union, *]
+  induction t generalizing ρ <;> simp [Set.image_union, *]
 
 theorem Term.fvs_wk1 (r : Term φ) : r.wk1.fvs = Nat.liftWk Nat.succ '' r.fvs := by
   simp [wk1, fvs_wk]
@@ -53,6 +59,9 @@ theorem Term.fvs_eq (t : Term φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ t.fvs, ρ
   | var x => simp [h x]
   | pair l r Il Ir => simp [Il (λi hi => h i (by simp [hi])), Ir (λi hi => h i (by simp [hi]))]
   | op _ a Ia | inl a Ia | inr a Ia | abort a Ia => simp [Ia h]
+  | let1 => sorry
+  | let2 => sorry
+  | case => sorry
   | _ => rfl
 
 /-- Get the index of the highest free variable in this term, plus one -/
@@ -60,9 +69,12 @@ theorem Term.fvs_eq (t : Term φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ t.fvs, ρ
 def Term.fvi : Term φ → ℕ
   | var x => x + 1
   | op _ x => x.fvi
+  | let1 a e => Nat.max a.fvi (e.fvi - 1)
   | pair x y => Nat.max x.fvi y.fvi
+  | let2 a e => Nat.max a.fvi (e.fvi - 2)
   | inl a => a.fvi
   | inr a => a.fvi
+  | case a l r => Nat.max a.fvi (Nat.max (l.fvi - 1) (r.fvi - 1))
   | abort a => a.fvi
   | _ => 0
 
@@ -86,7 +98,7 @@ theorem Term.fvi_inr_le_iff {t : Term φ} {n : ℕ} : t.inr.fvi ≤ n ↔ t.fvi 
 theorem Term.fvi_abort_le_iff {t : Term φ} {n : ℕ} : t.abort.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
 
 theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
-  induction t <;> simp [*]
+  stop induction t generalizing ρ <;> simp [*]
 
 /-- Get the count of how often a free variable occurs in this term -/
 @[simp]
@@ -100,9 +112,9 @@ def Term.fvc (x : ℕ) : Term φ → ℕ
   | _ => 0
 
 theorem Term.fvc_eq_fv_count (x : ℕ) (t : Term φ) : t.fvc x = t.fv.count x := by
-  induction t with
+  induction t generalizing x with
   | var y => simp [Multiset.count_singleton]
-  | _ => simp [*]
+  | _ => stop simp [*]
 
 /-- The free variables in this body -/
 @[simp]

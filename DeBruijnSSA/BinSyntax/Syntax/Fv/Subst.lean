@@ -34,8 +34,11 @@ theorem Region.fl_vsubst (σ : Term.Subst φ) (r : Region φ) : (r.vsubst σ).fl
 def Term.Subst.fvs (σ : Term.Subst φ) (i : ℕ) : Set ℕ := (σ i).fvs
 
 theorem Term.fvs_subst (σ : Term.Subst φ) (t : Term φ) : (t.subst σ).fvs = ⋃ x ∈ t.fvs, σ.fvs x
-  := by induction t with
+  := by induction t generalizing σ with
   | pair a b Ia Ib => simp only [fvs, Set.biUnion_union, *]
+  | let1 => sorry
+  | let2 => sorry
+  | case => sorry
   | _ => simp [Subst.fvs, *]
 
 open Classical in

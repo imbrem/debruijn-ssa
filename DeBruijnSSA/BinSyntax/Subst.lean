@@ -142,12 +142,16 @@ def Ctx.Var.subst (hσ : σ.WfD Γ Δ) (h : Δ.Var n V) : (σ n).WfD Γ V
 theorem Ctx.Var.subst' (hσ : σ.Wf Γ Δ) (h : Δ.Var n V) : (σ n).Wf Γ V
   := (hσ ⟨n, h.length⟩).wk_res h.get
 
-def Term.WfD.subst {a : Term φ} (hσ : σ.WfD Γ Δ) : a.WfD Δ V → (a.subst σ).WfD Γ V
+def Term.WfD.subst {Γ Δ : Ctx α ε} {σ} (hσ : σ.WfD Γ Δ) {a : Term φ}
+  : a.WfD Δ V → (a.subst σ).WfD Γ V
   | var h => Ctx.Var.subst hσ h
   | op df de => op df (de.subst hσ)
+  | let1 da dt => let1 (da.subst hσ) (dt.subst hσ.slift)
   | pair dl dr => pair (dl.subst hσ) (dr.subst hσ)
+  | let2 da dt => let2 (da.subst hσ) (dt.subst hσ.sliftn₂)
   | inl d => inl (d.subst hσ)
   | inr d => inr (d.subst hσ)
+  | case de dl dr => case (de.subst hσ) (dl.subst hσ.slift) (dr.subst hσ.slift)
   | abort d => abort (d.subst hσ)
   | unit e => unit e
 

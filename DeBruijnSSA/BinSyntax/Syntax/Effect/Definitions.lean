@@ -16,15 +16,19 @@ variable [Φ : EffectSet φ ε] [Bot ε] [Sup ε]
 def Term.effect (Γ : ℕ → ε) : Term φ → ε
   | var n => Γ n
   | op f e => Φ.effect f ⊔ e.effect Γ
+  | let1 a e => a.effect Γ ⊔ e.effect (Nat.liftBot Γ)
   | pair a b => a.effect Γ ⊔ b.effect Γ
+  | let2 a e => a.effect Γ ⊔ e.effect (Nat.liftnBot 2 Γ)
   | inl a => a.effect Γ
   | inr b => b.effect Γ
+  | case e s t => e.effect Γ ⊔ s.effect (Nat.liftBot Γ) ⊔ t.effect (Nat.liftBot Γ)
   | abort e => e.effect Γ
   | unit => ⊥
 
 theorem Term.effect_wk (ρ : ℕ → ℕ) (Γ : ℕ → ε) (e : Term φ)
   : (e.wk ρ).effect Γ = e.effect (Γ ∘ ρ)
-  := by induction e <;> simp [*]
+  := by induction e generalizing ρ Γ
+    <;> simp [Nat.liftBot_comp_liftWk, Nat.liftnBot_comp_liftnWk, *]
 
 theorem Term.effect_liftBot_wk_liftWk (Γ : ℕ → ε) (e : Term φ)
   : (e.wk (Nat.liftWk ρ)).effect (Nat.liftBot Γ) = e.effect (Nat.liftBot (Γ ∘ ρ))
@@ -340,10 +344,13 @@ theorem Term.effect_le {Γ Δ : ℕ → ε} (e : Term φ) (H : ∀i ∈ e.fvs, �
   induction e with
   | var => exact H _ rfl
   | op f e I => exact sup_le_sup_left (I H) _
+  | let1 => sorry
   | pair a b Ia Ib
     => exact sup_le_sup (Ia (λi hi => H i (Or.inl hi))) (Ib (λi hi => H i (Or.inr hi)))
+  | let2 => sorry
   | inl _ I => exact (I H)
   | inr _ I => exact (I H)
+  | case => sorry
   | abort _ I => exact (I H)
   | _ => exact le_refl _
 
