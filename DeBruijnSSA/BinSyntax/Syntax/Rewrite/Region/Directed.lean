@@ -106,31 +106,6 @@ def RWD.let1_abort_op {Γ : ℕ → ε} (e) (r : Region φ)
     (let1 (abort e) r)
   := single $ BCongD.rel $ StepD.let1_abort_op e r
 
-def RWD.let1_case {Γ : ℕ → ε} (a b) (r s : Region φ)
-  : RWD StepD Γ (let1 a $ case (b.wk Nat.succ) r s)
-    (case b
-      (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1))) (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
-  := single $ BCongD.rel $ StepD.let1_case a b r s
-
-def RWD.let1_case_op {Γ : ℕ → ε} (a b) (r s : Region φ)
-  : RWD StepD Γ (case b
-      (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1))) (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
-    (let1 a $ case (b.wk Nat.succ) r s)
-  := single $ BCongD.rel $ StepD.let1_case_op a b r s
-
-def RWD.let2_case {Γ : ℕ → ε} (a b) (r s : Region φ)
-  : RWD StepD Γ (let2 a $ case (b.wk (· + 2)) r s)
-    (case b
-      (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2))) (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
-  := single $ BCongD.rel $ StepD.let2_case a b r s
-
-def RWD.let2_case_op {Γ : ℕ → ε} (a b) (r s : Region φ)
-  : RWD StepD Γ
-    (case b
-      (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2))) (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
-    (let2 a $ case (b.wk (· + 2)) r s)
-  := single $ BCongD.rel $ StepD.let2_case_op a b r s
-
 def RWD.cfg_br_lt {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   : RWD StepD Γ (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   := single $ BCongD.rel $ StepD.cfg_br_lt ℓ e n G h

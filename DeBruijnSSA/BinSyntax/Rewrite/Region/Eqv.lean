@@ -455,51 +455,7 @@ theorem Eqv.case_abort {Γ : Ctx α ε} {L : LCtx α} (e' := ⊥)
       apply Eqv.sound
       apply InS.case_abort
 
-theorem InS.let1_case {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨A, ea⟩)
-  (b : Term.InS φ Γ ⟨B.coprod C, eb⟩)
-  {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
-  (s : InS φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (let1 a $ case (b.wk ⟨Nat.succ, (by simp)⟩) r s) ≈
-      case b
-        (let1 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
-        (let1 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
-  := EqvGen.rel _ _ $ Wf.Cong.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
-
-theorem Eqv.let1_case {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨A, ea⟩)
-  (b : Term.InS φ Γ ⟨B.coprod C, eb⟩)
-  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
-  (s : Eqv φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (Eqv.let1 a $ Eqv.case (b.wk ⟨Nat.succ, (by simp)⟩) r s) =
-      Eqv.case b
-        (Eqv.let1 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
-        (Eqv.let1 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 1, Ctx.Wkn.swap01⟩))
-  := by induction r using Quotient.inductionOn with
-  | h r =>
-    induction s using Quotient.inductionOn with
-    | h s =>
-      simp only [case_quot, let1_quot, vwk_quot]
-      apply Eqv.sound
-      apply InS.let1_case
-
-theorem Eqv.let2_case {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨A.prod B, ea⟩)
-  (b : Term.InS φ Γ ⟨C.coprod D, eb⟩)
-  {r : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
-  (s : Eqv φ (⟨D, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (Eqv.let2 a $ Eqv.case (b.wk ⟨(· + 2), (by simp)⟩) r s) =
-      Eqv.case b
-        (Eqv.let2 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
-        (Eqv.let2 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
-  := by induction r using Quotient.inductionOn with
-  | h r =>
-    induction s using Quotient.inductionOn with
-    | h s =>
-      simp only [case_quot, let2_quot, vwk_quot]
-      apply Eqv.sound
-      apply InS.let2_case
+-- TODO: let1_case, let2_case...
 
 theorem Eqv.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
   (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)

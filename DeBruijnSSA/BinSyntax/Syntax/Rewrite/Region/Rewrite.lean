@@ -23,6 +23,11 @@ namespace Region
 
 open Term
 
+-- TODO: let1_case and let2_case are NOT SEMANTICALLY VALID; must go fix!
+-- also maybe rename case_let1/2, can get rid of ugly t...
+
+-- TODO: we'll need a case_case and case_cfg too, probably :(
+
 -- TODO: CongD is effect monotone/antitone iff underlying is
 -- ==> CongD is effect preserving iff underlying is
 
@@ -42,7 +47,7 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk1)
   | let1_inr (e r) :
     RewriteD (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.vwk1)
-  | let1_case_t (a l r s) :
+  | let1_case (a l r s) :
     RewriteD (let1 (Term.case a l r) s) (case a (let1 l $ s.vwk1) (let1 r $ s.vwk1))
   | let1_abort (e r) :
     RewriteD (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
@@ -50,16 +55,35 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let2 e r) (let1 e $ (let2 (Term.var 0) (r.vwk (Nat.liftnWk 2 Nat.succ))))
   | case_bind (e r s) :
     RewriteD (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
-  | let1_case (a b r s) :
-    RewriteD (let1 a $ case (b.wk Nat.succ) r s)
-    (case b
-      (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1)))
-      (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
-  | let2_case (a b r s) :
-    RewriteD (let2 a $ case (b.wk (· + 2)) r s)
-    (case b
-      (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2)))
-      (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
+  -- | case_let1 (a b : Term φ) (r s) :
+  --   RewriteD (case a
+  --     (let1 (b.subst (Term.inl (Term.var 0)).subst0) r)
+  --     (let1 (b.subst (Term.inr (Term.var 0)).subst0) s))
+  --   (let1 a $ let1 b $ case (Term.var 1)
+  --     (r.vwk sorry)
+  --     (s.vwk sorry))
+  -- | case_let2 (a b : Term φ) (r s) :
+  --   RewriteD (case a
+  --     (let2 (b.subst (Term.inl (Term.var 0)).subst0) r)
+  --     (let2 (b.subst (Term.inr (Term.var 0)).subst0) s))
+  --   (let1 a $ let2 b $ case (Term.var 1)
+  --     ((r.vwk (Nat.swap0 2)).vwk (Nat.liftnWk 3 Nat.succ))
+  --     ((s.vwk (Nat.swap0 2)).vwk (Nat.liftnWk 3 Nat.succ)))
+  -- | case_case (a b : Term φ) (lr ls rr rs) :
+  --   RewriteD (case a
+  --     (case (b.subst (Term.inl (Term.var 0)).subst0) lr ls)
+  --     (case (b.subst (Term.inl (Term.var 0)).subst0) rr rs))
+  --   (let1 a $ let2 b $ sorry)
+  -- | let1_case (a b r s) :
+  --   RewriteD (let1 a $ case (b.wk Nat.succ) r s)
+  --   (case b
+  --     (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1)))
+  --     (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
+  -- | let2_case (a b r s) :
+  --   RewriteD (let2 a $ case (b.wk (· + 2)) r s)
+  --   (case b
+  --     (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2)))
+  --     (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
     RewriteD (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   | cfg_let1 (a β n G) :
@@ -72,10 +96,10 @@ inductive RewriteD : Region φ → Region φ → Type _
   | cfg_cfg (β n G n' G') :
     RewriteD (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   | cfg_zero (β G) : RewriteD (cfg β 0 G) β
-  | cfg_fuse (β n G k) (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ) :
-    RewriteD
-      (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
-      (cfg β k (G ∘ ρ))
+  -- | cfg_fuse (β n G k) (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ) :
+  --   RewriteD
+  --     (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+  --     (cfg β k (G ∘ ρ))
   | let1_eta (e) (r : Region φ) :
     RewriteD (let1 e (let1 (Term.var 0) r.vwk1)) (let1 e r)
   | let2_eta (e) (r : Region φ) :
@@ -109,43 +133,43 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     apply congrArg
     simp only [vwk1, effect_vwk, Nat.liftnBot_two, Nat.liftBot_comp_liftWk]
     rfl
-  | let1_case_t => sorry
+  | let1_case => sorry
   | let2_bind => sorry
   | case_bind => sorry
-  | let1_case a b r s =>
-    simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
-    have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
-      intro x y z w
-      rw [
-        sup_assoc, sup_assoc, sup_assoc, sup_comm, sup_comm z, <-sup_assoc, <-sup_assoc, sup_idem,
-        sup_assoc y, sup_assoc y]
-      apply congrArg
-      simp only [sup_assoc, sup_comm]
-    have h' : Nat.liftBot (Nat.liftBot Γ) ∘ Nat.swap0 1 = Nat.liftBot (Nat.liftBot Γ) := by
-      funext i
-      cases i with
-      | zero => rfl
-      | succ i => cases i <;> rfl
-    simp only [h, h', Region.effect_vwk]
-  | let2_case =>
-    simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
-    have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
-      intro x y z w
-      rw [
-        sup_assoc, sup_assoc, sup_assoc, sup_comm, sup_comm z, <-sup_assoc, <-sup_assoc, sup_idem,
-        sup_assoc y, sup_assoc y]
-      apply congrArg
-      simp only [sup_assoc, sup_comm]
-    rw [h]
-    have h' : Nat.liftBot (Nat.liftBot (Nat.liftBot Γ)) ∘ Nat.swap0 2
-      = Nat.liftBot (Nat.liftBot (Nat.liftBot Γ)) := by
-      funext i
-      cases i with
-      | zero => rfl
-      | succ i => cases i with
-        | zero => rfl
-        | succ i => cases i <;> rfl
-    simp [Nat.liftnBot_two, Region.effect_vwk, h']
+  -- | let1_case a b r s =>
+  --   simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
+  --   have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
+  --     intro x y z w
+  --     rw [
+  --       sup_assoc, sup_assoc, sup_assoc, sup_comm, sup_comm z, <-sup_assoc, <-sup_assoc, sup_idem,
+  --       sup_assoc y, sup_assoc y]
+  --     apply congrArg
+  --     simp only [sup_assoc, sup_comm]
+  --   have h' : Nat.liftBot (Nat.liftBot Γ) ∘ Nat.swap0 1 = Nat.liftBot (Nat.liftBot Γ) := by
+  --     funext i
+  --     cases i with
+  --     | zero => rfl
+  --     | succ i => cases i <;> rfl
+  --   simp only [h, h', Region.effect_vwk]
+  -- | let2_case =>
+  --   simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
+  --   have h : ∀x y z w : ε, x ⊔ (y ⊔ z) ⊔ (y ⊔ w) = y ⊔ (x ⊔ z ⊔ w) := by
+  --     intro x y z w
+  --     rw [
+  --       sup_assoc, sup_assoc, sup_assoc, sup_comm, sup_comm z, <-sup_assoc, <-sup_assoc, sup_idem,
+  --       sup_assoc y, sup_assoc y]
+  --     apply congrArg
+  --     simp only [sup_assoc, sup_comm]
+  --   rw [h]
+  --   have h' : Nat.liftBot (Nat.liftBot (Nat.liftBot Γ)) ∘ Nat.swap0 2
+  --     = Nat.liftBot (Nat.liftBot (Nat.liftBot Γ)) := by
+  --     funext i
+  --     cases i with
+  --     | zero => rfl
+  --     | succ i => cases i with
+  --       | zero => rfl
+  --       | succ i => cases i <;> rfl
+  --   simp [Nat.liftnBot_two, Region.effect_vwk, h']
   | cfg_br_lt ℓ e n G h =>
     simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ, Term.effect_liftnBot_wk_add]
     rw [sup_assoc]
@@ -169,10 +193,10 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     apply congrArg
     funext i
     simp [Region.effect_lwk]
-  | cfg_fuse β n G k ρ hρ =>
-    simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
-    apply congrArg
-    rw [Fin.sup_comp_surj _ hρ]
+  -- | cfg_fuse β n G k ρ hρ =>
+  --   simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
+  --   apply congrArg
+  --   rw [Fin.sup_comp_surj _ hρ]
   | let1_eta => sorry
   | let2_eta =>
     simp only [Region.effect, Term.effect, Nat.liftnBot, Nat.lt_succ_self, ↓reduceIte,
@@ -206,16 +230,16 @@ inductive Rewrite : Region φ → Region φ → Prop
     Rewrite (let2 e r) (let1 e $ (let2 (Term.var 0) (r.vwk (Nat.liftnWk 2 Nat.succ))))
   | case_bind (e r s) :
     Rewrite (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
-  | let1_case (a b r s) :
-    Rewrite (let1 a $ case (b.wk Nat.succ) r s)
-    (case b
-      (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1)))
-      (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
-  | let2_case (a b r s) :
-    Rewrite (let2 a $ case (b.wk (· + 2)) r s)
-    (case b
-      (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2)))
-      (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
+  -- | let1_case (a b r s) :
+  --   Rewrite (let1 a $ case (b.wk Nat.succ) r s)
+  --   (case b
+  --     (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1)))
+  --     (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
+  -- | let2_case (a b r s) :
+  --   Rewrite (let2 a $ case (b.wk (· + 2)) r s)
+  --   (case b
+  --     (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2)))
+  --     (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
     Rewrite (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   | cfg_let1 (a β n G) :
@@ -228,10 +252,10 @@ inductive Rewrite : Region φ → Region φ → Prop
   | cfg_cfg (β n G n' G') :
     Rewrite (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   | cfg_zero (β G) : Rewrite (cfg β 0 G) β
-  | cfg_fuse (β n G k) (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ) :
-    Rewrite
-      (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
-      (cfg β k (G ∘ ρ))
+  -- | cfg_fuse (β n G k) (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ) :
+  --   Rewrite
+  --     (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+  --     (cfg β k (G ∘ ρ))
   | let1_eta (e) (r : Region φ) :
     Rewrite (let1 e (let1 (Term.var 0) r.vwk1)) (let1 e r)
   | let2_eta (e) (r : Region φ) :
@@ -242,11 +266,11 @@ inductive Rewrite : Region φ → Region φ → Prop
       (let1 e r)
 
 theorem RewriteD.rewrite {r r' : Region φ} (p : RewriteD r r') : Rewrite r r'
-  := by cases p <;> constructor; assumption
+  := by cases p <;> constructor--; assumption
 
 -- TODO: make a def...
 theorem Rewrite.nonempty {r r' : Region φ} (p : Rewrite r r') : Nonempty (RewriteD r r')
-  := by cases p <;> constructor <;> constructor; assumption
+  := by cases p <;> constructor <;> constructor--; assumption
 
 theorem Rewrite.of_nonempty {r r' : Region φ} (p : Nonempty (RewriteD r r')) : Rewrite r r'
   := let ⟨p⟩ := p; p.rewrite
@@ -262,32 +286,32 @@ theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (
 
 theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs := by cases p with
   | let1_case_t => sorry
-  | let1_case a b r s =>
-    simp only [fvs, fvs_wk, Nat.succ_eq_add_one, Set.liftnFv_of_union, Set.liftnFv_map_add,
-      <-Set.union_assoc]
-    rw [Set.union_comm a.fvs]
-    simp only [Set.union_assoc (b.fvs ∪ a.fvs)]
-    rw [Set.union_comm (Set.liftnFv 1 _) a.fvs]
-    simp only [<-Set.union_assoc (b.fvs ∪ a.fvs)]
-    rw [Set.union_assoc b.fvs a.fvs a.fvs, Set.union_self]
-    simp only [Set.union_assoc]
-    apply congrArg
-    apply congrArg
-    congr 1
-    sorry
-    sorry
-  | let2_case a b r s =>
-    stop
-    simp only [fvs, fvs_wk, Set.liftnFv_of_union, Set.liftnFv_map_add, Nat.succ_eq_add_one,
-      <-Set.union_assoc]
-    rw [Set.union_comm a.fvs]
-    simp only [Set.union_assoc (b.fvs ∪ a.fvs)]
-    rw [Set.union_comm (Set.liftnFv 1 _) a.fvs]
-    simp only [<-Set.union_assoc (b.fvs ∪ a.fvs)]
-    rw [Set.union_assoc b.fvs a.fvs a.fvs, Set.union_self]
-    congr
-    rw [Set.liftnFv_succ, Set.liftnFv_one, Set.liftnFv_succ']
-    rw [Set.liftnFv_succ, Set.liftnFv_one, Set.liftnFv_succ']
+  -- | let1_case a b r s =>
+  --   simp only [fvs, fvs_wk, Nat.succ_eq_add_one, Set.liftnFv_of_union, Set.liftnFv_map_add,
+  --     <-Set.union_assoc]
+  --   rw [Set.union_comm a.fvs]
+  --   simp only [Set.union_assoc (b.fvs ∪ a.fvs)]
+  --   rw [Set.union_comm (Set.liftnFv 1 _) a.fvs]
+  --   simp only [<-Set.union_assoc (b.fvs ∪ a.fvs)]
+  --   rw [Set.union_assoc b.fvs a.fvs a.fvs, Set.union_self]
+  --   simp only [Set.union_assoc]
+  --   apply congrArg
+  --   apply congrArg
+  --   congr 1
+  --   sorry
+  --   sorry
+  -- | let2_case a b r s =>
+  --   stop
+  --   simp only [fvs, fvs_wk, Set.liftnFv_of_union, Set.liftnFv_map_add, Nat.succ_eq_add_one,
+  --     <-Set.union_assoc]
+  --   rw [Set.union_comm a.fvs]
+  --   simp only [Set.union_assoc (b.fvs ∪ a.fvs)]
+  --   rw [Set.union_comm (Set.liftnFv 1 _) a.fvs]
+  --   simp only [<-Set.union_assoc (b.fvs ∪ a.fvs)]
+  --   rw [Set.union_assoc b.fvs a.fvs a.fvs, Set.union_self]
+  --   congr
+  --   rw [Set.liftnFv_succ, Set.liftnFv_one, Set.liftnFv_succ']
+  --   rw [Set.liftnFv_succ, Set.liftnFv_one, Set.liftnFv_succ']
   | cfg_br_lt ℓ e n G h =>
     simp only [fvs]
     rw [Set.union_assoc]
@@ -304,11 +328,11 @@ theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs :=
     apply congrArg
     rw [Set.union_comm (s.fvs.liftnFv 1), <-Set.union_assoc, Set.union_self]
   | cfg_cfg => simp [fvs, Set.union_assoc, Fin.comp_addCases_apply, Set.iUnion_addCases]
-  | cfg_fuse β n G k ρ hρ =>
-    simp only [fvs, fvs_lwk]
-    rw [Set.iUnion_congr_of_surjective _ hρ]
-    intro i
-    simp
+  -- | cfg_fuse β n G k ρ hρ =>
+  --   simp only [fvs, fvs_lwk]
+  --   rw [Set.iUnion_congr_of_surjective _ hρ]
+  --   intro i
+  --   simp
   | let2_eta =>
     simp only [fvs, Term.fvs, Set.union_singleton, fvs_vwk1, Set.liftFv_map_liftWk,
       Nat.succ_eq_add_one, Set.map_add_liftnFv, Set.liftnFv_of_union, Nat.ofNat_pos,
@@ -336,32 +360,32 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     simp only [Region.vwk, wk, Fin.comp_addCases_apply]
     rw [<-Function.comp.assoc, Region.vwk_comp_lwk, Function.comp.assoc]
     constructor
-  | cfg_fuse β n G k σ hσ =>
-    simp only [Region.vwk, Region.vwk_lwk, Function.comp_apply]
-    constructor
-    assumption
-  | let1_case =>
-    simp only [Region.vwk, wk_liftWk_wk_succ]
-    apply cast_trg
-    apply let1_case
-    simp only [vwk_vwk]
-    congr <;>
-    funext i <;>
-    cases i with
-    | zero => rfl
-    | succ i => cases i <;> rfl
-  | let2_case =>
-    simp only [Region.vwk, wk_liftnWk_wk_add, wk_liftWk_wk_succ]
-    apply cast_trg
-    apply let2_case
-    simp only [vwk_vwk]
-    congr <;>
-    funext i <;>
-    cases i with
-    | zero => rfl
-    | succ i => cases i with
-      | zero => rfl
-      | succ i => cases i <;> rfl
+  -- | cfg_fuse β n G k σ hσ =>
+  --   simp only [Region.vwk, Region.vwk_lwk, Function.comp_apply]
+  --   constructor
+  --   assumption
+  -- | let1_case =>
+  --   simp only [Region.vwk, wk_liftWk_wk_succ]
+  --   apply cast_trg
+  --   apply let1_case
+  --   simp only [vwk_vwk]
+  --   congr <;>
+  --   funext i <;>
+  --   cases i with
+  --   | zero => rfl
+  --   | succ i => cases i <;> rfl
+  -- | let2_case =>
+  --   simp only [Region.vwk, wk_liftnWk_wk_add, wk_liftWk_wk_succ]
+  --   apply cast_trg
+  --   apply let2_case
+  --   simp only [vwk_vwk]
+  --   congr <;>
+  --   funext i <;>
+  --   cases i with
+  --   | zero => rfl
+  --   | succ i => cases i with
+  --     | zero => rfl
+  --     | succ i => cases i <;> rfl
   | let2_eta e r =>
     simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
       Nat.liftWk_comm_liftnWk_apply, vwk_liftnWk₂_vwk1, vwk_liftWk₂_vwk1]
@@ -407,34 +431,33 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
           rw [Nat.add_comm n n', <-Nat.add_assoc]
           rw [Nat.add_comm]
           simp [Nat.le_of_not_lt h]
-  | cfg_fuse β n G k σ hσ =>
-    have hσk := Fintype.card_le_of_surjective _ hσ
-    simp only [Fintype.card_fin] at hσk
-    simp only [Region.lwk, Function.comp_apply]
-    apply cast ?left ?right
-    apply cfg_fuse (β.lwk (Nat.liftnWk n ρ)) _ _ _ σ
-    case left =>
-      simp only [Region.lwk, Function.comp_apply, cfg.injEq, lwk_lwk]
-      constructor
-      . congr
-        funext j
-        simp only [Function.comp_apply, Fin.toNatWk, Nat.liftnWk]
-        split
-        case isTrue h =>
-          have h' : j < k := Nat.lt_of_lt_of_le h hσk
-          simp [h']
-        case isFalse h =>
-          if h : j < k then
-            simp [h]
-            sorry
-          else
-            sorry
-      . sorry
-    case right =>
-      sorry
-    all_goals sorry
+  -- | cfg_fuse β n G k σ hσ =>
+  --   have hσk := Fintype.card_le_of_surjective _ hσ
+  --   simp only [Fintype.card_fin] at hσk
+  --   simp only [Region.lwk, Function.comp_apply]
+  --   apply cast ?left ?right
+  --   apply cfg_fuse (β.lwk (Nat.liftnWk n ρ)) _ _ _ σ
+  --   case left =>
+  --     simp only [Region.lwk, Function.comp_apply, cfg.injEq, lwk_lwk]
+  --     constructor
+  --     . congr
+  --       funext j
+  --       simp only [Function.comp_apply, Fin.toNatWk, Nat.liftnWk]
+  --       split
+  --       case isTrue h =>
+  --         have h' : j < k := Nat.lt_of_lt_of_le h hσk
+  --         simp [h']
+  --       case isFalse h =>
+  --         if h : j < k then
+  --           simp [h]
+  --           sorry
+  --         else
+  --           sorry
+  --     . sorry
+  --   case right =>
+  --     sorry
+  --   all_goals sorry
   | _ =>
-    stop
     simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
     constructor
 

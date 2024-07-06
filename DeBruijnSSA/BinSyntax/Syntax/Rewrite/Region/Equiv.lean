@@ -32,7 +32,7 @@ open Term
 -- TODO: make these rewrites bidirectional
 
 
-
+-- TODO: fix this to fuse...
 instance instSetoid : Setoid (Region φ) := EqvGen.Setoid (Cong Rewrite)
 
 theorem eqv_let1 (e) (p : r ≈ r') : @let1 φ e r ≈ let1 e r'
@@ -94,6 +94,8 @@ theorem eqv_case_bind {e r s}
   : @case φ e r s ≈ (let1 e $ case (var 0) (r.vwk1) (s.vwk1))
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_bind e r s
 
+-- TODO: go prove
+
 -- theorem eqv_let2_op {f e r}
 --   : @let2 φ (op f e) r ≈ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
 --   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_op f e r
@@ -114,15 +116,15 @@ theorem eqv_case_bind {e r s}
 --   : @case φ (abort e) r s ≈ (let1 e $ case (abort (var 0)) (r.vwk1) (s.vwk1))
 --   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_abort e r s
 
-theorem eqv_let1_case {a b r s}
-  : (@let1 φ a $ case (b.wk Nat.succ) r s)
-  ≈ case b (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1))) (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1)))
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_case a b r s
+-- theorem eqv_let1_case {a b r s}
+--   : (@let1 φ a $ case (b.wk Nat.succ) r s)
+--   ≈ case b (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1))) (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1)))
+--   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_case a b r s
 
-theorem eqv_let2_case {a b r s}
-  : (@let2 φ a $ case (b.wk (· + 2)) r s)
-  ≈ case b (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2))) (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2)))
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_case a b r s
+-- theorem eqv_let2_case {a b r s}
+--   : (@let2 φ a $ case (b.wk (· + 2)) r s)
+--   ≈ case b (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2))) (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2)))
+--   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_case a b r s
 
 theorem eqv_cfg_br_lt {ℓ e n G} (h : ℓ < n)
   : @cfg φ (br ℓ e) n G ≈ cfg ((G ⟨ℓ, h⟩).let1 e) n G
@@ -145,10 +147,10 @@ theorem eqv_cfg_cfg {β n G n' G'}
   : @cfg φ (cfg β n G) n' G' ≈ cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G'))
   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_cfg β n G n' G'
 
-theorem eqv_cfg_fuse {β n G k} (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ)
-  : @cfg φ (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G)
-    ≈ cfg β k (G ∘ ρ)
-  := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_fuse β n G k ρ hρ
+-- theorem eqv_cfg_fuse {β n G k} (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ)
+--   : @cfg φ (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G)
+--     ≈ cfg β k (G ∘ ρ)
+--   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_fuse β n G k ρ hρ
 
 theorem eqv_let1_eta {e} {r : Region φ}
   : @let1 φ e (let1 (Term.var 0) r.vwk1) ≈ let1 e r

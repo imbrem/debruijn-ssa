@@ -1,4 +1,4 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Region.Equiv
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Eqv
 
 namespace BinSyntax
 

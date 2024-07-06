@@ -237,17 +237,7 @@ theorem InS.case_abort {Γ : Ctx α ε} {L : LCtx α} (e' := ⊥)
   -- := Uniform.rel $
   -- TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
 
-theorem InS.let2_case {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨A.prod B, ea⟩)
-  (b : Term.InS φ Γ ⟨C.coprod D, eb⟩)
-  {r : InS φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
-  (s : InS φ (⟨D, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-    : (let2 a $ case (b.wk ⟨(· + 2), (by simp)⟩) r s) ≈
-      case b
-        (let2 (a.wk ⟨Nat.succ, (by simp)⟩) (r.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
-        (let2 (a.wk ⟨Nat.succ, (by simp)⟩) (s.vwk ⟨Nat.swap0 2, Ctx.Wkn.swap02⟩))
-  := Uniform.rel $
-  TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+-- TODO: replacements for let1_case, let2_case
 
 theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
   (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
@@ -258,6 +248,8 @@ theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
     Prod.mk_le_mk, le_refl, and_true, Ctx.Wkn.id]; exact List.get_append ℓ hℓ' ▸ hℓ.get)).cfg R G
   := Uniform.rel $
   TStep.step InS.coe_wf InS.coe_wf (FStep.rw (by constructor))
+
+-- TODO: fix this statement ^
 
 theorem InS.cfg_let1 {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.InS φ Γ ⟨A, ea⟩)
