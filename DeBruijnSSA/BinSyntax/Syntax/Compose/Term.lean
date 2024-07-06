@@ -16,9 +16,11 @@ def pi_l {φ} : Term φ := let2 nil (var 1)
 
 def pi_r {φ} : Term φ := let2 nil (var 0)
 
-def tensor {φ} (l r : Term φ) : Term φ := let2 nil (pair l.wk0 r.wk1)
+def prod {φ} (l r : Term φ) : Term φ := let1 nil (pair l.wk1 r.wk1)
 
-def split {φ} (a : Term φ) := pair a a
+def tensor {φ} (l r : Term φ) : Term φ := let2 nil (pair l.wk1.wk0 r.wk1.wk1)
+
+def split {φ} : Term φ := prod nil nil
 
 def assoc {φ} : Term φ := let2 nil (let2 (var 1) (pair (var 1) (pair (var 0) (var 2))))
 

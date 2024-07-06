@@ -162,6 +162,9 @@ theorem TStep.right {Γ L} {r r' : Region φ} : TStep Γ L r r' → r'.Wf Γ L
   | TStep.initial _ _ d => d
   | TStep.terminal _ de dr => dr.let1 de
 
+theorem TStep.wf {Γ L} {r r' : Region φ} (h : TStep Γ L r r') : r.Wf Γ L ∧ r'.Wf Γ L
+  := ⟨TStep.left h, TStep.right h⟩
+
 theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   : TStep (φ := φ) Δ L r r' → TStep Γ L (r.vwk ρ) (r'.vwk ρ)
   | TStep.step d d' p => TStep.step (d.vwk hρ) (d'.vwk hρ)

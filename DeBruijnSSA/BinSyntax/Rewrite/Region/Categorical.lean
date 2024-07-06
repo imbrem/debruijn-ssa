@@ -1,33 +1,11 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Subst
-import DeBruijnSSA.BinSyntax.Syntax.Compose.Region
+import DeBruijnSSA.BinSyntax.Typing.Region.Compose
 
 namespace BinSyntax
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
 namespace Region
-
-theorem Wf.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  {t : Term φ} (ht : t.Wf (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (Region.ret t).Wf (⟨tyIn, ⊥⟩::rest) (tyOut::targets) := Wf.br ⟨by simp, le_refl _⟩ ht
-
-def InS.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : InS φ (⟨tyIn, ⊥⟩::rest) (tyOut::targets) := InS.br 0 t ⟨by simp, le_refl _⟩
-
-theorem InS.ret_eq {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : InS.ret (targets := targets) t = ⟨Region.ret t, Wf.ret t.prop⟩ := rfl
-
-theorem InS.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (ρ : Ctx.InS (⟨tyIn, ⊥⟩::rest') _)
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (InS.ret (targets := targets) t).vwk ρ = InS.ret (t.wk ρ) := rfl
-
-theorem InS.vwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (InS.ret (targets := targets) t).vwk1 (right := right)
-  = InS.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := rfl
 
 theorem InS.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
@@ -52,28 +30,6 @@ theorem Eqv.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α
   (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : (Eqv.ret (targets := targets) t).vsubst σ = Eqv.ret (t.subst σ) := rfl
-
-theorem Wf.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  : Region.nil.Wf (φ := φ) (⟨ty, ⊥⟩::rest) (ty::targets) := Wf.ret (by simp)
-
-def InS.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  : InS φ (⟨ty, ⊥⟩::rest) (ty::targets)  := InS.ret (Term.InS.var 0 (by simp))
-
-theorem InS.nil_eq {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  : InS.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets) = ⟨Region.nil, Wf.nil⟩ := rfl
-
-@[simp]
-theorem InS.nil_vwk_lift (ρ : Ctx.InS rest _)
-  : (InS.nil (φ := φ) (ty := ty) (rest := rest') (targets := targets)).vwk (ρ.lift h) = InS.nil
-  := rfl
-
-@[simp]
-theorem InS.nil_vwk1
-  : (InS.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)).vwk1 (right := right)
-  = InS.nil := rfl
-
--- theorem InS.coe_nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
---   : (InS.nil (ty := ty) (rest := rest) (targets := targets) : Region φ) = Region.nil := rfl
 
 abbrev Eqv.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   : Eqv φ (⟨ty, ⊥⟩::rest) (ty::targets) := ⟦InS.nil⟧
@@ -114,22 +70,9 @@ def Eqv.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, �
   : Subst.Eqv φ Γ (A::L) L
   := Quot.liftOn r (λr => ⟦InS.lsubst0 r⟧) (λ_ _ h => Quotient.sound $ InS.lsubst0_congr h)
 
-def Wf.alpha0 {Γ : Ctx α ε} {L : LCtx α} {r : Region φ} (hr : r.Wf (⟨A, ⊥⟩::Γ) (B::L))
-  : (r.alpha 0).Wf Γ (A::L) (B::L)
-  := Fin.cases hr (λi => Wf.br ⟨Nat.succ_lt_succ i.prop, le_refl _⟩ (by simp))
-
-def InS.alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) (B::L))
-  : Subst.InS φ Γ (A::L) (B::L)
-  := ⟨(r : Region φ).alpha 0, r.prop.alpha0⟩
-
 theorem InS.alpha0_congr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ (⟨A, ⊥⟩::Γ) (B::L)}
   (h : r ≈ r') : InS.alpha0 r ≈ InS.alpha0 r'
   := sorry
-
-theorem InS.vlift_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) (B::L))
-  : (InS.alpha0 r).vlift = InS.alpha0 (r.vwk1 (right := X)) := by
-  simp only [Subst.InS.vlift, Set.mem_setOf_eq, alpha0, vlift_alpha]
-  rfl
 
 def Eqv.alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   : Subst.Eqv φ Γ (A::L) (B::L)
@@ -144,56 +87,6 @@ theorem Eqv.vlift_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv �
   induction r using Quotient.inductionOn;
   rw [alpha0_quot, Subst.Eqv.vlift_quot, InS.vlift_alpha0]
   rfl
-
-def InS.seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L)) : InS φ (⟨A, ⊥⟩::Γ) (C::L)
-  := left.lsubst right.vwk1.alpha0
-
-instance InS.instHAppend {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : HAppend (InS φ (⟨A, ⊥⟩::Γ) (B::L)) (InS φ (⟨B, ⊥⟩::Γ) (C::L)) (InS φ (⟨A, ⊥⟩::Γ) (C::L)) where
-  hAppend := InS.seq
-
-theorem InS.append_def {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))
-  : left ++ right = left.lsubst right.vwk1.alpha0 := rfl
-
-theorem Wf.append {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  {l r : Region φ} (hl : l.Wf (⟨A, ⊥⟩::Γ) (B::L)) (hr : r.Wf (⟨B, ⊥⟩::Γ) (C::L))
-  : (l ++ r).Wf (⟨A, ⊥⟩::Γ) (C::L)
-  := (HAppend.hAppend (self := InS.instHAppend) (⟨l, hl⟩ : InS φ _ _) (⟨r, hr⟩ : InS φ _ _)).prop
-
-theorem InS.append_mk {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  {l r : Region φ} (hl : l.Wf (⟨A, ⊥⟩::Γ) (B::L)) (hr : r.Wf (⟨B, ⊥⟩::Γ) (C::L))
-  : HAppend.hAppend (self := InS.instHAppend) (⟨l, hl⟩ : InS φ _ _) (⟨r, hr⟩ : InS φ _ _)
-  = ⟨l ++ r, hl.append hr⟩ := rfl
-
-@[simp]
-theorem InS.append_nil {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  {l : InS φ (⟨A, ⊥⟩::Γ) (B::L)}
-  : (l ++ InS.nil (φ := φ) (ty := B) (rest := Γ) (targets := L)) = l := by
-  cases l; simp [nil_eq, append_mk, Region.append_nil]
-
-@[simp]
-theorem InS.nil_append {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  {l : InS φ (⟨A, ⊥⟩::Γ) (B::L)}
-  : (InS.nil (φ := φ) (ty := A) (rest := Γ) (targets := L) ++ l) = l := by
-  cases l; simp [nil_eq, append_mk, Region.nil_append]
-
-theorem InS.append_assoc {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (left : InS φ (⟨A, ⊥⟩::Γ) (B::L))
-  (middle : InS φ (⟨B, ⊥⟩::Γ) (C::L))
-  (right : InS φ (⟨C, ⊥⟩::Γ) (D::L))
-  : (left ++ middle) ++ right = left ++ (middle ++ right) := by
-  cases left; cases middle; cases right;
-  simp [append_mk, Region.append_assoc]
-
--- theorem InS.let1_seq {Γ : Ctx α ε} {L : LCtx α}
---   (a : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨X, e⟩)
---   (r : InS φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)) (s : InS φ (⟨B, ⊥⟩::Γ) (C::L))
---   : (let1 a r) ++ s = let1 a (r ++ (s.vwk1 (right := ⟨X, ⊥⟩))) := by
---   induction r using Quotient.inductionOn;
---   induction s using Quotient.inductionOn;
---   sorry
 
 def Eqv.seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)

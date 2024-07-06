@@ -1,5 +1,4 @@
 import DeBruijnSSA.BinSyntax.Typing.Region.VSubst
-import DeBruijnSSA.BinSyntax.Syntax.Subst
 
 namespace BinSyntax
 

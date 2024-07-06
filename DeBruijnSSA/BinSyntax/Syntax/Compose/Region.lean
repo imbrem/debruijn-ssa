@@ -58,9 +58,9 @@ theorem vwk_lift_alpha (n : ℕ) (r : Region φ)
   : vwk (Nat.liftWk ρ) ∘ (alpha n r) = alpha n (r.vwk (Nat.liftWk ρ)) := by
   simp [alpha, Function.comp_update]
 
-def append (r r' : Region φ) : Region φ := r.lsubst (r'.vwk1.alpha 0)
+def seq (r r' : Region φ) : Region φ := r.lsubst (r'.vwk1.alpha 0)
 
-instance : Append (Region φ) := ⟨Region.append⟩
+instance : Append (Region φ) := ⟨Region.seq⟩
 
 theorem append_def (r r' : Region φ) : r ++ r' = r.lsubst (r'.vwk1.alpha 0) := rfl
 
@@ -490,6 +490,8 @@ theorem append_assoc (r r' r'' : Region φ) : (r ++ r') ++ r'' = r ++ (r' ++ r''
 --   comp (let1_beta _ _ rfl) $
 --   let1_beta _ _ rfl
 
+-- TODO: use term composers instead...
+
 def proj_left : Region φ :=
   let2 (Term.var 0) $
   ret (Term.var 0)
@@ -563,7 +565,7 @@ def right_exit : Region φ :=
     (br 0 (Term.var 0))
     (br 1 (Term.var 0))
 
-def fixpoint (r : Region φ) : Region φ := cfg nil 1 (λ_ => r ++ left_exit)
+def fixpoint (r : Region φ) : Region φ := cfg nil 1 (λ_ => r.vwk1.lwk1 ++ left_exit)
 
 def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
 

@@ -291,6 +291,12 @@ theorem Wf.vwk_id {Γ Δ : Ctx α ε} {L} {r : Region φ} (h : Γ.Wkn Δ id)
   (d : Wf Δ r L) : Wf Γ r L
   := have ⟨d⟩ := d.nonempty; (d.vwk_id h).toWf
 
+theorem Wf.wk0 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r L) : Wf (A::Γ) r.vwk0 L
+  := d.vwk Ctx.Wkn.succ
+
+theorem Wf.vwk1 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf (A::Γ) r L) : Wf (A::B::Γ) r.vwk1 L
+  := d.vwk Ctx.Wkn.wk1
+
 theorem Wf.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K} {r : Region φ} (h : L.Wkn K ρ)
   (d : Wf Γ r L) : Wf Γ (r.lwk ρ) K
   := have ⟨d⟩ := d.nonempty; (d.lwk h).toWf
@@ -298,6 +304,10 @@ theorem Wf.lwk {Γ : Ctx α ε} {ρ : ℕ → ℕ} {L K} {r : Region φ} (h : L.
 theorem Wf.lwk_id {Γ : Ctx α ε} {L} {r : Region φ} (h : L.Wkn K id)
   (d : Wf Γ r L) : Wf Γ r K
   := r.lwk_id ▸ d.lwk h
+
+theorem Wf.lwk1 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r (head::L))
+  : Wf Γ r.lwk1 (head::inserted::L)
+  := d.lwk LCtx.Wkn.wk1
 
 def InS.vwk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨(r : Region φ).vwk ρ, r.prop.vwk ρ.prop⟩
@@ -350,6 +360,9 @@ theorem InS.coe_vwk0 {Γ : Ctx α ε} (r : InS φ Γ L)
 
 def InS.lwk {Γ : Ctx α ε} (ρ : L.InS K) (r : InS φ Γ L) : InS φ Γ K
   := ⟨(r : Region φ).lwk ρ, r.2.lwk ρ.prop⟩
+
+def InS.lwk1 {Γ : Ctx α ε} (r : InS φ Γ (head::L)) : InS φ Γ (head::inserted::L)
+  := r.lwk LCtx.InS.wk1
 
 theorem InS.lwk_equiv {Γ : Ctx α ε} {ρ ρ' : L.InS K} (r : InS φ Γ L) (h : ρ ≈ ρ')
   : r.lwk ρ = r.lwk ρ'

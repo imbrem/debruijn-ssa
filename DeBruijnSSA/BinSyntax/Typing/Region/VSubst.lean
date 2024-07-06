@@ -33,7 +33,3 @@ theorem Region.InS.vsubst_vsubst {Γ Δ Ξ : Ctx α ε}
   {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
   (r : InS φ Ξ L) : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ)
   := by ext; simp [Region.vsubst_vsubst]
-
-theorem Region.InS.vsubst_equiv {Γ Δ : Ctx α ε} {σ τ : Term.Subst.InS φ Γ Δ}
-  (r : InS φ Δ L) (h : σ ≈ τ) : r.vsubst σ = r.vsubst τ
-  := sorry

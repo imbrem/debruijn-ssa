@@ -208,6 +208,10 @@ theorem Wkn.succ {head} {Γ : Ctx α ε}
   : Wkn (head::Γ) Γ Nat.succ
   := step (head := head) (id (Γ := Γ))
 
+def InS.wk0 {head} {Γ : Ctx α ε}
+  : InS (head::Γ) Γ
+  := ⟨Nat.succ, Wkn.succ⟩
+
 theorem Wkn.wk1 {head inserted} {Γ : Ctx α ε}
   : Wkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
   := succ.slift

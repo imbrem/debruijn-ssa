@@ -412,8 +412,18 @@ def Term.WfD.wk {Γ Δ : Ctx α ε} {ρ} (h : Γ.Wkn Δ ρ) {a : Term φ}
 theorem Term.Wf.wk {a : Term φ} (h : Γ.Wkn Δ ρ) (d : Wf Δ a ⟨A, e⟩) : Wf Γ (a.wk ρ) ⟨A, e⟩
   := have ⟨d⟩ := d.nonempty; (d.wk h).toWf
 
+theorem Term.Wf.wk1 {a : Term φ} (d : Wf (head::Γ) a ⟨A, e⟩) : Wf (head::inserted::Γ) a.wk1 ⟨A, e⟩
+  := d.wk Ctx.Wkn.wk1
+
+theorem Term.Wf.wk0 {a : Term φ} (d : Wf Γ a ⟨A, e⟩) : Wf (head::Γ) a.wk0 ⟨A, e⟩
+  := d.wk Ctx.Wkn.succ
+
 def Term.InS.wk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) (d : InS φ Δ ⟨A, e⟩) : InS φ Γ ⟨A, e⟩
   := ⟨(d : Term φ).wk ρ, d.prop.wk ρ.prop⟩
+
+def Term.InS.wk0 {Γ : Ctx α ε} {L} (d : InS φ Γ L)
+  : InS φ (head::Γ) L
+  := d.wk Ctx.InS.wk0
 
 def Term.InS.wk1 {Γ : Ctx α ε} {L} (d : InS φ (head::Γ) L)
   : InS φ (head::inserted::Γ) L
