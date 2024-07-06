@@ -768,6 +768,26 @@ theorem Region.lwk1_vwk (r : Region φ) : (r.vwk ρ).lwk1 = r.lwk1.vwk ρ := by 
 
 theorem Region.vwk_lwk1 (r : Region φ) : r.lwk1.vwk ρ = (r.vwk ρ).lwk1 := r.lwk1_vwk.symm
 
+theorem Region.lwk_addCases (i : Fin (n + m)) (G : Fin n → Region φ) (G' : Fin m → Region φ)
+  : (Fin.addCases (motive := λ_ => Region φ) G G' i).lwk ρ
+  = Fin.addCases (motive := λ_ => Region φ) (lwk ρ ∘ G) (lwk ρ ∘ G') i
+  := by simp only [Fin.addCases]; split <;> simp
+
+theorem Region.lwk_addCases' (i : Fin (n + m)) (G : Fin n → Region φ) (G' : Fin m → Region φ)
+  : (Fin.addCases (motive := λ_ => Region φ) G G' i).lwk ρ
+  = Fin.addCases (motive := λ_ => Region φ) (λi => (G i).lwk ρ) (λi => (G' i).lwk ρ) i
+  := by simp only [Fin.addCases]; split <;> simp
+
+theorem Region.vwk_addCases (i : Fin (n + m)) (G : Fin n → Region φ) (G' : Fin m → Region φ)
+  : (Fin.addCases (motive := λ_ => Region φ) G G' i).vwk ρ
+  = Fin.addCases (motive := λ_ => Region φ) (vwk ρ ∘ G) (vwk ρ ∘ G') i
+  := by simp only [Fin.addCases]; split <;> simp
+
+theorem Region.vwk_addCases' (i : Fin (n + m)) (G : Fin n → Region φ) (G' : Fin m → Region φ)
+  : (Fin.addCases (motive := λ_ => Region φ) G G' i).vwk ρ
+  = Fin.addCases (motive := λ_ => Region φ) (λi => (G i).vwk ρ) (λi => (G' i).vwk ρ) i
+  := by simp only [Fin.addCases]; split <;> simp
+
 theorem CFG.vwk_id (G : CFG φ) : G.vwk id = G := by cases G; simp [vwk]
 
 @[simp]

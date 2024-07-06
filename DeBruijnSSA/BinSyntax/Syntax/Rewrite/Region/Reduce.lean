@@ -112,8 +112,20 @@ theorem Reduce.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Red
 
 def ReduceD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.lwk ρ) (r'.lwk ρ)
   := by cases d with
-  | dead_cfg_left β n G m G' => sorry
-  | wk_cfg => sorry
+  | dead_cfg_left β n G m G' =>
+    apply cast_src _
+    apply dead_cfg_left
+      (β := β.lwk (Nat.liftnWk m ρ))
+      (n := n) (G := (Region.lwk (Nat.liftnWk (n + m) ρ)) ∘ G)
+      (m := m) (G' := (Region.lwk (Nat.liftnWk m ρ)) ∘ G')
+    simp only [
+      Region.lwk, lwk_lwk, Region.lwk_addCases, <-Function.comp.assoc, Region.comp_lwk,
+      Nat.liftnWk_comp_add_right
+    ]
+  | wk_cfg β n G k σ =>
+    simp only [Region.lwk, Region.lwk_lwk, Function.comp_apply, Fin.liftnWk_comp_toNatWk]
+    simp only [<-Region.lwk_lwk]
+    apply wk_cfg
   | _ =>
     simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk]
     constructor
