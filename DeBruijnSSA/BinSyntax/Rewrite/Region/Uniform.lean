@@ -50,6 +50,38 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
   | symm : Uniform P Γ L x y → Uniform P Γ L y x
   | trans : Uniform P Γ L x y → Uniform P Γ L y z → Uniform P Γ L x z
 
+theorem Uniform.map {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
+  (f : ∀{Γ L r r'}, P Γ L r r' → Q Γ L r r') (p : Uniform P Γ L r r') : Uniform Q Γ L r r'
+  := by induction p with
+  | rel h => exact rel (f h)
+  | symm _ I => exact I.symm
+  | trans _ _ Il Ir => exact Il.trans Ir
+  | _ => constructor <;> assumption
+
+theorem Uniform.flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
+  (p : Uniform (Uniform P) Γ L r r') : Uniform P Γ L r r'
+  := by induction p with
+  | rel h => exact h
+  | symm _ I => exact I.symm
+  | trans _ _ Il Ir => exact Il.trans Ir
+  | _ => constructor <;> assumption
+
+theorem Uniform.duplicate {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
+  (p : Uniform P Γ L r r') : Uniform (Uniform P) Γ L r r' := p.map Uniform.rel
+
+theorem Uniform.idem {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
+  : Uniform (Uniform P) = Uniform P := by
+  ext Γ L r r'
+  exact ⟨flatten, duplicate⟩
+
+-- TODO: HaveType
+
+-- TODO: Uniform ⊤ = HaveType
+
+-- TODO: Uniform ⊥ = Uniform (· = ·) = (HaveType ⊓ (· = ·))
+
+-- TODO: Uniform monotone; is uniform inf-preserving?
+
 theorem Uniform.wf {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
   (toWf : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L ∧ r'.Wf Γ L)
   (p : (Uniform P Γ L) r r') : r.Wf Γ L ∧ r'.Wf Γ L
@@ -98,6 +130,56 @@ theorem Uniform.right {P : Ctx α ε → LCtx α → Region φ → Region φ →
 theorem Uniform.wf_iff {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r}
   (toWf : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L ∧ r'.Wf Γ L)
   : (Uniform P Γ L r r) ↔ r.Wf Γ L := ⟨Uniform.left toWf, Uniform.refl⟩
+
+theorem Uniform.vwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
+  (toVwk : ∀{Γ Δ L ρ r r'}, Γ.Wkn Δ ρ → P Δ L r r' → Q Γ L (r.vwk ρ) (r'.vwk ρ))
+  (hρ : Γ.Wkn Δ ρ)
+  (p : (Uniform P Δ L) r r') : Uniform Q Γ L (r.vwk ρ) (r'.vwk ρ)
+  := by induction p with
+  | rel h => exact rel $ toVwk hρ h
+  | symm _ I => exact (I hρ).symm
+  | trans _ _ Il Ir => exact (Il hρ).trans (Ir hρ)
+  | refl h => exact refl (h.vwk hρ)
+  | _ => sorry
+
+theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
+  (toLwk : ∀{Γ L K ρ r r'}, L.Wkn K ρ → P Γ L r r' → Q Γ K (r.lwk ρ) (r'.lwk ρ))
+  (hρ : L.Wkn K ρ)
+  (p : (Uniform P Γ L) r r') : Uniform Q Γ K (r.lwk ρ) (r'.lwk ρ)
+  := by induction p with
+  | rel h => exact rel $ toLwk hρ h
+  | symm _ I => exact (I hρ).symm
+  | trans _ _ Il Ir => exact (Il hρ).trans (Ir hρ)
+  | refl h => exact refl (h.lwk hρ)
+  | _ => sorry
+
+theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
+  (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Q Γ L (r.vsubst σ) (r'.vsubst σ))
+  (hσ : σ.Wf Γ Δ)
+  (p : (Uniform P Δ L) r r') : Uniform Q Γ L (r.vsubst σ) (r'.vsubst σ)
+  := by induction p with
+  | rel h => exact rel $ toVsubst hσ h
+  | symm _ I => exact (I hσ).symm
+  | trans _ _ Il Ir => exact (Il hσ).trans (Ir hσ)
+  | refl h => exact refl (h.vsubst hσ)
+  | _ => sorry
+
+theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
+  (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Q Γ K (r.lsubst σ) (r'.lsubst σ))
+  (hσ : σ.Wf Γ L K)
+  (p : (Uniform P Γ L) r r') : Uniform Q Γ K (r.lsubst σ) (r'.lsubst σ)
+  := by induction p with
+  | rel h => exact rel $ toLsubst hσ h
+  | symm _ I => exact (I hσ).symm
+  | trans _ _ Il Ir => exact (Il hσ).trans (Ir hσ)
+  | refl h => exact refl (h.lsubst hσ)
+  | _ => sorry
+
+theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
+  (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))
+  (hσ : σ.Wf Γ Δ)
+  (p : (Uniform P Δ L) r r') : Uniform P Γ L (r.vsubst σ) (r'.vsubst σ)
+  := (p.vsubst (Q := Uniform P) toVsubst hσ).flatten
 
 def Uniform.Setoid (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop) (Γ : Ctx α ε) (L : LCtx α)
   : Setoid (InS φ Γ L) where

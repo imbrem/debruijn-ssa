@@ -190,6 +190,14 @@ theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
   | TStep.initial di d d' => TStep.initial di (d.lwk hρ) (d'.lwk hρ)
   | TStep.terminal de de' dr => TStep.terminal de de' (dr.lwk hρ)
 
+-- Note: vsubst needs InS lore for initiality, so that's in Setoid.lean
+
+theorem TStep.lsubst {Γ : Ctx α ε} {L K} {r r' : Region φ} {σ : Subst φ}
+  (hσ : σ.Wf Γ L K) : (h : TStep Γ L r r') → TStep Γ K (r.lsubst σ) (r'.lsubst σ)
+  | step d d' p => sorry
+  | initial di d d' => initial di (d.lsubst hσ) (d'.lsubst hσ)
+  | terminal de de' dr => terminal de de' (dr.lsubst hσ.vlift)
+
 def CStep (Γ : Ctx α ε) (L : LCtx α) (r r' : Region φ) : Prop
   := Wf.Cong TStep Γ L r r'
 

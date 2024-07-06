@@ -522,7 +522,7 @@ def Eqv.zero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
 theorem Eqv.zero_eq {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r s : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A::L))
   : r = s
-  := by apply Eqv.initial; exact ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty⟩
+  := by apply Eqv.initial; exact ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty, rfl⟩
 
 theorem Eqv.zero_seq {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))

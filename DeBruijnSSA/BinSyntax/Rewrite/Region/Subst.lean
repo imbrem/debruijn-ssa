@@ -15,11 +15,15 @@ instance Subst.InS.instSetoid {Γ : Ctx α ε} {L K : LCtx α}
     trans := (λhl hr i => Setoid.trans (hl i) (hr i))
   }
 
-theorem InS.lsubst_congr {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.InS φ Γ L K)
+theorem InS.lsubst_congr_subst {Γ : Ctx α ε} {L K : LCtx α} {σ τ : Subst.InS φ Γ L K}
+  (h : σ ≈ τ) (r : InS φ Γ L) : r.lsubst σ ≈ r.lsubst τ := sorry
+
+theorem InS.lsubst_congr_right {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.InS φ Γ L K)
   {r r' : InS φ Γ L} (h : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ := sorry
 
-theorem InS.lsubst_equiv {Γ : Ctx α ε} {L K : LCtx α} {σ τ : Subst.InS φ Γ L K}
-  (h : σ ≈ τ)  (r : InS φ Γ L) : r.lsubst σ ≈ r.lsubst τ := sorry
+theorem InS.lsubst_congr {Γ : Ctx α ε} {L K : LCtx α} {σ σ' : Subst.InS φ Γ L K}
+  {r r' : InS φ Γ L} (hσ : σ ≈ σ') (hr : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ'
+  := Setoid.trans (lsubst_congr_subst hσ r) (lsubst_congr_right σ' hr)
 
 abbrev Subst.Eqv (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L K : LCtx α)
   := Quotient (α := Subst.InS φ Γ L K) inferInstance

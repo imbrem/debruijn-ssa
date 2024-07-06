@@ -129,14 +129,14 @@ def Eqv.vwk
   {Γ Δ : Ctx α ε} {L : LCtx α} (ρ : Γ.InS Δ) (r : Eqv φ Δ L)
   : Eqv φ Γ L := Quotient.liftOn r
     (λr => InS.q (r.vwk ρ))
-    (λ_ _ h => Quotient.sound (InS.vwk_congr ρ h))
+    (λ_ _ h => Quotient.sound (InS.vwk_congr (Setoid.refl ρ) h))
 
 def Eqv.vwk_id
   {Γ Δ : Ctx α ε} {L : LCtx α} (hρ : Γ.Wkn Δ id) (r : Eqv φ Δ L)
   : Eqv φ Γ L := Quotient.liftOn r
     (λr => InS.q (r.vwk_id hρ))
     (λ_ _ h => Quotient.sound (by
-      have h := InS.vwk_congr ⟨id, hρ⟩ h;
+      have h := InS.vwk_congr (Setoid.refl ⟨id, hρ⟩) h;
       simp only [InS.vwk, Set.mem_setOf_eq, vwk_of_id, id_eq, InS.vwk_id] at *
       exact h
       ))
@@ -144,7 +144,7 @@ def Eqv.vwk_id
 def Eqv.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ : L.InS K) (r : Eqv φ Γ L)
   : Eqv φ Γ K := Quotient.liftOn r
     (λr => InS.q (r.lwk ρ))
-    (λ_ _ h => Quotient.sound sorry)
+    (λ_ _ h => Quotient.sound (InS.lwk_congr_right _ h))
 
 def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ Γ L)
   : Eqv φ Γ K := Quotient.liftOn r
@@ -154,7 +154,7 @@ def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ �
 def Eqv.vsubst {Γ Δ : Ctx α ε} {L : LCtx α} (σ : Term.Subst.InS φ Γ Δ) (r : Eqv φ Δ L)
   : Eqv φ Γ L := Quotient.liftOn r
     (λr => InS.q (r.vsubst σ))
-    (λ_ _ h => Quotient.sound sorry)
+    (λ_ _ h => Quotient.sound (InS.vsubst_congr_right _ h))
 
 @[simp]
 theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ Δ L}

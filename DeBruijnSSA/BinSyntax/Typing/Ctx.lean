@@ -67,7 +67,7 @@ instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
 instance : Membership (Ty α × ε) (Ctx α ε)
   := (inferInstance : Membership (Ty α × ε) (List (Ty α × ε)))
 
-def IsInitial (Γ : Ctx α ε) : Prop := ∃V ∈ Γ, Ty.IsInitial V.1
+def IsInitial (Γ : Ctx α ε) : Prop := ∃V ∈ Γ, Ty.IsInitial V.1 ∧ V.2 = ⊥
 
 theorem IsInitial.append_left {Γ : Ctx α ε} (h : Γ.IsInitial) (Δ) : (Γ ++ Δ).IsInitial
   := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_left _ hV, hV0⟩
@@ -81,9 +81,28 @@ theorem IsInitial.append {Γ Δ : Ctx α ε} : (Γ ++ Δ).IsInitial ↔ Γ.IsIni
     λ⟨V, hV, hV0⟩ => (List.mem_append.mp hV).elim (Or.inl ⟨V, ·, hV0⟩) (Or.inr ⟨V, ·, hV0⟩),
     λh => h.elim (append_left · _) (append_right _)⟩
 
--- def IsInitial.cons {A ε} (h : Ty.IsInitial A) (Γ : Ctx α ε)
---   : IsInitial (⟨A, ε⟩::Γ)
---   := ⟨V, List.mem_cons_self _ _, h⟩
+theorem IsInitial.head {A} (h : Ty.IsInitial A) (Γ : Ctx α ε)
+  : IsInitial (⟨A, ⊥⟩::Γ)
+  := ⟨⟨A, ⊥⟩, List.mem_cons_self _ _, h, rfl⟩
+
+theorem IsInitial.head' {A e} (hA : Ty.IsInitial A) (he : e = ⊥) (Γ : Ctx α ε)
+  : IsInitial (⟨A, e⟩::Γ)
+  := by cases he; apply head; exact hA
+
+theorem IsInitial.cons {head} {Γ : Ctx α ε} (h : IsInitial Γ)
+  : IsInitial (head::Γ)
+  := let ⟨V', hV, hV0⟩ := h; ⟨V', List.mem_cons_of_mem _ hV, hV0⟩
+
+theorem IsInitial.head_or_tail {head} {Γ : Ctx α ε} (h : IsInitial (head::Γ))
+  : (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
+  := let ⟨V, hV, hV0⟩ := h;
+  by cases hV with
+  | head => exact Or.inl hV0
+  | tail _ hV => exact Or.inr ⟨V, hV, hV0⟩
+
+theorem IsInitial.cons_iff {head} {Γ : Ctx α ε}
+  : IsInitial (head::Γ) ↔ (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
+  := ⟨IsInitial.head_or_tail, λ| Or.inl ⟨hA, he⟩ => head' hA he Γ | Or.inr h => h.cons⟩
 
 -- TODO: HAppend of Ctx and List?
 
@@ -513,11 +532,6 @@ theorem mem_wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (hV : V
   have ⟨V', hV', hV⟩ := Var.mem hρn;
   ⟨V', hV', hn' ▸ hV⟩
 
-theorem IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) : IsInitial Δ → IsInitial Γ
-  | ⟨_, hV, hI⟩ =>
-    have ⟨V', hV', hV⟩ := mem_wk h hV;
-    ⟨V', hV', hI.anti hV.1⟩
-
 theorem Wkn.effect {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (i : ℕ) (hi : i < Δ.length)
   : (Γ.effect (ρ i)) ≤ Δ.effect i
   := by
@@ -580,5 +594,10 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Ord
 
 def Ctx.var_bot_head {Γ : Ctx α ε} : Var (⟨A, ⊥⟩::Γ) 0 ⟨A, e⟩
   := Var.head (by simp) Γ
+
+theorem Ctx.IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) : IsInitial Δ → IsInitial Γ
+  | ⟨_, hV, hI⟩ =>
+    have ⟨V', hV', hV⟩ := mem_wk h hV;
+    ⟨V', hV', hI.1.anti hV.1, le_bot_iff.mp (hI.2 ▸ hV.2)⟩
 
 end OrderBot

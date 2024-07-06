@@ -121,8 +121,41 @@ theorem InS.cfg_congr' {Γ : Ctx α ε} {L : LCtx α}
   cases hR
   apply cfg_congr <;> assumption
 
+theorem InS.vwk_congr_right {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : InS φ Δ L}
+  (ρ : Γ.InS Δ) (hr : r ≈ r') : r.vwk ρ ≈ r'.vwk ρ
+  := Uniform.vwk TStep.vwk ρ.prop hr
+
 theorem InS.vwk_congr {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : InS φ Δ L}
-  (ρ : Γ.InS Δ) : r ≈ r' → r.vwk ρ ≈ r'.vwk ρ := sorry
+  {ρ ρ' : Γ.InS Δ} (hρ : ρ ≈ ρ') (hr : r ≈ r') : r.vwk ρ ≈ r'.vwk ρ'
+  := r.vwk_equiv hρ ▸ vwk_congr_right ρ' hr
+
+theorem InS.lwk_congr_right {Γ : Ctx α ε} {L K : LCtx α} {r r' : InS φ Γ L}
+  (ρ : L.InS K) (hr : r ≈ r') : r.lwk ρ ≈ r'.lwk ρ
+  := Uniform.lwk TStep.lwk ρ.prop hr
+
+theorem InS.lwk_congr {Γ : Ctx α ε} {L K : LCtx α} {r r' : InS φ Γ L}
+  {ρ ρ' : L.InS K} (hρ : ρ ≈ ρ') (hr : r ≈ r') : r.lwk ρ ≈ r'.lwk ρ'
+  := r.lwk_equiv hρ ▸ lwk_congr_right ρ' hr
+
+theorem TStep.vsubst_to_uniform {Γ Δ : Ctx α ε} {L} {r r' : Region φ} {σ : Term.Subst φ}
+  (hσ : σ.Wf Γ Δ) : TStep Δ L r r' → Uniform TStep Γ L (r.vsubst σ) (r'.vsubst σ)
+  | TStep.step d d' p => sorry
+  | TStep.initial di d d' => sorry
+  | TStep.terminal de de' dr => sorry
+
+theorem TStep.vsubst_to_congr {Γ Δ : Ctx α ε} {L}
+  {r r' : InS φ Δ L} (σ : Term.Subst.InS φ Γ Δ) (h : TStep Δ L (r : Region φ) (↑r'))
+  : r.vsubst σ ≈ r'.vsubst σ := by
+  cases r; cases r'
+  exact vsubst_to_uniform σ.prop h
+
+theorem InS.vsubst_congr_right {Γ Δ : Ctx α ε} {L : LCtx α} {r r' : InS φ Δ L}
+  (σ : Term.Subst.InS φ Γ Δ) (hr : r ≈ r') : r.vsubst σ ≈ r'.vsubst σ
+  := Uniform.vsubst_flatten TStep.vsubst_to_uniform σ.prop hr
+
+-- theorem InS.vsubst_congr {Γ Δ : Ctx α ε} {L r r' : InS φ Δ L}
+--   {σ σ' : Term.Subst.InS φ Γ Δ} (hσ : σ ≈ σ') (hr : r ≈ r')
+--   : r.vsubst σ ≈ r'.vsubst σ' := sorry
 
 theorem InS.let1_op {Γ : Ctx α ε} {L : LCtx α}
   {r : InS φ (⟨B, ⊥⟩::Γ) L}
