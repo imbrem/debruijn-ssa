@@ -403,69 +403,97 @@ theorem InS.terminal {Γ : Ctx α ε} {L : LCtx α}
   : let1 e r ≈ let1 e' r
   := Uniform.rel (TStep.terminal e.2 e'.2 r.2)
 
-theorem InS.let1_cong_uniform {Γ : Ctx α ε} {L : LCtx α}
-  {a a' : Term φ} (ha : Term.Wf.Cong Term.TStep Γ V a a') (r : Region φ) (hr : Wf (⟨V.1, ⊥⟩::Γ) r L)
-  : Uniform TStep Γ L (Region.let1 a r) (Region.let1 a' r) := by
-  induction ha generalizing r with
-  | op hf ha Ia =>
-    apply Uniform.trans
-    exact Uniform.rel $ TStep.let1_op hf (ha.left Term.TStep.left) hr
-    apply Uniform.symm
-    apply Uniform.trans
-    exact Uniform.rel $ TStep.let1_op hf (ha.right Term.TStep.right) hr
-    apply Uniform.symm
-    apply Ia _ (hr.vwk1.let1 ((Term.Wf.var (by simp)).op hf))
-  | let1_bound =>
-    apply Uniform.trans
-    apply Uniform.rel
-    apply TStep.rewrite sorry sorry
-    apply Rewrite.let1_let1
-    apply Uniform.symm
-    apply Uniform.trans
-    apply Uniform.rel
-    apply TStep.rewrite sorry sorry
-    apply Rewrite.let1_let1
-    sorry
-  | let1_body => sorry
-  | pair_left => sorry
-  | pair_right => sorry
-  | let2_bound => sorry
-  | let2_body => sorry
-  | inl => sorry
-  | inr => sorry
-  | case_disc => sorry
-  | case_left => sorry
-  | case_right => sorry
-  | abort => sorry
-  | rel => sorry
-
-theorem InS.let1_cong_congr {Γ : Ctx α ε} {L : LCtx α}
-  {a a' : Term φ} (ha : Term.Wf.Cong Term.TStep Γ V a a') (r : InS φ (⟨V.1, ⊥⟩::Γ) L)
-  : InS.let1 ⟨a, ha.left Term.TStep.left⟩ r ≈ InS.let1 ⟨a', ha.right Term.TStep.right⟩ r
-  := let1_cong_uniform ha r r.prop
+-- theorem InS.let1_cong_uniform_alt {Γ : Ctx α ε} {L : LCtx α}
+--   {a a' : Term φ} (ha : Term.Wf.Cong Term.TStep Γ V a a') (r : Region φ)
+--   (hr : Wf (⟨V.1, ⊥⟩::Γ) r L)
+--   : Uniform TStep Γ L (Region.let1 a r) (Region.let1 a' r) := by
+--   induction ha generalizing r with
+--   | op hf ha Ia =>
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_op hf (ha.left Term.TStep.left) hr
+--     apply Uniform.symm
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_op hf (ha.right Term.TStep.right) hr
+--     apply Uniform.symm
+--     exact Ia _ (hr.vwk1.let1 ((Term.Wf.var (by simp)).op hf))
+--   | let1_bound ha hb Ia =>
+--     apply Uniform.trans
+--     apply Uniform.rel
+--     exact TStep.let1_let1 (ha.left Term.TStep.left) hb hr
+--     apply Uniform.symm
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_let1 (ha.right Term.TStep.right) hb hr
+--     apply Uniform.symm
+--     exact Ia _ (hr.vwk1.let1 hb)
+--   | let1_body ha hb Ib =>
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_let1 ha (hb.left Term.TStep.left) hr
+--     apply Uniform.symm
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_let1 ha (hb.right Term.TStep.right) hr
+--     apply Uniform.symm
+--     exact Uniform.let1 ha $ Ib _ hr.vwk1
+--   | pair_left ha hb Ia =>
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_pair (ha.left Term.TStep.left) hb hr
+--     apply Uniform.symm
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_pair (ha.right Term.TStep.right) hb hr
+--     apply Uniform.symm
+--     exact Ia _ (Wf.let1 hb.wk0
+--       (Wf.let1 (Term.Wf.pair (Term.Wf.var Ctx.Var.shead.step) (Term.Wf.var Ctx.Var.shead))
+--       hr.vwk1.vwk1))
+--   | pair_right ha hb Ib =>
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_pair ha (hb.left Term.TStep.left) hr
+--     apply Uniform.symm
+--     apply Uniform.trans
+--     exact Uniform.rel $ TStep.let1_pair ha (hb.right Term.TStep.right) hr
+--     apply Uniform.symm
+--     sorry
+--   | let2_bound => sorry
+--   | let2_body => sorry
+--   | inl => sorry
+--   | inr => sorry
+--   | case_disc => sorry
+--   | case_left => sorry
+--   | case_right => sorry
+--   | abort => sorry
+--   | rel => sorry
 
 theorem InS.let1_uniform_congr {Γ : Ctx α ε} {L : LCtx α}
   {a a' : Term φ} (ha : Term.Uniform Term.TStep Γ ⟨A, e⟩ a a') (r : InS φ (⟨A, ⊥⟩::Γ) L)
-  : InS.let1 ⟨a, ha.left Term.TStep.wf⟩ r ≈ InS.let1 ⟨a', ha.right Term.TStep.wf⟩ r := by
-  induction ha with
-  | cong ha => exact let1_cong_congr ha r
-  | refl => exact Setoid.refl _
-  | symm _ I => exact I.symm
-  | trans _ _ Il Ir => exact Il.trans Ir
+  : InS.let1 ⟨a, ha.left Term.TStep.wf⟩ r ≈ InS.let1 ⟨a', ha.right Term.TStep.wf⟩ r
+  := Uniform.let1_equiv ha r.prop
 
 theorem InS.let1_bound_congr {Γ : Ctx α ε} {L : LCtx α}
   {a a' : Term.InS φ Γ ⟨A, e⟩} (ha : a ≈ a') (r : InS φ (⟨A, ⊥⟩::Γ) L)
   : InS.let1 a r ≈ InS.let1 a' r := let1_uniform_congr ha r
+
+theorem InS.let1_congr {Γ : Ctx α ε} {L : LCtx α}
+  {a a' : Term.InS φ Γ ⟨A, e⟩} (ha : a ≈ a') {r r' : InS φ (⟨A, ⊥⟩::Γ) L} (hr : r ≈ r')
+  : InS.let1 a r ≈ InS.let1 a' r' := (let1_bound_congr ha r).trans (let1_body_congr a' hr)
 
 theorem InS.let2_bound_congr {Γ : Ctx α ε} {L : LCtx α}
   {a a' : Term.InS φ Γ ⟨Ty.prod A B, e⟩} (ha : a ≈ a') (r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
   : InS.let2 a r ≈ InS.let2 a' r
   := Setoid.trans let2_bind (Setoid.trans (let1_bound_congr ha _) let2_bind.symm)
 
+theorem InS.let2_congr {Γ : Ctx α ε} {L : LCtx α}
+  {a a' : Term.InS φ Γ ⟨Ty.prod A B, e⟩} (ha : a ≈ a') {r r' : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  (hr : r ≈ r') : InS.let2 a r ≈ InS.let2 a' r'
+  := (let2_bound_congr ha r).trans (let2_body_congr a' hr)
+
 theorem InS.case_disc_congr {Γ : Ctx α ε} {L : LCtx α}
   {a a' : Term.InS φ Γ ⟨Ty.coprod A B, e⟩} (ha : a ≈ a') (r : InS φ (⟨A, ⊥⟩::Γ) L)
   (s : InS φ (⟨B, ⊥⟩::Γ) L) : InS.case a r s ≈ InS.case a' r s
   := Setoid.trans case_bind (Setoid.trans (let1_bound_congr ha _) case_bind.symm)
+
+theorem InS.case_congr {Γ : Ctx α ε} {L : LCtx α}
+  {a a' : Term.InS φ Γ ⟨Ty.coprod A B, e⟩} (ha : a ≈ a') {r r' : InS φ (⟨A, ⊥⟩::Γ) L}
+  (hr : r ≈ r') {s s' : InS φ (⟨B, ⊥⟩::Γ) L} (hs : s ≈ s')
+  : InS.case a r s ≈ InS.case a' r' s'
+  := (case_disc_congr ha r s).trans (case_branches_congr hr hs)
 
 theorem InS.br_bind {Γ : Ctx α ε} {L : LCtx α}
   {ℓ} {a : Term.InS φ Γ ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
@@ -477,10 +505,25 @@ theorem InS.br_congr {Γ : Ctx α ε} {L : LCtx α} (ℓ) {a a' : Term.InS φ Γ
   := Setoid.trans br_bind (Setoid.trans (let1_bound_congr ha _) br_bind.symm)
 
 theorem InS.vsubst_subst_equiv {Γ Δ : Ctx α ε} {L : LCtx α}
-  {σ σ' : Term.Subst.InS φ Γ Δ} (hσ : σ ≈ σ') : (r : InS φ Δ L) → r.vsubst σ ≈ r.vsubst σ
-  | ⟨r, hr⟩ => by induction hr generalizing Γ with
-  | br => sorry
-  | let1 => sorry
-  | let2 => sorry
-  | case => sorry
-  | cfg => sorry
+  {σ σ' : Term.Subst.InS φ Γ Δ} (hσ : σ ≈ σ') (r : InS φ Δ L) : r.vsubst σ ≈ r.vsubst σ'
+  := by induction r using InS.induction generalizing Γ with
+  | br ℓ a hℓ => exact br_congr ℓ (Term.InS.subst_equiv_congr hσ a) hℓ
+  | let1 a r Ir =>
+    exact let1_congr
+      (Term.InS.subst_equiv_congr hσ a)
+      (Ir (Term.Subst.InS.slift_congr hσ))
+  | let2 a r Ir =>
+    exact let2_congr
+      (Term.InS.subst_equiv_congr hσ a)
+      (Ir (Term.Subst.InS.sliftn₂_congr hσ))
+  | case a r s Ir Is =>
+    exact case_congr
+      (Term.InS.subst_equiv_congr hσ a)
+      (Ir (Term.Subst.InS.slift_congr hσ))
+      (Is (Term.Subst.InS.slift_congr hσ))
+  | cfg R hβ hG Iβ IG => exact cfg_congr _ (Iβ hσ) (λi => IG i (Term.Subst.InS.slift_congr hσ))
+
+theorem InS.vsubst_congr {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ σ' : Term.Subst.InS φ Γ Δ} (hσ : σ ≈ σ') {r r' : InS φ Δ L} (hr : r ≈ r')
+  : r.vsubst σ ≈ r'.vsubst σ'
+  := (vsubst_subst_equiv hσ r).trans (vsubst_congr_right _ hr)

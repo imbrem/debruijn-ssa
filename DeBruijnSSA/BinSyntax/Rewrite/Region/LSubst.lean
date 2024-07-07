@@ -69,22 +69,31 @@ theorem Eqv.lsubst_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L
 
 @[simp]
 theorem Eqv.lsubst_let1 {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
-  {a : Term.InS φ Γ ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L}
+  {a : Term.Eqv φ Γ ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L}
   : (let1 a r).lsubst σ = let1 a (r.lsubst σ.vlift) := by
-  induction r using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  rfl
 
 @[simp]
 theorem Eqv.lsubst_let2 {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
-  {a : Term.InS φ Γ ⟨A.prod B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  {a : Term.Eqv φ Γ ⟨A.prod B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   : (let2 a r).lsubst σ = let2 a (r.lsubst σ.vliftn₂) := by
-  induction r using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  rfl
 
 @[simp]
 theorem Eqv.lsubst_case {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
-  {a : Term.InS φ Γ ⟨A.coprod B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L} {s : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  {a : Term.Eqv φ Γ ⟨A.coprod B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L} {s : Eqv φ (⟨B, ⊥⟩::Γ) L}
   : (case a r s).lsubst σ = case a (r.lsubst σ.vlift) (s.lsubst σ.vlift) := by
-  induction r using Quotient.inductionOn; induction s using Quotient.inductionOn;
-  induction σ using Quotient.inductionOn; rfl
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  rfl
 
 -- TODO: lsubst_cfg
 

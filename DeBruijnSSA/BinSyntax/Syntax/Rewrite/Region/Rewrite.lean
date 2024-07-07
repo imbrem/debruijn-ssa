@@ -8,7 +8,6 @@ import Discretion.Correspondence.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Fv
-
 namespace BinSyntax
 
 variable {φ : Type u} {ε : Type v} [Φ: EffectSet φ ε] [SemilatticeSup ε] [OrderBot ε]

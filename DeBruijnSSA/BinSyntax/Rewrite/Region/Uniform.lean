@@ -1,6 +1,7 @@
 import DeBruijnSSA.BinSyntax.Typing.Region.Compose
 import DeBruijnSSA.BinSyntax.Syntax.Compose.Term
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Cong
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Setoid
 
 import Discretion.Utils.Quotient
 
@@ -46,6 +47,11 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
       (s.lsubst (ret (sum Term.nil e)).lsubst0)
     → Uniform P (⟨A, ⊥⟩::Γ) (C::L) (r.fixpoint.vsubst e.subst0) s.fixpoint
   | refl : r.Wf Γ L → Uniform P Γ L r r
+  -- TODO: this should be a theorem, later
+  | let1_equiv {a a' : Term φ} {r : Region φ}
+    : Term.Uniform Term.TStep Γ ⟨A, e⟩ a a'
+    → r.Wf (⟨A, ⊥⟩::Γ) L
+    → Uniform P Γ L (Region.let1 a r) (Region.let1 a' r)
   | rel : P Γ L x y → Uniform P Γ L x y
   | symm : Uniform P Γ L x y → Uniform P Γ L y x
   | trans : Uniform P Γ L x y → Uniform P Γ L y z → Uniform P Γ L x z
@@ -113,6 +119,8 @@ theorem Uniform.wf {P : Ctx α ε → LCtx α → Region φ → Region φ → Pr
     case isFalse h => apply dG
   | uniform de dr ds => exact ⟨Wf.vsubst de.subst0 dr.fixpoint, ds.fixpoint⟩
   | refl h => exact ⟨h, h⟩
+  | let1_equiv da dr => exact ⟨dr.let1 (da.left TStep.wf),
+                               dr.let1 (da.right TStep.wf)⟩
   | rel h => exact toWf h
   | symm _ I => exact I.symm
   | trans _ _ Il Ir => exact ⟨Il.1, Ir.2⟩

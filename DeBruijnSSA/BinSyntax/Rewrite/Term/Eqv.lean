@@ -186,6 +186,14 @@ def Eqv.subst (σ : Subst.Eqv φ Γ Δ) (a : Eqv φ Δ V) : Eqv φ Γ V
 @[simp]
 theorem Eqv.subst_quot {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V} : subst ⟦σ⟧ ⟦a⟧ = ⟦a.subst σ⟧ := rfl
 
+def Subst.Eqv.comp (σ : Subst.Eqv φ Γ Δ) (τ : Subst.Eqv φ Δ Ξ)
+  : Subst.Eqv φ Γ Ξ := Quotient.liftOn₂ σ τ (λσ τ => ⟦σ.comp τ⟧)
+    (λ_ _ _ _ h h' => sound $ Term.Subst.InS.comp_congr h h')
+
+@[simp]
+theorem Subst.Eqv.comp_quot {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ}
+  : comp ⟦σ⟧ ⟦τ⟧ = ⟦σ.comp τ⟧ := rfl
+
 -- TODO: subst_var lore
 
 @[simp]
@@ -256,6 +264,12 @@ theorem Eqv.subst_unit {σ : Subst.Eqv φ Γ Δ} {e}
   : subst σ (unit (φ := φ) e) = unit e := by
   induction σ using Quotient.inductionOn;
   rfl
+
+def Eqv.subst0 (a : Eqv φ Δ V) : Subst.Eqv φ Δ (V::Δ)
+  := Quotient.liftOn a (λa => ⟦a.subst0⟧) (λ_ _ h => sorry)
+
+@[simp]
+theorem Eqv.subst0_quot {a : InS φ Δ V} : subst0 ⟦a⟧ = ⟦a.subst0⟧ := rfl
 
 -- TODO: Define Eqv.termInduction or somesuch... should do the same for InS, too...
 

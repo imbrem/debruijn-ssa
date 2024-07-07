@@ -180,4 +180,13 @@ theorem InS.subst_congr {Γ Δ : Ctx α ε} {V}
   {σ σ' : Subst.InS φ Γ Δ} (hσ : σ ≈ σ') {r r' : InS φ Δ V} (hr : r ≈ r') : r.subst σ ≈ r'.subst σ'
   := Setoid.trans (InS.subst_equiv_congr hσ r) (InS.subst_congr_right σ' hr)
 
+theorem Subst.InS.comp_congr {Γ Δ Ξ : Ctx α ε}
+  {σ σ' : Subst.InS φ Γ Δ} {ρ ρ' : Subst.InS φ Δ Ξ}
+  (hσ : σ ≈ σ') (hρ : ρ ≈ ρ') : σ.comp ρ ≈ σ'.comp ρ'
+  := sorry
+
+theorem InS.subst0_congr {Γ Δ : Ctx α ε} {V}
+{r r' : InS φ Δ V} (hr : r ≈ r') : r.subst0 ≈ r'.subst0
+  := sorry
+
 -- TODO: stick rules down here...

@@ -29,6 +29,39 @@ theorem Region.InS.coe_vsubst {Γ Δ : Ctx α ε} {σ : Term.Subst.InS φ Γ Δ}
   : (r.vsubst σ : Region φ) = (r : Region φ).vsubst σ
   := rfl
 
+@[simp]
+theorem Region.InS.vsubst_br {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {ℓ} {a : Term.InS φ Δ (A, ⊥)} {hℓ : L.Trg ℓ A}
+  : (br ℓ a hℓ).vsubst σ = br ℓ (a.subst σ) hℓ
+  := rfl
+
+@[simp]
+theorem Region.InS.vsubst_let1 {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {a : Term.InS φ Δ ⟨A, e⟩} {r : InS φ (⟨A, ⊥⟩::Δ) L}
+  : (let1 a r).vsubst σ = let1 (a.subst σ) (r.vsubst (σ.lift (le_refl _)))
+  := rfl
+
+@[simp]
+theorem Region.InS.vsubst_let2 {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {a : Term.InS φ Δ ⟨Ty.prod A B, e⟩} {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ) L}
+  : (let2 a r).vsubst σ = let2 (a.subst σ) (r.vsubst (σ.liftn₂ (le_refl _) (le_refl _)))
+  := rfl
+
+@[simp]
+theorem Region.InS.vsubst_case {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {e : Term.InS φ Δ ⟨Ty.coprod A B, e⟩}
+  {r : InS φ (⟨A, ⊥⟩::Δ) L} {s : InS φ (⟨B, ⊥⟩::Δ) L}
+  : (case e r s).vsubst σ = case (e.subst σ)
+    (r.vsubst (σ.lift (le_refl _))) (s.vsubst (σ.lift (le_refl _)))
+  := rfl
+
+@[simp]
+theorem Region.InS.vsubst_cfg {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ} {R : LCtx α} {β : InS φ Δ (R ++ L)}
+  {G : (i : Fin R.length) → InS φ ((R[i], ⊥)::Δ) (R ++ L)}
+  : (cfg R β G).vsubst σ = cfg R (β.vsubst σ) (λi => (G i).vsubst (σ.lift (le_refl _)))
+  := rfl
+
 theorem Region.InS.vsubst_vsubst {Γ Δ Ξ : Ctx α ε}
   {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
   (r : InS φ Ξ L) : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ)

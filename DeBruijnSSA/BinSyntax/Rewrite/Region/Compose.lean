@@ -8,23 +8,31 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 namespace Region
 
 abbrev Eqv.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : Eqv φ (⟨tyIn, ⊥⟩::rest) (tyOut::targets) := ⟦InS.ret t⟧
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : Eqv φ (⟨tyIn, ⊥⟩::rest) (tyOut::targets)
+  := Quotient.liftOn t (λt => ⟦InS.ret t⟧) (λ_ _ h => Quotient.sound $ InS.br_congr _ h (by simp))
 
 theorem Eqv.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (ρ : Ctx.InS (⟨tyIn, ⊥⟩::rest') _)
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (Eqv.ret (targets := targets) t).vwk ρ = Eqv.ret (t.wk ρ) := rfl
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (Eqv.ret (targets := targets) t).vwk ρ = Eqv.ret (t.wk ρ) := by
+  induction t using Quotient.inductionOn
+  rfl
 
 theorem Eqv.vwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : (Eqv.ret (targets := targets) t).vwk1 (inserted := inserted)
-  = Eqv.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := rfl
+  = Eqv.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := by
+  induction t using Quotient.inductionOn
+  rfl
 
 theorem Eqv.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (Eqv.ret (targets := targets) t).vsubst σ = Eqv.ret (t.subst σ) := rfl
+  (σ : Term.Subst.Eqv φ (⟨tyIn, ⊥⟩::Γ) _)
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (Eqv.ret (targets := targets) t).vsubst σ = Eqv.ret (t.subst σ) := by
+  induction σ using Quotient.inductionOn
+  induction t using Quotient.inductionOn
+  rfl
 
 abbrev Eqv.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   : Eqv φ (⟨ty, ⊥⟩::rest) (ty::targets) := ⟦InS.nil⟧
@@ -45,7 +53,7 @@ theorem Eqv.nil_vwk1 {Γ : Ctx α ε} {L : LCtx α}
   = Eqv.nil := rfl
 
 theorem Eqv.let1_0_nil
-  : Eqv.let1 (Term.InS.var 0 ⟨by simp, le_refl _⟩) Eqv.nil
+  : Eqv.let1 (Term.Eqv.var 0 ⟨by simp, le_refl _⟩) Eqv.nil
   = Eqv.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)
   := by rw [let1_beta]; rfl
 
@@ -140,32 +148,33 @@ theorem Eqv.seq_assoc {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp [InS.append_assoc]
 
 theorem Eqv.ret_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩)
+  (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩)
   (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : (Eqv.ret a) ;; r = r.vwk1.vsubst a.subst0 := by
+  induction a using Quotient.inductionOn;
   induction r using Quotient.inductionOn;
   simp only [ret, seq_def, vwk1_quot, alpha0_quot, lsubst_quot, vsubst_quot]
   rfl
 
 theorem Eqv.ret_seq_let {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩)
+  (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩)
   (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : (Eqv.ret a) ;; r = let1 a r.vwk1 := by rw [ret_seq, let1_beta]
 
 theorem Eqv.let1_seq {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨X, e⟩)
+  (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X, e⟩)
   (r : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)) (s : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : (Eqv.let1 a r) ;; s = Eqv.let1 a (r ;; s.vwk1) := by
   simp only [seq_def, lsubst_let1, vlift_alpha0]
 
 theorem Eqv.let2_seq {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨X.prod Y, e⟩)
+  (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.prod Y, e⟩)
   (r : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (C::L)) (s : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))
   : (Eqv.let2 a r) ;; s = Eqv.let2 a (r ;; s.vwk1.vwk1) := by
   simp only [seq_def, lsubst_let2, Subst.Eqv.vliftn₂_eq_vlift_vlift, vlift_alpha0]
 
 theorem Eqv.case_seq {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ (⟨A, ⊥⟩::Γ) ⟨X.coprod Y, e⟩)
+  (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.coprod Y, e⟩)
   (r : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)) (s : Eqv φ (⟨Y, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L))
   (t : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : (Eqv.case a r s) ;; t = Eqv.case a (r ;; t.vwk1) (s ;; t.vwk1) := by
@@ -196,7 +205,7 @@ theorem Eqv.vwk1_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   = left.vwk1 ;; right.vwk1 := vwk_lift_seq ⟨Nat.succ, (by simp)⟩ left right
 
 theorem Eqv.vsubst_lift_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
-  (σ : Term.Subst.InS φ Γ Δ)
+  (σ : Term.Subst.Eqv φ Γ Δ)
   (left : Eqv φ (⟨A, ⊥⟩::Δ) (B::L))
   (right : Eqv φ (⟨B, ⊥⟩::Δ) (C::L))
   : (left ;; right).vsubst (σ.lift (le_refl _))
@@ -206,14 +215,14 @@ theorem Eqv.vsubst_lift_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   sorry
 
 theorem Eqv.vsubst_liftn₂_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
-  (σ : Term.Subst.InS φ Γ Δ)
+  (σ : Term.Subst.Eqv φ Γ Δ)
   (left : Eqv φ (⟨A, ⊥⟩::X::Δ) (B::L))
   (right : Eqv φ (⟨B, ⊥⟩::X::Δ) (C::L))
   : (left ;; right).vsubst (σ.liftn₂ (le_refl _) (le_refl _))
   = left.vsubst (σ.liftn₂ (le_refl _) (le_refl _)) ;; right.vsubst (σ.liftn₂ (le_refl _) (le_refl _))
-  := by simp only [<-Term.Subst.InS.lift_lift, vsubst_lift_seq]
+  := by stop simp only [<-Term.Subst.InS.lift_lift, vsubst_lift_seq]
 
-open Term.InS
+open Term.Eqv
 
 -- TODO: centrality lore...
 
@@ -276,8 +285,8 @@ theorem Eqv.IsPure.swap {left right : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.IsPure (Eqv.swap (φ := φ) (left := left) (right := right) (Γ := Γ) (L := L)) := sorry
 
 theorem Eqv.repack {left right : Ty α} {rest : Ctx α ε} {targets : LCtx α}
-  : Eqv.let2 (Term.InS.var 0 ⟨by simp, le_refl _⟩)
-    (Eqv.ret (Term.InS.pair (Term.InS.var 1 (by simp)) (Term.InS.var 0 (by simp))))
+  : Eqv.let2 (var 0 ⟨by simp, le_refl _⟩)
+    (Eqv.ret (pair (var 1 (by simp)) (var 0 (by simp))))
   = Eqv.nil (φ := φ) (ty := left.prod right) (rest := rest) (targets := targets) := by
   rw [<-let1_0_nil, <-let2_eta, let1_beta]
   rfl
@@ -285,6 +294,7 @@ theorem Eqv.repack {left right : Ty α} {rest : Ctx α ε} {targets : LCtx α}
 theorem Eqv.swap_swap {left right : Ty α}
   : Eqv.swap ;; Eqv.swap
   = (Eqv.nil (φ := φ) (ty := left.prod right) (rest := rest) (targets := targets)) := by
+  stop
   simp only [
     swap, let2_seq, vwk1, vwk_let2, wk_var, wk_pair, Nat.liftWk, vwk_ret, Ctx.InS.liftn₂,
     Nat.liftnWk, Nat.one_lt_ofNat, Nat.ofNat_pos, ↓reduceIte, ret_seq, vsubst_let2,
@@ -300,6 +310,7 @@ theorem Eqv.rtimes_nil {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.rtimes_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (tyLeft : Ty α) (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (s : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : tyLeft ⋊ (r ;; s) = (tyLeft ⋊ r) ;; (tyLeft ⋊ s) := by
+  stop
   apply Eq.symm
   rw [rtimes, rtimes, let2_seq, seq_assoc, ret_seq]
   simp only [
@@ -383,6 +394,7 @@ theorem Eqv.runit_seq_runit_inv {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.runit_inv_seq_runit {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : runit_inv (φ := φ) (ty := ty) (Γ := Γ) (L := L) ;; runit = nil := by
+  stop
   simp only [runit_inv, runit, ret_seq]
   rw [vwk1, vwk_let2, vsubst_let2, wk_var, subst_var]
   simp only [Nat.liftWk_zero, Term.Subst.InS.get_0_subst0, Set.mem_setOf_eq]
@@ -573,6 +585,7 @@ theorem Eqv.sum_nil {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.ret_inl_seq_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : ret_inl ;; coprod l r = l := by
+  stop
   rw [ret_inl, coprod, ret_seq, vwk1, vwk_case, vsubst_case]
   simp only [Set.mem_setOf_eq, wk_var, Nat.liftWk_zero, subst_var, Term.Subst.InS.get_0_subst0]
   rw [case_inl, let1_beta, vwk1, vwk_vwk, vsubst_vsubst]
@@ -582,6 +595,7 @@ theorem Eqv.ret_inl_seq_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.ret_inr_seq_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : ret_inr ;; coprod l r = r := by
+  stop
   rw [ret_inr, coprod, ret_seq, vwk1, vwk_case, vsubst_case]
   simp only [Set.mem_setOf_eq, wk_var, Nat.liftWk_zero, subst_var, Term.Subst.InS.get_0_subst0]
   rw [case_inr, let1_beta, vwk1, vwk_vwk, vsubst_vsubst]
@@ -739,7 +753,7 @@ theorem Eqv.IsPure.distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 def Eqv.control {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (B::A::L) :=
   case (var 0 Ctx.Var.shead)
-    (InS.br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩).q
+    (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩)
     (ret (var 0 (by simp)))
 
 def Eqv.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}

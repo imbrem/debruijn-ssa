@@ -202,6 +202,31 @@ theorem InS.coe_update {ι : Type _} [DecidableEq ι] {Γ : ι → Ctx α ε} {L
         case isTrue h => cases h; rfl
         case isFalse h => rfl
 
+def InS.induction
+  {motive : (Γ : Ctx α ε) → (L : LCtx α) → InS φ Γ L → Prop}
+  (br : ∀{Γ L A} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (InS.br ℓ a hℓ))
+  (let1 : ∀{Γ L A e} (a : Term.InS φ Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L),
+    motive _ _ t → motive Γ L (InS.let1 a t))
+  (let2 : ∀{Γ L A B e} (a : Term.InS φ Γ ⟨Ty.prod A B, e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L),
+    motive _ _ t → motive Γ L (InS.let2 a t))
+  (case : ∀{Γ L A B e} (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩)
+    (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L),
+    motive _ _ s → motive _ _ t → motive Γ L (InS.case a s t))
+  (cfg : ∀{Γ L} (R)
+    (dβ : InS φ Γ (R ++ L))
+    (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)),
+    motive _ _ dβ → (∀i, motive _ _ (dG i)) → motive Γ L (InS.cfg R dβ dG))
+  {Γ L} : (h : InS φ Γ L) → motive _ _ h
+  | ⟨r, hr⟩ => by induction hr with
+  | br hℓ ha => exact br _ ⟨_, ha⟩ hℓ
+  | let1 ha hr Ir => exact let1 ⟨_, ha⟩ ⟨_, hr⟩ Ir
+  | let2 ha hr Ir => exact let2 ⟨_, ha⟩ ⟨_, hr⟩ Ir
+  | case ha hl hr Il Ir => exact case ⟨_, ha⟩ ⟨_, hl⟩ ⟨_, hr⟩ Il Ir
+  | cfg n R hR dβ dG Iβ IG =>
+    cases hR
+    simp only [Fin.cast_eq_self] at *
+    exact cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩) Iβ IG
+
 def InD (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
   := Σr : Region φ, r.WfD Γ L
 
