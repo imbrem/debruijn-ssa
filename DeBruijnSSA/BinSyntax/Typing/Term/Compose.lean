@@ -38,14 +38,14 @@ theorem Wf.pi_l {A B : Ty α} {Γ : Ctx α ε}
   : pi_l.Wf (φ := φ) (⟨A.prod B, ⊥⟩::Γ) ⟨A, e⟩
   := let2 nil (var (by simp))
 
-def InS.pi_l {A B : Ty α} {Γ : Ctx α ε} : InS (φ := φ) (⟨A.prod B, ⊥⟩::Γ) ⟨A, e⟩
+def InS.pi_l {A B : Ty α} {Γ : Ctx α ε} : InS φ (⟨A.prod B, ⊥⟩::Γ) ⟨A, e⟩
   := let2 nil (var 1 (by simp))
 
 theorem Wf.pi_r {A B : Ty α} {Γ : Ctx α ε}
   : pi_r.Wf (φ := φ) (⟨A.prod B, ⊥⟩::Γ) ⟨B, e⟩
   := let2 nil (var (by simp))
 
-def InS.pi_r {A B : Ty α} {Γ : Ctx α ε} : InS (φ := φ) (⟨A.prod B, ⊥⟩::Γ) ⟨B, e⟩
+def InS.pi_r {A B : Ty α} {Γ : Ctx α ε} : InS φ (⟨A.prod B, ⊥⟩::Γ) ⟨B, e⟩
   := let2 nil (var 0 (by simp))
 
 theorem Wf.prod {A B C : Ty α} {Γ : Ctx α ε} {l r : Term φ}

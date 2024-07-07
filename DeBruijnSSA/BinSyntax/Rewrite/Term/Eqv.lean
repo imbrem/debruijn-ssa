@@ -163,7 +163,152 @@ theorem Eqv.wk_unit {ρ : Γ.InS Δ} {e}
 @[simp]
 theorem Eqv.wk_quot {ρ : Γ.InS Δ} {a : InS φ Δ V} : wk ρ ⟦a⟧ = ⟦a.wk ρ⟧ := rfl
 
--- TODO: "inductive simps" for wk
+theorem Eqv.wk_wk {ρ : Γ.InS Δ} {σ : Δ.InS Ξ} {a : Eqv φ Ξ V}
+  : (a.wk σ).wk ρ = a.wk (ρ.comp σ) := by
+  induction a using Quotient.inductionOn
+  simp [InS.wk_wk]
+
+def Eqv.wk0 (a : Eqv φ Γ V) : Eqv φ (head::Γ) V := wk Ctx.InS.wk0 a
+
+@[simp]
+theorem Eqv.wk0_quot {a : InS φ Γ V} : wk0 (head := head) ⟦a⟧ = ⟦a.wk0⟧ := rfl
+
+@[simp]
+theorem Eqv.wk0_var {hn : Γ.Var n V}
+  : wk0 (φ := φ) (head := head) (var n hn) = var (n + 1) hn.step := rfl
+
+def Eqv.wk1 (a : Eqv φ (head::Γ) V) : Eqv φ (head::inserted::Γ) V := wk Ctx.InS.wk1 a
+
+@[simp]
+theorem Eqv.wk1_quot {a : InS φ (head::Γ) V} : wk1 (inserted := inserted) ⟦a⟧ = ⟦a.wk1⟧ := rfl
+
+@[simp]
+theorem Eqv.wk1_var0 {hn : Ctx.Var (head::Γ) 0 V}
+  : wk1 (inserted := inserted) (var (φ := φ) 0 hn) = var 0 (Ctx.Var.head hn.get _) := rfl
+
+def Eqv.wk2 (a : Eqv φ (left::right::Γ) V) : Eqv φ (left::right::inserted::Γ) V := wk Ctx.InS.wk2 a
+
+@[simp]
+theorem Eqv.wk2_quot {a : InS φ (left::right::Γ) V}
+  : wk2 (inserted := inserted) ⟦a⟧ = ⟦a.wk2⟧ := rfl
+
+theorem Eqv.wk1_wk2 {a : Eqv φ (head::Γ) V}
+  : (a.wk1 (inserted := left)).wk2 (inserted := right) = a.wk1.wk1 := by
+  induction a using Quotient.inductionOn
+  simp [InS.wk1_wk2]
+
+theorem Eqv.wk0_let1 {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : wk0 (head := head) (a.let1 b) = a.wk0.let1 b.wk1 := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  simp [InS.wk0_let1]
+
+theorem Eqv.wk1_let1 {a : Eqv φ (head::Γ) ⟨A, e⟩} {b : Eqv φ (⟨A, ⊥⟩::head::Γ) ⟨B, e⟩}
+  : wk1 (inserted := inserted) (a.let1 b) = a.wk1.let1 b.wk2 := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  simp [InS.wk1_let1]
+
+theorem Eqv.wk0_let2 {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
+  {b : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : wk0 (head := head) (a.let2 b) = a.wk0.let2 b.wk2 := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  simp [InS.wk0_let2]
+
+theorem Eqv.wk0_case {a : Eqv φ Γ ⟨Ty.coprod A B, e⟩}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : wk0 (head := head) (a.case l r) = a.wk0.case l.wk1 r.wk1 := by
+  induction a using Quotient.inductionOn
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  simp [InS.wk0_case]
+
+theorem Eqv.wk1_case {a : Eqv φ (head::Γ) ⟨Ty.coprod A B, e⟩}
+  {l : Eqv φ (⟨A, ⊥⟩::head::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::head::Γ) ⟨C, e⟩}
+  : wk1 (inserted := inserted) (a.case l r) = a.wk1.case l.wk2 r.wk2 := by
+  induction a using Quotient.inductionOn
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  simp [InS.wk1_case]
+
+theorem Eqv.wk0_pair {Γ : Ctx α ε}
+  {l : Eqv φ Γ (A, e)} {r : Eqv φ Γ (B, e)}
+  : (pair l r).wk0 (head := head) = pair l.wk0 r.wk0 := by
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk0_inl {Γ : Ctx α ε} {l : Eqv φ Γ (A, e)}
+  : (inl (B := right) l).wk0 (head := head) = inl l.wk0 := by
+  induction l using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk0_inr {Γ : Ctx α ε} {r : Eqv φ Γ (B, e)}
+  : (inr (A := left) r).wk0 (head := head) = inr r.wk0 := by
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk0_abort {Γ : Ctx α ε} {a : Eqv φ Γ (Ty.empty, e)}
+  : (abort (A := tyOut) a).wk0 (head := head) = abort a.wk0 tyOut := by
+  induction a using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk0_unit {Γ : Ctx α ε} {e} : (unit (Γ := Γ) (φ := φ) e).wk0 (head := head) = unit e
+  := rfl
+
+theorem Eqv.wk1_pair {Γ : Ctx α ε}
+  {l : Eqv φ (head::Γ) (A, e)} {r : Eqv φ (head::Γ) (B, e)}
+  : (pair l r).wk1 (inserted := inserted) = pair l.wk1 r.wk1
+  := by
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk1_inl {Γ : Ctx α ε} {l : Eqv φ (head::Γ) (A, e)}
+  : (inl (B := right) l).wk1 (inserted := inserted) = inl l.wk1 := by
+  induction l using Quotient.inductionOn
+  rfl
+
+
+theorem Eqv.wk1_inr {Γ : Ctx α ε} {r : Eqv φ (head::Γ) (B, e)}
+  : (inr (A := left) r).wk1 (inserted := inserted) = inr r.wk1 := by
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk1_abort {Γ : Ctx α ε} {a : Eqv φ (head::Γ) (Ty.empty, e)}
+  : (abort (A := tyOut) a).wk1 (inserted := inserted) = abort a.wk1 tyOut := by
+  induction a using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk1_unit {Γ : Ctx α ε} {e}
+  : (unit (Γ := head::Γ) (φ := φ) e).wk1 (inserted := inserted) = unit e
+  := rfl
+
+theorem Eqv.wk2_pair {Γ : Ctx α ε}
+  {l : Eqv φ (left::right::Γ) (A, e)} {r : Eqv φ (left::right::Γ) (B, e)}
+  : (pair l r).wk2 (inserted := inserted) = pair l.wk2 r.wk2 := by
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk2_inl {Γ : Ctx α ε} {l : Eqv φ (left::right::Γ) (A, e)}
+  : (inl (B := B) l).wk2 (inserted := inserted) = inl l.wk2 := by
+  induction l using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk2_inr {Γ : Ctx α ε} {r : Eqv φ (left::right::Γ) (B, e)}
+  : (inr (A := A) r).wk2 (inserted := inserted) = inr r.wk2 := by
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk2_abort {Γ : Ctx α ε} {a : Eqv φ (left::right::Γ) (Ty.empty, e)}
+  : (abort (A := tyOut) a).wk2 (inserted := inserted) = abort a.wk2 tyOut := by
+  induction a using Quotient.inductionOn
+  rfl
+
+theorem Eqv.wk2_unit {Γ : Ctx α ε} {e}
+  : (unit (Γ := left::right::Γ) (φ := φ) e).wk2 (inserted := inserted) = unit e := rfl
 
 def Subst.Eqv (φ) [EffInstSet φ (Ty α) ε] (Γ Δ : Ctx α ε)
   := Quotient (α := Subst.InS φ Γ Δ) inferInstance
@@ -274,6 +419,121 @@ theorem Eqv.subst0_quot {a : InS φ Δ V} : subst0 ⟦a⟧ = ⟦a.subst0⟧ := r
 -- TODO: Define Eqv.termInduction or somesuch... should do the same for InS, too...
 
 -- TODO: Ye Olde Rewrites
+
+def Eqv.wk_res (hV : lo ≤ hi) (a : Eqv φ Γ lo) : Eqv φ Γ hi
+  := Quotient.liftOn a (λa => ⟦a.wk_res hV⟧) (λ_ _ h => sound $ InS.wk_res_congr hV h)
+
+@[simp]
+theorem Eqv.wk_res_self {a : Eqv φ Γ e} : a.wk_res (by simp) = a := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+def Eqv.wk_eff (he : lo ≤ hi) (a : Eqv φ Γ ⟨A, lo⟩) : Eqv φ Γ ⟨A, hi⟩
+  := Quotient.liftOn a (λa => ⟦a.wk_eff he⟧) (λ_ _ h => sound $ InS.wk_eff_congr he h)
+
+@[simp]
+theorem Eqv.wk_eff_self {a : Eqv φ Γ ⟨A, e⟩} : a.wk_eff (by simp) = a := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_eff_var {n : ℕ} {hn : Γ.Var n ⟨A, lo⟩} {he : lo ≤ hi}
+  : wk_eff he (var n hn) = var (φ := φ) n ⟨hn.length, by apply le_trans hn.get; simp [he]⟩ := rfl
+
+theorem Eqv.let1_op {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {hf : Φ.EFn f A B e} : let1 (op f hf a) b = (let1 a $ let1 (op f hf (var 0 (by simp))) $ b.wk1)
+  := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_op
+
+theorem Eqv.let1_let1 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  {c : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (let1 a b) c = (let1 a $ let1 b $ c.wk1) := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  induction c using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_let1
+
+theorem Eqv.let1_pair {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (Γ) ⟨B, e⟩} {r : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (pair a b) r
+  = (let1 a $ let1 b.wk0 $ let1 (pair (var 1 (by simp)) (var 0 (by simp))) $ r.wk1.wk1) := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_pair
+
+theorem Eqv.let1_let2 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
+  {b : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}
+  : let1 (let2 a b) r = (let2 a $ let1 b $ r.wk1.wk1) := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_let2
+
+theorem Eqv.let1_inl {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {r : Eqv φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (inl a) r = (let1 a $ let1 (inl (var 0 (by simp))) $ r.wk1) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_inl
+
+theorem Eqv.let1_inr {Γ : Ctx α ε} {a : Eqv φ Γ ⟨B, e⟩} {r : Eqv φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (inr a) r = (let1 a $ let1 (inr (var 0 (by simp))) $ r.wk1) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_inr
+
+theorem Eqv.let1_case {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.coprod A B, e⟩}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {s : Eqv φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}
+  : let1 (case a l r) s = case a (let1 l s.wk1) (let1 r s.wk1) := by
+  induction a using Quotient.inductionOn
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_case
+
+theorem Eqv.let1_abort {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.empty, e⟩} {A : Ty α}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : let1 (abort a A) r = (let1 a $ let1 (abort (var 0 (by simp)) A) $ r.wk1) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_abort
+
+theorem Eqv.let2_eta {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
+  : let2 a (pair (var 1 (by simp)) (var 0 (by simp))) = a := by
+  induction a using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let2_eta
+
+theorem Eqv.let1_eta {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩}
+  : let1 a (var 0 (by simp)) = a := by
+  induction a using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let1_eta
+
+theorem Eqv.let2_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 a r = (let1 a $ let2 (var 0 (by simp)) $ r.wk2) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.let2_bind
+
+theorem Eqv.case_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.coprod A B, e⟩}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : case a l r = (let1 a $ case (var 0 (by simp)) (l.wk1) (r.wk1)) := by
+  induction a using Quotient.inductionOn
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.sound; apply InS.case_bind
+
+theorem Eqv.let1_beta {a : Eqv φ Γ ⟨A, ⊥⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : let1 (a.wk_eff (by simp)) b = b.subst a.subst0 := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  apply Eqv.sound $ InS.let1_beta
+
+theorem Eqv.let1_beta_pure {a : Eqv φ Γ ⟨A, ⊥⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩}
+  : let1 a b = b.subst a.subst0 := by rw [<-a.wk_eff_self, Eqv.let1_beta, wk_eff_self]
 
 end Basic
 

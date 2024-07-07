@@ -112,7 +112,7 @@ theorem Wf.cfg_iff {Γ : Ctx α ε} {n} {G} {β : Region φ} {L}
 def InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
   := {r : Region φ | r.Wf Γ L}
 
-instance inSCoe {Γ : Ctx α ε} {L : LCtx α} : CoeOut (InS φ Γ L) (Region φ)
+instance InS.instCoeOut {Γ : Ctx α ε} {L : LCtx α} : CoeOut (InS φ Γ L) (Region φ)
   := ⟨λr => r.1⟩
 
 @[simp]
@@ -371,11 +371,14 @@ theorem InS.vwk_id_vwk {Γ Δ Ξ : Ctx α ε} {h : Γ.Wkn Δ id} {ρ : Δ.InS Ξ
   : (r.vwk ρ).vwk_id h = r.vwk ⟨ρ, h.comp ρ.prop⟩ := by
   cases r; simp [vwk, vwk_id, vwk_vwk]
 
-def InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (left::Γ) L) : InS φ (left::right::Γ) L
+def InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (head::Γ) L) : InS φ (head::inserted::Γ) L
   := r.vwk Ctx.InS.wk1
 
-theorem InS.coe_vwk1 {Γ : Ctx α ε} {L} {r : InS φ (left::Γ) L}
-  : (r.vwk1 (right := right) : Region φ) = r.vwk1 (right := right) := rfl
+def InS.vwk2 {Γ : Ctx α ε} {L} (r : InS φ (left::right::Γ) L) : InS φ (left::right::inserted::Γ) L
+  := r.vwk Ctx.InS.wk2
+
+theorem InS.coe_vwk1 {Γ : Ctx α ε} {L} {r : InS φ (head::Γ) L}
+  : (r.vwk1 (inserted := inserted) : Region φ) = r.vwk1 (inserted := inserted) := rfl
 
 def InS.vwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L} : InS φ (head::Γ) L
   := r.vwk ⟨Nat.succ, Ctx.Wkn.succ⟩
@@ -413,12 +416,12 @@ theorem InS.vwk_lwk {Γ Δ : Ctx α ε} {L K} {ρ : Γ.InS Δ} {σ : L.InS K}
   : (r.lwk σ).vwk ρ = (r.vwk ρ).lwk σ := by
   cases r; simp [lwk, vwk, Region.lwk_vwk]
 
-theorem InS.lwk_vwk1 {Γ : Ctx α ε} {L K} {ρ : L.InS K} {r : InS φ (left::Γ) L}
-  : (r.vwk1 (right := right)).lwk ρ = (r.lwk ρ).vwk1 := by
+theorem InS.lwk_vwk1 {Γ : Ctx α ε} {L K} {ρ : L.InS K} {r : InS φ (head::Γ) L}
+  : (r.vwk1 (inserted := inserted)).lwk ρ = (r.lwk ρ).vwk1 := by
   rw [vwk1, lwk_vwk]; rfl
 
-theorem InS.vwk1_lwk {Γ : Ctx α ε} {L K} {ρ : L.InS K} {r : InS φ (left::Γ) L}
-  : (r.lwk ρ).vwk1 = (r.vwk1 (right := right)).lwk ρ := by rw [lwk_vwk1]
+theorem InS.vwk1_lwk {Γ : Ctx α ε} {L K} {ρ : L.InS K} {r : InS φ (head::Γ) L}
+  : (r.lwk ρ).vwk1 = (r.vwk1 (inserted := inserted)).lwk ρ := by rw [lwk_vwk1]
 
 def InS.lwk_id {Γ : Ctx α ε} {L} (h : L.Wkn K id) (r : InS φ Γ L) : InS φ Γ K
   := ⟨r, r.2.lwk_id h⟩

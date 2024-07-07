@@ -103,9 +103,82 @@ theorem InS.wk_congr {Γ Δ : Ctx α ε} {ρ ρ' : Ctx.InS Γ Δ}
   {r r' : InS φ Δ V} (hρ : ρ ≈ ρ') (hr : r ≈ r') : r.wk ρ ≈ r'.wk ρ'
   := r.wk_equiv hρ ▸ wk_congr_right ρ' hr
 
-theorem InS.wk_res_congr {Γ : Ctx α ε} {V V'} (h : V ≤ V') {r r' : InS φ Γ V} (hr : r ≈ r')
+theorem InS.wk0_congr {Γ : Ctx α ε} {r r' : InS φ Γ V}
+  (hr : r ≈ r') : r.wk0 (head := head) ≈ r'.wk0
+  := wk_congr_right (ρ := Ctx.InS.wk0) hr
+
+theorem InS.wk1_congr {Γ : Ctx α ε} {r r' : InS φ (head::Γ) V}
+  (hr : r ≈ r') : r.wk1 (inserted := inserted) ≈ r'.wk1
+  := wk_congr_right (ρ := Ctx.InS.wk1) hr
+
+theorem InS.wk2_congr {Γ : Ctx α ε} {r r' : InS φ (left::right::Γ) V}
+  (hr : r ≈ r') : r.wk2 (inserted := inserted) ≈ r'.wk2
+  := wk_congr_right (ρ := Ctx.InS.wk2) hr
+
+theorem InS.wk_res_congr {Γ : Ctx α ε} {lo hi} (h : lo ≤ hi) {r r' : InS φ Γ lo} (hr : r ≈ r')
   : r.wk_res h ≈ r'.wk_res h
   := Uniform.wk_res (λh p => p.wk_res h) h hr
+
+theorem InS.wk_eff_congr {Γ : Ctx α ε} (h : lo ≤ hi) {r r' : InS φ Γ ⟨A, lo⟩} (hr : r ≈ r')
+  : r.wk_eff h ≈ r'.wk_eff h
+  := wk_res_congr (lo := ⟨A, lo⟩) (hi := ⟨A, hi⟩) ⟨le_refl _, h⟩ hr
+
+theorem InS.let1_op {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩} {b : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {hf : Φ.EFn f A B e} : let1 (op f hf a) b ≈ (let1 a $ let1 (op f hf (var 0 (by simp))) $ b.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_let1 {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩} {b : InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  {c : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (let1 a b) c ≈ (let1 a $ let1 b $ c.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_pair {Γ : Ctx α ε}
+  {a : InS φ Γ ⟨A, e⟩} {b : InS φ (Γ) ⟨B, e⟩} {r : InS φ (⟨A.prod B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (pair a b) r
+  ≈ (let1 a $ let1 b.wk0 $ let1 (pair (var 1 (by simp)) (var 0 (by simp))) $ r.wk1.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_let2 {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.prod A B, e⟩}
+  {b : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : InS φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}
+  : let1 (let2 a b) r ≈ (let2 a $ let1 b $ r.wk1.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_inl {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩} {r : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (inl a) r ≈ (let1 a $ let1 (inl (var 0 (by simp))) $ r.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_inr {Γ : Ctx α ε} {a : InS φ Γ ⟨B, e⟩} {r : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (inr a) r ≈ (let1 a $ let1 (inr (var 0 (by simp))) $ r.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_case {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
+  {l : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {s : InS φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}
+  : let1 (case a l r) s ≈ case a (let1 l s.wk1) (let1 r s.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_abort {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.empty, e⟩} {A : Ty α}
+  {r : InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : let1 (abort a A) r ≈ (let1 a $ let1 (abort (var 0 (by simp)) A) $ r.wk1)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let2_eta {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.prod A B, e⟩}
+  : let2 a (pair (var 1 (by simp)) (var 0 (by simp))) ≈ a
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let1_eta {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩}
+  : let1 a (var 0 (by simp)) ≈ a
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.let2_bind {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.prod A B, e⟩}
+  {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 a r ≈ (let1 a $ let2 (var 0 (by simp)) $ r.wk2)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.case_bind {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
+  {l : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : case a l r ≈ (let1 a $ case (var 0 (by simp)) (l.wk1) (r.wk1))
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 theorem InS.let1_beta {Γ : Ctx α ε} {a : InS φ Γ ⟨A, ⊥⟩} {b : InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
   : let1 (a.wk_eff (by simp)) b ≈ b.subst a.subst0

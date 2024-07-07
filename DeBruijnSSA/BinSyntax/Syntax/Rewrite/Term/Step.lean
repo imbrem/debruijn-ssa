@@ -39,8 +39,8 @@ inductive Rewrite : Term φ → Term φ → Prop
     Rewrite (let1 (case a l r) s) (case a (let1 l $ s.wk1) (let1 r $ s.wk1))
   | let1_abort (e r) :
     Rewrite (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.wk1)
-  | let2_eta (a b) : Rewrite (let2 a (let1 (pair (var 1) (var 0)) b.wk1.wk1)) (let1 a b)
-  | let1_eta (a b) : Rewrite (let1 a (let1 (var 0) b.wk1)) (let1 a b)
+  | let2_eta (a) : Rewrite (let2 a (pair (var 1) (var 0))) a
+  | let1_eta (a) : Rewrite (let1 a (var 0)) a
   | let2_bind (e r) :
     Rewrite (let2 e r) (let1 e $ (let2 (var 0) (r.wk (Nat.liftnWk 2 Nat.succ))))
   | case_bind (e r s) :

@@ -254,6 +254,18 @@ theorem wk_succ_comp_subst0 (e : Term φ) : e.subst0.comp (Subst.fromWk Nat.succ
 theorem wk_succ_subst_subst0 (e s : Term φ) : (e.wk Nat.succ).subst s.subst0 = e := by
   rw [<-subst_fromWk_apply, <-subst_comp, wk_succ_comp_subst0, subst_id]
 
+@[simp]
+theorem wk1_subst0_var0 (e : Term φ) : e.wk1.subst (var 0).subst0 = e := by
+  rw [subst0_var0, subst_fromWk, wk1, wk_wk]
+  apply Eq.trans _ e.wk_id
+  congr
+  funext i
+  cases i <;> rfl
+
+@[simp]
+theorem wk1_subst0_var0' (e : Term φ) : (e.wk (Nat.liftWk Nat.succ)).subst (var 0).subst0 = e
+  := e.wk1_subst0_var0
+
 /-- Substitute a term for the `n`th variable, bumping those above it downwards -/
 def substn (n : ℕ) (t : Term φ) : Subst φ := λm =>
   if m < n then var m else if m = n then t else var (m - 1)

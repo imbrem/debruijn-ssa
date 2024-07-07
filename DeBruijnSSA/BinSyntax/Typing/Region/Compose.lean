@@ -28,7 +28,7 @@ theorem InS.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
 
 theorem InS.vwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (InS.ret (targets := targets) t).vwk1 (right := right)
+  : (InS.ret (targets := targets) t).vwk1 (inserted := inserted)
   = InS.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := rfl
 
 @[simp]
@@ -57,7 +57,7 @@ theorem InS.nil_vwk_lift (ρ : Ctx.InS rest _)
 
 @[simp]
 theorem InS.nil_vwk1
-  : (InS.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)).vwk1 (right := right)
+  : (InS.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)).vwk1 (inserted := inserted)
   = InS.nil := rfl
 
 @[simp]
@@ -74,7 +74,7 @@ def InS.alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, �
   := ⟨(r : Region φ).alpha 0, r.prop.alpha0⟩
 
 theorem InS.vlift_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) (B::L))
-  : (InS.alpha0 r).vlift = InS.alpha0 (r.vwk1 (right := X)) := by
+  : (InS.alpha0 r).vlift = InS.alpha0 (r.vwk1 (inserted := X)) := by
   simp only [Subst.InS.vlift, Set.mem_setOf_eq, alpha0, vlift_alpha]
   rfl
 

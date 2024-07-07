@@ -302,8 +302,57 @@ def Term.wk0 : Term φ → Term φ := wk Nat.succ
 
 def Term.wk1 : Term φ → Term φ := wk (Nat.liftWk Nat.succ)
 
+def Term.wk2 : Term φ → Term φ := wk (Nat.liftnWk 2 Nat.succ)
+
+theorem Term.wk0_let1 (e r : Term φ) : (let1 e r).wk0 = let1 e.wk0 r.wk1 := rfl
+
+theorem Term.wk1_let1 (e r : Term φ) : (let1 e r).wk1 = let1 e.wk1 r.wk2
+  := by simp [wk1, wk2, Nat.liftnWk_two]
+
+theorem Term.wk0_let2 (e r : Term φ) : (let2 e r).wk0 = let2 e.wk0 r.wk2 := rfl
+
+theorem Term.wk0_case (e l r : Term φ) : (case e l r).wk0 = case e.wk0 l.wk1 r.wk1 := rfl
+
+theorem Term.wk1_case (e l r : Term φ) : (case e l r).wk1 = case e.wk1 l.wk2 r.wk2
+  := by simp [wk1, wk2, Nat.liftnWk_two]
+
+theorem Term.wk0_var (n : ℕ) : (var n).wk0 (φ := φ) = var (n + 1) := rfl
+
+theorem Term.wk0_pair (l r : Term φ) : (pair l r).wk0 = pair l.wk0 r.wk0 := rfl
+
+theorem Term.wk0_inl (e : Term φ) : (inl e).wk0 = inl e.wk0 := rfl
+
+theorem Term.wk0_inr (e : Term φ) : (inr e).wk0 = inr e.wk0 := rfl
+
+theorem Term.wk0_abort (e : Term φ) : (abort e).wk0 = abort e.wk0 := rfl
+
+theorem Term.wk0_unit : unit.wk0 (φ := φ) = unit := rfl
+
+theorem Term.wk1_pair (l r : Term φ) : (pair l r).wk1 = pair l.wk1 r.wk1 := rfl
+
+theorem Term.wk1_inl (e : Term φ) : (inl e).wk1 = inl e.wk1 := rfl
+
+theorem Term.wk1_inr (e : Term φ) : (inr e).wk1 = inr e.wk1 := rfl
+
+theorem Term.wk1_abort (e : Term φ) : (abort e).wk1 = abort e.wk1 := rfl
+
+theorem Term.wk1_unit : unit.wk1 (φ := φ) = unit := rfl
+
+theorem Term.wk2_pair (l r : Term φ) : (pair l r).wk2 = pair l.wk2 r.wk2 := rfl
+
+theorem Term.wk2_inl (e : Term φ) : (inl e).wk2 = inl e.wk2 := rfl
+
+theorem Term.wk2_inr (e : Term φ) : (inr e).wk2 = inr e.wk2 := rfl
+
+theorem Term.wk2_abort (e : Term φ) : (abort e).wk2 = abort e.wk2 := rfl
+
+theorem Term.wk2_unit : unit.wk2 (φ := φ) = unit := rfl
+
 theorem Term.wk_wk1 (r : Term φ) : r.wk1.wk ρ = r.wk (ρ ∘ Nat.liftWk Nat.succ)
   := by simp only [wk1, wk_wk, <-Nat.liftWk_comp]
+
+theorem Term.wk1_wk2 (r : Term φ) : r.wk1.wk2 = r.wk1.wk1
+  := by simp only [wk1, wk2, wk_wk]; congr; funext k; cases k <;> rfl
 
 theorem Term.wk_liftWk₂_wk1_to_wk (r : Term φ)
   : r.wk1.wk (Nat.liftWk (Nat.liftWk ρ)) = r.wk (Nat.liftWk (Nat.succ ∘ ρ))
@@ -700,6 +749,8 @@ def Region.vwk0 : Region φ → Region φ := vwk Nat.succ
 
 def Region.vwk1 : Region φ → Region φ := vwk (Nat.liftWk Nat.succ)
 
+def Region.vwk2 : Region φ → Region φ := vwk (Nat.liftnWk 2 Nat.succ)
+
 theorem Region.vwk_vwk1 (r : Region φ) : r.vwk1.vwk ρ = r.vwk (ρ ∘ Nat.liftWk Nat.succ)
   := by simp only [vwk1, vwk_vwk, <-Nat.liftWk_comp]
 
@@ -723,6 +774,11 @@ theorem Region.vwk_liftnWk₂_liftWk_vwk2 (r : Region φ)
   : (r.vwk (Nat.liftnWk 2 Nat.succ)).vwk (Nat.liftnWk 2 (Nat.liftWk ρ))
   = (r.vwk (Nat.liftnWk 2 ρ)).vwk (Nat.liftnWk 2 Nat.succ)
   := by simp only [vwk_vwk, <-Nat.liftnWk_comp, Nat.liftWk_comp_succ]
+
+theorem Region.vwk_liftnWk₂_vwk2 (r : Region φ)
+  : r.vwk2.vwk (Nat.liftnWk 2 (Nat.liftWk ρ))
+  = (r.vwk (Nat.liftnWk 2 ρ)).vwk2
+  := vwk_liftnWk₂_liftWk_vwk2 r
 
 def Region.vwk1n (n : ℕ) : Region φ → Region φ := vwk (Nat.liftWk (· + n))
 

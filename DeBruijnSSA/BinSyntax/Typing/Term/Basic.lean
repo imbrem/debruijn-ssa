@@ -44,8 +44,12 @@ theorem Term.Wf.to_fn {Γ : Ctx α ε} {a : Term φ} (h : Wf Γ (Term.op f a) V)
 def Term.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (V : Ty α × ε) : Type _
   := {a : Term φ | a.Wf Γ V}
 
-instance Term.inSCoe {Γ : Ctx α ε} {V} : CoeOut (Term.InS φ Γ V) (Term φ)
+instance Term.InS.instCoeOut {Γ : Ctx α ε} {V} : CoeOut (Term.InS φ Γ V) (Term φ)
   := ⟨λt => t.val⟩
+
+@[simp]
+theorem InS.coe_wf {Γ : Ctx α ε} {V} {a : Term.InS φ Γ V} : (a : Term φ).Wf Γ V
+  := a.prop
 
 @[ext]
 theorem Term.InS.ext {Γ : Ctx α ε} {V} {a b : Term.InS φ Γ V} (h : a.val = b.val) : a = b := by
@@ -395,13 +399,142 @@ theorem Term.Wf.wk0 {a : Term φ} (d : Wf Γ a ⟨A, e⟩) : Wf (head::Γ) a.wk0
 def Term.InS.wk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) (d : InS φ Δ ⟨A, e⟩) : InS φ Γ ⟨A, e⟩
   := ⟨(d : Term φ).wk ρ, d.prop.wk ρ.prop⟩
 
+@[simp]
+theorem Term.InS.coe_wk {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {A e} {d : InS φ Δ ⟨A, e⟩}
+  : (d.wk ρ : Term φ) = (d : Term φ).wk ρ
+  := rfl
+
+theorem Term.InS.wk_wk {Γ Δ Ξ : Ctx α ε} {ρ : Γ.InS Δ} {σ : Δ.InS Ξ} (d : InS φ Ξ (A, e))
+  : (d.wk σ).wk ρ = d.wk (ρ.comp σ)
+  := by cases d; ext; simp [Term.wk_wk]
+
 def Term.InS.wk0 {Γ : Ctx α ε} {L} (d : InS φ Γ L)
   : InS φ (head::Γ) L
   := d.wk Ctx.InS.wk0
 
+@[simp]
+theorem Term.InS.coe_wk0 {Γ : Ctx α ε} {L} {d : InS φ Γ L}
+  : (d.wk0 (head := head) : Term φ) = (d : Term φ).wk0
+  := rfl
+
 def Term.InS.wk1 {Γ : Ctx α ε} {L} (d : InS φ (head::Γ) L)
   : InS φ (head::inserted::Γ) L
   := d.wk Ctx.InS.wk1
+
+@[simp]
+theorem Term.InS.coe_wk1 {Γ : Ctx α ε} {L} {d : InS φ (head::Γ) L}
+  : (d.wk1 (inserted := inserted) : Term φ) = (d : Term φ).wk1
+  := rfl
+
+def Term.InS.wk2 {Γ : Ctx α ε} {L} (d : InS φ (left::right::Γ) L)
+  : InS φ (left::right::inserted::Γ) L
+  := d.wk Ctx.InS.wk2
+
+@[simp]
+theorem Term.InS.coe_wk2 {Γ : Ctx α ε} {L} {d : InS φ (left::right::Γ) L}
+  : (d.wk2 (inserted := inserted) : Term φ) = (d : Term φ).wk2
+  := rfl
+
+theorem Term.InS.wk1_wk2 {Γ : Ctx α ε} {L} (d : InS φ (head::Γ) L)
+  : (d.wk1 (inserted := left)).wk2 (inserted := right) = d.wk1.wk1
+  := by ext; simp [Term.wk1_wk2]
+
+theorem Term.InS.wk0_let1 {Γ : Ctx α ε}
+  {a : Term.InS φ Γ (A, e)} {b : Term.InS φ (⟨A, ⊥⟩::Γ) (B, e)}
+  : (a.let1 b).wk0 (head := head) = let1 a.wk0 b.wk1
+  := by ext; simp [Term.wk0_let1]
+
+theorem Term.InS.wk1_let1 {Γ : Ctx α ε}
+  {a : Term.InS φ (head::Γ) (A, e)} {b : Term.InS φ (⟨A, ⊥⟩::head::Γ) (B, e)}
+  : (a.let1 b).wk1 (inserted := inserted) = let1 a.wk1 b.wk2
+  := by ext; simp [Term.wk1_let1]
+
+theorem Term.InS.wk0_let2 {Γ : Ctx α ε}
+  {a : Term.InS φ Γ (A.prod B, e)}
+  {c : Term.InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (C, e)}
+  : (a.let2 c).wk0 (head := head) = let2 a.wk0 c.wk2
+  := by ext; simp [Term.wk0_let2]
+
+theorem Term.InS.wk0_case {Γ : Ctx α ε}
+  {a : Term.InS φ Γ (Ty.coprod A B, e)}
+  {l : Term.InS φ (⟨A, ⊥⟩::Γ) (C, e)}
+  {r : Term.InS φ (⟨B, ⊥⟩::Γ) (C, e)}
+  : (a.case l r).wk0 (head := head) = case a.wk0 l.wk1 r.wk1
+  := by ext; simp [Term.wk0_case]
+
+theorem Term.InS.wk1_case {Γ : Ctx α ε}
+  {a : Term.InS φ (head::Γ) (Ty.coprod A B, e)}
+  {l : Term.InS φ (⟨A, ⊥⟩::head::Γ) (C, e)}
+  {r : Term.InS φ (⟨B, ⊥⟩::head::Γ) (C, e)}
+  : (a.case l r).wk1 (inserted := inserted) = case a.wk1 l.wk2 r.wk2
+  := by ext; simp [Term.wk1_case]
+
+theorem Term.InS.wk0_var {Γ : Ctx α ε} {n} (h : Γ.Var n A)
+  : (var (φ := φ) n h).wk0 (head := head) = var (n + 1) h.step
+  := rfl
+
+theorem Term.InS.wk0_pair {Γ : Ctx α ε}
+  {l : Term.InS φ Γ (A, e)} {r : Term.InS φ Γ (B, e)}
+  : (pair l r).wk0 (head := head) = pair l.wk0 r.wk0
+  := rfl
+
+theorem Term.InS.wk0_inl {Γ : Ctx α ε} {l : Term.InS φ Γ (A, e)}
+  : (inl (right := right) l).wk0 (head := head) = inl l.wk0
+  := rfl
+
+theorem Term.InS.wk0_inr {Γ : Ctx α ε} {r : Term.InS φ Γ (B, e)}
+  : (inr (left := left) r).wk0 (head := head) = inr r.wk0
+  := rfl
+
+theorem Term.InS.wk0_abort {Γ : Ctx α ε} {a : Term.InS φ Γ (Ty.empty, e)}
+  : (abort (tyOut := tyOut) a).wk0 (head := head) = abort a.wk0 tyOut
+  := rfl
+
+theorem Term.InS.wk0_unit {Γ : Ctx α ε} {e}
+  : (unit (Γ := Γ) (φ := φ) e).wk0 (head := head) = unit e
+  := rfl
+
+theorem Term.InS.wk1_pair {Γ : Ctx α ε}
+  {l : Term.InS φ (head::Γ) (A, e)} {r : Term.InS φ (head::Γ) (B, e)}
+  : (pair l r).wk1 (inserted := inserted) = pair l.wk1 r.wk1
+  := rfl
+
+theorem Term.InS.wk1_inl {Γ : Ctx α ε} {l : Term.InS φ (head::Γ) (A, e)}
+  : (inl (right := right) l).wk1 (inserted := inserted) = inl l.wk1
+  := rfl
+
+theorem Term.InS.wk1_inr {Γ : Ctx α ε} {r : Term.InS φ (head::Γ) (B, e)}
+  : (inr (left := left) r).wk1 (inserted := inserted) = inr r.wk1
+  := rfl
+
+theorem Term.InS.wk1_abort {Γ : Ctx α ε} {a : Term.InS φ (head::Γ) (Ty.empty, e)}
+  : (abort (tyOut := tyOut) a).wk1 (inserted := inserted) = abort a.wk1 tyOut
+  := rfl
+
+theorem Term.InS.wk1_unit {Γ : Ctx α ε} {e}
+  : (unit (Γ := head::Γ) (φ := φ) e).wk1 (inserted := inserted) = unit e
+  := rfl
+
+theorem Term.InS.wk2_pair {Γ : Ctx α ε}
+  {l : Term.InS φ (left::right::Γ) (A, e)} {r : Term.InS φ (left::right::Γ) (B, e)}
+  : (pair l r).wk2 (inserted := inserted) = pair l.wk2 r.wk2
+  := rfl
+
+theorem Term.InS.wk2_inl {Γ : Ctx α ε} {l : Term.InS φ (left::right::Γ) (A, e)}
+  : (inl (right := B) l).wk2 (inserted := inserted) = inl l.wk2
+  := rfl
+
+theorem Term.InS.wk2_inr {Γ : Ctx α ε} {r : Term.InS φ (left::right::Γ) (B, e)}
+  : (inr (left := A) r).wk2 (inserted := inserted) = inr r.wk2
+  := rfl
+
+theorem Term.InS.wk2_abort {Γ : Ctx α ε} {a : Term.InS φ (left::right::Γ) (Ty.empty, e)}
+  : (abort (tyOut := tyOut) a).wk2 (inserted := inserted) = abort a.wk2 tyOut
+  := rfl
+
+theorem Term.InS.wk2_unit {Γ : Ctx α ε} {e}
+  : (unit (Γ := left::right::Γ) (φ := φ) e).wk2 (inserted := inserted) = unit e
+  := rfl
 
 theorem Term.InS.wk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} (d : InS φ Δ ⟨A, e⟩) (h : ρ ≈ ρ')
   : d.wk ρ = d.wk ρ'

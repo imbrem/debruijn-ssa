@@ -299,6 +299,14 @@ theorem Wkn.sliftn_id₂ (V₁ V₂ : Ty α × ε) (h : Γ.Wkn Δ _root_.id)
   : Wkn (V₁::V₂::Γ) (V₁::V₂::Δ) _root_.id
   := h.liftn_id₂ (le_refl _) (le_refl _)
 
+theorem Wkn.wk2 {left right inserted} {Γ : Ctx α ε}
+  : Wkn (left::right::inserted::Γ) (left::right::Γ) (Nat.liftnWk 2 Nat.succ)
+  := succ.sliftn₂
+
+def InS.wk2 {left right inserted} {Γ : Ctx α ε}
+  : InS (left::right::inserted::Γ) (left::right::Γ)
+  := ⟨Nat.liftnWk 2 Nat.succ, Wkn.wk2⟩
+
 theorem Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
   := Wkn_iff.mpr ((Wkn_iff.mp h).liftn_append Ξ)

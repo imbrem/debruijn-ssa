@@ -51,7 +51,7 @@ inductive RewriteD : Region φ → Region φ → Type _
   | let1_abort (e r) :
     RewriteD (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
   | let2_bind (e r) :
-    RewriteD (let2 e r) (let1 e $ (let2 (Term.var 0) (r.vwk (Nat.liftnWk 2 Nat.succ))))
+    RewriteD (let2 e r) (let1 e $ (let2 (Term.var 0) r.vwk2))
   | case_bind (e r s) :
     RewriteD (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   -- | case_let1 (a b : Term φ) (r s) :
@@ -226,7 +226,7 @@ inductive Rewrite : Region φ → Region φ → Prop
   | let1_abort (e r) :
     Rewrite (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
   | let2_bind (e r) :
-    Rewrite (let2 e r) (let1 e $ (let2 (Term.var 0) (r.vwk (Nat.liftnWk 2 Nat.succ))))
+    Rewrite (let2 e r) (let1 e $ (let2 (Term.var 0) r.vwk2))
   | case_bind (e r s) :
     Rewrite (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   -- | let1_case (a b r s) :
@@ -351,7 +351,7 @@ theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs :=
     intro hk
     exact ⟨k + 1, hk, rfl⟩
   | case_eta => sorry
-  | _ => simp [fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.liftnFv_iUnion, Set.union_assoc]
+  | _ => simp [vwk2, fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.liftnFv_iUnion, Set.union_assoc]
 
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
   := by cases d with
@@ -391,7 +391,7 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     constructor
   | _ =>
     simp only [
-      Region.vwk, wk, Nat.liftWk,
+      Region.vwk2, Region.vwk, wk, Nat.liftWk,
       vwk_liftWk₂_vwk1, wk_liftWk_wk_succ, vwk_liftnWk₂_liftWk_vwk2, vwk_liftnWk₂_vwk1,
       wk_liftnWk_wk_add, Nat.liftWk_comm_liftnWk_apply, Function.comp_apply]
     constructor
@@ -457,7 +457,8 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
   --     sorry
   --   all_goals sorry
   | _ =>
-    simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
+    simp only [
+      Region.vwk2, Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
     constructor
 
 theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
