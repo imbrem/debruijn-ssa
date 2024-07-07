@@ -36,6 +36,11 @@ theorem InS.coe_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : (InS.ret (targets := targets) t : Region φ) = Region.ret (t : Term φ) := rfl
 
+theorem InS.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
+  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (InS.ret (targets := targets) t).vsubst σ = InS.ret (t.subst σ) := rfl
+
 theorem Wf.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   : Region.nil.Wf (φ := φ) (⟨ty, ⊥⟩::rest) (ty::targets) := Wf.ret (by simp)
 

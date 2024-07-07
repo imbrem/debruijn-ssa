@@ -123,78 +123,69 @@ structure HaveTrg (Γ : Ctx α ε) (L : LCtx α) (r r' : Region φ) where
 --   | RWD.refl _, d => d
 --   | RWD.cons p s, d => s.wfD (p.wfD d)
 
-inductive TStepD : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → Type _
-  -- TODO: do we need to require r.WfD for rw?
-  | step {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → FStepD Γ.effect r r' → TStepD Γ L r r'
-  -- | step_op {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → FStepD Γ.effect r' r → TStepD Γ L r r'
-  | initial {Γ L} : Γ.IsInitial → r.WfD Γ L → r'.WfD Γ L → TStepD Γ L r r'
-  | terminal {Γ L} : e.WfD Γ ⟨Ty.unit, ⊥⟩ → e'.WfD Γ ⟨Ty.unit, ⊥⟩ → r.WfD (⟨Ty.unit, ⊥⟩::Γ) L
-    → TStepD Γ L (let1 e r) (let1 e' r)
-
--- def TStepD.symm {Γ L} {r r' : Region φ} : TStepD Γ L r r' → TStepD Γ L r' r
---   | step d d' p => step_op d' d p
---   | step_op d d' p => step d' d p
---   | initial i d d' => initial i d' d
---   | terminal e e' d => terminal e' e d
+-- inductive TStepD : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → Type _
+--   -- TODO: do we need to require r.WfD for rw?
+--   | step {Γ L r r'} : r.WfD Γ L → r'.WfD Γ L → FStepD Γ.effect r r' → TStepD Γ L r r'
+--   | initial {Γ L} : Γ.IsInitial → r.WfD Γ L → r'.WfD Γ L → TStepD Γ L r r'
+--   | terminal {Γ L} : e.WfD Γ ⟨Ty.unit, ⊥⟩ → e'.WfD Γ ⟨Ty.unit, ⊥⟩ → r.WfD (⟨Ty.unit, ⊥⟩::Γ) L
+--     → TStepD Γ L (let1 e r) (let1 e' r)
 
 inductive TStep : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → Prop
-  | step {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → FStep Γ.effect r r' → TStep Γ L r r'
-  -- | step_op {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → FStep Γ.effect r' r → TStep Γ L r r'
+  | let1_beta {e r} : e.Wf Γ ⟨A, ⊥⟩ → r.Wf (⟨A, ⊥⟩::Γ) L
+    → TStep Γ L (let1 e r) (r.vsubst e.subst0)
+  | rewrite {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → Rewrite r r' → TStep Γ L r r'
+  | reduce {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → Reduce r r' → TStep Γ L r r'
   | initial {Γ L} : Γ.IsInitial → r.Wf Γ L → r'.Wf Γ L → TStep Γ L r r'
   | terminal {Γ L} : e.Wf Γ ⟨Ty.unit, ⊥⟩ → e'.Wf Γ ⟨Ty.unit, ⊥⟩ → r.Wf (⟨Ty.unit, ⊥⟩::Γ) L
     → TStep Γ L (let1 e r) (let1 e' r)
 
--- theorem TStep.symm {Γ L} {r r' : Region φ} : TStep Γ L r r' → TStep Γ L r' r
---   | step d d' p => step_op d' d p
---   | step_op d d' p => step d' d p
---   | initial i d d' => initial i d' d
---   | terminal e e' d => terminal e' e d
-
 theorem TStep.left {Γ L} {r r' : Region φ} : TStep Γ L r r' → r.Wf Γ L
-  | TStep.step d _ _ => d
-  -- | TStep.step_op d _ _ => d
-  | TStep.initial _ d _ => d
-  | TStep.terminal de _ dr => dr.let1 de
+  | let1_beta de dr => dr.let1 de
+  | rewrite d _ _ => d
+  | reduce d _ _ => d
+  | initial _ d _ => d
+  | terminal de _ dr => dr.let1 de
 
 theorem TStep.right {Γ L} {r r' : Region φ} : TStep Γ L r r' → r'.Wf Γ L
-  | TStep.step _ d _ => d
-  -- | TStep.step_op _ d _ => d
-  | TStep.initial _ _ d => d
-  | TStep.terminal _ de dr => dr.let1 de
+  | let1_beta de dr => dr.vsubst de.subst0
+  | rewrite _ d _ => d
+  | reduce _ d _ => d
+  | initial _ _ d => d
+  | terminal _ de dr => dr.let1 de
+
+theorem TStep.cast_src {Γ L} {r₀' r₀ r₁ : Region φ} (h : r₀' = r₀) (p : TStep Γ L r₀ r₁)
+  : TStep Γ L r₀' r₁ := h ▸ p
+
+theorem TStep.cast_trg {Γ L} {r₀ r₁' r₁ : Region φ} (p : TStep Γ L r₀ r₁) (h : r₁ = r₁')
+  : TStep Γ L r₀ r₁' := h ▸ p
 
 theorem TStep.wf {Γ L} {r r' : Region φ} (h : TStep Γ L r r') : r.Wf Γ L ∧ r'.Wf Γ L
-  := ⟨TStep.left h, TStep.right h⟩
+  := ⟨left h, right h⟩
 
 theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   : TStep (φ := φ) Δ L r r' → TStep Γ L (r.vwk ρ) (r'.vwk ρ)
-  | TStep.step d d' p => TStep.step (d.vwk hρ) (d'.vwk hρ)
-    ((p.wk_eff (λi hi => by
-      have hi : i < Δ.length := d.fvs hi
-      have hρ := hρ i hi
-      simp only [Function.comp_apply, Ctx.effect, hρ.length, ↓reduceDIte, List.get_eq_getElem, hi,
-        ge_iff_le]
-      exact hρ.get.2
-      )).vwk ρ)
-  -- | TStep.step_op d d' p => TStep.step_op (d.vwk hρ) (d'.vwk hρ)
-  --   ((p.wk_eff (λi hi => by
-  --     have hi : i < Δ.length := d'.fvs hi
-  --     have hρ := hρ i hi
-  --     simp [Ctx.effect, hρ.length, hi, hρ.get.2]
-  --     )).vwk ρ)
-  | TStep.initial di d d' => TStep.initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
-  | TStep.terminal de de' dr => TStep.terminal (de.wk hρ) (de'.wk hρ) (dr.vwk hρ.slift)
+  | let1_beta de dr => (let1_beta (de.wk hρ) (dr.vwk hρ.slift)).cast_trg
+    (by simp [vsubst_subst0_vwk])
+  | rewrite d d' p => rewrite (d.vwk hρ) (d'.vwk hρ) (p.vwk ρ)
+  | reduce d d' p => reduce (d.vwk hρ) (d'.vwk hρ) (p.vwk ρ)
+  | initial di d d' => initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
+  | terminal de de' dr => terminal (de.wk hρ) (de'.wk hρ) (dr.vwk hρ.slift)
 
 theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
   : TStep (φ := φ) Γ L r r' → TStep Γ K (r.lwk ρ) (r'.lwk ρ)
-  | TStep.step d d' p => TStep.step (d.lwk hρ) (d'.lwk hρ) (p.lwk ρ)
-  | TStep.initial di d d' => TStep.initial di (d.lwk hρ) (d'.lwk hρ)
-  | TStep.terminal de de' dr => TStep.terminal de de' (dr.lwk hρ)
+  | let1_beta de dr => (let1_beta de (dr.lwk hρ)).cast_trg (by simp [lwk_vsubst])
+  | rewrite d d' p => rewrite (d.lwk hρ) (d'.lwk hρ) (p.lwk ρ)
+  | reduce d d' p => reduce (d.lwk hρ) (d'.lwk hρ) (p.lwk ρ)
+  | initial di d d' => initial di (d.lwk hρ) (d'.lwk hρ)
+  | terminal de de' dr => terminal de de' (dr.lwk hρ)
 
 -- Note: vsubst needs InS lore for initiality, so that's in Setoid.lean
 
 theorem TStep.lsubst {Γ : Ctx α ε} {L K} {r r' : Region φ} {σ : Subst φ}
   (hσ : σ.Wf Γ L K) : (h : TStep Γ L r r') → TStep Γ K (r.lsubst σ) (r'.lsubst σ)
-  | step d d' p => sorry
+  | let1_beta de dr => (let1_beta de (dr.lsubst hσ.vlift)).cast_trg sorry
+  | rewrite d d' p => sorry--rewrite (d.lsubst hσ) (d'.lsubst hσ) (p.lsubst σ)
+  | reduce d d' p => sorry
   | initial di d d' => initial di (d.lsubst hσ) (d'.lsubst hσ)
   | terminal de de' dr => terminal de de' (dr.lsubst hσ.vlift)
 

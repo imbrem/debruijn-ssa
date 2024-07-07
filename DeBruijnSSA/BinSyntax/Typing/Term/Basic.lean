@@ -41,60 +41,6 @@ theorem Term.Wf.to_fn' {Γ : Ctx α ε} {a : Term φ}
 theorem Term.Wf.to_fn {Γ : Ctx α ε} {a : Term φ} (h : Wf Γ (Term.op f a) V)
   : Φ.EFn f (Φ.src f) V.1 V.2 := h.to_fn' (le_refl _) (le_refl _) (le_refl _)
 
-theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV : V ≤ V') : Wf Γ a V'
-  := by induction h generalizing V' with
-  | var dv =>
-    constructor
-    exact ⟨dv.length, dv.getElem.trans hV⟩
-  | op hf _ I =>
-    cases V'
-    constructor
-    exact ⟨⟨hf.src, hf.trg.trans hV.left⟩, hf.effect.trans hV.right⟩
-    exact I ⟨le_refl _, hV.right⟩
-  | let1 => sorry
-  | pair _ _ Il Ir =>
-    cases V'
-    cases hV.left
-    constructor
-    exact Il ⟨by assumption, hV.right⟩
-    exact Ir ⟨by assumption, hV.right⟩
-  | let2 => sorry
-  | inl _ I =>
-    cases V'
-    cases hV.left
-    constructor
-    exact I ⟨by assumption, hV.right⟩
-  | inr _ I =>
-    cases V'
-    cases hV.left
-    constructor
-    exact I ⟨by assumption, hV.right⟩
-  | case => sorry
-  | abort _ I =>
-    cases V'
-    constructor
-    exact I ⟨le_refl _, hV.right⟩
-  | unit =>
-    cases V'
-    cases hV.left
-    constructor
-
-theorem Term.Wf.to_op' {Γ : Ctx α ε} {a : Term φ}
-  (h : Wf Γ (Term.op f a) V)
-  (hV : ⟨Φ.src f, V.2⟩ ≤ V')
-  : Wf Γ a V' := by cases h with | op hf ha => exact ha.wk_res ⟨hf.src.trans hV.left, hV.right⟩
-
-theorem Term.Wf.to_op {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ (Term.op f a) V)
-  : Wf Γ a ⟨Φ.src f, V.2⟩ := h.to_op' (le_refl _)
-
-theorem Term.Wf.to_left {Γ : Ctx α ε} {a b : Term φ}
-  (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
-  : Wf Γ a ⟨A, e⟩ := by cases h with | pair ha _ => exact ha
-
-theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
-  (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
-  : Wf Γ b ⟨B, e⟩ := by cases h with | pair _ hb => exact hb
-
 def Term.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (V : Ty α × ε) : Type _
   := {a : Term φ | a.Wf Γ V}
 
@@ -274,40 +220,6 @@ theorem Term.Wf.nonempty {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : No
 theorem Term.Wf.nonempty_iff {Γ : Ctx α ε} {a : Term φ} {V} : Wf Γ a V ↔ Nonempty (WfD Γ a V)
   := ⟨Term.Wf.nonempty, λ⟨h⟩ => h.toWf⟩
 
-@[simp]
-theorem Term.Wf.var_iff {Γ : Ctx α ε} {n V} : Wf (φ := φ) Γ (Term.var n) V ↔ Γ.Var n V
-  := ⟨λ| Wf.var dv => dv, λdv => Wf.var dv⟩
-
-@[simp]
-theorem Term.Wf.op_iff {Γ : Ctx α ε} {a : Term φ} {V}
-  : Wf Γ (Term.op f a) V ↔ Φ.trg f ≤ V.1 ∧ Φ.effect f ≤ V.2 ∧ Wf Γ a ⟨Φ.src f, V.2⟩
-  := ⟨λ| Wf.op df de => ⟨df.trg, df.effect, de.wk_res ⟨df.src, le_refl _⟩⟩,
-      λ⟨trg, e, de⟩ => Wf.op ⟨⟨le_refl _, trg⟩, e⟩ de⟩
-
-@[simp]
-theorem Term.Wf.pair_iff {Γ : Ctx α ε} {a b : Term φ} {A B}
-  : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩ ↔ Wf Γ a ⟨A, e⟩ ∧ Wf Γ b ⟨B, e⟩
-  := ⟨λ| Wf.pair dl dr => ⟨dl, dr⟩, λ⟨dl, dr⟩ => Wf.pair dl dr⟩
-
-@[simp]
-theorem Term.Wf.inl_iff {Γ : Ctx α ε} {a : Term φ} {A B}
-  : Wf Γ (Term.inl a) ⟨Ty.coprod A B, e⟩ ↔ Wf Γ a ⟨A, e⟩
-  := ⟨λ| Wf.inl dl => dl, λdl => Wf.inl dl⟩
-
-@[simp]
-theorem Term.Wf.inr_iff {Γ : Ctx α ε} {b : Term φ} {A B}
-  : Wf Γ (Term.inr b) ⟨Ty.coprod A B, e⟩ ↔ Wf Γ b ⟨B, e⟩
-  := ⟨λ| Wf.inr dr => dr, λdr => Wf.inr dr⟩
-
-@[simp]
-theorem Term.Wf.abort_iff {Γ : Ctx α ε} {a : Term φ} {A}
-  : Wf Γ (Term.abort a) ⟨A, e⟩ ↔ Wf Γ a ⟨Ty.empty, e⟩
-  := ⟨λ| Wf.abort da => da, λda => Wf.abort da⟩
-
-@[simp]
-theorem Term.Wf.unit' {Γ : Ctx α ε} {e} : Wf (φ := φ) Γ Term.unit ⟨Ty.unit, e⟩
-  := Wf.unit e
-
 -- /-- Infer the type of a term; pun with infimum -/
 -- def Term.infTy (Γ : Ctx α ε) : Term φ → Ty α
 --   | var n => if h : n < Γ.length then (Γ.get ⟨n, h⟩).1 else Ty.unit
@@ -355,8 +267,6 @@ theorem Term.Wf.unit' {Γ : Ctx α ε} {e} : Wf (φ := φ) Γ Term.unit ⟨Ty.un
 
 -- TODO: for a discrete order on α, WfD unique
 
-
-
 /-- Weaken the effect of a term derivation -/
 def Term.WfD.wk_eff {Γ : Ctx α ε} {a : Term φ} {A e} (h : e ≤ e')
   : WfD Γ a ⟨A, e⟩ → WfD Γ a ⟨A, e'⟩
@@ -370,6 +280,12 @@ def Term.WfD.wk_eff {Γ : Ctx α ε} {a : Term φ} {A e} (h : e ≤ e')
   | case da dl dr => case (da.wk_eff h) (dl.wk_eff h) (dr.wk_eff h)
   | abort da => abort (da.wk_eff h)
   | unit e => unit e'
+
+theorem Term.Wf.wk_eff {Γ : Ctx α ε} {a : Term φ} {A e} (he : e ≤ e') (h : Wf Γ a ⟨A, e⟩)
+  : Wf Γ a ⟨A, e'⟩ := let ⟨d⟩ := h.nonempty; (d.wk_eff he).toWf
+
+def Term.InS.wk_eff {Γ : Ctx α ε} (a : Term.InS φ Γ ⟨A, e⟩) (h : e ≤ e') : Term.InS φ Γ ⟨A, e'⟩
+  := ⟨a, a.2.wk_eff h⟩
 
 /-- Weaken the type of a term derivation -/
 def Term.WfD.wk_ty {Γ : Ctx α ε} {a : Term φ} {A e} (h : A ≤ A')
@@ -394,6 +310,64 @@ def Term.WfD.wk_res₂ {a : Term φ} (hA : A ≤ A') (he : e ≤ e') (da : WfD �
 def Term.WfD.wk_res {a : Term φ} (h : V ≤ V') (da : WfD Γ a V) : WfD Γ a V'
   := match V, V', h with
   | ⟨_, _⟩, ⟨_, _⟩, ⟨hA, he⟩ => da.wk_res₂ hA he
+
+theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV : V ≤ V') : Wf Γ a V'
+  := let ⟨d⟩ := h.nonempty; (d.wk_res hV).toWf
+
+def Term.InS.wk_res {Γ : Ctx α ε} {V V'} (hV : V ≤ V') (a : InS φ Γ V) : InS φ Γ V'
+  := ⟨a, a.prop.wk_res hV⟩
+
+theorem Term.Wf.to_op' {Γ : Ctx α ε} {a : Term φ}
+  (h : Wf Γ (Term.op f a) V)
+  (hV : ⟨Φ.src f, V.2⟩ ≤ V')
+  : Wf Γ a V' := by cases h with | op hf ha => exact ha.wk_res ⟨hf.src.trans hV.left, hV.right⟩
+
+theorem Term.Wf.to_op {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ (Term.op f a) V)
+  : Wf Γ a ⟨Φ.src f, V.2⟩ := h.to_op' (le_refl _)
+
+theorem Term.Wf.to_left {Γ : Ctx α ε} {a b : Term φ}
+  (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
+  : Wf Γ a ⟨A, e⟩ := by cases h with | pair ha _ => exact ha
+
+theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
+  (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
+  : Wf Γ b ⟨B, e⟩ := by cases h with | pair _ hb => exact hb
+
+
+
+@[simp]
+theorem Term.Wf.var_iff {Γ : Ctx α ε} {n V} : Wf (φ := φ) Γ (Term.var n) V ↔ Γ.Var n V
+  := ⟨λ| Wf.var dv => dv, λdv => Wf.var dv⟩
+
+@[simp]
+theorem Term.Wf.op_iff {Γ : Ctx α ε} {a : Term φ} {V}
+  : Wf Γ (Term.op f a) V ↔ Φ.trg f ≤ V.1 ∧ Φ.effect f ≤ V.2 ∧ Wf Γ a ⟨Φ.src f, V.2⟩
+  := ⟨λ| Wf.op df de => ⟨df.trg, df.effect, de.wk_res ⟨df.src, le_refl _⟩⟩,
+      λ⟨trg, e, de⟩ => Wf.op ⟨⟨le_refl _, trg⟩, e⟩ de⟩
+
+@[simp]
+theorem Term.Wf.pair_iff {Γ : Ctx α ε} {a b : Term φ} {A B}
+  : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩ ↔ Wf Γ a ⟨A, e⟩ ∧ Wf Γ b ⟨B, e⟩
+  := ⟨λ| Wf.pair dl dr => ⟨dl, dr⟩, λ⟨dl, dr⟩ => Wf.pair dl dr⟩
+
+@[simp]
+theorem Term.Wf.inl_iff {Γ : Ctx α ε} {a : Term φ} {A B}
+  : Wf Γ (Term.inl a) ⟨Ty.coprod A B, e⟩ ↔ Wf Γ a ⟨A, e⟩
+  := ⟨λ| Wf.inl dl => dl, λdl => Wf.inl dl⟩
+
+@[simp]
+theorem Term.Wf.inr_iff {Γ : Ctx α ε} {b : Term φ} {A B}
+  : Wf Γ (Term.inr b) ⟨Ty.coprod A B, e⟩ ↔ Wf Γ b ⟨B, e⟩
+  := ⟨λ| Wf.inr dr => dr, λdr => Wf.inr dr⟩
+
+@[simp]
+theorem Term.Wf.abort_iff {Γ : Ctx α ε} {a : Term φ} {A}
+  : Wf Γ (Term.abort a) ⟨A, e⟩ ↔ Wf Γ a ⟨Ty.empty, e⟩
+  := ⟨λ| Wf.abort da => da, λda => Wf.abort da⟩
+
+@[simp]
+theorem Term.Wf.unit' {Γ : Ctx α ε} {e} : Wf (φ := φ) Γ Term.unit ⟨Ty.unit, e⟩
+  := Wf.unit e
 
 /-- Weaken a term derivation -/
 def Term.WfD.wk {Γ Δ : Ctx α ε} {ρ} (h : Γ.Wkn Δ ρ) {a : Term φ}

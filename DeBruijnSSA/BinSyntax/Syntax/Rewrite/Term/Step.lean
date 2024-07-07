@@ -49,6 +49,10 @@ inductive Rewrite : Term φ → Term φ → Prop
 
 -- TODO: Cong.Rewrite induces a Setoid on Term
 
+inductive Reduce : Term φ → Term φ → Prop
+  | case_inl (e r s) : Reduce (case (inl e) r s) (let1 e r)
+  | case_inr (e r s) : Reduce (case (inr e) r s) (let1 e s)
+
 -- TODO: Reduce
 
 -- TODO: Step, FStep, friends...

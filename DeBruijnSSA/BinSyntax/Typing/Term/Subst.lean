@@ -19,6 +19,9 @@ def Subst.Wf (Γ Δ : Ctx α ε) (σ : Subst φ) : Prop
 
 def Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ Δ : Ctx α ε) : Type _ := {σ : Subst φ | σ.Wf Γ Δ}
 
+def Subst.InS.get (r : Subst.InS φ Γ Δ) (i : Fin Δ.length) : Term.InS φ Γ Δ[i]
+  := ⟨r.1 i, r.2 i⟩
+
 instance Subst.InS.instCoeOut {Γ Δ : Ctx α ε} : CoeOut (Subst.InS φ Γ Δ) (Subst φ)
   := ⟨λr => r.1⟩
 
@@ -161,12 +164,12 @@ theorem InS.coe_subst {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V}
   : (a.subst σ : Term φ) = (a : Term φ).subst σ
   := rfl
 
-def Subst.InS.get (n) (h : Δ.Var n V) (σ : Subst.InS φ Γ Δ) : Term.InS φ Γ V
+def Subst.InS.var (n) (h : Δ.Var n V) (σ : Subst.InS φ Γ Δ) : Term.InS φ Γ V
   := ⟨σ.val n, Ctx.Var.subst' σ.prop h⟩
 
 @[simp]
 theorem InS.subst_var (σ : Subst.InS φ Γ Δ) (h : Δ.Var n V) :
-  (var n h).subst σ = σ.get n h
+  (var n h).subst σ = σ.var n h
   := rfl
 
 @[simp]
@@ -215,14 +218,14 @@ theorem InS.coe_subst0 {a : InS φ Γ V}
 
 @[simp]
 theorem Subst.InS.get_0_subst0 (a : Term.InS φ Δ ty)
-  : a.subst0.get 0 (by simp) = a
+  : a.subst0.var 0 (by simp) = a
   := rfl
 
 @[simp]
-theorem Subst.InS.get_succ_lift (n)
+theorem Subst.InS.var_succ_lift (n)
   (h : Ctx.Var _ (n + 1) ty) (σ : Subst.InS φ Γ Δ)
   (hv : lo ≤ hi)
-  : (σ.lift hv).get (n + 1) h = (σ.get n h.tail).wk ⟨Nat.succ, by simp⟩
+  : (σ.lift hv).var (n + 1) h = (σ.var n h.tail).wk ⟨Nat.succ, by simp⟩
   := rfl
 
 def Subst.WfD.comp {Γ Δ Ξ : Ctx α ε} {σ : Subst φ} {τ : Subst φ}

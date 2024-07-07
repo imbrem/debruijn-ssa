@@ -7,11 +7,6 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 
 namespace Region
 
-theorem InS.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (σ : Term.Subst.InS φ (⟨tyIn, ⊥⟩::Γ) _)
-  (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (InS.ret (targets := targets) t).vsubst σ = InS.ret (t.subst σ) := rfl
-
 abbrev Eqv.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.InS φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : Eqv φ (⟨tyIn, ⊥⟩::rest) (tyOut::targets) := ⟦InS.ret t⟧
