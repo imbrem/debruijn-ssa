@@ -1,4 +1,4 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Region.Subst
+import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Typing.Region.Compose
 
 namespace BinSyntax

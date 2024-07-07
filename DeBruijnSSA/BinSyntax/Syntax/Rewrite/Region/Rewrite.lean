@@ -34,8 +34,8 @@ open Term
 -- TODO: make these rewrites bidirectional
 
 inductive RewriteD : Region φ → Region φ → Type _
-  | let1_op (f e r) :
-    RewriteD (let1 (op f e) r) (let1 e $ let1 (op f (var 0)) $ r.vwk1)
+  | let1_op (f a r) :
+    RewriteD (let1 (op f a) r) (let1 a $ let1 (op f (var 0)) $ r.vwk1)
   | let1_let1 (a b r) :
     RewriteD (let1 (Term.let1 a b) r) (let1 a $ let1 b $ r.vwk1)
   | let1_pair (a b r) :
@@ -209,8 +209,8 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
   | _ => simp [Nat.liftBot, sup_assoc]
 
 inductive Rewrite : Region φ → Region φ → Prop
-  | let1_op (f e r) :
-    Rewrite (let1 (op f e) r) (let1 e $ let1 (op f (var 0)) $ r.vwk1)
+  | let1_op (f a r) :
+    Rewrite (let1 (op f a) r) (let1 a $ let1 (op f (var 0)) $ r.vwk1)
   | let1_let1 (a b r) :
     Rewrite (let1 (Term.let1 a b) r) (let1 a $ let1 b $ r.vwk1)
   | let1_pair (a b r) :
@@ -222,7 +222,7 @@ inductive Rewrite : Region φ → Region φ → Prop
     Rewrite (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk1)
   | let1_inr (e r) :
     Rewrite (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.vwk1)
-  | let1_case_t (a l r s) :
+  | let1_case (a l r s) :
     Rewrite (let1 (Term.case a l r) s) (case a (let1 l $ s.vwk1) (let1 r $ s.vwk1))
   | let1_abort (e r) :
     Rewrite (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
@@ -285,7 +285,7 @@ theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (
   : Rewrite r₀ r₁' := h ▸ p
 
 theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs := by cases p with
-  | let1_case_t => sorry
+  | let1_case => sorry
   -- | let1_case a b r s =>
   --   simp only [fvs, fvs_wk, Nat.succ_eq_add_one, Set.liftnFv_of_union, Set.liftnFv_map_add,
   --     <-Set.union_assoc]
