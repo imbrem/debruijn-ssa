@@ -127,7 +127,6 @@ theorem Eqv.cfg_inner_quot
   {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg_inner R ⟦β⟧ ⟦G⟧ = ⟦InS.cfg R β G⟧ := rfl
 
-@[simp]
 theorem InS.cfg_q {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : (β.q).cfg R (λi => (G i).q) = (β.cfg R G).q
   := by simp [Eqv.cfg, Eqv.cfg_inner, q, Quotient.finChoice_eq]
@@ -136,6 +135,35 @@ theorem InS.cfg_q {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨
 theorem Eqv.cfg_quot
   {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.cfg R β G⟧ := InS.cfg_q
+
+
+
+def Eqv.induction
+  {motive : (Γ : Ctx α ε) → (L : LCtx α) → Eqv φ Γ L → Prop}
+  (br : ∀{Γ L A} (ℓ) (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (Eqv.br ℓ a hℓ))
+  (let1 : ∀{Γ L A e} (a : Term.Eqv φ Γ ⟨A, e⟩) (t : Eqv φ (⟨A, ⊥⟩::Γ) L),
+    motive _ _ t → motive Γ L (Eqv.let1 a t))
+  (let2 : ∀{Γ L A B e} (a : Term.Eqv φ Γ ⟨Ty.prod A B, e⟩) (t : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L),
+    motive _ _ t → motive Γ L (Eqv.let2 a t))
+  (case : ∀{Γ L A B e} (a : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩)
+    (s : Eqv φ (⟨A, ⊥⟩::Γ) L) (t : Eqv φ (⟨B, ⊥⟩::Γ) L),
+    motive _ _ s → motive _ _ t → motive Γ L (Eqv.case a s t))
+  (cfg : ∀{Γ L} (R)
+    (dβ : Eqv φ Γ (R ++ L))
+    (dG : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)),
+    motive _ _ dβ → (∀i, motive _ _ (dG i)) → motive Γ L (Eqv.cfg R dβ dG))
+  {Γ L} (r : Eqv φ Γ L) : motive _ _ r := by
+  induction r using Quotient.inductionOn with
+  | h r =>
+    induction r using InS.induction with
+    | br ℓ a ha => exact br ℓ ⟦a⟧ ha
+    | let1 a r Ir => exact let1 ⟦a⟧ ⟦r⟧ Ir
+    | let2 a r Ir => exact let2 ⟦a⟧ ⟦r⟧ Ir
+    | case a r s Ir Is => exact case ⟦a⟧ ⟦r⟧ ⟦s⟧ Ir Is
+    | cfg R β G Iβ IG =>
+      have res := cfg R ⟦β⟧ (λi => ⟦G i⟧) Iβ IG
+      rw [cfg_quot] at res
+      exact res
 
 def Eqv.vwk
   {Γ Δ : Ctx α ε} {L : LCtx α} (ρ : Γ.InS Δ) (r : Eqv φ Δ L)
