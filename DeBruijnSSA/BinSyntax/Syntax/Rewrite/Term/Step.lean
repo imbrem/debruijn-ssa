@@ -40,6 +40,7 @@ inductive Rewrite : Term φ → Term φ → Prop
   | let1_abort (e r) :
     Rewrite (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.wk1)
   | let2_eta (a) : Rewrite (let2 a (pair (var 1) (var 0))) a
+  | let2_pair (a b r) : Rewrite (let2 (pair a b) r) (let1 a $ let1 b.wk0 $ r)
   | let1_eta (a) : Rewrite (let1 a (var 0)) a
   | let2_bind (e r) :
     Rewrite (let2 e r) (let1 e $ (let2 (var 0) (r.wk (Nat.liftnWk 2 Nat.succ))))

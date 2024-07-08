@@ -255,6 +255,9 @@ theorem wk_succ_subst_subst0 (e s : Term φ) : (e.wk Nat.succ).subst s.subst0 = 
   rw [<-subst_fromWk_apply, <-subst_comp, wk_succ_comp_subst0, subst_id]
 
 @[simp]
+theorem subst0_wk0 (e s : Term φ) : e.wk0.subst s.subst0 = e := wk_succ_subst_subst0 e s
+
+@[simp]
 theorem wk1_subst0_var0 (e : Term φ) : e.wk1.subst (var 0).subst0 = e := by
   rw [subst0_var0, subst_fromWk, wk1, wk_wk]
   apply Eq.trans _ e.wk_id

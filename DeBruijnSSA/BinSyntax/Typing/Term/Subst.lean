@@ -256,3 +256,23 @@ theorem Subst.InS.comp_assoc {Γ Δ Ξ Ω : Ctx α ε}
   {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ} {υ : Subst.InS φ Ξ Ω}
   : (σ.comp τ).comp υ = σ.comp (τ.comp υ)
   := by apply eq_of_coe_eq; simp [Subst.comp_assoc]
+
+@[ext]
+theorem Subst.InS.ext {Γ Δ : Ctx α ε} {σ τ : Subst.InS φ Γ Δ}
+  (h : (σ : Subst φ) = (τ : Subst φ)) : σ = τ
+  := by cases σ; cases τ; cases h; rfl
+
+theorem Subst.InS.lift_comp_lift {Γ Δ Ξ : Ctx α ε} {he : lo ≤ mid} {he' : mid ≤ hi}
+  {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ}
+  : (σ.lift he).comp (τ.lift he') = (σ.comp τ).lift (le_trans he he')
+  := by ext; simp [Subst.lift_comp]
+
+@[simp]
+theorem InS.subst0_var0_wk1 {Γ : Ctx α ε}
+  (a : InS φ (⟨A, e⟩::Γ) V) : a.wk1.subst (var 0 (by simp)).subst0 = a
+  := by ext; simp
+
+@[simp]
+theorem InS.subst0_wk0 {Γ : Ctx α ε}
+  (a : InS φ Γ V) (b : InS φ Γ V') : a.wk0.subst b.subst0 = a
+  := by ext; simp

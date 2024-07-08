@@ -239,6 +239,11 @@ def InS.wk1 {head inserted} {Γ : Ctx α ε}
   : InS (head::inserted::Γ) (head::Γ)
   := ⟨Nat.liftWk Nat.succ, Wkn.wk1⟩
 
+@[simp]
+theorem InS.coe_wk1 {head inserted} {Γ : Ctx α ε}
+  : (InS.wk1 (Γ := Γ) (head := head) (inserted := inserted) : ℕ → ℕ) = Nat.liftWk Nat.succ
+  := rfl
+
 theorem Wkn.swap01 {left right : Ty α × ε} {Γ : Ctx α ε}
   : Wkn (left::right::Γ) (right::left::Γ) (Nat.swap0 1)
   | 0, _ => by simp
@@ -306,6 +311,13 @@ theorem Wkn.wk2 {left right inserted} {Γ : Ctx α ε}
 def InS.wk2 {left right inserted} {Γ : Ctx α ε}
   : InS (left::right::inserted::Γ) (left::right::Γ)
   := ⟨Nat.liftnWk 2 Nat.succ, Wkn.wk2⟩
+
+
+@[simp]
+theorem InS.coe_wk2 {left right inserted} {Γ : Ctx α ε}
+  : (InS.wk2 (Γ := Γ) (left := left) (right := right) (inserted := inserted) : ℕ → ℕ)
+  = Nat.liftnWk 2 Nat.succ
+  := rfl
 
 theorem Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)

@@ -25,6 +25,10 @@ def InS.seq {A B C : Ty α} {Γ : Ctx α ε}
   (l : InS φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩)
   : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩ := let1 l r.wk1
 
+theorem InS.seq_wk_eff {A B : Ty α} {Γ : Ctx α ε} (h : lo ≤ hi)
+  (l : InS φ (⟨A, ⊥⟩::Γ) ⟨B, lo⟩) (r : InS φ (⟨B, ⊥⟩::Γ) ⟨C, lo⟩)
+  : (l.wk_eff h).seq (r.wk_eff h) = (l.seq r).wk_eff h := rfl
+
 theorem Wf.pseq {A B : Ty α} {Γ : Ctx α ε} {l r : Term φ}
   (hl : l.Wf (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩) (hr : r.Wf (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩)
   : (l.pseq r).Wf (⟨A, ⊥⟩::Γ) ⟨C, ⊥⟩

@@ -170,6 +170,11 @@ theorem InS.let1_eta {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩}
   : let1 a (var 0 (by simp)) ≈ a
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
+theorem InS.let2_pair {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩} {b : InS φ Γ ⟨B, e⟩}
+  {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 (pair a b) r ≈ (let1 a $ let1 b.wk0 $ r)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+
 theorem InS.let2_bind {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.prod A B, e⟩}
   {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
   : let2 a r ≈ (let1 a $ let2 (var 0 (by simp)) $ r.wk2)
@@ -187,6 +192,15 @@ theorem InS.let1_beta {Γ : Ctx α ε} {a : InS φ Γ ⟨A, ⊥⟩} {b : InS φ 
 theorem InS.let1_beta_drop {Γ : Ctx α ε} (a : InS φ Γ ⟨A, ⊥⟩) (b : InS φ Γ ⟨B, e⟩)
   : let1 (a.wk_eff (by simp)) b.wk0 ≈ b
   := Uniform.rel $ TStep.let1_beta_drop a.prop b.prop
+
+theorem InS.terminal {Γ : Ctx α ε} (a : InS φ Γ ⟨Ty.unit, ⊥⟩) (b : InS φ Γ ⟨Ty.unit, ⊥⟩) : a ≈ b
+  := Uniform.rel $ TStep.terminal a.prop b.prop
+
+theorem InS.congr_unit {Γ : Ctx α ε} (a : InS φ Γ ⟨Ty.unit, ⊥⟩) : a ≈ InS.unit ⊥
+  := Uniform.rel $ TStep.terminal a.prop (by simp)
+
+theorem InS.initial {Γ : Ctx α ε} (hΓ : Γ.IsInitial) (a : InS φ Γ ⟨A, e⟩) (b : InS φ Γ ⟨A, e⟩)
+  : a ≈ b := Uniform.rel $ TStep.initial hΓ a.prop b.prop
 
 theorem TStep.subst {Γ Δ : Ctx α ε} {L r r'} {σ} (hσ : σ.Wf Γ Δ)
   : TStep (φ := φ) Δ L r r' → Uniform TStep Γ L (r.subst σ) (r'.subst σ)
