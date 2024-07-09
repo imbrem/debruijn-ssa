@@ -126,8 +126,12 @@ def InS (Γ Δ : Ctx α ε) : Type _ := {ρ : ℕ → ℕ | Γ.Wkn Δ ρ}
 
 variable {Γ Δ Ξ Γ' Δ' : Ctx α ε}
 
-instance inSCoe : CoeOut (InS Γ Δ) (ℕ → ℕ)
+instance InS.instCoeOut : CoeOut (InS Γ Δ) (ℕ → ℕ)
   := ⟨λt => t.val⟩
+
+@[ext]
+theorem InS.ext {h h' : InS Γ Δ} (hh : (h : ℕ → ℕ) = (h' : ℕ → ℕ)) : h = h' := by
+  cases h; cases h'; cases hh; rfl
 
 instance InS.instSetoid : Setoid (InS Γ Δ) where
   r ρ σ := ∀i, i < Δ.length → (ρ : ℕ → ℕ) i = (σ : ℕ → ℕ) i
@@ -231,6 +235,11 @@ def InS.wk0 {head} {Γ : Ctx α ε}
   : InS (head::Γ) Γ
   := ⟨Nat.succ, Wkn.succ⟩
 
+@[simp]
+theorem InS.coe_wk0 {head} {Γ : Ctx α ε}
+  : (InS.wk0 (Γ := Γ) (head := head) : ℕ → ℕ) = Nat.succ
+  := rfl
+
 theorem Wkn.wk1 {head inserted} {Γ : Ctx α ε}
   : Wkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
   := succ.slift
@@ -242,6 +251,16 @@ def InS.wk1 {head inserted} {Γ : Ctx α ε}
 @[simp]
 theorem InS.coe_wk1 {head inserted} {Γ : Ctx α ε}
   : (InS.wk1 (Γ := Γ) (head := head) (inserted := inserted) : ℕ → ℕ) = Nat.liftWk Nat.succ
+  := rfl
+
+@[simp]
+theorem InS.coe_lift {lo hi : Ty α × ε} {Γ Δ} (h : lo ≤ hi) (hρ : InS Γ Δ)
+  : (InS.lift h hρ : ℕ → ℕ) = Nat.liftWk hρ
+  := rfl
+
+@[simp]
+theorem InS.lift_wk0 {head inserted} {Γ : Ctx α ε}
+  : wk0.lift (le_refl _) = (wk1 : InS (head::inserted::Γ) (head::Γ))
   := rfl
 
 theorem Wkn.swap01 {left right : Ty α × ε} {Γ : Ctx α ε}
@@ -312,12 +331,21 @@ def InS.wk2 {left right inserted} {Γ : Ctx α ε}
   : InS (left::right::inserted::Γ) (left::right::Γ)
   := ⟨Nat.liftnWk 2 Nat.succ, Wkn.wk2⟩
 
-
 @[simp]
 theorem InS.coe_wk2 {left right inserted} {Γ : Ctx α ε}
   : (InS.wk2 (Γ := Γ) (left := left) (right := right) (inserted := inserted) : ℕ → ℕ)
   = Nat.liftnWk 2 Nat.succ
   := rfl
+
+@[simp]
+theorem InS.coe_liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (ρ : InS Γ Δ)
+  : (InS.liftn₂ hV₁ hV₂ ρ : ℕ → ℕ) = Nat.liftnWk 2 ρ
+  := rfl
+
+@[simp]
+theorem InS.lift_wk1 {left right inserted} {Γ : Ctx α ε}
+  : wk1.lift (le_refl _) = (wk2 : InS (left::right::inserted::Γ) (left::right::Γ))
+  := by ext; simp [Nat.liftnWk_two]
 
 theorem Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)

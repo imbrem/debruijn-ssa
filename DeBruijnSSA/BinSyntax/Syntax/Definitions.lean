@@ -351,8 +351,17 @@ theorem Term.wk2_unit : unit.wk2 (φ := φ) = unit := rfl
 theorem Term.wk_wk1 (r : Term φ) : r.wk1.wk ρ = r.wk (ρ ∘ Nat.liftWk Nat.succ)
   := by simp only [wk1, wk_wk, <-Nat.liftWk_comp]
 
+theorem Term.wk0_wk1 (r : Term φ) : r.wk0.wk1 = r.wk0.wk0
+  := by simp only [wk1, wk0, wk_wk, Nat.liftWk_comp_succ]
+
 theorem Term.wk1_wk2 (r : Term φ) : r.wk1.wk2 = r.wk1.wk1
   := by simp only [wk1, wk2, wk_wk]; congr; funext k; cases k <;> rfl
+
+theorem Term.wk1_wk0 (r : Term φ) : r.wk1.wk0 = r.wk0.wk2
+  := by simp only [wk1, wk0, wk2, wk_wk]; congr; funext k; cases k <;> rfl
+
+theorem Term.wk0_wk2 (r : Term φ) : r.wk0.wk2 = r.wk1.wk0
+  := r.wk1_wk0.symm
 
 theorem Term.wk_liftWk₂_wk1_to_wk (r : Term φ)
   : r.wk1.wk (Nat.liftWk (Nat.liftWk ρ)) = r.wk (Nat.liftWk (Nat.succ ∘ ρ))

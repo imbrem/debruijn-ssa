@@ -439,6 +439,18 @@ theorem Term.InS.wk1_wk2 {Γ : Ctx α ε} {L} (d : InS φ (head::Γ) L)
   : (d.wk1 (inserted := left)).wk2 (inserted := right) = d.wk1.wk1
   := by ext; simp [Term.wk1_wk2]
 
+theorem Term.InS.wk0_wk1 {Γ : Ctx α ε} {L} (d : InS φ Γ L)
+  : d.wk0.wk1 = (d.wk0 (head := right)).wk0 (head := left)
+  := by ext; simp [Term.wk0_wk1]
+
+theorem Term.InS.wk1_wk0 {Γ : Ctx α ε} {L} (d : InS φ (mid::Γ) L)
+  : (d.wk1 (inserted := right)).wk0 (head := left) = d.wk0.wk2
+  := by ext; simp [Term.wk1_wk0]
+
+theorem Term.InS.wk0_wk2 {Γ : Ctx α ε} {L} (d : InS φ (mid::Γ) L)
+  : d.wk0.wk2 = (d.wk1 (inserted := right)).wk0 (head := left)
+  := by ext; simp [Term.wk0_wk2]
+
 theorem Term.InS.wk0_let1 {Γ : Ctx α ε}
   {a : Term.InS φ Γ (A, e)} {b : Term.InS φ (⟨A, ⊥⟩::Γ) (B, e)}
   : (a.let1 b).wk0 (head := head) = let1 a.wk0 b.wk1
