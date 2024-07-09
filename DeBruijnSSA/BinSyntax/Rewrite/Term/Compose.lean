@@ -427,13 +427,29 @@ theorem Eqv.rtimes_nil {A B : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.rtimes_rtimes {A B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨B₀, ⊥⟩::Γ) ⟨B₁, e⟩) (r : Eqv φ (⟨B₁, ⊥⟩::Γ) ⟨B₂, e⟩)
-  : rtimes A l ;;' rtimes A r = rtimes A (l ;;' r) := by
-  sorry
+  : rtimes A l ;;' rtimes A r = rtimes A (l ;;' r) := by rw [
+    <-swap_ltimes_swap, <-seq_assoc, swap_rtimes, seq_assoc, <-seq_assoc (a := swap), ltimes_ltimes,
+    swap_ltimes_swap]
 
 theorem Eqv.ltimes_rtimes {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : ltimes l B ;;' rtimes A' r = tensor l r := by
-  sorry
+  rw [
+    seq_rtimes, ltimes, tensor, let2_let2, let2_pair, wk1_nil, wk1_nil, wk0_nil, let1_beta_var1,
+    wk2_pair, wk2_pair, wk2_var1, wk2_var1, subst_pair, var_succ_subst0, tensor,
+    pair_bind_left (a := l.wk1.wk0)
+  ]
+  congr
+  -- TODO: _really_ need to factor this...
+  induction r using Quotient.inductionOn
+  simp only [var, subst0_quot, wk2, wk1, wk_quot, subst_quot, wk0]
+  congr
+  ext
+  simp only [Set.mem_setOf_eq, InS.coe_subst, InS.coe_subst0, InS.coe_var, InS.coe_wk,
+    Ctx.InS.coe_wk2, Ctx.InS.coe_wk1, ← subst_fromWk, Term.subst_subst, Ctx.InS.coe_wk0]
+  congr
+  funext k
+  cases k <;> rfl
 
 theorem Eqv.Pure.left_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩} (hl : l.Pure) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
