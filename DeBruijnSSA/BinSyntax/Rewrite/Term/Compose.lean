@@ -453,8 +453,9 @@ theorem Eqv.ltimes_rtimes {A A' B B' : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.Pure.left_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩} (hl : l.Pure) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
-  : ltimes l B ;;' rtimes A' r = rtimes A r ;;' ltimes l B'
-  := by sorry
+  : ltimes l B ;;' rtimes A' r = rtimes A r ;;' ltimes l B':= by
+  rw [<-swap_rtimes_swap (r := l) (A := B'), seq_assoc]
+  sorry
 
 theorem Eqv.Pure.right_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩} (hr : r.Pure)
