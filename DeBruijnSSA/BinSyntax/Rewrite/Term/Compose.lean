@@ -96,6 +96,12 @@ def Eqv.pi_l {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) �
 def Eqv.pi_r {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B, e⟩
   := let2 nil (var 0 (by simp))
 
+theorem Eqv.seq_pi_l {C A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ (⟨C, ⊥⟩::Γ) ⟨A.prod B, e⟩) :
+  a ;;' pi_l = a.let2 (var 1 (by simp)) := by rw [seq, let2_bind]; rfl
+
+theorem Eqv.seq_pi_r {C A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ (⟨C, ⊥⟩::Γ) ⟨A.prod B, e⟩) :
+  a ;;' pi_r = a.let2 (var 0 (by simp)) := by rw [seq, let2_bind]; rfl
+
 @[simp]
 theorem Eqv.pi_l_is_pure {A B : Ty α} {Γ : Ctx α ε}
   : (pi_l (φ := φ) (A := A) (B := B) (Γ := Γ) (e := e)).Pure := ⟨pi_l, rfl⟩
@@ -239,6 +245,23 @@ theorem Eqv.pi_l_runit {A : Ty α} {Γ : Ctx α ε}
   ]
   exact ⟨var 0 (by simp), rfl⟩
 
+def Eqv.swap {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩
+  := let2 nil $ pair (var 0 (by simp)) (var 1 (by simp))
+
+theorem Eqv.seq_swap {C A B : Ty α} {Γ : Ctx α ε}
+  (a : Eqv φ (⟨C, ⊥⟩::Γ) ⟨A.prod B, e⟩)
+  : a ;;' swap = (let2 a $ pair (var 0 (by simp)) (var 1 (by simp))) := by rw [seq, let2_bind]; rfl
+
+theorem Eqv.swap_swap {A B : Ty α} {Γ : Ctx α ε}
+  : swap ;;' swap = nil (φ := φ) (A := A.prod B) (Γ := Γ) (e := e) := by
+  rw [
+    seq_swap, swap, let2_let2, swap_eta_wk2, swap_eta_wk2, let2_pair, let1_beta_var0,
+    subst_let1, wk0_var, var_succ_subst0,
+    <-wk_eff_var (lo := ⊥) (n := 1) (he := bot_le) (hn := by simp), let1_beta,
+  ]
+  apply Eq.trans _ let2_eta
+  rfl
+
 def Eqv.tensor {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A'.prod B', e⟩ := let2 nil (pair l.wk1.wk0 r.wk1.wk1)
@@ -260,6 +283,10 @@ theorem Eqv.ltimes_seq {A A' B : Ty α} {Γ : Ctx α ε}
 
 def Eqv.rtimes {Γ : Ctx α ε} (A : Ty α) {B B' : Ty α} (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A.prod B', e⟩ := tensor nil r
+
+-- TODO: swap_ltimes_swap is rtimes
+
+-- TODO: swap_rtimes_swap is ltimes
 
 theorem Eqv.rtimes_nil {A B : Ty α} {Γ : Ctx α ε}
   : rtimes (φ := φ) (Γ := Γ) (A := A) (B := B) (B' := B) (e := e) nil = nil := tensor_nil_nil

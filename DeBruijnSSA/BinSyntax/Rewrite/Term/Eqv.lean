@@ -687,6 +687,28 @@ theorem Eqv.let2_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
   induction r using Quotient.inductionOn
   apply Eqv.sound; apply InS.let2_bind
 
+theorem Eqv.let2_let1 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨C, e⟩} {b : Eqv φ (⟨C, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 (let1 a b) r = (let1 a $ let2 b $ r.wk2) := by
+  rw [let2_bind, let1_let1]
+  congr
+  apply Eq.symm
+  rw [let2_bind]
+  congr
+  sorry -- this is obviously true...
+
+theorem Eqv.let2_let2
+  {a : Eqv φ Γ ⟨X.prod Y, e⟩} {b : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 (let2 a b) r = (let2 a $ let2 b $ r.wk2.wk2) := by
+  rw [let2_bind, let1_let2]
+  congr
+  apply Eq.symm
+  rw [let2_bind]
+  congr
+  sorry -- this is obviously true for the same reason as above, so factor!
+
 theorem Eqv.case_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.coprod A B, e⟩}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
   : case a l r = (let1 a $ case (var 0 (by simp)) (l.wk1) (r.wk1)) := by
@@ -723,6 +745,16 @@ theorem Eqv.let1_beta_let2_eta {Γ : Ctx α ε}
   : let1 ((var 1 (by simp)).pair (var 0 (by simp))) b
   = b.subst ((var 1 (by simp)).pair (var 0 (by simp))).subst0
   := by rw [<-wk_eff_var (n := 1), <-wk_eff_var (n := 0), <-wk_eff_pair, let1_beta]
+
+theorem Eqv.let2_eta_wk2 {Γ : Ctx α ε}
+  : ((var 1 (by simp)).pair (var 0 (by simp)) : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (A.prod B, e)
+    ).wk2 (inserted := inserted) = (var 1 (by simp)).pair (var 0 (by simp))
+  := rfl
+
+theorem Eqv.swap_eta_wk2 {Γ : Ctx α ε}
+  : ((var 0 (by simp)).pair (var 1 (by simp)) : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (B.prod A, e)
+    ).wk2 (inserted := inserted) = (var 0 (by simp)).pair (var 1 (by simp))
+  := rfl
 
 theorem Eqv.terminal {a : Eqv φ Γ ⟨Ty.unit, ⊥⟩} {b : Eqv φ Γ ⟨Ty.unit, ⊥⟩} : a = b := by
   induction a using Quotient.inductionOn; induction b using Quotient.inductionOn; apply sound;
