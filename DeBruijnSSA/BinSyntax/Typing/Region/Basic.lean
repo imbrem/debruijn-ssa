@@ -202,7 +202,7 @@ theorem InS.coe_update {ι : Type _} [DecidableEq ι] {Γ : ι → Ctx α ε} {L
         case isTrue h => cases h; rfl
         case isFalse h => rfl
 
-def InS.induction
+theorem InS.induction
   {motive : (Γ : Ctx α ε) → (L : LCtx α) → InS φ Γ L → Prop}
   (br : ∀{Γ L A} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (InS.br ℓ a hℓ))
   (let1 : ∀{Γ L A e} (a : Term.InS φ Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L),

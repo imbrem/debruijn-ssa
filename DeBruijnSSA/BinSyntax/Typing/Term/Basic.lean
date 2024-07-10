@@ -147,6 +147,40 @@ theorem Term.InS.coe_unit {Γ : Ctx α ε} {e}
   : (Term.InS.unit (φ := φ) (Γ := Γ) e : Term φ) = Term.unit
   := rfl
 
+theorem Term.InS.induction
+  {motive : (Γ : Ctx α ε) → (V : Ty α × ε) → InS φ Γ V → Prop}
+  (var : ∀{Γ V} (n) (hv : Γ.Var n V), motive Γ V (Term.InS.var n hv))
+  (op : ∀{Γ A B e} (f a) (hf : Φ.EFn f A B e) (_ha : motive Γ ⟨A, e⟩ a),
+    motive Γ ⟨B, e⟩ (Term.InS.op f hf a))
+  (let1 : ∀{Γ A B e} (a b) (_ha : motive Γ ⟨A, e⟩ a) (_hb : motive (⟨A, ⊥⟩::Γ) ⟨B, e⟩ b),
+    motive Γ ⟨B, e⟩ (Term.InS.let1 a b))
+  (pair : ∀{Γ A B e} (a b) (_ha : motive Γ ⟨A, e⟩ a) (_hb : motive Γ ⟨B, e⟩ b),
+    motive Γ ⟨Ty.prod A B, e⟩ (Term.InS.pair a b))
+  (let2 : ∀{Γ A B C e} (a c)
+    (_ha : motive Γ ⟨A.prod B, e⟩ a) (_hc : motive (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩ c),
+    motive Γ ⟨C, e⟩ (Term.InS.let2 a c))
+  (inl : ∀{Γ A B e} (a) (_ha : motive Γ ⟨A, e⟩ a), motive Γ ⟨Ty.coprod A B, e⟩ (Term.InS.inl a))
+  (inr : ∀{Γ A B e} (b) (_hb : motive Γ ⟨B, e⟩ b), motive Γ ⟨Ty.coprod A B, e⟩ (Term.InS.inr b))
+  (case : ∀{Γ A B C e} (a l r)
+    (_ha : motive Γ ⟨Ty.coprod A B, e⟩ a)
+    (_hl : motive (⟨A, ⊥⟩::Γ) ⟨C, e⟩ l)
+    (_hr : motive (⟨B, ⊥⟩::Γ) ⟨C, e⟩ r),
+    motive Γ ⟨C, e⟩ (Term.InS.case a l r))
+  (abort : ∀{Γ A e} (a) (_ha : motive Γ ⟨Ty.empty, e⟩ a), motive Γ ⟨A, e⟩ (Term.InS.abort a A))
+  (unit : ∀{Γ e}, motive Γ ⟨Ty.unit, e⟩ (Term.InS.unit e))
+  : (h : InS φ Γ V) → motive Γ V h
+  | ⟨a, ha⟩ => by induction ha with
+  | var hv => exact var _ hv
+  | op hf ha Ia => exact op _ _ hf Ia
+  | let1 ha hb Ia Ib => exact let1 _ _ Ia Ib
+  | pair ha hb Ia Ib => exact pair _ _ Ia Ib
+  | let2 ha hc Ia Ic => exact let2 _ _ Ia Ic
+  | inl ha Ia => exact inl _ Ia
+  | inr hb Ib => exact inr _ Ib
+  | case ha hl hr Ia Il Ir => exact case _ _ _ Ia Il Ir
+  | abort ha Ia => exact abort _ Ia
+  | unit e => exact unit
+
 /-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
   | var : Γ.Var n V → WfD Γ (var n) V
