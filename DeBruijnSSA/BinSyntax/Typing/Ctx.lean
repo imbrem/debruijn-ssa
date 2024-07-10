@@ -269,12 +269,30 @@ theorem Wkn.swap01 {left right : Ty α × ε} {Γ : Ctx α ε}
   | 1, _ => by simp
   | n + 2, hn => ⟨hn, by simp⟩
 
+def InS.swap01 {left right : Ty α × ε} {Γ : Ctx α ε}
+  : InS (left::right::Γ) (right::left::Γ)
+  := ⟨Nat.swap0 1, Wkn.swap01⟩
+
+@[simp]
+theorem InS.coe_swap01 {left right : Ty α × ε} {Γ : Ctx α ε}
+  : (InS.swap01 (Γ := Γ) (left := left) (right := right) : ℕ → ℕ) = Nat.swap0 1
+  := rfl
+
 theorem Wkn.swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
   : Wkn (first::second::third::Γ) (third::first::second::Γ) (Nat.swap0 2)
   | 0, _ => by simp
   | 1, _ => by simp
   | 2, _ => by simp
   | n + 3, hn => ⟨hn, by simp⟩
+
+def InS.swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
+  : InS (first::second::third::Γ) (third::first::second::Γ)
+  := ⟨Nat.swap0 2, Wkn.swap02⟩
+
+@[simp]
+theorem InS.coe_swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
+  : (InS.swap02 (Γ := Γ) (first := first) (second := second) (third := third) : ℕ → ℕ) = Nat.swap0 2
+  := rfl
 
 @[simp]
 theorem Wkn.add2 {first second} {Γ : Ctx α ε}

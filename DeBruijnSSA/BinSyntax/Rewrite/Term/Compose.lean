@@ -26,8 +26,17 @@ theorem Eqv.wk2_nil {A : Ty α} {Γ : Ctx α ε}
   := rfl
 
 @[simp]
+theorem Eqv.subst_lift_nil {A : Ty α} {Γ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ} {h}
+  : (nil : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A, e⟩).subst (σ.lift h) = nil := by
+  induction σ using Quotient.inductionOn; rfl
+
+@[simp]
 theorem Eqv.wk_eff_nil {A : Ty α} {Γ : Ctx α ε} (h : lo ≤ hi)
   : (nil (φ := φ) (A := A) (Γ := Γ)).wk_eff h = nil
+  := rfl
+
+theorem Eqv.nil_pure {A : Ty α} {Γ : Ctx α ε}
+  : (nil : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A, e⟩) = nil.wk_eff bot_le
   := rfl
 
 @[simp]
@@ -41,8 +50,8 @@ theorem Eqv.nil_subst0 {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A, ⊥⟩)
   := by induction a using Quotient.inductionOn; rfl
 
 @[simp]
-theorem Eqv.nil_pure {A : Ty α} {Γ : Ctx α ε} : (nil (φ := φ) (A := A) (Γ := Γ) (e := e)).Pure
-  := ⟨nil, rfl⟩
+theorem Eqv.Pure.nil {A : Ty α} {Γ : Ctx α ε} : (nil (φ := φ) (A := A) (Γ := Γ) (e := e)).Pure
+  := ⟨Eqv.nil, rfl⟩
 
 def Eqv.seq {A B C : Ty α} {Γ : Ctx α ε}
 (a : Eqv φ ((A, ⊥)::Γ) (B, e)) (b : Eqv φ ((B, ⊥)::Γ) (C, e))
@@ -422,6 +431,12 @@ theorem Eqv.swap_ltimes {A B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : swap ;;' ltimes l A = rtimes A l ;;' swap := by
   rw [<-seq_swap_inj, swap_ltimes_swap, <-seq_assoc, swap_swap, seq_nil]
 
+theorem Eqv.rtimes_swap {A B B' : Ty α} {Γ : Ctx α ε}
+  (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : rtimes A r ;;' swap = swap ;;' ltimes r A := by rw [swap_ltimes]
+
+theorem Eqv.ltimes_swap {A B B' : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : ltimes l A ;;' swap = swap ;;' rtimes A l := by rw [swap_rtimes]
+
 theorem Eqv.rtimes_nil {A B : Ty α} {Γ : Ctx α ε}
   : rtimes (φ := φ) (Γ := Γ) (A := A) (B := B) (B' := B) (e := e) nil = nil := tensor_nil_nil
 
@@ -454,13 +469,36 @@ theorem Eqv.ltimes_rtimes {A A' B B' : Ty α} {Γ : Ctx α ε}
 theorem Eqv.Pure.left_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩} (hl : l.Pure) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : ltimes l B ;;' rtimes A' r = rtimes A r ;;' ltimes l B':= by
-  rw [<-swap_rtimes_swap (r := l) (A := B'), seq_assoc]
-  sorry
+  rw [ltimes_rtimes, seq_ltimes, tensor, rtimes, tensor, let2_let2]
+  apply congrArg
+  rw [let2_pair]
+  simp only [wk1_nil, wk0_nil, wk2_pair, wk2_nil, let1_beta_var1, subst_let1, subst0_wk0,
+    subst_pair, subst_lift_nil]
+  apply Eq.symm
+  rw [pair_bind_left]
+  apply Eq.symm
+  rw [pair_bind_swap_left]
+  -- TODO: this REALLY needs to be factored out...
+  congr
+  induction l using Quotient.inductionOn
+  apply eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_wk, Ctx.InS.coe_wk0, Ctx.InS.coe_wk1, ← subst_fromWk,
+    Term.subst_subst, InS.coe_subst, Subst.coe_lift, InS.coe_subst0, InS.coe_var, Ctx.InS.coe_wk2]
+  congr
+  funext k
+  cases k <;> rfl
+  sorry -- TODO: obviously, if something is pure so are its weakenings
 
 theorem Eqv.Pure.right_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩} (hr : r.Pure)
   : ltimes l B ;;' rtimes A' r = rtimes A r ;;' ltimes l B'
-  := by sorry
+  := by
+  apply Eq.symm
+  rw [
+    <-swap_ltimes_swap, <-seq_assoc, swap_ltimes (l := l), seq_assoc, <-seq_assoc (a := swap),
+    hr.left_central, seq_assoc, swap_rtimes, <-seq_assoc, ltimes_swap (l := r), seq_assoc,
+    <-seq_assoc (c := swap), swap_swap, seq_nil
+  ]
 
 theorem Eqv.tensor_seq_of_comm {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A₀, ⊥⟩::Γ) ⟨A₁, e⟩} {r : Eqv φ (⟨B₀, ⊥⟩::Γ) ⟨B₁, e⟩}
@@ -472,8 +510,6 @@ theorem Eqv.tensor_seq_of_comm {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : Ctx
   simp only [seq_assoc]
 
 -- TODO: tensor_seq (pure only)
-
--- TODO: swap
 
 def Eqv.split {A : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.prod A, e⟩
   := let1 nil (pair nil nil)
@@ -492,7 +528,55 @@ def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
   let2 (var (V := (B.prod C, e)) 0 (by simp)) $
   pair (pair (var 3 (by simp)) (var 1 (by simp))) (var 0 (by simp))
 
--- TODO: assoc_assoc_inv, assoc_inv_assoc
+theorem Eqv.seq_prod_assoc {A B C : Ty α} {Γ : Ctx α ε}
+  (r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩)
+  : r ;;' assoc = (let2 r $ let2 (var (V := (A.prod B, e)) 1 (by simp))
+                          $ pair (var 1 (by simp)) (pair (var 0 (by simp)) (var 2 (by simp))))
+   := sorry
+
+theorem Eqv.seq_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
+  (r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A.prod (B.prod C), e⟩)
+  : r ;;' assoc_inv = (let2 r $ let2 (var (V := (B.prod C, e)) 0 (by simp))
+                              $ pair (pair (var 3 (by simp)) (var 1 (by simp))) (var 0 (by simp)))
+  := sorry
+
+@[simp]
+theorem Eqv.wk_eff_assoc {A B C : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
+  : (assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := lo)).wk_eff h = assoc := rfl
+
+@[simp]
+theorem Eqv.wk_eff_assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
+  : (assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := lo)).wk_eff h = assoc_inv := rfl
+
+theorem Eqv.assoc_pure  {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) = assoc.wk_eff bot_le
+  := rfl
+
+theorem Eqv.assoc_inv_pure {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) = assoc_inv.wk_eff bot_le
+  := rfl
+
+@[simp]
+theorem Eqv.Pure.assoc {A B C : Ty α} {Γ : Ctx α ε}
+  : (assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).Pure := ⟨Eqv.assoc, rfl⟩
+
+@[simp]
+theorem Eqv.Pure.assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : (assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).Pure := ⟨Eqv.assoc_inv, rfl⟩
+
+theorem Eqv.assoc_assoc_inv_pure {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := ⊥) ;;' assoc_inv = nil := sorry
+
+theorem Eqv.assoc_inv_assoc_pure {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := ⊥) ;;' assoc = nil := sorry
+
+theorem Eqv.assoc_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) ;;' assoc_inv = nil :=  by
+  rw [assoc_pure, assoc_inv_pure, <-wk_eff_seq, assoc_assoc_inv_pure]; rfl
+
+theorem Eqv.assoc_inv_assoc {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) ;;' assoc = nil := by
+  rw [assoc_pure, assoc_inv_pure, <-wk_eff_seq, assoc_inv_assoc_pure]; rfl
 
 def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩)

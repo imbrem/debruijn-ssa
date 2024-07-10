@@ -276,3 +276,11 @@ theorem InS.subst0_var0_wk1 {Γ : Ctx α ε}
 theorem InS.subst0_wk0 {Γ : Ctx α ε}
   (a : InS φ Γ V) (b : InS φ Γ V') : a.wk0.subst b.subst0 = a
   := by ext; simp
+
+def Subst.InS.fromWk {Γ Δ : Ctx α ε} (h : Γ.InS Δ) : Subst.InS φ Γ Δ
+  := ⟨Subst.fromWk h, λi => by simp only [Set.mem_setOf_eq, fromWk_apply, Wf.var_iff, h.prop i]⟩
+
+@[simp]
+theorem Subst.InS.coe_fromWk {Γ Δ : Ctx α ε} (h : Γ.InS Δ)
+  : ((fromWk h : Subst.InS φ Γ Δ) : Subst φ) = Subst.fromWk h
+  := rfl
