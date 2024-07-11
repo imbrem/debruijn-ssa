@@ -430,6 +430,14 @@ theorem Term.Wf.wk1 {a : Term φ} (d : Wf (head::Γ) a ⟨A, e⟩) : Wf (head::i
 theorem Term.Wf.wk0 {a : Term φ} (d : Wf Γ a ⟨A, e⟩) : Wf (head::Γ) a.wk0 ⟨A, e⟩
   := d.wk Ctx.Wkn.succ
 
+theorem Term.Wf.swap01 {a : Term φ} (d : Wf (left::right::Γ) a ⟨A, e⟩)
+  : Wf (right::left::Γ) (a.wk $ Nat.swap0 1) ⟨A, e⟩
+  := d.wk Ctx.Wkn.swap01
+
+theorem Term.Wf.swap02 {a : Term φ} (d : Wf (left::mid::right::Γ) a ⟨A, e⟩)
+  : Wf (mid::right::left::Γ) (a.wk $ Nat.swap0 2) ⟨A, e⟩
+  := d.wk Ctx.Wkn.swap02
+
 def Term.InS.wk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) (d : InS φ Δ ⟨A, e⟩) : InS φ Γ ⟨A, e⟩
   := ⟨(d : Term φ).wk ρ, d.prop.wk ρ.prop⟩
 
@@ -467,6 +475,24 @@ def Term.InS.wk2 {Γ : Ctx α ε} {L} (d : InS φ (left::right::Γ) L)
 @[simp]
 theorem Term.InS.coe_wk2 {Γ : Ctx α ε} {L} {d : InS φ (left::right::Γ) L}
   : (d.wk2 (inserted := inserted) : Term φ) = (d : Term φ).wk2
+  := rfl
+
+def Term.InS.swap01 {Γ : Ctx α ε} {L} (d : InS φ (left::right::Γ) L)
+  : InS φ (right::left::Γ) L
+  := d.wk Ctx.InS.swap01
+
+@[simp]
+theorem Term.InS.coe_swap01 {Γ : Ctx α ε} {L} {d : InS φ (left::right::Γ) L}
+  : (d.swap01 : Term φ) = (d : Term φ).swap01
+  := rfl
+
+def Term.InS.swap02 {Γ : Ctx α ε} {L} (d : InS φ (left::mid::right::Γ) L)
+  : InS φ (mid::right::left::Γ) L
+  := d.wk Ctx.InS.swap02
+
+@[simp]
+theorem Term.InS.coe_swap02 {Γ : Ctx α ε} {L} {d : InS φ (left::mid::right::Γ) L}
+  : (d.swap02 : Term φ) = (d : Term φ).swap02
   := rfl
 
 theorem Term.InS.wk1_wk2 {Γ : Ctx α ε} {L} (d : InS φ (head::Γ) L)

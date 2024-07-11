@@ -658,6 +658,9 @@ section OrderBot
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
 
+theorem Ctx.Var.bhead {head : Ty α} {e : ε} {Γ : Ctx α ε}
+  : Var (⟨head, ⊥⟩::Γ) 0 ⟨head, e⟩ := Var.head (by simp) Γ
+
 def Ctx.var_bot_head {Γ : Ctx α ε} : Var (⟨A, ⊥⟩::Γ) 0 ⟨A, e⟩
   := Var.head (by simp) Γ
 

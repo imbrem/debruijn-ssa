@@ -304,6 +304,10 @@ def Term.wk1 : Term φ → Term φ := wk (Nat.liftWk Nat.succ)
 
 def Term.wk2 : Term φ → Term φ := wk (Nat.liftnWk 2 Nat.succ)
 
+def Term.swap01 : Term φ → Term φ := wk (Nat.swap0 1)
+
+def Term.swap02 : Term φ → Term φ := wk (Nat.swap0 2)
+
 theorem Term.wk0_let1 (e r : Term φ) : (let1 e r).wk0 = let1 e.wk0 r.wk1 := rfl
 
 theorem Term.wk1_let1 (e r : Term φ) : (let1 e r).wk1 = let1 e.wk1 r.wk2
@@ -759,6 +763,10 @@ def Region.vwk0 : Region φ → Region φ := vwk Nat.succ
 def Region.vwk1 : Region φ → Region φ := vwk (Nat.liftWk Nat.succ)
 
 def Region.vwk2 : Region φ → Region φ := vwk (Nat.liftnWk 2 Nat.succ)
+
+def Region.vswap01 : Region φ → Region φ := vwk (Nat.swap0 1)
+
+def Region.vswap02 : Region φ → Region φ := vwk (Nat.swap0 2)
 
 theorem Region.vwk_vwk1 (r : Region φ) : r.vwk1.vwk ρ = r.vwk (ρ ∘ Nat.liftWk Nat.succ)
   := by simp only [vwk1, vwk_vwk, <-Nat.liftWk_comp]
