@@ -25,7 +25,7 @@ theorem Eqv.sound {a a' : InS φ Γ V} (h : a ≈ a') : InS.q a = InS.q a' := Qu
 theorem Eqv.eq {a a' : InS φ Γ V} : a.q = a'.q ↔ a ≈ a' := Quotient.eq
 
 theorem Eqv.eq_of_term_eq {a a' : InS φ Γ V} (h : (a : Term φ) = (a' : Term φ))
-  : a.q = a'.q := sorry
+  : a.q = a'.q := congrArg _ (InS.ext h)
 
 def Eqv.var (n : ℕ) (hn : Γ.Var n V) : Eqv φ Γ V := ⟦InS.var n hn⟧
 
@@ -33,6 +33,7 @@ def Eqv.op (f : φ) (hf : Φ.EFn f A B e) (a : Eqv φ Γ ⟨A, e⟩) : Eqv φ Γ
   := Quotient.liftOn a (λa => ⟦InS.op f hf a⟧) (λ_ _ h => sound $ InS.op_congr hf h)
 
 @[simp]
+
 theorem Eqv.op_quot {f : φ} {hf : Φ.EFn f A B e} {a : InS φ Γ ⟨A, e⟩}
   : op f hf ⟦a⟧ = ⟦InS.op f hf a⟧ := rfl
 
@@ -203,11 +204,26 @@ theorem Eqv.wk2_var0 {hn : Ctx.Var (left::right::Γ) 0 V}
 theorem Eqv.wk2_var1 {hn : Ctx.Var (left::right::Γ) 1 V}
   : wk2 (inserted := inserted) (var (φ := φ) 1 hn) = var 1 (Ctx.Var.head hn.get _).step := rfl
 
+theorem Eqv.var0_eq_wk1_var0 {hn : Ctx.Var (head::inserted::Γ) 0 V}
+  : var 0 hn = wk1 (var (φ := φ) 0 (Ctx.Var.head hn.get _)) := rfl
+
 theorem Eqv.var0_eq_wk2_var0 {hn : Ctx.Var (left::right::inserted::Γ) 0 V}
   : var 0 hn = wk2 (inserted := inserted) (var (φ := φ) 0 (Ctx.Var.head hn.get _)) := rfl
 
+theorem Eqv.var1_eq_wk0_var0 {hn : Ctx.Var (head::Γ) 1 V}
+  : var 1 hn = wk0 (var (φ := φ) 0 hn.tail) := rfl
+
 theorem Eqv.var1_eq_wk2_var1 {hn : Ctx.Var (left::right::inserted::Γ) 1 V}
   : var 1 hn = wk2 (inserted := inserted) (var (φ := φ) 1 (Ctx.Var.head hn.get _).step) := rfl
+
+theorem Eqv.var2_eq_wk0_var1 {hn : Ctx.Var (head::Γ) 2 V}
+  : var 2 hn = wk0 (var (φ := φ) 1 hn.tail) := rfl
+
+theorem Eqv.var4_eq_wk0_var3 {hn : Ctx.Var (head::Γ) 4 V}
+  : var 4 hn = wk0 (var (φ := φ) 3 hn.tail) := rfl
+
+theorem Eqv.var4_eq_wk1_var3 {hn : Ctx.Var (head::inserted::Γ) 4 V}
+  : var 4 hn = wk1 (var (φ := φ) 3 hn.tail.tail.step) := rfl
 
 theorem Eqv.wk1_wk2 {a : Eqv φ (head::Γ) V}
   : (a.wk1 (inserted := left)).wk2 (inserted := right) = a.wk1.wk1 := by
@@ -225,6 +241,17 @@ theorem Eqv.wk1_wk0 {Γ : Ctx α ε} {L} (d : Eqv φ (mid::Γ) L)
 theorem Eqv.wk0_wk2 {Γ : Ctx α ε} {L} (d : Eqv φ (mid::Γ) L)
   : d.wk0.wk2 = (d.wk1 (inserted := right)).wk0 (head := left)
   := d.wk1_wk0.symm
+
+theorem Eqv.wk2_liftn₂_wk1 {Γ : Ctx α ε} {L} (d : Eqv φ (left::right::Γ) L)
+  : d.wk2.wk (Ctx.InS.wk1.liftn₂ (le_refl _) (le_refl _))
+  = (d.wk2 (inserted := inserted)).wk2 (inserted := inserted') := by
+  rw [wk2, wk2, wk_wk, wk2, wk_wk]
+  congr 1
+  ext k
+  -- Need an "engineering induction" tactic here...
+  cases k with
+  | zero => rfl
+  | succ k => cases k <;> rfl
 
 @[simp]
 theorem Eqv.wk0_let1 {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
@@ -342,6 +369,14 @@ theorem Eqv.wk2_let1 {a : Eqv φ (left::right::Γ) ⟨A, e⟩} {b : Eqv φ (⟨A
   induction b using Quotient.inductionOn
   rfl
 
+theorem Eqv.wk2_let2 {a : Eqv φ (left::right::Γ) ⟨Ty.prod A B, e⟩}
+  {b : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::left::right::Γ) ⟨C, e⟩}
+  : wk2 (inserted := inserted) (a.let2 b)
+  = a.wk2.let2 (b.wk ((Ctx.InS.wk2).liftn₂ (le_refl _) (le_refl _))) := by
+  induction a using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  simp only [wk2, wk_let2]
+
 @[simp]
 theorem Eqv.wk2_pair {Γ : Ctx α ε}
   {l : Eqv φ (left::right::Γ) (A, e)} {r : Eqv φ (left::right::Γ) (B, e)}
@@ -410,7 +445,9 @@ theorem Subst.Eqv.lift_quot {h : lo ≤ hi} {σ : InS φ Γ Δ} : lift h ⟦σ�
 
 def Subst.Eqv.liftn₂ (h₁ : lo₁ ≤ hi₁) (h₂ : lo₂ ≤ hi₂)
   (σ : Eqv φ Γ Δ) : Eqv φ (lo₁::lo₂::Γ) (hi₁::hi₂::Δ)
-  := Quotient.liftOn σ (λσ => ⟦σ.liftn₂ h₁ h₂⟧) (λ_ _ h' => sound $ sorry)
+  := Quotient.liftOn σ (λσ => ⟦σ.liftn₂ h₁ h₂⟧) (λ_ _ h' => sound $ by
+    simp only [<-Subst.InS.lift_lift]
+    exact Subst.InS.lift_congr _ $ Subst.InS.lift_congr _ h')
 
 @[simp]
 theorem Subst.Eqv.liftn₂_quot {h₁ : lo₁ ≤ hi₁} {h₂ : lo₂ ≤ hi₂} {σ : InS φ Γ Δ}
@@ -418,6 +455,11 @@ theorem Subst.Eqv.liftn₂_quot {h₁ : lo₁ ≤ hi₁} {h₂ : lo₂ ≤ hi₂
 
 def Eqv.subst (σ : Subst.Eqv φ Γ Δ) (a : Eqv φ Δ V) : Eqv φ Γ V
   := Quotient.liftOn₂ σ a (λσ a => ⟦a.subst σ⟧) (λ_ _ _ _ h h' => sound $ InS.subst_congr h h')
+
+theorem Subst.Eqv.lift_lift (h₁ : lo₁ ≤ hi₁) (h₂ : lo₂ ≤ hi₂)
+  {σ : Eqv φ Γ Δ} : (σ.lift h₁).lift h₂ = (σ.liftn₂ h₂ h₁) := by
+  induction σ using Quotient.inductionOn
+  simp [Subst.InS.lift_lift]
 
 @[simp]
 theorem Eqv.subst_quot {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V} : subst ⟦σ⟧ ⟦a⟧ = ⟦a.subst σ⟧ := rfl
@@ -470,6 +512,11 @@ theorem Eqv.subst_lift_var_succ {σ : Subst.Eqv φ Γ Δ} {n : ℕ}
   : subst (σ.lift h) (var (n + 1) hn) = (subst σ (var n hn.tail)).wk0 := by
   induction σ using Quotient.inductionOn
   rfl
+
+@[simp]
+theorem Eqv.subst_liftn₂_var_add_2 {σ : Subst.Eqv φ Γ Δ} {he₁ : lo₁ ≤ med₁} {he₂ : lo₂ ≤ med₂}
+  : subst (σ.liftn₂ he₁ he₂) (var (n + 2) hn) = (subst σ (var n hn.tail.tail)).wk0.wk0
+  := by rw [<-Subst.Eqv.lift_lift, subst_lift_var_succ, subst_lift_var_succ]
 
 theorem Eqv.subst_var_wk0 {σ : Subst.Eqv φ Γ Δ} {n : ℕ}
   {hn : Ctx.Var Δ n V} {h : lo ≤ hi}
@@ -551,7 +598,13 @@ theorem Eqv.subst_unit {σ : Subst.Eqv φ Γ Δ} {e}
   rfl
 
 def Eqv.subst0 (a : Eqv φ Δ V) : Subst.Eqv φ Δ (V::Δ)
-  := Quotient.liftOn a (λa => ⟦a.subst0⟧) (λ_ _ h => sorry)
+  := Quotient.liftOn a (λa => ⟦a.subst0⟧) (λ_ _ h => by
+    simp only
+    apply Quotient.sound
+    intro i
+    cases i using Fin.cases with
+    | zero => exact h
+    | succ => exact Setoid.refl _)
 
 @[simp]
 theorem Eqv.subst0_quot {a : InS φ Δ V} : subst0 ⟦a⟧ = ⟦a.subst0⟧ := rfl
@@ -786,7 +839,7 @@ theorem Eqv.let2_let1 {Γ : Ctx α ε}
   apply Eq.symm
   rw [let2_bind]
   congr
-  sorry -- this is obviously true...
+  rw [wk1_let2, wk1_var0, wk2_liftn₂_wk1]
 
 theorem Eqv.let2_let2
   {a : Eqv φ Γ ⟨X.prod Y, e⟩} {b : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩}
@@ -797,7 +850,20 @@ theorem Eqv.let2_let2
   apply Eq.symm
   rw [let2_bind]
   congr
-  sorry -- this is obviously true for the same reason as above, so factor!
+  simp only [wk1_let2, wk1_var0, wk2_liftn₂_wk1]
+
+theorem Eqv.let2_case
+  {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
+  {l : Eqv φ (⟨X, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩} {r : Eqv φ (⟨Y, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩}
+  {s : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 (case a l r) s = case a (let2 l s.wk2) (let2 r s.wk2) := by
+  rw [let2_bind, let1_case]
+  congr <;> {
+    apply Eq.symm
+    rw [let2_bind]
+    congr
+    simp only [wk1_let2, wk1_var0, wk2_liftn₂_wk1]
+  }
 
 theorem Eqv.case_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.coprod A B, e⟩}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
@@ -833,6 +899,13 @@ theorem Eqv.let1_beta_var0 {Γ : Ctx α ε} {b : Eqv φ (⟨A, ⊥⟩::⟨A, ⊥
 theorem Eqv.let1_beta_var1 {Γ : Ctx α ε} {b : Eqv φ (⟨A, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
   : let1 (var 1 (by simp)) b = b.subst (var 1 (by simp)).subst0 := by rw [<-wk_eff_var, let1_beta]
 
+theorem Eqv.let1_beta_var2 {Γ : Ctx α ε} {b : Eqv φ (⟨A, ⊥⟩::⟨B, ⊥⟩::⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, e⟩}
+  : let1 (var 2 (by simp)) b = b.subst (var 2 (by simp)).subst0 := by rw [<-wk_eff_var, let1_beta]
+
+theorem Eqv.let1_beta_var3
+  {Γ : Ctx α ε} {b : Eqv φ (⟨A, ⊥⟩::⟨B, ⊥⟩::⟨C, ⊥⟩::⟨D, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨E, e⟩}
+  : let1 (var 3 (by simp)) b = b.subst (var 3 (by simp)).subst0 := by rw [<-wk_eff_var, let1_beta]
+
 theorem Eqv.let1_beta_let2_eta {Γ : Ctx α ε}
   {b : Eqv φ (⟨A.prod B, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
   : let1 ((var 1 (by simp)).pair (var 0 (by simp))) b
@@ -861,10 +934,17 @@ theorem Eqv.pair_bind_left
 
 theorem Eqv.let1_pair_right
   {Γ : Ctx α ε} {r : Eqv φ Γ ⟨X, e⟩} {a : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩}
-  : let1 r (pair a b.wk0) = pair (let1 r a) b := by
-  rw [
+  : let1 r (pair a b.wk0) = pair (let1 r a) b := by rw [
     pair_bind (b := b), let1_let1, let1_pair_var_1_left, let1_eta, wk1_pair, wk1_var0, wk0_wk1,
     <-pair_bind_left
+  ]
+
+theorem Eqv.let2_pair_right
+  {Γ : Ctx α ε} {r : Eqv φ Γ ⟨X.prod Y, e⟩}
+  {a : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::Γ) ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩}
+  : let2 r (pair a b.wk0.wk0) = pair (let2 r a) b := by rw [
+    pair_bind (b := b), let1_let2, let1_pair_var_1_left, let1_eta, wk1_pair, wk1_var0, wk0_wk1,
+    wk1_pair, wk0_wk1, wk1_var0, <-pair_bind_left
   ]
 
 theorem Eqv.let1_pair_wk_eff_left
@@ -886,6 +966,31 @@ theorem Eqv.swap_eta_wk2 {Γ : Ctx α ε}
   : ((var 0 (by simp)).pair (var 1 (by simp)) : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (B.prod A, e)
     ).wk2 (inserted := inserted) = (var 0 (by simp)).pair (var 1 (by simp))
   := rfl
+
+-- TODO: generalize appropriately...
+
+theorem Eqv.let2_pair_var_2_left
+  {Γ : Ctx α ε} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.prod Y, e⟩} {b : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : let2 r (pair (e := e) (A := A) (var 2 (by simp)) b)
+  = pair (var 0 (by simp)) (let2 r b) := by
+  rw [
+    pair_bind, let1_beta_var2, subst_let1, subst0_wk0, subst_pair, subst_lift_var_succ,
+    var0_subst0, wk_res_var, subst_lift_var_zero,
+    pair_bind (a := var 0 _), let1_beta_var0, subst_let1, subst0_wk0, let1_let2
+  ]
+  rfl
+
+theorem Eqv.let2_pair_var_3_left
+  {Γ : Ctx α ε} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨X.prod Y, e⟩}
+  {b : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
+  : let2 r (pair (e := e) (A := A) (var 3 (by simp)) b)
+  = pair (var 1 (by simp)) (let2 r b) := by
+  rw [
+    pair_bind, let1_beta_var3, subst_let1, subst0_wk0, subst_pair, subst_lift_var_succ,
+    var0_subst0, wk_res_var, subst_lift_var_zero,
+    pair_bind (a := var 1 _), let1_beta_var1, subst_let1, subst0_wk0, let1_let2
+  ]
+  rfl
 
 theorem Eqv.terminal {a : Eqv φ Γ ⟨Ty.unit, ⊥⟩} {b : Eqv φ Γ ⟨Ty.unit, ⊥⟩} : a = b := by
   induction a using Quotient.inductionOn; induction b using Quotient.inductionOn; apply sound;
@@ -965,55 +1070,6 @@ theorem Eqv.pair_bind_swap
   {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, ⊥⟩} {b : Eqv φ Γ ⟨B, ⊥⟩}
   : pair a b = (let1 b $ let1 a.wk0 $ pair (var 0 (by simp)) (var 1 (by simp)))
   := pair_bind_swap_left ⟨a, by simp⟩
-
-def Eqv.reassoc {A B C : Ty α} {Γ : Ctx α ε}
-  (r : Eqv φ Γ ⟨(A.prod B).prod C, e⟩)
-  : Eqv φ Γ ⟨A.prod (B.prod C), e⟩
-  := let2 r
-  $ let2 (var (V := (A.prod B, e)) 1 (by simp))
-  $ pair (var 1 (by simp)) (pair (var 0 (by simp)) (var 2 (by simp)))
-
-def Eqv.reassoc_inv {A B C : Ty α} {Γ : Ctx α ε}
-  (r : Eqv φ Γ ⟨A.prod (B.prod C), e⟩)
-  : Eqv φ Γ ⟨(A.prod B).prod C, e⟩
-  := let2 r
-  $ let2 (var (V := (B.prod C, e)) 0 (by simp))
-  $ pair (pair (var 3 (by simp)) (var 1 (by simp))) (var 0 (by simp))
-
-theorem Eqv.reassoc_beta {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩} {c : Eqv φ Γ ⟨C, e⟩}
-  : reassoc (pair (pair a b) c) = pair a (pair b c) := by sorry
-
-theorem Eqv.reassoc_inv_beta {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩} {c : Eqv φ Γ ⟨C, e⟩}
-  : reassoc_inv (pair a (pair b c)) = pair (pair a b) c := by sorry
-
-theorem Eqv.let1_reassoc {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨X, e⟩}
-  {r : Eqv φ ((X, ⊥)::Γ) ⟨(A.prod B).prod C, e⟩}
-  : let1 a (reassoc r) = reassoc (let1 a r) := sorry
-
-theorem Eqv.let2_reassoc {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨X.prod Y, e⟩}
-  {r : Eqv φ ((Y, ⊥)::(X, ⊥)::Γ) ⟨(A.prod B).prod C, e⟩}
-  : let2 a (reassoc r) = reassoc (let2 a r) := sorry
-
-theorem Eqv.case_reassoc {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨Ty.coprod X Y, e⟩}
-  {l : Eqv φ (⟨X, ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩}
-  {r : Eqv φ (⟨Y, ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩}
-  : case a (reassoc l) (reassoc r) = reassoc (case a l r) := by
-  sorry
-
-theorem Eqv.let1_reassoc_inv {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨X, e⟩}
-  {r : Eqv φ ((X, ⊥)::Γ) ⟨A.prod (B.prod C), e⟩}
-  : let1 a (reassoc_inv r) = reassoc_inv (let1 a r) := sorry
-
-theorem Eqv.let2_reassoc_inv {A B C : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨X.prod Y, e⟩}
-  {r : Eqv φ ((Y, ⊥)::(X, ⊥)::Γ) ⟨A.prod (B.prod C), e⟩}
-  : let2 a (reassoc_inv r) = reassoc_inv (let2 a r) := sorry
 
 end Basic
 
