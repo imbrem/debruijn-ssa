@@ -12,3 +12,9 @@ namespace BinSyntax
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
 
 namespace Term
+
+-- TODO: distributor
+
+-- TODO: inverse distributor
+
+-- TODO: distributor is iso; this gives us the desired categorical structure! yay!

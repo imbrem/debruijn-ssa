@@ -9,6 +9,19 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 
 namespace Term
 
+def Eqv.swap {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨B.prod A, e⟩
+  := let2 a (pair (var 0 (by simp)) (var 1 (by simp)))
+
+-- TODO: general swaplore; define braid w/ swap?
+
+def Eqv.pl {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨A, e⟩
+  := let2 a (var 1 (by simp))
+
+def Eqv.pr {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨B, e⟩
+  := let2 a (var 0 (by simp))
+
+-- TODO: general pilore, define pi_* with p*?
+
 def Eqv.reassoc {A B C : Ty α} {Γ : Ctx α ε}
   (r : Eqv φ Γ ⟨(A.prod B).prod C, e⟩)
   : Eqv φ Γ ⟨A.prod (B.prod C), e⟩
@@ -366,41 +379,41 @@ theorem Eqv.pi_l_runit {A : Ty α} {Γ : Ctx α ε}
   ]
   exact ⟨var 0 (by simp), rfl⟩
 
-def Eqv.swap {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩
+def Eqv.braid {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩
   := let2 nil $ pair (var 0 (by simp)) (var 1 (by simp))
 
--- TODO: wk_lift_swap
+-- TODO: wk_lift_braid
 
-theorem Eqv.wk1_swap {A B : Ty α} {Γ : Ctx α ε}
-  : (swap : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk1 (inserted := inserted) = swap := rfl
+theorem Eqv.wk1_braid {A B : Ty α} {Γ : Ctx α ε}
+  : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk1 (inserted := inserted) = braid := rfl
 
--- theorem Eqv.wk2_swap {A B : Ty α} {Γ : Ctx α ε}
---   : (swap : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk2 (inserted := inserted) = swap := rfl
+-- theorem Eqv.wk2_braid {A B : Ty α} {Γ : Ctx α ε}
+--   : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk2 (inserted := inserted) = braid := rfl
 
-theorem Eqv.seq_swap {C A B : Ty α} {Γ : Ctx α ε}
+theorem Eqv.seq_braid {C A B : Ty α} {Γ : Ctx α ε}
   (a : Eqv φ (⟨C, ⊥⟩::Γ) ⟨A.prod B, e⟩)
-  : a ;;' swap = (let2 a $ pair (var 0 (by simp)) (var 1 (by simp))) := by rw [seq, let2_bind]; rfl
+  : a ;;' braid = (let2 a $ pair (var 0 (by simp)) (var 1 (by simp))) := by rw [seq, let2_bind]; rfl
 
-theorem Eqv.swap_swap {A B : Ty α} {Γ : Ctx α ε}
-  : swap ;;' swap = nil (φ := φ) (A := A.prod B) (Γ := Γ) (e := e) := by
+theorem Eqv.braid_braid {A B : Ty α} {Γ : Ctx α ε}
+  : braid ;;' braid = nil (φ := φ) (A := A.prod B) (Γ := Γ) (e := e) := by
   rw [
-    seq_swap, swap, let2_let2, swap_eta_wk2, swap_eta_wk2, let2_pair, let1_beta_var0,
+    seq_braid, braid, let2_let2, swap_eta_wk2, swap_eta_wk2, let2_pair, let1_beta_var0,
     subst_let1, wk0_var, var_succ_subst0, let1_beta_var1
   ]
   apply Eq.trans _ let2_eta
   rfl
 
-theorem Eqv.seq_swap_inj {A B C : Ty α} {Γ : Ctx α ε}
+theorem Eqv.seq_braid_inj {A B C : Ty α} {Γ : Ctx α ε}
   {a b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B.prod C, e⟩}
-  : a ;;' swap = b ;;' swap ↔ a = b := ⟨
-    λh => by rw [<-seq_nil (a := a), <-seq_nil (a := b), <-swap_swap]; simp only [seq_assoc, h],
+  : a ;;' braid = b ;;' braid ↔ a = b := ⟨
+    λh => by rw [<-seq_nil (a := a), <-seq_nil (a := b), <-braid_braid]; simp only [seq_assoc, h],
     λh => h ▸ rfl
   ⟩
 
-theorem Eqv.swap_seq_inj {A B C : Ty α} {Γ : Ctx α ε}
+theorem Eqv.braid_seq_inj {A B C : Ty α} {Γ : Ctx α ε}
   {a b : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨C, e⟩}
-  : swap ;;' a = swap ;;' b ↔ a = b := ⟨
-    λh => by rw [<-nil_seq (a := a), <-nil_seq (a := b), <-swap_swap]; simp only [<-seq_assoc, h],
+  : braid ;;' a = braid ;;' b ↔ a = b := ⟨
+    λh => by rw [<-nil_seq (a := a), <-nil_seq (a := b), <-braid_braid]; simp only [<-seq_assoc, h],
     λh => h ▸ rfl
   ⟩
 
@@ -466,19 +479,19 @@ theorem Eqv.seq_rtimes {A B B' : Ty α} {Γ : Ctx α ε}
   : l ;;' rtimes A r = let2 l (pair (var 1 (by simp)) r.wk1.wk1)
   := by rw [rtimes, seq_tensor, wk1_nil, wk0_nil]
 
-theorem Eqv.swap_rtimes {A B B' : Ty α} {Γ : Ctx α ε}
+theorem Eqv.braid_rtimes {A B B' : Ty α} {Γ : Ctx α ε}
   (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
-  : swap ;;' rtimes A r = ltimes r A ;;' swap := by
-  rw [seq_rtimes, swap, let2_let2, seq, let2_pair, let1_beta_var0]
+  : braid ;;' rtimes A r = ltimes r A ;;' braid := by
+  rw [seq_rtimes, braid, let2_let2, seq, let2_pair, let1_beta_var0]
   simp only [wk0_var, Nat.reduceAdd, subst_let1, var_succ_subst0]
   rw [let1_beta_var1]
   simp only [wk2_pair, wk2_var1, List.length_cons, Nat.reduceAdd, Fin.mk_one, List.get_eq_getElem,
     Fin.val_one, List.getElem_cons_succ, List.getElem_cons_zero, subst_pair, subst_lift_var_succ,
     var0_subst0, Fin.zero_eta, Fin.val_zero, wk_res_eff, wk_eff_var, wk0_var, zero_add,
     var_succ_subst0]
-  rw [wk1_swap, ltimes, tensor, let1_let2, wk1_swap, wk1_swap]
+  rw [wk1_braid, ltimes, tensor, let1_let2, wk1_braid, wk1_braid]
   apply congrArg
-  rw [swap]
+  rw [braid]
   apply Eq.symm
   rw [
     var0_eq_wk2_var0, var1_eq_wk2_var1, <-wk2_pair, <-let2_let1, wk1_nil, wk1_nil, nil, nil,
@@ -499,23 +512,25 @@ theorem Eqv.swap_rtimes {A B B' : Ty α} {Γ : Ctx α ε}
   funext k
   cases k <;> rfl
 
-theorem Eqv.swap_rtimes_swap {A B B' : Ty α} {Γ : Ctx α ε}
-  (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : swap ;;' rtimes A r ;;' swap = ltimes r A
-  := by rw [swap_rtimes, <-seq_assoc, swap_swap, seq_nil]
+theorem Eqv.braid_rtimes_braid {A B B' : Ty α} {Γ : Ctx α ε}
+  (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : braid ;;' rtimes A r ;;' braid = ltimes r A
+  := by rw [braid_rtimes, <-seq_assoc, braid_braid, seq_nil]
 
-theorem Eqv.swap_ltimes_swap {A B B' : Ty α} {Γ : Ctx α ε}
-  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : swap ;;' ltimes l A ;;' swap = rtimes A l
-  := by rw [<-seq_assoc, <-swap_rtimes, seq_assoc, swap_swap, nil_seq]
+theorem Eqv.braid_ltimes_braid {A B B' : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : braid ;;' ltimes l A ;;' braid = rtimes A l
+  := by rw [<-seq_assoc, <-braid_rtimes, seq_assoc, braid_braid, nil_seq]
 
-theorem Eqv.swap_ltimes {A B B' : Ty α} {Γ : Ctx α ε}
-  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : swap ;;' ltimes l A = rtimes A l ;;' swap := by
-  rw [<-seq_swap_inj, swap_ltimes_swap, <-seq_assoc, swap_swap, seq_nil]
+theorem Eqv.braid_ltimes {A B B' : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : braid ;;' ltimes l A = rtimes A l ;;' braid := by
+  rw [<-seq_braid_inj, braid_ltimes_braid, <-seq_assoc, braid_braid, seq_nil]
 
-theorem Eqv.rtimes_swap {A B B' : Ty α} {Γ : Ctx α ε}
-  (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : rtimes A r ;;' swap = swap ;;' ltimes r A := by rw [swap_ltimes]
+theorem Eqv.rtimes_braid {A B B' : Ty α} {Γ : Ctx α ε}
+  (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : rtimes A r ;;' braid = braid ;;' ltimes r A
+  := by rw [braid_ltimes]
 
-theorem Eqv.ltimes_swap {A B B' : Ty α} {Γ : Ctx α ε}
-  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : ltimes l A ;;' swap = swap ;;' rtimes A l := by rw [swap_rtimes]
+theorem Eqv.ltimes_braid {A B B' : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩) : ltimes l A ;;' braid = braid ;;' rtimes A l
+  := by rw [braid_rtimes]
 
 theorem Eqv.rtimes_nil {A B : Ty α} {Γ : Ctx α ε}
   : rtimes (φ := φ) (Γ := Γ) (A := A) (B := B) (B' := B) (e := e) nil = nil := tensor_nil_nil
@@ -523,8 +538,8 @@ theorem Eqv.rtimes_nil {A B : Ty α} {Γ : Ctx α ε}
 theorem Eqv.rtimes_rtimes {A B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨B₀, ⊥⟩::Γ) ⟨B₁, e⟩) (r : Eqv φ (⟨B₁, ⊥⟩::Γ) ⟨B₂, e⟩)
   : rtimes A l ;;' rtimes A r = rtimes A (l ;;' r) := by rw [
-    <-swap_ltimes_swap, <-seq_assoc, swap_rtimes, seq_assoc, <-seq_assoc (a := swap), ltimes_ltimes,
-    swap_ltimes_swap]
+    <-braid_ltimes_braid, <-seq_assoc, braid_rtimes, seq_assoc, <-seq_assoc (a := braid),
+    ltimes_ltimes, braid_ltimes_braid]
 
 theorem Eqv.ltimes_rtimes {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
@@ -575,9 +590,9 @@ theorem Eqv.Pure.right_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   := by
   apply Eq.symm
   rw [
-    <-swap_ltimes_swap, <-seq_assoc, swap_ltimes (l := l), seq_assoc, <-seq_assoc (a := swap),
-    hr.left_central, seq_assoc, swap_rtimes, <-seq_assoc, ltimes_swap (l := r), seq_assoc,
-    <-seq_assoc (c := swap), swap_swap, seq_nil
+    <-braid_ltimes_braid, <-seq_assoc, braid_ltimes (l := l), seq_assoc, <-seq_assoc (a := braid),
+    hr.left_central, seq_assoc, braid_rtimes, <-seq_assoc, ltimes_braid (l := r), seq_assoc,
+    <-seq_assoc (c := braid), braid_braid, seq_nil
   ]
 
 theorem Eqv.tensor_seq_of_comm {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
@@ -590,11 +605,6 @@ theorem Eqv.tensor_seq_of_comm {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : Ctx
   simp only [seq_assoc]
 
 -- TODO: tensor_seq (pure only)
-
-def Eqv.split {A : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.prod A, e⟩
-  := let1 nil (pair nil nil)
-
--- TODO: split_seq (pure only)
 
 def Eqv.assoc {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv (φ := φ) (⟨(A.prod B).prod C, ⊥⟩::Γ) ⟨A.prod (B.prod C), e⟩ := nil.reassoc
@@ -641,3 +651,20 @@ theorem Eqv.assoc_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.assoc_inv_assoc {A B C : Ty α} {Γ : Ctx α ε}
   : assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) ;;' assoc = nil := by
   rw [seq_prod_assoc, assoc_inv, reassoc_reassoc_inv]
+
+-- TODO: assoc is natural
+
+-- TODO: lunit, runit are natural
+
+-- TODO: triangle
+
+-- TODO: pentagon
+
+-- TODO: hexagon
+
+-- TODO: drop
+
+def Eqv.split {A : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.prod A, e⟩
+  := let1 nil (pair nil nil)
+
+-- TODO: comonoid structure (for pure only!)

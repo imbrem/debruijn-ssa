@@ -293,6 +293,51 @@ def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ)
 def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨B, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inr nil
 
+-- TODO: lzero, rzero; appropriate isomorphisms
+
 def Eqv.sum {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ⟨A'.coprod B', e⟩ := coprod (l.seq inj_l) (r.seq inj_r)
+
+-- TODO: sum is a bifunctor; so that's nil nil and seq!
+
+def Eqv.braid_sum {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ⟨B.coprod A, e⟩
+  := nil.swap_sum
+
+theorem Eqv.braid_braid_sum
+  : braid_sum (φ := φ) (A := A) (B := A) (Γ := Γ) (e := e) ;;' braid_sum = nil := by
+  rw [braid_sum, seq_swap_sum, seq_nil, swap_sum_swap_sum]
+
+def Eqv.assoc_sum {A B C : Ty α} {Γ : Ctx α ε}
+  : Eqv φ (⟨(A.coprod B).coprod C, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩
+  := nil.reassoc_sum
+
+def Eqv.assoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
+  : Eqv φ (⟨A.coprod (B.coprod C), ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩
+  := nil.reassoc_inv_sum
+
+theorem Eqv.assoc_assoc_inv_sum
+  : assoc_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e) ;;' assoc_inv_sum = nil := by
+  rw [assoc_sum, assoc_inv_sum, seq_reassoc_inv_sum, seq_nil, reassoc_inv_reassoc_sum]
+
+theorem Eqv.assoc_inv_assoc_sum
+  : assoc_inv_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e) ;;' assoc_sum = nil := by
+  rw [assoc_sum, assoc_inv_sum, seq_reassoc_sum, seq_nil, reassoc_reassoc_inv_sum]
+
+-- TODO: assoc is natural
+
+-- TODO: lzero, rzero are natural
+
+-- TODO: triangle
+
+-- TODO: pentagon
+
+-- TODO: hexagon
+
+-- TODO: zero, join
+
+-- TODO: comonoid structure on _everything_
+
+end Term
+
+end BinSyntax
