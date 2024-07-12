@@ -114,7 +114,6 @@ def Eqv.cfg'
   (G : ∀i : Fin n, Eqv φ (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
   : Eqv φ Γ L := cfg_inner' n R hR β (Quotient.finChoice G)
 
-@[simp]
 theorem InS.cfg_inner_q
   {R : LCtx α} {β : InS φ Γ (R ++ L)}
   {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
@@ -135,8 +134,6 @@ theorem InS.cfg_q {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨
 theorem Eqv.cfg_quot
   {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.cfg R β G⟧ := InS.cfg_q
-
-
 
 def Eqv.induction
   {motive : (Γ : Ctx α ε) → (L : LCtx α) → Eqv φ Γ L → Prop}
@@ -196,7 +193,6 @@ def Eqv.vsubst {Γ Δ : Ctx α ε} {L : LCtx α} (σ : Term.Subst.Eqv φ Γ Δ) 
     (λσ r => InS.q (r.vsubst σ))
     (λ_ _ _ _ hσ hr => Quotient.sound (InS.vsubst_congr hσ hr))
 
-@[simp]
 theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ Δ L}
    : (r.q).vwk ρ = (r.vwk ρ).q := rfl
 
@@ -204,7 +200,6 @@ theorem InS.vwk_q {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ
 theorem Eqv.vwk_quot {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ} {r : InS φ Δ L}
    : Eqv.vwk ρ ⟦r⟧ = ⟦r.vwk ρ⟧ := rfl
 
-@[simp]
 theorem InS.vwk_id_q {Γ Δ : Ctx α ε} {L : LCtx α} {r : InS φ Δ L}
   (hρ : Γ.Wkn Δ id) : (r.q).vwk_id hρ = (r.vwk_id hρ).q := rfl
 
@@ -249,7 +244,6 @@ theorem Eqv.vwk_case {Γ : Ctx α ε} {L : LCtx α}
 --   = Eqv.cfg R (Eqv.vwk (ρ.lift (le_refl _)) β) sorry := by
 --   stop induction β using Quotient.inductionOn; simp [Eqv.cfg, Eqv.cfg_inner, Quotient.finChoice_eq]
 
-@[simp]
 theorem InS.lwk_q {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : InS φ Γ L}
    : (r.q).lwk ρ = (r.lwk ρ).q := rfl
 
@@ -331,9 +325,8 @@ theorem Eqv.vwk_lwk {Γ Δ : Ctx α ε} {L K : LCtx α}
 
 def Eqv.vwk0
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ L)
-  : Eqv φ (head::Γ) L := Eqv.vwk ⟨Nat.succ, by simp⟩ r
+  : Eqv φ (head::Γ) L := Eqv.vwk Ctx.InS.wk0 r
 
-@[simp]
 theorem InS.vwk0_q {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}
   : (r.q).vwk0 (head := head) = (r.vwk0).q := rfl
 
@@ -343,9 +336,8 @@ theorem Eqv.vwk0_quot {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}
 
 def Eqv.vwk1
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (head::Γ) L)
-  : Eqv φ (head::inserted::Γ) L := Eqv.vwk ⟨Nat.liftWk Nat.succ, by simp⟩ r
+  : Eqv φ (head::inserted::Γ) L := Eqv.vwk Ctx.InS.wk1 r
 
-@[simp]
 theorem InS.vwk1_q {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (head::Γ) L}
   : (r.q).vwk1 (inserted := inserted) = (r.vwk1).q := rfl
 
@@ -389,6 +381,24 @@ def Eqv.vswap02
 theorem Eqv.vswap02_quot
   {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (left::mid::right::Γ) L}
   : Eqv.vswap02 ⟦r⟧ = ⟦r.vswap02⟧ := rfl
+
+def Eqv.lwk0
+  {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ L)
+  : Eqv φ Γ (head::L) := Eqv.lwk LCtx.InS.wk0 r
+
+-- @[simp]
+-- theorem Eqv.lwk0_quot
+--   {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}
+--   : Eqv.lwk0 ⟦r⟧ = ⟦r.lwk0⟧ := rfl
+
+def Eqv.lwk1
+  {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ (head::L))
+  : Eqv φ Γ (head::inserted::L) := Eqv.lwk LCtx.InS.wk1 r
+
+@[simp]
+theorem Eqv.lwk1_quot
+  {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ (head::L)}
+  : Eqv.lwk1 (inserted := inserted) ⟦r⟧ = ⟦r.lwk1⟧ := rfl
 
 open Term.Eqv
 
@@ -704,6 +714,8 @@ theorem Eqv.let2_eta {Γ : Ctx α ε} {L : LCtx α}
   induction r using Quotient.inductionOn
   exact Eqv.sound $ InS.let2_eta _ _
 
+-- TODO: case_eta
+
 theorem Eqv.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   (R S : LCtx α) (β : Eqv φ Γ (R ++ L))
   (G : (i : Fin S.length) → Eqv φ ((List.get S i, ⊥)::Γ) (R ++ L))
@@ -793,20 +805,7 @@ theorem Eqv.case_inr {Γ : Ctx α ε} {L : LCtx α}
   induction s using Quotient.inductionOn
   case _ e r s => exact Eqv.sound (InS.case_inr e r s)
 
-theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
-  (R S : LCtx α) (β : InS φ Γ (S ++ L))
-  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ S ++ L))
-  (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
-  : (β.lwk ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))).cfg'
-    (R.length + S.length) (R ++ S) (by rw [List.length_append])
-      (Fin.addCases
-        (λi => (G i).cast sorry rfl)
-        (λi => ((G' i).cast sorry rfl).lwk
-          ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))))
-    ≈ β.cfg S G'
-  := sorry
-
--- TODO: Eqv.dead_cfg_left; after Eqv.lwk
+-- TODO: Eqv.dead_cfg_left
 
 theorem Eqv.let1_beta {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.Eqv φ Γ ⟨A, ⊥⟩)

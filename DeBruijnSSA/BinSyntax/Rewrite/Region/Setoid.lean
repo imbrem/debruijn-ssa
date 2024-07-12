@@ -366,6 +366,8 @@ theorem InS.let2_eta {Γ : Ctx α ε} {L : LCtx α}
     ≈ let1 a r
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
+-- TODO: case_eta
+
 theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   (R S : LCtx α) (β : InS φ Γ (R ++ L))
   (G : (i : Fin S.length) → InS φ ((List.get S i, ⊥)::Γ) (R ++ L))
@@ -374,6 +376,19 @@ theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
   ≈ cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
   := Uniform.rel $ TStep.reduce InS.coe_wf InS.coe_wf (by constructor)
+
+theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
+  (R S : LCtx α) (β : InS φ Γ (S ++ L))
+  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ S ++ L))
+  (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
+  : (β.lwk ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))).cfg'
+    (R.length + S.length) (R ++ S) (by rw [List.length_append])
+      (Fin.addCases
+        (λi => (G i).cast sorry rfl)
+        (λi => ((G' i).cast sorry rfl).lwk
+          ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))))
+    ≈ β.cfg S G'
+  := sorry
 
 theorem InS.case_inl {Γ : Ctx α ε} {L : LCtx α}
   (e : Term.InS φ Γ ⟨A, ea⟩)
