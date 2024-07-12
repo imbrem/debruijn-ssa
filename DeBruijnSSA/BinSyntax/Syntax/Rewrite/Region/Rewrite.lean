@@ -54,35 +54,6 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let2 e r) (let1 e $ (let2 (Term.var 0) r.vwk2))
   | case_bind (e r s) :
     RewriteD (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
-  -- | case_let1 (a b : Term φ) (r s) :
-  --   RewriteD (case a
-  --     (let1 (b.subst (Term.inl (Term.var 0)).subst0) r)
-  --     (let1 (b.subst (Term.inr (Term.var 0)).subst0) s))
-  --   (let1 a $ let1 b $ case (Term.var 1)
-  --     (r.vwk sorry)
-  --     (s.vwk sorry))
-  -- | case_let2 (a b : Term φ) (r s) :
-  --   RewriteD (case a
-  --     (let2 (b.subst (Term.inl (Term.var 0)).subst0) r)
-  --     (let2 (b.subst (Term.inr (Term.var 0)).subst0) s))
-  --   (let1 a $ let2 b $ case (Term.var 1)
-  --     ((r.vwk (Nat.swap0 2)).vwk (Nat.liftnWk 3 Nat.succ))
-  --     ((s.vwk (Nat.swap0 2)).vwk (Nat.liftnWk 3 Nat.succ)))
-  -- | case_case (a b : Term φ) (lr ls rr rs) :
-  --   RewriteD (case a
-  --     (case (b.subst (Term.inl (Term.var 0)).subst0) lr ls)
-  --     (case (b.subst (Term.inl (Term.var 0)).subst0) rr rs))
-  --   (let1 a $ let2 b $ sorry)
-  -- | let1_case (a b r s) :
-  --   RewriteD (let1 a $ case (b.wk Nat.succ) r s)
-  --   (case b
-  --     (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1)))
-  --     (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1))))
-  -- | let2_case (a b r s) :
-  --   RewriteD (let2 a $ case (b.wk (· + 2)) r s)
-  --   (case b
-  --     (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2)))
-  --     (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
     RewriteD (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
   | cfg_let1 (a β n G) :
@@ -107,6 +78,20 @@ inductive RewriteD : Region φ → Region φ → Type _
   | case_eta (e r) :
     RewriteD (case e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1))
       (let1 e r)
+  | let1_let1_case (a b r s) :
+    RewriteD
+      (let1 a $ let1 b $ case (var 1) r s)
+      (let1 a $ case (var 0) (let1 b.wk0 r.vswap01) (let1 b.wk0 s.vswap01))
+  | let1_let2_case (a b r s) :
+    RewriteD
+      (let1 a $ let2 b $ case (var 2) r s)
+      (let1 a $ case (var 0) (let2 b.wk0 r.vswap02) (let2 b.wk0 s.vswap02))
+  | let1_case_case (a d ll lr rl rr) :
+    RewriteD
+      (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
+      (let1 a $ case (var 0)
+        (case d.wk0 ll.vswap01 rl.vswap01)
+        (case d.wk0 lr.vswap01 rr.vswap01))
 
 def RewriteD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀ = r₀') (p : RewriteD r₀ r₁)
   : RewriteD r₀' r₁ := h ▸ p
@@ -205,6 +190,9 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     funext k
     cases k <;> rfl
   | case_eta => sorry
+  | let1_let1_case => sorry
+  | let1_let2_case => sorry
+  | let1_case_case => sorry
   | _ => simp [Nat.liftBot, sup_assoc]
 
 inductive Rewrite : Region φ → Region φ → Prop
@@ -263,6 +251,20 @@ inductive Rewrite : Region φ → Region φ → Prop
   | case_eta (e r) :
     Rewrite (case e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1))
       (let1 e r)
+  | let1_let1_case (a b r s) :
+    Rewrite
+      (let1 a $ let1 b $ case (var 1) r s)
+      (let1 a $ case (var 0) (let1 b.wk0 r.vswap01) (let1 b.wk0 s.vswap01))
+  | let1_let2_case (a b r s) :
+    Rewrite
+      (let1 a $ let2 b $ case (var 2) r s)
+      (let1 a $ case (var 0) (let2 b.wk0 r.vswap02) (let2 b.wk0 s.vswap02))
+  | let1_case_case (a d ll lr rl rr) :
+    Rewrite
+      (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
+      (let1 a $ case (var 0)
+        (case d.wk0 ll.vswap01 rl.vswap01)
+        (case d.wk0 lr.vswap01 rr.vswap01))
 
 theorem RewriteD.rewrite {r r' : Region φ} (p : RewriteD r r') : Rewrite r r'
   := by cases p <;> constructor--; assumption
@@ -351,6 +353,9 @@ theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs :=
     intro hk
     exact ⟨k + 1, hk, rfl⟩
   | case_eta => sorry
+  | let1_let1_case => sorry
+  | let1_let2_case => sorry
+  | let1_case_case => sorry
   | _ => simp [vwk2, fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.liftnFv_iUnion, Set.union_assoc]
 
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
@@ -389,6 +394,9 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
       Nat.liftWk_comm_liftnWk_apply, vwk_liftnWk₂_vwk1, vwk_liftWk₂_vwk1]
     constructor
+  | let1_let1_case => sorry
+  | let1_let2_case => sorry
+  | let1_case_case => sorry
   | _ =>
     simp only [
       Region.vwk2, Region.vwk, wk, Nat.liftWk,
@@ -456,6 +464,9 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
   --   case right =>
   --     sorry
   --   all_goals sorry
+  | let1_let1_case => sorry
+  | let1_let2_case => sorry
+  | let1_case_case => sorry
   | _ =>
     simp only [
       Region.vwk2, Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]

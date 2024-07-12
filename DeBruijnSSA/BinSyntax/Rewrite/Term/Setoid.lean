@@ -210,10 +210,10 @@ theorem InS.let1_let2_case {Γ : Ctx α ε}
 theorem InS.let1_case_case {Γ : Ctx α ε}
   {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
   {d : InS φ (⟨A.coprod B, ⊥⟩::Γ) ⟨Ty.coprod X Y, e⟩}
-  {ll : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨X, e⟩}
-  {lr : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨X, e⟩}
-  {rl : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨X, e⟩}
-  {rr : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨X, e⟩}
+  {ll : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+  {lr : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+  {rl : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+  {rr : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
   : (let1 a $ case d
       (case (var 1 Ctx.Var.bhead.step) ll lr)
       (case (var 1 Ctx.Var.bhead.step) rl rr))

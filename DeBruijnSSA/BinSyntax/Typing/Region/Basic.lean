@@ -371,20 +371,41 @@ theorem InS.vwk_id_vwk {Γ Δ Ξ : Ctx α ε} {h : Γ.Wkn Δ id} {ρ : Δ.InS Ξ
   : (r.vwk ρ).vwk_id h = r.vwk ⟨ρ, h.comp ρ.prop⟩ := by
   cases r; simp [vwk, vwk_id, vwk_vwk]
 
+def InS.vwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L} : InS φ (head::Γ) L
+  := r.vwk ⟨Nat.succ, Ctx.Wkn.succ⟩
+
+@[simp]
+theorem InS.coe_vwk0 {Γ : Ctx α ε} (r : InS φ Γ L)
+  : (r.vwk0 (head := head) : Region φ) = r.vwk0 (head := head) := rfl
+
 def InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (head::Γ) L) : InS φ (head::inserted::Γ) L
   := r.vwk Ctx.InS.wk1
+
+@[simp]
+theorem InS.coe_vwk1 {Γ : Ctx α ε} {L} {r : InS φ (head::Γ) L}
+  : (r.vwk1 (inserted := inserted) : Region φ) = r.vwk1 (inserted := inserted) := rfl
 
 def InS.vwk2 {Γ : Ctx α ε} {L} (r : InS φ (left::right::Γ) L) : InS φ (left::right::inserted::Γ) L
   := r.vwk Ctx.InS.wk2
 
-theorem InS.coe_vwk1 {Γ : Ctx α ε} {L} {r : InS φ (head::Γ) L}
-  : (r.vwk1 (inserted := inserted) : Region φ) = r.vwk1 (inserted := inserted) := rfl
+@[simp]
+theorem InS.coe_vwk2 {Γ : Ctx α ε} {L} {r : InS φ (left::right::Γ) L}
+  : (r.vwk2 (inserted := inserted) : Region φ) = r.vwk2 (inserted := inserted) := rfl
 
-def InS.vwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L} : InS φ (head::Γ) L
-  := r.vwk ⟨Nat.succ, Ctx.Wkn.succ⟩
+def InS.vswap01 {Γ : Ctx α ε} {L} (r : InS φ (left::right::Γ) L) : InS φ (right::left::Γ) L
+  := r.vwk Ctx.InS.swap01
 
-theorem InS.coe_vwk0 {Γ : Ctx α ε} (r : InS φ Γ L)
-  : (r.vwk0 (head := head) : Region φ) = r.vwk0 (head := head) := rfl
+@[simp]
+theorem InS.coe_vswap01 {Γ : Ctx α ε} {L} {r : InS φ (left::right::Γ) L}
+  : (r.vswap01 : Region φ) = r.vswap01 := rfl
+
+def InS.vswap02 {Γ : Ctx α ε} {L} (r : InS φ (left::mid::right::Γ) L)
+  : InS φ (mid::right::left::Γ) L
+  := r.vwk Ctx.InS.swap02
+
+@[simp]
+theorem InS.coe_vswap02 {Γ : Ctx α ε} {L} {r : InS φ (left::mid::right::Γ) L}
+  : (r.vswap02 : Region φ) = r.vswap02 := rfl
 
 def InS.lwk {Γ : Ctx α ε} (ρ : L.InS K) (r : InS φ Γ L) : InS φ Γ K
   := ⟨(r : Region φ).lwk ρ, r.2.lwk ρ.prop⟩

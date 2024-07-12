@@ -1,6 +1,7 @@
 import DeBruijnSSA.BinSyntax.Typing.Region
 import DeBruijnSSA.BinSyntax.Syntax.Rewrite.Region.Step
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Cong
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Setoid
 
 import Discretion.Utils.Quotient
 
@@ -137,22 +138,22 @@ inductive TStep : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → 
   | reduce {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → Reduce r r' → TStep Γ L r r'
   | initial {Γ L} : Γ.IsInitial → r.Wf Γ L → r'.Wf Γ L → TStep Γ L r r'
   -- TODO: replace "terminal" with general term rewriting... can be much nicer, maybe...
-  | terminal {Γ L} : e.Wf Γ ⟨Ty.unit, ⊥⟩ → e'.Wf Γ ⟨Ty.unit, ⊥⟩ → r.Wf (⟨Ty.unit, ⊥⟩::Γ) L
-    → TStep Γ L (let1 e r) (let1 e' r)
+  | let1_equiv {Γ L} : Term.Uniform Term.TStep Γ ⟨A, e⟩ a a' → r.Wf (⟨A, ⊥⟩::Γ) L
+    → TStep Γ L (let1 a r) (let1 a' r)
 
 theorem TStep.left {Γ L} {r r' : Region φ} : TStep Γ L r r' → r.Wf Γ L
   | let1_beta de dr => dr.let1 de
   | rewrite d _ _ => d
   | reduce d _ _ => d
   | initial _ d _ => d
-  | terminal de _ dr => dr.let1 de
+  | let1_equiv da dr => dr.let1 (da.left Term.TStep.wf)
 
 theorem TStep.right {Γ L} {r r' : Region φ} : TStep Γ L r r' → r'.Wf Γ L
   | let1_beta de dr => dr.vsubst de.subst0
   | rewrite _ d _ => d
   | reduce _ d _ => d
   | initial _ _ d => d
-  | terminal _ de dr => dr.let1 de
+  | let1_equiv da dr => dr.let1 (da.right Term.TStep.wf)
 
 theorem TStep.cast_src {Γ L} {r₀' r₀ r₁ : Region φ} (h : r₀' = r₀) (p : TStep Γ L r₀ r₁)
   : TStep Γ L r₀' r₁ := h ▸ p
@@ -200,7 +201,7 @@ theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   | rewrite d d' p => rewrite (d.vwk hρ) (d'.vwk hρ) (p.vwk ρ)
   | reduce d d' p => reduce (d.vwk hρ) (d'.vwk hρ) (p.vwk ρ)
   | initial di d d' => initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
-  | terminal de de' dr => terminal (de.wk hρ) (de'.wk hρ) (dr.vwk hρ.slift)
+  | let1_equiv da dr => let1_equiv (da.wk sorry hρ) (dr.vwk hρ.slift)
 
 theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
   : TStep (φ := φ) Γ L r r' → TStep Γ K (r.lwk ρ) (r'.lwk ρ)
@@ -208,7 +209,7 @@ theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
   | rewrite d d' p => rewrite (d.lwk hρ) (d'.lwk hρ) (p.lwk ρ)
   | reduce d d' p => reduce (d.lwk hρ) (d'.lwk hρ) (p.lwk ρ)
   | initial di d d' => initial di (d.lwk hρ) (d'.lwk hρ)
-  | terminal de de' dr => terminal de de' (dr.lwk hρ)
+  | let1_equiv da dr => let1_equiv da (dr.lwk hρ)
 
 -- Note: vsubst needs InS lore for initiality, so that's in Setoid.lean
 
@@ -218,7 +219,7 @@ theorem TStep.lsubst {Γ : Ctx α ε} {L K} {r r' : Region φ} {σ : Subst φ}
   | rewrite d d' p => sorry--rewrite (d.lsubst hσ) (d'.lsubst hσ) (p.lsubst σ)
   | reduce d d' p => sorry
   | initial di d d' => initial di (d.lsubst hσ) (d'.lsubst hσ)
-  | terminal de de' dr => terminal de de' (dr.lsubst hσ.vlift)
+  | let1_equiv da dr => let1_equiv da (dr.lsubst hσ.vlift)
 
 def CStep (Γ : Ctx α ε) (L : LCtx α) (r r' : Region φ) : Prop
   := Wf.Cong TStep Γ L r r'
