@@ -1,4 +1,5 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Seq
 import DeBruijnSSA.BinSyntax.Typing.Region.Compose
 
 namespace BinSyntax
@@ -10,7 +11,7 @@ namespace Region
 abbrev Eqv.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : Eqv φ (⟨tyIn, ⊥⟩::rest) (tyOut::targets)
-  := Quotient.liftOn t (λt => ⟦InS.ret t⟧) (λ_ _ h => Quotient.sound $ InS.br_congr _ h (by simp))
+  := Eqv.br 0 t (by simp)
 
 theorem Eqv.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (ρ : Ctx.InS (⟨tyIn, ⊥⟩::rest') _)
@@ -21,15 +22,14 @@ theorem Eqv.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
 
 theorem Eqv.vwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (Eqv.ret (targets := targets) t).vwk1 (inserted := inserted)
-  = Eqv.ret (t.wk ⟨Nat.liftWk Nat.succ, by simp⟩) := by
+  : (ret (targets := targets) t).vwk1 (inserted := inserted) = ret t.wk1 := by
   induction t using Quotient.inductionOn
   rfl
 
-theorem Eqv.vsubst_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+theorem Eqv.vsubst_ret {tyIn tyIn' tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   (σ : Term.Subst.Eqv φ (⟨tyIn, ⊥⟩::Γ) _)
-  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
-  : (Eqv.ret (targets := targets) t).vsubst σ = Eqv.ret (t.subst σ) := by
+  (t : Term.Eqv φ (⟨tyIn', ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (ret (targets := targets) t).vsubst σ = ret (t.subst σ) := by
   induction σ using Quotient.inductionOn
   induction t using Quotient.inductionOn
   rfl
@@ -221,6 +221,40 @@ theorem Eqv.vsubst_liftn₂_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α
   : (left ;; right).vsubst (σ.liftn₂ (le_refl _) (le_refl _))
   = left.vsubst (σ.liftn₂ (le_refl _) (le_refl _)) ;; right.vsubst (σ.liftn₂ (le_refl _) (le_refl _))
   := by stop simp only [<-Term.Subst.InS.lift_lift, vsubst_lift_seq]
+
+theorem Eqv.let1_ret {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {b : Term.Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, ⊥⟩}
+  : let1 a (ret (targets := L) b) = ret (Term.Eqv.let1 a b) := let1_br
+
+theorem Eqv.let2_ret
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B.prod C, ⊥⟩} {b : Term.Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, ⊥⟩}
+  : let2 a (ret (targets := L) b) = ret (Term.Eqv.let2 a b) := let2_br
+
+theorem Eqv.case_ret
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B.coprod C, ⊥⟩}
+  {l : Term.Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, ⊥⟩}
+  {r : Term.Eqv φ (⟨C, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, ⊥⟩}
+  : case a (ret (targets := L) l) (ret r) = ret (Term.Eqv.case a l r) := case_br
+
+theorem Eqv.ret_br {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {b : Term.Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩} {hℓ : LCtx.Trg (D::L) ℓ C}
+  : ret (targets := L) a ;; br ℓ b hℓ = br ℓ (a ;;' b) hℓ := by
+  rw [ret_seq, Term.Eqv.seq, Term.Eqv.let1_beta_pure, vwk1_br, vsubst_br]
+
+theorem Eqv.br_of_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {b : Term.Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩} {hℓ : LCtx.Trg (D::L) ℓ C}
+  : br ℓ (a ;;' b) hℓ = ret (targets := L) a ;; br ℓ b hℓ := ret_br.symm
+
+theorem Eqv.ret_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩}
+  {b : Term.Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩}
+  : ret (targets := L) a ;; ret b = ret (a ;;' b) := ret_br
+
+theorem Eqv.ret_of_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩}
+  {b : Term.Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩}
+  : ret (a ;;' b) = ret (targets := L) a ;; ret b := ret_ret.symm
+
+theorem Eqv.ret_nil : ret Term.Eqv.nil = nil (φ := φ) (ty := A) (rest := Γ) (targets := L)  := rfl
 
 -- TODO: centrality lore...
 
