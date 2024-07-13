@@ -190,6 +190,11 @@ theorem Eqv.wk1_quot {a : InS φ (head::Γ) V} : wk1 (inserted := inserted) ⟦a
 theorem Eqv.wk1_var0 {hn : Ctx.Var (head::Γ) 0 V}
   : wk1 (inserted := inserted) (var (φ := φ) 0 hn) = var 0 (Ctx.Var.head hn.get _) := rfl
 
+@[simp]
+theorem Eqv.wk1_var_succ {n : ℕ} {hn : Ctx.Var (head::Γ) (n + 1) V}
+  : wk1 (inserted := inserted) (var (φ := φ) (n + 1) hn)
+  = var (n + 2) (have hn := hn.wk (Ctx.Wkn.wk1 (inserted := inserted)); hn) := rfl
+
 def Eqv.wk2 (a : Eqv φ (left::right::Γ) V) : Eqv φ (left::right::inserted::Γ) V := wk Ctx.InS.wk2 a
 
 @[simp]
@@ -1085,6 +1090,11 @@ theorem Eqv.let1_beta_var3
   {Γ : Ctx α ε} {b : Eqv φ (⟨A, ⊥⟩::⟨B, ⊥⟩::⟨C, ⊥⟩::⟨D, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨E, e⟩}
   : let1 (var 3 (by simp)) b = b.subst (var 3 (by simp)).subst0 := by rw [<-wk_eff_var, let1_beta]
 
+theorem Eqv.let1_beta_var
+  {Γ : Ctx α ε} {n : ℕ} {hn : Ctx.Var Γ n ⟨A, ⊥⟩}
+  {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : let1 (var n (hn.wk_eff bot_le)) b = b.subst (var n hn).subst0 := by rw [<-wk_eff_var, let1_beta]
+
 theorem Eqv.let1_beta_let2_eta {Γ : Ctx α ε}
   {b : Eqv φ (⟨A.prod B, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
   : let1 ((var 1 (by simp)).pair (var 0 (by simp))) b
@@ -1105,6 +1115,20 @@ theorem Eqv.let1_pair_var_1_left
     pair_bind (a := var 0 _), let1_beta_var0, subst_let1, subst0_wk0, let1_let1
   ]
   rfl
+
+theorem Eqv.let1_pair_var_succ
+  {Γ : Ctx α ε} {r : Eqv φ Γ ⟨X, e⟩} {b : Eqv φ (⟨X, ⊥⟩::Γ) ⟨B, e⟩}
+  {hn : Ctx.Var _ n ⟨C, ⊥⟩}
+  : let1 r (pair (var (n + 1) (hn.step.wk_eff bot_le)) b)
+  = pair (var n (hn.wk_eff bot_le)) (let1 r b) := by
+  rw [
+    pair_bind, let1_beta_var, subst_let1, subst0_wk0, subst_pair, subst_lift_var_succ,
+    var0_subst0, wk_res_var, subst_lift_var_zero,
+    pair_bind (a := var n _), let1_beta_var, subst_let1, subst0_wk0, let1_let1
+  ]
+  rfl
+  exact hn
+  simp [hn]
 
 theorem Eqv.pair_bind_left
   {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩}

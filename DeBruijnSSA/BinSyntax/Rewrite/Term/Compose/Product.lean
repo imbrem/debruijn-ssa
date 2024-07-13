@@ -541,6 +541,13 @@ theorem Eqv.rtimes_rtimes {A B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
     <-braid_ltimes_braid, <-seq_assoc, braid_rtimes, seq_assoc, <-seq_assoc (a := braid),
     ltimes_ltimes, braid_ltimes_braid]
 
+theorem Eqv.rtimes_def' {A B B' : Ty α} {Γ : Ctx α ε} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩}
+  : rtimes A r = let2 nil (r.wk1.wk1 ;;' ((var 1 (by simp)).pair (var 0 (by simp)))) := by
+  rw [rtimes, tensor]
+  apply congrArg
+  rw [wk1_nil, wk0_nil, seq, wk1_pair, wk1_var_succ, wk1_var0, let1_pair_var_succ, let1_eta]
+  simp
+
 theorem Eqv.ltimes_rtimes {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : ltimes l B ;;' rtimes A' r = tensor l r := by

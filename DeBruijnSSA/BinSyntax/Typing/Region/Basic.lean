@@ -148,7 +148,7 @@ def InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
 
 @[simp]
 theorem InS.coe_let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
-  (a : Term.InS φ Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : (t.let1 a : Region φ) = let1 a t
+  (a : Term.InS φ Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L) : (t.let1 a : Region φ) = Region.let1 a t
   := rfl
 
 def InS.let2 {Γ : Ctx α ε} {L : LCtx α} {A B e}
@@ -158,7 +158,7 @@ def InS.let2 {Γ : Ctx α ε} {L : LCtx α} {A B e}
 @[simp]
 theorem InS.coe_let2 {Γ : Ctx α ε} {L : LCtx α} {A B e}
   (a : Term.InS φ Γ ⟨(Ty.prod A B), e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
-  : (t.let2 a : Region φ) = let2 a t
+  : (t.let2 a : Region φ) = Region.let2 a t
   := rfl
 
 def InS.case {Γ : Ctx α ε} {L : LCtx α} {A B e}
@@ -168,7 +168,7 @@ def InS.case {Γ : Ctx α ε} {L : LCtx α} {A B e}
 @[simp]
 theorem InS.coe_case {Γ : Ctx α ε} {L : LCtx α} {A B e}
   (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩) (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L)
-  : (s.case a t : Region φ) = case a s t
+  : (s.case a t : Region φ) = Region.case a s t
   := rfl
 
 def InS.cfg {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α) (dβ : InS φ Γ (R ++ L))
@@ -383,14 +383,26 @@ def InS.vwk1 {Γ : Ctx α ε} {L} (r : InS φ (head::Γ) L) : InS φ (head::inse
 
 @[simp]
 theorem InS.coe_vwk1 {Γ : Ctx α ε} {L} {r : InS φ (head::Γ) L}
-  : (r.vwk1 (inserted := inserted) : Region φ) = r.vwk1 (inserted := inserted) := rfl
+  : (r.vwk1 (inserted := inserted) : Region φ) = (r : Region φ).vwk1 := rfl
 
 def InS.vwk2 {Γ : Ctx α ε} {L} (r : InS φ (left::right::Γ) L) : InS φ (left::right::inserted::Γ) L
   := r.vwk Ctx.InS.wk2
 
 @[simp]
 theorem InS.coe_vwk2 {Γ : Ctx α ε} {L} {r : InS φ (left::right::Γ) L}
-  : (r.vwk2 (inserted := inserted) : Region φ) = r.vwk2 (inserted := inserted) := rfl
+  : (r.vwk2 (inserted := inserted) : Region φ) = (r : Region φ).vwk2 := rfl
+
+@[simp]
+theorem InS.vwk1_br {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.InS φ (⟨head, ⊥⟩::Γ) ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
+  : (InS.br ℓ a hℓ).vwk1 (inserted := inserted) = InS.br (φ := φ) ℓ a.wk1 hℓ
+  := rfl
+
+@[simp]
+theorem InS.vwk1_let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
+  {a : Term.InS φ (⟨head, ⊥⟩::Γ) ⟨A, e⟩} {t : InS φ (⟨A, ⊥⟩::⟨head, ⊥⟩::Γ) L}
+  : (t.let1 a).vwk1 (inserted := inserted) = let1 a.wk1 t.vwk2
+  := by ext; simp [Region.vwk1, Nat.liftnWk_two, Region.vwk2, Term.wk1]
 
 def InS.vswap01 {Γ : Ctx α ε} {L} (r : InS φ (left::right::Γ) L) : InS φ (right::left::Γ) L
   := r.vwk Ctx.InS.swap01

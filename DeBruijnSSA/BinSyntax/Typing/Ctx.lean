@@ -638,7 +638,7 @@ theorem Var.wk_ty (h : A ≤ A') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨A', e
 theorem Var.wk_eff (h : e ≤ e') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨A, e'⟩
   := hΓ.wk_res (by simp [h])
 
-theorem Var.wk (h : Γ.Wkn Δ ρ) (hΓ : Δ.Var n ⟨A, e⟩) : Γ.Var (ρ n) ⟨A, e⟩ where
+theorem Var.wk (h : Γ.Wkn Δ ρ) (hΓ : Δ.Var n V) : Γ.Var (ρ n) V where
   length := (h n hΓ.length).1
   getElem := le_trans (h n hΓ.length).2 hΓ.get
 

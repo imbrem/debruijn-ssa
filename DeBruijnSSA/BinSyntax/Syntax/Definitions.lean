@@ -304,6 +304,10 @@ def Term.wk1 : Term φ → Term φ := wk (Nat.liftWk Nat.succ)
 
 def Term.wk2 : Term φ → Term φ := wk (Nat.liftnWk 2 Nat.succ)
 
+def Term.wk3 : Term φ → Term φ := wk (Nat.liftnWk 3 Nat.succ)
+
+def Term.wk4 : Term φ → Term φ := wk (Nat.liftnWk 4 Nat.succ)
+
 def Term.swap01 : Term φ → Term φ := wk (Nat.swap0 1)
 
 def Term.swap02 : Term φ → Term φ := wk (Nat.swap0 2)
@@ -763,6 +767,10 @@ def Region.vwk0 : Region φ → Region φ := vwk Nat.succ
 def Region.vwk1 : Region φ → Region φ := vwk (Nat.liftWk Nat.succ)
 
 def Region.vwk2 : Region φ → Region φ := vwk (Nat.liftnWk 2 Nat.succ)
+
+def Region.vwk3 : Region φ → Region φ := vwk (Nat.liftnWk 3 Nat.succ)
+
+def Region.vwk4 : Region φ → Region φ := vwk (Nat.liftnWk 4 Nat.succ)
 
 def Region.vswap01 : Region φ → Region φ := vwk (Nat.swap0 1)
 

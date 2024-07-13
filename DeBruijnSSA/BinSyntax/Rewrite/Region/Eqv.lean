@@ -37,6 +37,9 @@ theorem Eqv.sound {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
 theorem Eqv.eq {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   : r.q = r'.q ↔ r ≈ r' := Quotient.eq
 
+theorem Eqv.eq_of_reg_eq {a a' : InS φ Γ L} (h : (a : Region φ) = (a' : Region φ))
+  : a.q = a'.q := congrArg _ (InS.ext h)
+
 def Eqv.br (ℓ : ℕ) (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A) : Eqv φ Γ L
   := Quotient.liftOn a (λa => ⟦InS.br ℓ a hℓ⟧)
     (λ_ _ h => Quotient.sound (InS.br_congr ℓ h hℓ))
@@ -377,6 +380,19 @@ def Eqv.vwk2
 theorem Eqv.vwk2_quot
   {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (left::right::Γ) L}
   : Eqv.vwk2 (inserted := inserted) ⟦r⟧ = ⟦r.vwk2⟧ := rfl
+
+@[simp]
+theorem Eqv.vwk1_let1 {L : LCtx α}
+  {a : Term.Eqv φ (⟨X, ⊥⟩::Γ) ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) L}
+  : vwk1 (inserted := inserted) (let1 a r) = let1 a.wk1 r.vwk2 := by
+  induction a using Quotient.inductionOn; induction r using Quotient.inductionOn;
+  simp [InS.vwk1_let1]
+
+@[simp]
+theorem Eqv.vwk2_br {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.Eqv φ (left::right::Γ) ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
+  : Eqv.vwk2 (Eqv.br ℓ a hℓ) = Eqv.br ℓ (a.wk2 (inserted := inserted)) hℓ := by
+  induction a using Quotient.inductionOn; rfl
 
 def Eqv.vswap01
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (left::right::Γ) L)
