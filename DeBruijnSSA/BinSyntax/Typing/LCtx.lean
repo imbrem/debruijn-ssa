@@ -4,6 +4,7 @@ import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions
 import DeBruijnSSA.BinSyntax.Typing.Ty
+import DeBruijnSSA.BinSyntax.Typing.Ctx
 
 namespace BinSyntax
 
@@ -166,3 +167,10 @@ theorem Trg.tail {n} {A : Ty α} (h : Trg (B::L) (n + 1) A) : Trg L n A
 @[simp]
 theorem Trg.step_iff {n} {A : Ty α} {L : LCtx α} : Trg (B::L) (n + 1) A ↔ Trg L n A
   := ⟨λh => h.tail, λh => h.step⟩
+
+theorem Trg.rec_to_wkn_id {L R : LCtx α} {ℓ} {A : Ty α} (h : Trg (R ++ L) ℓ A) (hℓ : ℓ < R.length)
+  {Γ : Ctx α ε} : Ctx.Wkn ((A, ⊥)::Γ) ((R.get ⟨ℓ, hℓ⟩, ⊥)::Γ) _root_.id
+  := Ctx.Wkn.id.lift_id ⟨by
+    have h' := h.getElem;
+    rw [List.getElem_append_left] at h';
+    exact h', le_refl _⟩

@@ -616,8 +616,7 @@ theorem Eqv.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α)  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   (hℓ : (R ++ L).Trg ℓ A) (hℓ' : ℓ < R.length)
   : (Eqv.br ℓ a hℓ).cfg R G
-  = (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (by simp only [Ctx.Wkn.lift_id_iff,
-    Prod.mk_le_mk, le_refl, and_true, Ctx.Wkn.id]; exact List.get_append ℓ hℓ' ▸ hℓ.get)).cfg R G
+  = (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (hℓ.rec_to_wkn_id hℓ')).cfg R G
   := by
   induction a using Quotient.inductionOn
   simp only [cfg]
