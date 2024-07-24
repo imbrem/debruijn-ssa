@@ -143,45 +143,88 @@ theorem Uniform.vwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
   (toVwk : ∀{Γ Δ L ρ r r'}, Γ.Wkn Δ ρ → P Δ L r r' → Q Γ L (r.vwk ρ) (r'.vwk ρ))
   (hρ : Γ.Wkn Δ ρ)
   (p : (Uniform P Δ L) r r') : Uniform Q Γ L (r.vwk ρ) (r'.vwk ρ)
-  := by induction p with
+  := by induction p generalizing ρ Γ with
   | rel h => exact rel $ toVwk hρ h
   | symm _ I => exact (I hρ).symm
   | trans _ _ Il Ir => exact (Il hρ).trans (Ir hρ)
   | refl h => exact refl (h.vwk hρ)
-  | _ => sorry
+  | case_left he hr hs Ir => exact case_left (he.wk hρ) (Ir hρ.slift) (hs.vwk hρ.slift)
+  | case_right he hr hs Is => exact case_right (he.wk hρ) (hr.vwk hρ.slift) (Is hρ.slift)
+  | let1 ha hr Ir => exact let1 (ha.wk hρ) (Ir hρ.slift)
+  | let2 ha hr Ir => exact let2 (ha.wk hρ) (Ir hρ.sliftn₂)
+  | cfg_entry R hR hβ hG Iβ => exact cfg_entry R hR (Iβ hρ) (λi => (hG i).vwk hρ.slift)
+  | cfg_block R hR hβ hG i hG' IG' =>
+    simp only [Region.vwk, Function.comp_update_apply]
+    exact cfg_block R hR (hβ.vwk hρ) (λi => (hG i).vwk hρ.slift) i (IG' hρ.slift)
+  | uniform he hr hs hS IS => sorry -- TODO: vwk_fixpoint
 
 theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLwk : ∀{Γ L K ρ r r'}, L.Wkn K ρ → P Γ L r r' → Q Γ K (r.lwk ρ) (r'.lwk ρ))
   (hρ : L.Wkn K ρ)
   (p : (Uniform P Γ L) r r') : Uniform Q Γ K (r.lwk ρ) (r'.lwk ρ)
-  := by induction p with
+  := by induction p generalizing ρ K with
   | rel h => exact rel $ toLwk hρ h
   | symm _ I => exact (I hρ).symm
   | trans _ _ Il Ir => exact (Il hρ).trans (Ir hρ)
   | refl h => exact refl (h.lwk hρ)
-  | _ => sorry
+  | case_left de dr ds Ir => exact case_left de (Ir hρ) (ds.lwk hρ)
+  | case_right de dr ds Is => exact case_right de (dr.lwk hρ) (Is hρ)
+  | let1 de dr Ir => exact let1 de (Ir hρ)
+  | let2 de dr Ir => exact let2 de (Ir hρ)
+  | cfg_entry R hR dβ dG Iβ =>
+    exact cfg_entry R hR (Iβ (hR ▸ hρ.liftn_append _)) (λi => (dG i).lwk (hR ▸ hρ.liftn_append _))
+  | cfg_block R hR dβ dG i hG' IG' =>
+    simp only [Region.lwk, Function.comp_update_apply]
+    exact cfg_block R hR
+      (dβ.lwk (hR ▸ hρ.liftn_append _))
+      (λi => (dG i).lwk (hR ▸ hρ.liftn_append _)) i
+      (IG' (hR ▸ hρ.liftn_append _))
+  | uniform he hr hs hS IS => sorry -- TODO: lwk_fixpoint
 
 theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Q Γ L (r.vsubst σ) (r'.vsubst σ))
   (hσ : σ.Wf Γ Δ)
   (p : (Uniform P Δ L) r r') : Uniform Q Γ L (r.vsubst σ) (r'.vsubst σ)
-  := by induction p with
+  := by induction p generalizing σ Γ with
   | rel h => exact rel $ toVsubst hσ h
   | symm _ I => exact (I hσ).symm
   | trans _ _ Il Ir => exact (Il hσ).trans (Ir hσ)
   | refl h => exact refl (h.vsubst hσ)
-  | _ => sorry
+  | case_left de dr ds Ir => exact case_left (de.subst hσ) (Ir hσ.slift) (ds.vsubst hσ.slift)
+  | case_right de dr ds Is => exact case_right (de.subst hσ) (dr.vsubst hσ.slift) (Is hσ.slift)
+  | let1 de dr Ir => exact let1 (de.subst hσ) (Ir hσ.slift)
+  | let2 de dr Ir => exact let2 (de.subst hσ) (Ir hσ.sliftn₂)
+  | cfg_entry R hR dβ dG Iβ =>
+    exact cfg_entry R hR (Iβ hσ) (λi => (dG i).vsubst hσ.slift)
+  | cfg_block R hR dβ dG i hG' IG' =>
+    simp only [Region.vsubst, Function.comp_update_apply]
+    exact cfg_block R hR (dβ.vsubst hσ) (λi => (dG i).vsubst hσ.slift) i (IG' hσ.slift)
+  | uniform de dr ds hS IS => sorry -- TODO: vsubst_fixpoint
 
 theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Q Γ K (r.lsubst σ) (r'.lsubst σ))
   (hσ : σ.Wf Γ L K)
   (p : (Uniform P Γ L) r r') : Uniform Q Γ K (r.lsubst σ) (r'.lsubst σ)
-  := by induction p with
+  := by induction p generalizing σ K with
   | rel h => exact rel $ toLsubst hσ h
   | symm _ I => exact (I hσ).symm
   | trans _ _ Il Ir => exact (Il hσ).trans (Ir hσ)
   | refl h => exact refl (h.lsubst hσ)
-  | _ => sorry
+  | case_left de dr ds Ir => exact case_left de (Ir hσ.vlift) (ds.lsubst hσ.vlift)
+  | case_right de dr ds Is => exact case_right de (dr.lsubst hσ.vlift) (Is hσ.vlift)
+  | let1 de dr Ir => exact let1 de (Ir hσ.vlift)
+  | let2 de dr Ir => exact let2 de (Ir hσ.vliftn₂)
+  | cfg_entry R hR dβ dG Iβ =>
+    exact cfg_entry R hR
+      (Iβ (hσ.liftn_append' hR.symm))
+      (λi => (dG i).lsubst (hσ.liftn_append' hR.symm).vlift)
+  | cfg_block R hR dβ dG i hG' IG' =>
+    simp only [Region.lsubst, Function.comp_update_apply]
+    exact cfg_block R hR
+      (dβ.lsubst (hσ.liftn_append' hR.symm))
+      (λi => (dG i).lsubst (hσ.liftn_append' hR.symm).vlift) i
+      (IG' (hσ.liftn_append' hR.symm).vlift)
+  | uniform de dr ds hS IS => sorry -- TODO: lsubst_fixpoint
 
 theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))

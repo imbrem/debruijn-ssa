@@ -53,8 +53,11 @@ theorem Region.Subst.InS.coe_lift (h : A ≤ A') (σ : Region.Subst.InS φ Γ L 
   : (σ.lift h : Region.Subst φ) = (σ : Region.Subst φ).lift
   := rfl
 
-def Region.Subst.WfD.slift (A) (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A::K)
-  := hσ.lift (le_refl A)
+def Region.Subst.WfD.slift {head} (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (head::L) (head::K)
+  := hσ.lift (le_refl head)
+
+theorem Region.Subst.Wf.slift {head} (hσ : σ.Wf Γ L K) : σ.lift.Wf Γ (head::L) (head::K)
+  := hσ.lift (le_refl head)
 
 -- @[simp]
 -- theorem Region.Subst.InS.coe_slift (σ : Region.Subst.InS φ Γ L K)
@@ -65,10 +68,20 @@ def Region.Subst.WfD.liftn_append (J : LCtx α) (hσ : σ.WfD Γ L K)
   : (σ.liftn J.length).WfD Γ (J ++ L) (J ++ K)
   := match J with
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
-  | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift _
+  | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift
+
+theorem Region.Subst.Wf.liftn_append (J : LCtx α) (hσ : σ.Wf Γ L K)
+  : (σ.liftn J.length).Wf Γ (J ++ L) (J ++ K)
+  := match J with
+  | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
+  | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift
 
 def Region.Subst.WfD.liftn_append' {J : LCtx α} (hn : n = J.length) (hσ : σ.WfD Γ L K)
   : (σ.liftn n).WfD Γ (J ++ L) (J ++ K)
+  := hn ▸ hσ.liftn_append J
+
+theorem Region.Subst.Wf.liftn_append' {J : LCtx α} (hn : n = J.length) (hσ : σ.Wf Γ L K)
+  : (σ.liftn n).Wf Γ (J ++ L) (J ++ K)
   := hn ▸ hσ.liftn_append J
 
 def Region.Subst.WfD.liftn_append_cons (V : Ty α) (J : LCtx α) (hσ : σ.WfD Γ L K)
@@ -108,8 +121,16 @@ def Region.Subst.WfD.vliftn_append (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
   : (σ.vliftn Ξ.length).WfD (Ξ ++ Γ) L K
   := λi => (hσ i).vwk (Ctx.Wkn.id.stepn_append Ξ).slift
 
+theorem Region.Subst.Wf.vlift_append (Ξ : Ctx α ε) (hσ : σ.Wf Γ L K)
+  : (σ.vliftn Ξ.length).Wf (Ξ ++ Γ) L K
+  := λi => (hσ i).vwk (Ctx.Wkn.id.stepn_append Ξ).slift
+
 def Region.Subst.WfD.vliftn_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.WfD Γ L K)
   : (σ.vliftn n).WfD (Ξ ++ Γ) L K
+  := λi => (hσ i).vwk ((Ctx.Wkn.id.stepn_append' hn).slift)
+
+theorem Region.Subst.Wf.vlift_append' {Ξ : Ctx α ε} (hn : n = Ξ.length) (hσ : σ.Wf Γ L K)
+  : (σ.vliftn n).Wf (Ξ ++ Γ) L K
   := λi => (hσ i).vwk ((Ctx.Wkn.id.stepn_append' hn).slift)
 
 def Region.Subst.WfD.vliftn_append_cons (V) (Ξ : Ctx α ε) (hσ : σ.WfD Γ L K)
