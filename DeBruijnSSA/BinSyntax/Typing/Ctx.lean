@@ -166,6 +166,10 @@ def InS.lift {lo hi : Ty α × ε} (h : lo ≤ hi) (hρ : InS Γ Δ)
   : InS (lo::Γ) (hi::Δ)
   := ⟨Nat.liftWk hρ.1, hρ.2.lift h⟩
 
+abbrev InS.slift {head : Ty α × ε} (hρ : InS Γ Δ)
+  : InS (head::Γ) (head::Δ)
+  := hρ.lift (le_refl _)
+
 theorem Wkn.lift_tail {head head' : Ty α × ε} (h : Wkn (head::Γ) (head'::Δ) (Nat.liftWk ρ))
   : Wkn Γ Δ ρ := λi hi => Var.tail (h (i + 1) (Nat.succ_lt_succ hi))
 
@@ -258,6 +262,10 @@ theorem InS.coe_lift {lo hi : Ty α × ε} {Γ Δ} (h : lo ≤ hi) (hρ : InS Γ
   : (InS.lift h hρ : ℕ → ℕ) = Nat.liftWk hρ
   := rfl
 
+theorem InS.coe_slift {head : Ty α × ε} {Γ Δ} (hρ : InS Γ Δ)
+  : (InS.slift (head := head) hρ : ℕ → ℕ) = Nat.liftWk hρ
+  := rfl
+
 @[simp]
 theorem InS.lift_wk0 {head inserted} {Γ : Ctx α ε}
   : wk0.lift (le_refl _) = (wk1 : InS (head::inserted::Γ) (head::Γ))
@@ -328,6 +336,15 @@ theorem InS.lift_lift
   : (ρ.lift hV₂).lift hV₁ = ρ.liftn₂ hV₁ hV₂
   := by cases ρ; simp [lift, liftn₂, Nat.liftnWk_two]
 
+abbrev InS.sliftn₂ {left right : Ty α × ε} (h : InS Γ Δ)
+  : InS (left::right::Γ) (left::right::Δ)
+  := h.liftn₂ (le_refl _) (le_refl _)
+
+theorem InS.slift_slift
+  {left right : Ty α × ε} (h : InS Γ Δ)
+  : h.slift.slift = h.sliftn₂ (left := left) (right := right)
+  := lift_lift (le_refl left) (le_refl right) h
+
 theorem Wkn.sliftn₂ {left right : Ty α × ε} (h : Γ.Wkn Δ ρ)
   : Wkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
   := h.liftn₂ (le_refl _) (le_refl _)
@@ -358,6 +375,10 @@ theorem InS.coe_wk2 {left right inserted} {Γ : Ctx α ε}
 @[simp]
 theorem InS.coe_liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤ V₁') (hV₂ : V₂ ≤ V₂') (ρ : InS Γ Δ)
   : (InS.liftn₂ hV₁ hV₂ ρ : ℕ → ℕ) = Nat.liftnWk 2 ρ
+  := rfl
+
+theorem InS.coe_sliftn₂ {left right : Ty α × ε} (h : InS Γ Δ)
+  : (InS.sliftn₂ (left := left) (right := right) h : ℕ → ℕ) = Nat.liftnWk 2 h
   := rfl
 
 @[simp]

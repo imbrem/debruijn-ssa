@@ -337,10 +337,39 @@ theorem Wf.lwk1 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r (head::L))
 def InS.vwk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨(r : Region φ).vwk ρ, r.prop.vwk ρ.prop⟩
 
+@[simp]
+theorem InS.vwk_br {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {ℓ} {a : Term.InS φ Δ ⟨A, ⊥⟩}
+  {hℓ : LCtx.Trg L ℓ A}
+  : (InS.br ℓ a hℓ).vwk ρ = InS.br ℓ (a.wk ρ) hℓ
+  := rfl
+
+@[simp]
+theorem InS.vwk_let1 {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {A e}
+  {a : Term.InS φ Δ ⟨A, e⟩} {t : InS φ (⟨A, ⊥⟩::Δ) L}
+  : (t.let1 a).vwk ρ = (t.vwk ρ.slift).let1 (a.wk ρ) := rfl
+
+@[simp]
+theorem InS.vwk_let2 {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {A B e}
+  {a : Term.InS φ Δ ⟨(Ty.prod A B), e⟩} {t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ) L}
+  : (t.let2 a).vwk ρ = (t.vwk ρ.sliftn₂).let2 (a.wk ρ) := rfl
+
+@[simp]
+theorem InS.vwk_case {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {A B e}
+  {a : Term.InS φ Δ ⟨Ty.coprod A B, e⟩} {s : InS φ (⟨A, ⊥⟩::Δ) L} {t : InS φ (⟨B, ⊥⟩::Δ) L}
+  : (s.case a t).vwk ρ = (s.vwk ρ.slift).case (a.wk ρ) (t.vwk ρ.slift) := rfl
+
+@[simp]
+theorem InS.vwk_cfg {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {R : LCtx α}
+  {dβ : InS φ Δ (R ++ L)}
+  {dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Δ) (R ++ L)}
+  : (InS.cfg R dβ dG).vwk ρ = InS.cfg R (dβ.vwk ρ) (λi => (dG i).vwk ρ.slift) := rfl
+
 theorem InS.vwk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} {L} (r : InS φ Δ L) (h : ρ ≈ ρ')
   : r.vwk ρ = r.vwk ρ'
-  := sorry
+  := by induction r using InS.induction with
+  | _ => sorry
 
+@[simp]
 theorem InS.coe_vwk {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {r : InS φ Δ L}
   : (r.vwk ρ : Region φ) = (r : Region φ).vwk ρ := rfl
 

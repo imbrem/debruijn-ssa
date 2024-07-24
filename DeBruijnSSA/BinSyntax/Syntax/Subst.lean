@@ -72,6 +72,9 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
             simp_arith
             simp_arith
 
+theorem Subst.liftn_two (σ: Subst φ) : σ.liftn 2 = σ.lift.lift
+  := by rw [Subst.liftn_succ, Subst.liftn_one]
+
 theorem Subst.liftn_eq_iterate_lift_apply (n: ℕ) (σ: Subst φ) : σ.liftn n = (Subst.lift^[n] σ) := by
   induction n with
   | zero => exact σ.liftn_zero
@@ -555,6 +558,10 @@ theorem Region.vsubst_vsubst (σ τ : Term.Subst φ) (r : Region φ)
   induction r generalizing σ τ
   <;> simp [Term.subst_comp, Term.Subst.lift_comp, Term.Subst.liftn_comp, *]
 
+theorem Region.vsubst_comp (σ τ : Term.Subst φ)
+  : vsubst σ ∘ vsubst τ = vsubst (σ.comp τ) := by
+  funext r; simp [vsubst_vsubst]
+
 theorem Region.ext_vsubst (σ τ : Term.Subst φ)
   (h : ∀t : Region φ, t.vsubst σ = t.vsubst τ) : ∀n, σ n = τ n
   := λn => by
@@ -652,6 +659,9 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
             simp_arith
             simp_arith
 
+theorem Subst.liftn_two (σ : Subst φ) : σ.liftn 2 = σ.lift.lift := by
+  rw [Subst.liftn_succ, Subst.liftn_succ]; simp
+
 theorem Subst.liftn_eq_iterate_lift_apply (n: ℕ) (σ: Subst φ) : σ.liftn n = (Subst.lift^[n] σ)
   := by induction n with
   | zero => exact σ.liftn_zero
@@ -723,6 +733,9 @@ theorem Subst.vliftn_succ (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = (σ.vl
   congr
   funext n
   cases n <;> rfl
+
+theorem Subst.vliftn_two (σ : Subst φ) : σ.vliftn 2 = σ.vlift.vlift := by
+  rw [Subst.vliftn_succ, Subst.vliftn_succ]; simp
 
 theorem Subst.vliftn_eq_iterate_vlift_apply (n: ℕ) (σ: Subst φ) : σ.vliftn n = (Subst.vlift^[n] σ)
   := by induction n with
@@ -1136,6 +1149,9 @@ theorem Subst.vliftn_succ (σ : Subst φ) (i : ℕ) : σ.vliftn (i + 1) = (σ.vl
   funext n
   cases n <;> rfl
 
+theorem Subst.vliftn_two (σ : Subst φ) : σ.vliftn 2 = σ.vlift.vlift := by
+  rw [Subst.vliftn_succ, Subst.vliftn_succ]; simp
+
 theorem Subst.vliftn_eq_iterate_vlift_apply (n: ℕ) (σ: Subst φ) : σ.vliftn n = (Subst.vlift^[n] σ)
   := by induction n with
   | zero => exact σ.vliftn_zero
@@ -1203,6 +1219,9 @@ theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ
 
 @[simp]
 theorem Subst.vwk_lift_comp_id (ρ) : vwk (Nat.liftWk ρ) ∘ Subst.id = @Subst.id φ := rfl
+
+@[simp]
+theorem Subst.vsubst_lift_comp_id (σ : Term.Subst φ) : vsubst σ.lift ∘ Subst.id = Subst.id := rfl
 
 @[simp]
 theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := rfl
@@ -1536,6 +1555,43 @@ theorem lsubst_liftn_comp_lwk_toNatWk {ρ : Fin k → Fin n}
       = (lwk (Fin.toNatWk ρ) ∘ lsubst (Subst.liftn k σ)) := by
   funext r
   apply lsubst_liftn_lwk_toNatWk
+
+theorem vsubst_lift_lift_comp_vwk1 {ρ : Term.Subst φ}
+  : (vsubst ρ.lift.lift ∘ vwk1) = (vwk1 ∘ vsubst ρ.lift) := by
+  simp only [vwk1, <-vsubst_fromWk, vsubst_comp]
+  apply congrArg
+  funext k
+  cases k with
+  | zero => rfl
+  | succ =>
+    simp only [Term.Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Term.Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ]
+    rfl
+
+theorem vsubst_lift_lift_comp_vlift {ρ : Term.Subst φ} {σ : Subst φ}
+  : (vsubst ρ.lift.lift ∘ σ.vlift) = Subst.vlift (vsubst ρ.lift ∘ σ) := by
+  rw [Subst.vlift, <-Function.comp.assoc, vsubst_lift_lift_comp_vwk1]; rfl
+
+theorem Subst.vsubst_lift_comp_liftn (σ : Subst φ) (ρ : Term.Subst φ)
+    : vsubst ρ.lift ∘ σ.liftn n = liftn n (vsubst ρ.lift ∘ σ) := by
+  funext k
+  simp only [Function.comp_apply, liftn]
+  split
+  rfl
+  rw [vsubst_lwk]
+
+theorem vsubst_lsubst (σ ρ) (t : Region φ)
+  : (t.lsubst σ).vsubst ρ = (t.vsubst ρ).lsubst (vsubst ρ.lift ∘ σ)
+  := by induction t generalizing σ ρ with
+  | br ℓ e =>
+    simp only [lsubst, vsubst_vsubst, Function.comp_apply]
+    congr
+    funext k
+    cases k <;> simp [Term.Subst.comp]
+  | _ =>
+    simp only [
+      vsubst, lsubst, Term.Subst.liftn_two, Subst.vliftn_two, vsubst_lift_lift_comp_vlift,
+      Subst.vsubst_lift_comp_liftn, *]
 
 end Region
 

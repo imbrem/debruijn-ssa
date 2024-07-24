@@ -73,6 +73,10 @@ def InS.alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, �
   : Subst.InS φ Γ (A::L) (B::L)
   := ⟨(r : Region φ).alpha 0, r.prop.alpha0⟩
 
+@[simp]
+theorem InS.coe_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) (B::L))
+  : (r.alpha0 : Region.Subst φ) = (r : Region φ).alpha 0 := rfl
+
 theorem InS.vlift_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) (B::L))
   : (InS.alpha0 r).vlift = InS.alpha0 (r.vwk1 (inserted := X)) := by
   simp only [Subst.InS.vlift, Set.mem_setOf_eq, alpha0, vlift_alpha]

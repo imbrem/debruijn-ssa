@@ -188,7 +188,14 @@ theorem Eqv.vwk_lift_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   = left.vwk (ρ.lift (le_refl _)) ;; right.vwk (ρ.lift (le_refl _)) := by
   induction left using Quotient.inductionOn;
   induction right using Quotient.inductionOn;
-  sorry
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.coe_vwk, Ctx.InS.coe_lift, InS.coe_lsubst, InS.coe_alpha0,
+    Ctx.InS.coe_wk1, vwk_liftWk_lsubst_alpha, Region.vwk_vwk]
+  congr
+  apply congrArg
+  congr
+  funext k
+  cases k <;> rfl
 
 theorem Eqv.vwk_liftn₂_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   (ρ : Ctx.InS Γ Δ)
@@ -212,15 +219,27 @@ theorem Eqv.vsubst_lift_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   = left.vsubst (σ.lift (le_refl _)) ;; right.vsubst (σ.lift (le_refl _)) := by
   induction left using Quotient.inductionOn;
   induction right using Quotient.inductionOn;
-  sorry
+  induction σ using Quotient.inductionOn;
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.coe_vsubst, Term.Subst.coe_lift, InS.coe_lsubst, InS.coe_alpha0,
+    InS.coe_vwk, Ctx.InS.coe_wk1, vsubst_lift_lsubst_alpha,
+    <-Region.vsubst_fromWk, Region.vsubst_vsubst]
+  congr
+  apply congrArg
+  congr
+  funext k
+  cases k with
+  | zero => rfl
+  | succ k => simp [Term.Subst.comp, Term.subst_fromWk, Term.wk_wk, Term.Subst.liftn]
 
 theorem Eqv.vsubst_liftn₂_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   (σ : Term.Subst.Eqv φ Γ Δ)
   (left : Eqv φ (⟨A, ⊥⟩::X::Δ) (B::L))
   (right : Eqv φ (⟨B, ⊥⟩::X::Δ) (C::L))
   : (left ;; right).vsubst (σ.liftn₂ (le_refl _) (le_refl _))
-  = left.vsubst (σ.liftn₂ (le_refl _) (le_refl _)) ;; right.vsubst (σ.liftn₂ (le_refl _) (le_refl _))
-  := by stop simp only [<-Term.Subst.InS.lift_lift, vsubst_lift_seq]
+  = left.vsubst (σ.liftn₂ (le_refl _) (le_refl _))
+  ;; right.vsubst (σ.liftn₂ (le_refl _) (le_refl _)) := by
+  simp only [<-Term.Subst.Eqv.lift_lift, vsubst_lift_seq]
 
 theorem Eqv.let1_ret {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {b : Term.Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, ⊥⟩}
   : let1 a (ret (targets := L) b) = ret (Term.Eqv.let1 a b) := let1_br

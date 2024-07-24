@@ -48,8 +48,18 @@ def Region.Subst.InS.lift (h : A ≤ A') (σ : Region.Subst.InS φ Γ L K)
   : Region.Subst.InS φ Γ (A::L) (A'::K)
   := ⟨Subst.lift σ, σ.prop.lift h⟩
 
+@[simp]
+theorem Region.Subst.InS.coe_lift (h : A ≤ A') (σ : Region.Subst.InS φ Γ L K)
+  : (σ.lift h : Region.Subst φ) = (σ : Region.Subst φ).lift
+  := rfl
+
 def Region.Subst.WfD.slift (A) (hσ : σ.WfD Γ L K) : σ.lift.WfD Γ (A::L) (A::K)
   := hσ.lift (le_refl A)
+
+-- @[simp]
+-- theorem Region.Subst.InS.coe_slift (σ : Region.Subst.InS φ Γ L K)
+--   : (σ.slift : Region.Subst φ) = (σ : Region.Subst φ).slift A
+--   := rfl
 
 def Region.Subst.WfD.liftn_append (J : LCtx α) (hσ : σ.WfD Γ L K)
   : (σ.liftn J.length).WfD Γ (J ++ L) (J ++ K)
@@ -137,6 +147,11 @@ theorem Region.Wf.lsubst {Γ : Ctx α ε} {L} {σ} {r : Region φ} (hσ : σ.Wf 
 
 def Region.InS.lsubst {Γ : Ctx α ε} (σ : Region.Subst.InS φ Γ L K) (r : InS φ Γ L) : InS φ Γ K
   := ⟨(r : Region φ).lsubst σ, r.prop.lsubst σ.prop⟩
+
+@[simp]
+theorem Region.InS.coe_lsubst {Γ : Ctx α ε} (σ : Region.Subst.InS φ Γ L K) (r : InS φ Γ L)
+  : (r.lsubst σ : Region φ) = (r : Region φ).lsubst σ
+  := rfl
 
 def Region.Subst.WfD.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
   (hσ : σ.WfD Γ K J) (hτ : τ.WfD Γ L K) : (σ.comp τ).WfD Γ L J
