@@ -891,6 +891,41 @@ theorem Eqv.case_br
   rw [<-Term.Eqv.let1_eta (a := Term.Eqv.case a b c), <-let1_br, let1_case]
   simp [let1_br, Term.Eqv.let1_eta]
 
+@[simp]
+theorem Eqv.case_wk_eff
+  {a : Term.Eqv φ Γ ⟨Ty.coprod A B, lo⟩}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) L}
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  {h : lo ≤ hi}
+  : case (a.wk_eff h) l r = case a l r := by
+  induction a using Quotient.inductionOn
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  rfl
+
+@[simp]
+theorem Eqv.let1_wk_eff
+  {a : Term.Eqv φ Γ ⟨A, lo⟩}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) L}
+  {h : lo ≤ hi}
+  : let1 (a.wk_eff h) r = let1 a r := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  rfl
+
+@[simp]
+theorem Eqv.let2_wk_eff
+  {a : Term.Eqv φ Γ ⟨A.prod B, lo⟩}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  {h : lo ≤ hi}
+  : let2 (a.wk_eff h) r = let2 a r := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  rfl
+
 end Region
 
 end BinSyntax

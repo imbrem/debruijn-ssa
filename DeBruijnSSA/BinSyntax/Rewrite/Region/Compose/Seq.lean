@@ -14,7 +14,7 @@ abbrev Eqv.ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   := Eqv.br 0 t (by simp)
 
 theorem Eqv.vwk_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
-  (ρ : Ctx.InS (⟨tyIn, ⊥⟩::rest') _)
+  (ρ : Ctx.InS (⟨tyIn', ⊥⟩::rest') _)
   (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
   : (Eqv.ret (targets := targets) t).vwk ρ = Eqv.ret (t.wk ρ) := by
   induction t using Quotient.inductionOn
@@ -67,7 +67,8 @@ def InS.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, �
 
 theorem InS.lsubst0_congr {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ (⟨A, ⊥⟩::Γ) L}
   (h : r ≈ r') : InS.lsubst0 r ≈ InS.lsubst0 r'
-  := sorry
+  | ⟨0, _⟩ => by simp [Subst.InS.get, InS.lsubst0, Region.lsubst0, h]
+  | ⟨n + 1, h⟩ =>  by simp [Subst.InS.get, InS.lsubst0, Region.lsubst0, Setoid.refl]
 
 def Eqv.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, ⊥⟩::Γ) L)
   : Subst.Eqv φ Γ (A::L) L
@@ -75,7 +76,8 @@ def Eqv.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, �
 
 theorem InS.alpha0_congr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ (⟨A, ⊥⟩::Γ) (B::L)}
   (h : r ≈ r') : InS.alpha0 r ≈ InS.alpha0 r'
-  := sorry
+  | ⟨0, _⟩ => by simp [Subst.InS.get, Region.alpha, h]
+  | ⟨n + 1, h⟩ =>  by simp [Subst.InS.get, Region.alpha, Setoid.refl]
 
 def Eqv.alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   : Subst.Eqv φ Γ (A::L) (B::L)
@@ -304,12 +306,81 @@ def Eqv.Pure {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L
 -- TODO: closed under vwk, lwk (lift), vsubst, lsubst (pure), ltimes, rtimes...
 
 theorem Eqv.Pure.nil {Γ : Ctx α ε} {L : LCtx α}
-  : Eqv.Pure (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L)) := sorry
+  : Eqv.Pure (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L))
+  := ⟨Term.Eqv.var 0 (by simp), rfl⟩
+
+theorem Eqv.Pure.ret {Γ : Ctx α ε} {L : LCtx α} {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩}
+  : Eqv.Pure (Eqv.ret (targets := L) a) := ⟨a, rfl⟩
 
 theorem Eqv.Pure.seq {Γ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {s : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
-  (hr : r.Pure) (hs : s.Pure) : (r ;; s).Pure := sorry
+  : r.Pure → s.Pure → (r ;; s).Pure
+  | ⟨pr, hpr⟩, ⟨ps, hps⟩ => by
+    rw [hpr, hps, ret_seq, vwk1_ret, vsubst_ret]
+    exact ⟨_, rfl⟩
 
--- TODO: ret, case, let1, let2
+theorem Eqv.Pure.case' {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.coprod Y, ⊥⟩}
+  {l : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)}
+  {r : Eqv φ (⟨Y, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)}
+  : l.Pure → r.Pure → (Eqv.case a l r).Pure
+  | ⟨pl, hpl⟩, ⟨pr, hpr⟩ => by
+    rw [hpl, hpr, Eqv.case_ret]
+    exact ⟨_, rfl⟩
 
--- TODO: closed under vwk, lwk (lift), vsubst, lsubst (pure), append...
+theorem Eqv.Pure.case {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.coprod Y, e⟩}
+  {l : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)}
+  {r : Eqv φ (⟨Y, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)}
+  : a.Pure → l.Pure → r.Pure → (Eqv.case a l r).Pure
+  | ⟨pa, hpa⟩, hl, hr => by
+    rw [hpa]
+    simp [case', hl, hr]
+
+theorem Eqv.Pure.let1' {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X, ⊥⟩}
+  {r : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)}
+  : r.Pure → (Eqv.let1 a r).Pure
+  | ⟨pr, hpr⟩ => by
+    rw [hpr, Eqv.let1_ret]
+    exact ⟨_, rfl⟩
+
+theorem Eqv.Pure.let1 {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X, e⟩}
+  {r : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)}
+  : a.Pure → r.Pure → (Eqv.let1 a r).Pure
+  | ⟨pa, hpa⟩, hr => by
+    rw [hpa]
+    simp [let1', hr]
+
+theorem Eqv.Pure.let2' {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.prod Y, ⊥⟩}
+  {r : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (C::L)}
+  : r.Pure → (Eqv.let2 a r).Pure
+  | ⟨pr, hpr⟩ => by
+    rw [hpr, Eqv.let2_ret]
+    exact ⟨_, rfl⟩
+
+theorem Eqv.Pure.let2 {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.prod Y, e⟩}
+  {r : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (C::L)}
+  : a.Pure → r.Pure → (Eqv.let2 a r).Pure
+  | ⟨pa, hpa⟩, hr => by
+    rw [hpa]
+    simp [let2', hr]
+
+theorem Eqv.Pure.vwk {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨A', ⊥⟩::Δ) (B::L)} {ρ : Ctx.InS (⟨A, ⊥⟩::Γ) (⟨A', ⊥⟩::Δ)}
+  : r.Pure → (r.vwk ρ).Pure
+  | ⟨pr, hpr⟩ => by
+    rw [hpr, Eqv.vwk_ret]
+    exact ⟨_, rfl⟩
+
+theorem Eqv.Pure.vwk1 {L : LCtx α}
+  {r : Eqv φ (⟨A', ⊥⟩::Δ) (B::L)}
+  : r.Pure → (r.vwk1 (inserted := inserted)).Pure
+  | ⟨pr, hpr⟩ => by
+    rw [hpr, Eqv.vwk1_ret]
+    exact ⟨_, rfl⟩
+
+-- TODO: lwk lift, vsubst, lsubst lift
