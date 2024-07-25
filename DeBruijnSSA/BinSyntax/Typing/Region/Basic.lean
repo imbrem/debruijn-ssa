@@ -237,23 +237,13 @@ theorem InS.induction
     simp only [Fin.cast_eq_self] at *
     exact cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩) Iβ IG
 
-def output_first (R : LCtx α) (Y : Ty α) (L : LCtx α) : Ty α
-  := (R ++ (Y::L))[0]
-
-def output_rest (R : LCtx α) (Y : Ty α) (L : LCtx α) : LCtx α
-  := (R ++ (Y::L)).drop 1
-
-theorem output_reshuffle_helper {R : LCtx α} {Y : Ty α} {L : LCtx α}
-  : (R ++ (Y::L)) = (output_first R Y L)::(output_rest R Y L)
-  := by cases R <;> rfl
-
 def InS.shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
-  (d : InS φ Γ (R ++ (Y::L))) : InS φ Γ ((output_first R Y L)::(output_rest R Y L))
-  := d.cast rfl output_reshuffle_helper
+  (d : InS φ Γ (R ++ (Y::L))) : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))
+  := d.cast rfl LCtx.shf_eq
 
 def InS.ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
-  (d : InS φ Γ ((output_first R Y L)::(output_rest R Y L))) : InS φ Γ (R ++ (Y::L))
-  := d.cast rfl output_reshuffle_helper.symm
+  (d : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))) : InS φ Γ (R ++ (Y::L))
+  := d.cast rfl LCtx.shf_eq.symm
 
 @[simp]
 theorem InS.shf_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
@@ -262,7 +252,7 @@ theorem InS.shf_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
 
 @[simp]
 theorem InS.ushf_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
-  (d : InS φ Γ ((output_first R Y L)::(output_rest R Y L))) : d.ushf.shf = d
+  (d : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))) : d.ushf.shf = d
   := by cases d; rfl
 
 @[simp]
@@ -272,7 +262,8 @@ theorem InS.coe_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
 
 @[simp]
 theorem InS.coe_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
-  (d : InS φ Γ ((output_first R Y L)::(output_rest R Y L))) : (d.ushf : Region φ) = (d : Region φ)
+  (d : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L)))
+  : (d.ushf : Region φ) = (d : Region φ)
   := rfl
 
 @[simp]
@@ -282,7 +273,7 @@ theorem InS.shf_inj {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
 
 @[simp]
 theorem InS.ushf_inj {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
-  {r r' : InS φ Γ ((output_first R Y L)::(output_rest R Y L))} : r.ushf = r'.ushf ↔ r = r'
+  {r r' : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))} : r.ushf = r'.ushf ↔ r = r'
   := cast_inj
 
 theorem InS.arrow_induction
@@ -336,13 +327,13 @@ theorem InS.arrow_induction
       cases hR
       simp only [Fin.cast_eq_self] at *
       apply cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩)
-      exact Iβ (output_reshuffle_helper ▸ dβ) rfl rfl
-        output_reshuffle_helper.symm
-        output_reshuffle_helper.symm
+      exact Iβ (LCtx.shf_eq ▸ dβ) rfl rfl
+        LCtx.shf_eq.symm
+        LCtx.shf_eq.symm
       intro i
-      apply IG i (output_reshuffle_helper ▸ dG i) rfl rfl
-        output_reshuffle_helper.symm
-        output_reshuffle_helper.symm
+      apply IG i (LCtx.shf_eq ▸ dG i) rfl rfl
+        LCtx.shf_eq.symm
+        LCtx.shf_eq.symm
 
 def InD (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
   := Σr : Region φ, r.WfD Γ L

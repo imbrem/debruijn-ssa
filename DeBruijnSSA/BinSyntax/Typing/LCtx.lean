@@ -99,6 +99,9 @@ theorem Wkn.liftn_append {L K : LCtx α} {ρ : ℕ → ℕ} (R : LCtx α) (h : L
   rw [<-Wkn_iff]
   exact h
 
+def InS.liftn_append {L K : LCtx α} (R : LCtx α) : InS L K → InS (R ++ L) (R ++ K)
+  := λρ => ⟨Nat.liftnWk R.length ρ, ρ.2.liftn_append R⟩
+
 theorem Wkn.comp {L K J : LCtx α} {ρ σ}
   : K.Wkn J ρ → L.Wkn K σ → L.Wkn J (ρ ∘ σ)
   := by
@@ -185,3 +188,42 @@ theorem Trg.rec_to_wkn_id {L R : LCtx α} {ℓ} {A : Ty α} (h : Trg (R ++ L) �
     have h' := h.getElem;
     rw [List.getElem_append_left] at h';
     exact h', le_refl _⟩
+
+def shf_first (R : LCtx α) (Y : Ty α) (L : LCtx α) : Ty α
+  := (R ++ (Y::L))[0]
+
+def shf_rest (R : LCtx α) (Y : Ty α) (L : LCtx α) : LCtx α
+  := (R ++ (Y::L)).drop 1
+
+theorem shf_eq {R : LCtx α} {Y : Ty α} {L : LCtx α}
+  : (R ++ (Y::L)) = (shf_first R Y L)::(shf_rest R Y L)
+  := by cases R <;> rfl
+
+@[simp]
+theorem length_shf_rest {R : LCtx α} {Y : Ty α} {L : LCtx α}
+  : (shf_rest R Y L).length = R.length + L.length
+  := by simp [shf_rest, drop, List.length_drop]
+
+@[simp]
+theorem getElem_shf_rest_add {R : LCtx α} {Y : Ty α} {L : LCtx α} {n}
+  {hn : n + R.length < (shf_rest R Y L).length}
+  : (shf_rest R Y L)[n + R.length] = L[n]'(by simp at hn; omega)
+  := by cases R with
+  | nil => rfl
+  | cons X R =>
+    simp only [shf_rest, drop, List.cons_append, List.drop_succ_cons, List.drop_zero,
+      List.length_cons, Nat.add_comm R.length 1, <-Nat.add_assoc]
+    rw [List.getElem_append_right]
+    simp only [Nat.add_sub_cancel]
+    simp
+    omega
+    simp at hn
+    simp only [add_tsub_cancel_right, List.length_cons, add_lt_add_iff_right]
+    omega
+
+theorem Wkn.shf {R : LCtx α} {Y : Ty α} {L : LCtx α}
+  : LCtx.Wkn L (shf_rest R Y L) (· + R.length)
+  := λi hi => ⟨by simp only [length_shf_rest]; omega, by simp⟩
+
+def InS.shf {R : LCtx α} {Y : Ty α} {L : LCtx α} : L.InS (shf_rest R Y L)
+  := ⟨(· + R.length), Wkn.shf⟩

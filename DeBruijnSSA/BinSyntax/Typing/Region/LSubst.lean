@@ -81,6 +81,10 @@ theorem Region.Subst.Wf.liftn_append (J : LCtx α) (hσ : σ.Wf Γ L K)
   | [] => by rw [List.nil_append, List.nil_append, List.length_nil, liftn_zero]; exact hσ
   | A::J => by rw [List.length_cons, liftn_succ]; exact (hσ.liftn_append J).slift
 
+def Region.Subst.InS.liftn_append (J : LCtx α) (σ : Region.Subst.InS φ Γ L K)
+  : Region.Subst.InS φ Γ (J ++ L) (J ++ K)
+  := ⟨σ.val.liftn J.length, σ.prop.liftn_append J⟩
+
 def Region.Subst.WfD.liftn_append' {J : LCtx α} (hn : n = J.length) (hσ : σ.WfD Γ L K)
   : (σ.liftn n).WfD Γ (J ++ L) (J ++ K)
   := hn ▸ hσ.liftn_append J

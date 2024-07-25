@@ -337,8 +337,11 @@ theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
           ) (by rw [List.append_assoc]))
         (λi => ((G' i).lwk (LCtx.InS.add_left_append (S ++ L) R)).cast (by
           simp only [List.get_eq_getElem, Fin.cast, Fin.coe_natAdd]
+          rw [List.getElem_append_right]
+          simp
+          omega
+          omega
           -- TODO: put in discretion
-          sorry
         )
           (by rw [List.append_assoc])))
   := Uniform.rel $

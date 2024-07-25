@@ -146,6 +146,49 @@ theorem Eqv.cfg_eq_quot {R : LCtx α}
   : cfg R β G = ⟦InS.cfg R β' G'⟧ := by
   rw [hβ, funext hG, cfg_quot]
 
+theorem Eqv.cast_br {Γ : Ctx α ε} {L : LCtx α} {ℓ : ℕ} {A : Ty α}
+  (hΓ : Γ = Γ') (hL : L = L')
+  (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A)
+  : (br ℓ a hℓ).cast hΓ hL = br ℓ (a.cast hΓ rfl) (hL ▸ hℓ) := by
+  induction a using Quotient.inductionOn
+  rfl
+
+theorem Eqv.cast_let1 {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} {e : ε}
+  (hΓ : Γ = Γ') (hL : L = L')
+  (a : Term.Eqv φ Γ ⟨A, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Γ) L)
+  : (let1 a r).cast hΓ hL = let1 (a.cast hΓ rfl) (r.cast (Γ' := (A, ⊥)::Γ') (by rw [hΓ]) hL) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.cast_let2 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} {e : ε}
+  (hΓ : Γ = Γ') (hL : L = L')
+  (a : Term.Eqv φ Γ ⟨Ty.prod A B, e⟩) (r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L)
+  : (let2 a r).cast hΓ hL = let2 (a.cast hΓ rfl) (r.cast (Γ' := (B, ⊥)::(A, ⊥)::Γ') (by rw [hΓ]) hL)
+  := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.cast_case {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} {e : ε}
+  (hΓ : Γ = Γ') (hL : L = L')
+  (a : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Γ) L) (s : Eqv φ (⟨B, ⊥⟩::Γ) L)
+  : (case a r s).cast hΓ hL = case (a.cast hΓ rfl) (r.cast (Γ' := (A, ⊥)::Γ') (by rw [hΓ]) hL)
+    (s.cast (Γ' := (B, ⊥)::Γ') (by rw [hΓ]) hL) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  rfl
+
+theorem Eqv.cast_cfg {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α}
+  (hΓ : Γ = Γ') (hL : L = L')
+  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : (cfg R β G).cast hΓ hL =
+    cfg R (β.cast hΓ (by rw [hL]))
+    (λi => (G i).cast (Γ' := (R.get i, ⊥)::Γ') (by rw [hΓ]) (by rw [hL])) := by
+  induction β using Quotient.inductionOn
+  sorry
+
 def Eqv.induction
   {motive : (Γ : Ctx α ε) → (L : LCtx α) → Eqv φ Γ L → Prop}
   (br : ∀{Γ L A} (ℓ) (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (Eqv.br ℓ a hℓ))
@@ -173,6 +216,90 @@ def Eqv.induction
       rw [cfg_quot] at res
       exact res
 
+def Eqv.shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : Eqv φ Γ (R ++ (Y::L))) : Eqv φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))
+  := Quotient.liftOn d (λd => ⟦d.shf⟧)
+    (λ_ _ h => Quotient.sound sorry)
+
+@[simp]
+theorem Eqv.shf_quot {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ (R ++ (Y::L))) : shf ⟦d⟧ = ⟦d.shf⟧ := rfl
+
+theorem Eqv.shf_eq_cast {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : Eqv φ Γ (R ++ (Y::L))) : d.shf = d.cast rfl LCtx.shf_eq := rfl
+
+@[simp]
+theorem Eqv.shf_br {Γ : Ctx α ε} {L : LCtx α} {ℓ : ℕ} {A : Ty α}
+  (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : LCtx.Trg (R ++ (Y :: L)) ℓ A)
+  : (br ℓ a hℓ).shf = br ℓ a (LCtx.shf_eq ▸ hℓ) := by
+  induction a using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.shf_let1 {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} {e : ε}
+  (a : Term.Eqv φ Γ ⟨A, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Γ) (R ++ (Y::L)))
+  : (let1 a r).shf = let1 a (r.shf) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.shf_let2 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} {e : ε}
+  (a : Term.Eqv φ Γ ⟨Ty.prod A B, e⟩) (r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (R ++ (Y::L)))
+  : (let2 a r).shf = let2 a (r.shf) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.shf_case {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} {e : ε}
+  (a : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩)
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (R ++ (Y::L))) (s : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ (Y::L)))
+  : (case a r s).shf = case a (r.shf) (s.shf) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  rfl
+
+-- theorem Eqv.shf_cfg {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α}
+--   (dβ : Eqv φ Γ (R' ++ (R ++ (Y::L)))) (dG : ∀i, Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R' ++ (R ++ (Y::L))))
+--   : (cfg R' dβ dG).shf = cfg R' (dβ.shf) (λi => (dG i).shf) := by
+--   induction dβ using Quotient.inductionOn
+--   simp [Eqv.cfg, Eqv.cfg_inner, Quotient.finChoice_eq]
+
+def Eqv.ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : Eqv φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))) : Eqv φ Γ (R ++ (Y::L))
+  := Quotient.liftOn d (λd => ⟦d.ushf⟧)
+    (λ_ _ h => Quotient.sound sorry)
+
+@[simp]
+theorem Eqv.ushf_quot {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))) : ushf ⟦d⟧ = ⟦d.ushf⟧ := rfl
+
+theorem Eqv.ushf_eq_cast {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : Eqv φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L)))
+  : d.ushf = d.cast rfl LCtx.shf_eq.symm := rfl
+
+@[simp]
+theorem Eqv.shf_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : Eqv φ Γ (R ++ (Y::L))) : d.shf.ushf = d
+  := by induction d using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.ushf_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : Eqv φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))) : d.ushf.shf = d
+  := by induction d using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.shf_inj {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d₁ d₂ : Eqv φ Γ (R ++ (Y::L))} :
+   d₁.shf = d₂.shf ↔ d₁ = d₂ := ⟨λh => by convert congrArg ushf h <;> simp, λh => congrArg _ h⟩
+
+@[simp]
+theorem Eqv.ushf_inj {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d₁ d₂ : Eqv φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))} :
+   d₁.ushf = d₂.ushf ↔ d₁ = d₂ := by rw [<-shf_inj]; simp
+
 theorem Eqv.arrow_induction
   {motive : (X : Ty α) → (Γ : Ctx α ε) → (Y : Ty α) → (L : LCtx α)
     → Eqv φ ((X, ⊥)::Γ) (Y::L) → Prop}
@@ -189,8 +316,8 @@ theorem Eqv.arrow_induction
   (cfg : ∀{X Γ Y L} (R)
     (dβ : Eqv φ ((X, ⊥)::Γ) (R ++ (Y :: L)))
     (dG : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::⟨X, ⊥⟩::Γ) (R ++ (Y :: L))),
-    motive X Γ _ _ (dβ.cast rfl output_reshuffle_helper)
-    → (∀i, motive _ _ _ _ ((dG i).cast rfl output_reshuffle_helper))
+    motive X Γ _ _ dβ.shf
+    → (∀i, motive _ _ _ _ (dG i).shf)
     → motive _ Γ _ L (Eqv.cfg R dβ dG))
   {X Γ Y L} (r : Eqv φ ((X, ⊥)::Γ) (Y::L)) : motive _ _ _ _ r := by
   induction r using Quotient.inductionOn with
@@ -301,7 +428,41 @@ theorem InS.lwk_q {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : InS φ Γ
 theorem Eqv.lwk_quot {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : InS φ Γ L}
    : Eqv.lwk ρ ⟦r⟧ = ⟦r.lwk ρ⟧ := rfl
 
--- TODO: lwk lemmas
+@[simp]
+theorem Eqv.lwk_br {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
+  {ℓ} {a : Term.Eqv φ Γ ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
+  : Eqv.lwk ρ (Eqv.br ℓ a hℓ) = Eqv.br (ρ.val ℓ) a (hℓ.wk ρ.prop) := by
+  induction a using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.lwk_let1 {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
+  {a : Term.Eqv φ Γ ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) L}
+  : (let1 a r).lwk ρ = let1 a (r.lwk ρ) := by
+  induction a using Quotient.inductionOn; induction r using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.lwk_let2 {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
+  {a : Term.Eqv φ Γ ⟨Ty.prod A B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  : (let2 a r).lwk ρ = let2 a (r.lwk ρ) := by
+  induction a using Quotient.inductionOn; induction r using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.lwk_case {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
+  {e : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) L} {s : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  : (case e r s).lwk ρ = case e (r.lwk ρ) (s.lwk ρ) := by
+  induction e using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.lwk_cfg {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : (cfg R β G).lwk ρ = cfg R (β.lwk (ρ.liftn_append _)) (λi => (G i).lwk (ρ.liftn_append _)) := by
+  induction β using Quotient.inductionOn
+  sorry
 
 theorem InS.vsubst_q {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.InS φ Γ Δ} {r : InS φ Δ L}
    : (r.q).vsubst σ.q = (r.vsubst σ).q := rfl
@@ -868,18 +1029,29 @@ theorem Eqv.cfg_case {Γ : Ctx α ε} {L : LCtx α}
     apply Eq.symm
     apply Quotient.forall_of_finChoice_eq hG
 
--- theorem Eqv.cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
---   (R S : LCtx α) (β : Eqv φ Γ (R ++ (S ++ L)))
---   (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ (S ++ L)))
---   (G' : (i : Fin S.length) → Eqv φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
---     : (β.cfg R G).cfg S G'
---     = (β.cast rfl (by rw [List.append_assoc])).cfg'
---       (R.length + S.length) (R ++ S) (by rw [List.length_append])
---       (Fin.addCases (λi => (G i).cast (by sorry) (by rw [List.append_assoc]))
---                     (λi => ((G' i).lwk (· + R.length) sorry).cast sorry
---                       (by rw [List.append_assoc]))
---       )
---   := sorry
+theorem Eqv.cfg_cfg_eq_cfg' {Γ : Ctx α ε} {L : LCtx α}
+  (R S : LCtx α) (β : Eqv φ Γ (R ++ (S ++ L)))
+  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ (S ++ L)))
+  (G' : (i : Fin S.length) → Eqv φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
+    : (β.cfg R G).cfg S G'
+    = (β.cast rfl (by rw [List.append_assoc])).cfg'
+      (R.length + S.length) (R ++ S) (by rw [List.length_append])
+      (Fin.addCases
+        (λi => (G i).cast (by
+          simp only [List.get_eq_getElem, Fin.cast, Fin.coe_castAdd]
+          rw [List.getElem_append]
+          -- TODO: put in discretion
+          ) (by rw [List.append_assoc]))
+        (λi => ((G' i).lwk (LCtx.InS.add_left_append (S ++ L) R)).cast (by
+          simp only [List.get_eq_getElem, Fin.cast, Fin.coe_natAdd]
+          rw [List.getElem_append_right]
+          simp
+          omega
+          omega
+          -- TODO: put in discretion
+        )
+          (by rw [List.append_assoc])))
+  := sorry
 
 theorem Eqv.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
   (β : Eqv φ Γ L)

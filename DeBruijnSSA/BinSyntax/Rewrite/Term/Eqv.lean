@@ -24,6 +24,12 @@ theorem Eqv.sound {a a' : InS φ Γ V} (h : a ≈ a') : InS.q a = InS.q a' := Qu
 
 theorem Eqv.eq {a a' : InS φ Γ V} : a.q = a'.q ↔ a ≈ a' := Quotient.eq
 
+def Eqv.cast
+  (a : Eqv φ Γ V) (hΓ : Γ = Γ') (hV : V = V') : Eqv φ Γ' V'
+  := Quotient.liftOn a
+    (λa => ⟦a.cast hΓ hV⟧)
+    (λa a' h => Quotient.sound (by cases hΓ; cases hV; exact h))
+
 theorem Eqv.eq_of_term_eq {a a' : InS φ Γ V} (h : (a : Term φ) = (a' : Term φ))
   : a.q = a'.q := congrArg _ (InS.ext h)
 

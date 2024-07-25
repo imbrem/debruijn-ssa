@@ -147,6 +147,9 @@ theorem Term.InS.coe_unit {Γ : Ctx α ε} {e}
   : (Term.InS.unit (φ := φ) (Γ := Γ) e : Term φ) = Term.unit
   := rfl
 
+def Term.InS.cast {Γ : Ctx α ε} {V} (a : InS φ Γ V) (hΓ : Γ = Γ') (hV : V = V')
+  : InS φ Γ' V' := ⟨a, hΓ ▸ hV ▸ a.prop⟩
+
 theorem Term.InS.induction
   {motive : (Γ : Ctx α ε) → (V : Ty α × ε) → InS φ Γ V → Prop}
   (var : ∀{Γ V} (n) (hv : Γ.Var n V), motive Γ V (Term.InS.var n hv))
@@ -370,8 +373,6 @@ theorem Term.Wf.to_left {Γ : Ctx α ε} {a b : Term φ}
 theorem Term.Wf.to_right {Γ : Ctx α ε} {a b : Term φ}
   (h : Wf Γ (Term.pair a b) ⟨Ty.prod A B, e⟩)
   : Wf Γ b ⟨B, e⟩ := by cases h with | pair _ hb => exact hb
-
-
 
 @[simp]
 theorem Term.Wf.var_iff {Γ : Ctx α ε} {n V} : Wf (φ := φ) Γ (Term.var n) V ↔ Γ.Var n V

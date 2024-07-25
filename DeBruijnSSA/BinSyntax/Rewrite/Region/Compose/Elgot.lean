@@ -111,25 +111,19 @@ theorem Eqv.seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ C::L))
   : f ;; cfg R g (λi => (G i).vwk1)
   = cfg R
-    ((f.lwk sorry ;; g.cast rfl output_reshuffle_helper).cast rfl output_reshuffle_helper.symm)
+    ((f.lwk LCtx.InS.shf.slift ;; g.shf).ushf)
     (λi => (G i).vwk1)
-  := sorry
-
-theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))
-  (h : Eqv φ (⟨C, ⊥⟩::Γ) (C::D::L))
-  : f ;; cfg [C] g (Fin.elim1 h.vwk1) = cfg [C] (f.lwk1 ;; g) (Fin.elim1 h.vwk1)
   := by
   induction f using Eqv.arrow_induction with
-  | br ℓ a hℓ =>
+  | br ℓ a hl =>
     cases ℓ with
     | zero =>
       simp only [List.append_eq, List.nil_append, br_zero_eq_ret, wk_res_self, lwk1_ret, ret_seq,
         List.length_singleton, List.get_eq_getElem, List.singleton_append, vwk1_cfg, vsubst_cfg]
       congr
+      sorry
       funext i
-      cases i using Fin.elim1
-      induction h using Quotient.inductionOn
+      induction (G i) using Quotient.inductionOn
       induction a using Quotient.inductionOn
       apply Eqv.eq_of_reg_eq
       simp only [Set.mem_setOf_eq, InS.coe_vwk, Ctx.InS.coe_wk1, Fin.isValue, Fin.val_zero,
@@ -139,21 +133,44 @@ theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
       congr
       funext i
       cases i <;> rfl
-    | succ ℓ => simp [cfg_br_ge]
+    | succ ℓ => sorry
   | let1 a r Ir =>
-    apply Eq.symm
-    rw [lwk1_let1, let1_seq, cfg_let1, let1_seq]
+    rw [let1_seq, vwk1_cfg]
+    simp only [vwk1_vwk2]
+    rw [Ir, <-cfg_let1]
     congr
-    apply Eq.trans (Ir g.vwk1 h.vwk1).symm
-    simp only [vwk1_cfg]
-    congr
-    funext i
-    cases i using Fin.elim1
-    simp [vwk1_vwk2]
-  | let2 a r Ir =>
     sorry
-  | case a l r Il Ir => sorry
-  | cfg R β G Iβ IG => sorry
+  | let2 a r Ir =>
+    simp only [let2_seq, vwk1_cfg, vwk1_vwk2]
+    rw [Ir, <-cfg_let2]
+    congr
+    sorry
+  | case a l r Il Ir =>
+    simp only [case_seq, vwk1_cfg, vwk1_vwk2, Il, Ir]
+    rw [<-cfg_case]
+    congr
+    sorry
+  | cfg β dβ dG Iβ IG =>
+    conv =>
+      rhs
+      simp only [lwk_cfg, seq, lsubst_cfg, ushf_eq_cast, cast_cfg]
+      rw [cfg_cfg_eq_cfg']
+    sorry
+
+theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))
+  (h : Eqv φ (⟨C, ⊥⟩::Γ) (C::D::L))
+  : f ;; cfg [C] g (Fin.elim1 h.vwk1) = cfg [C] (f.lwk1 ;; g) (Fin.elim1 h.vwk1)
+  := by
+  have hc := Eqv.seq_cfg (R := [C]) f g (Fin.elim1 h)
+  convert hc
+  · rename Fin 1 => i; cases i using Fin.elim1; rfl
+  · induction f using Quotient.inductionOn
+    induction g using Quotient.inductionOn
+    induction h using Quotient.inductionOn
+    apply Eqv.eq_of_reg_eq
+    rfl
+  · rename Fin 1 => i; cases i using Fin.elim1; rfl
 
 theorem Eqv.ret_var_zero_eq_nil_vwk1 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : ret (var 0 (by simp)) = (nil (φ := φ) (ty := A) (rest := Γ) (targets := L)).vwk1 (inserted := X)

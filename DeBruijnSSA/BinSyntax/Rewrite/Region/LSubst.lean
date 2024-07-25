@@ -95,7 +95,20 @@ theorem Eqv.lsubst_case {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L
   induction σ using Quotient.inductionOn
   rfl
 
--- TODO: lsubst_cfg
+def Subst.Eqv.liftn_append {Γ : Ctx α ε} {L K : LCtx α} (J) (σ : Subst.Eqv φ Γ L K)
+  : Subst.Eqv φ Γ (J ++ L) (J ++ K)
+  := Quotient.liftOn σ
+    (λσ => ⟦σ.liftn_append J⟧)
+    sorry
+
+@[simp]
+theorem Eqv.lsubst_cfg {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  {σ : Subst.Eqv φ Γ L K}
+  : (cfg R β G).lsubst σ
+  = cfg R (β.lsubst (σ.liftn_append _)) (λi => (G i).lsubst (σ.liftn_append _).vlift) := by
+  induction β using Quotient.inductionOn
+  sorry
 
 def Subst.Eqv.vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
   (ρ : Term.Subst.Eqv φ Γ Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K
