@@ -181,9 +181,30 @@ def InS.left_exit {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
     (br 1 (Term.InS.var 0 Ctx.Var.shead) (by simp))
     (br 0 (Term.InS.var 0 Ctx.Var.shead) (by simp))
 
+@[simp]
+theorem InS.coe_left_exit {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+    : (InS.left_exit (φ := φ) (Γ := Γ) (L := L) (A := A) (B := B) (e := e) : Region φ)
+    = Region.left_exit := rfl
+
 theorem Wf.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} {r : Region φ}
   (hr : r.Wf (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)) : (fixpoint r).Wf (⟨A, ⊥⟩::Γ) (B::L)
-  := cfg 1 [A] rfl nil (λ| ⟨0, _⟩ => hr.vwk1.lwk1.append left_exit)
+  := cfg 1 [A] rfl nil (Fin.elim1 (hr.vwk1.lwk1.append left_exit))
 
 def InS.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
-  : InS φ (⟨A, ⊥⟩::Γ) (B::L) := cfg [A] nil (λ| ⟨0, _⟩ => r.vwk1.lwk1.seq left_exit)
+  : InS φ (⟨A, ⊥⟩::Γ) (B::L) := cfg [A] nil (Fin.elim1 (r.vwk1.lwk1.seq left_exit))
+
+@[simp]
+theorem InS.coe_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : InS φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : (r.fixpoint : Region φ) = (r : Region φ).fixpoint := by
+  simp only [Set.mem_setOf_eq, fixpoint, List.append_eq, List.nil_append, List.length_singleton,
+    List.get_eq_getElem, List.singleton_append, coe_cfg, coe_nil, Region.fixpoint, cfg.injEq,
+    heq_eq_eq, true_and]
+  ext i; cases i using Fin.elim1; rfl
+
+theorem InS.vwk_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {r : InS φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
+  {ρ : Ctx.InS Γ Δ}
+  : r.fixpoint.vwk ρ.slift = (r.vwk ρ.slift).fixpoint := by
+  ext
+  sorry

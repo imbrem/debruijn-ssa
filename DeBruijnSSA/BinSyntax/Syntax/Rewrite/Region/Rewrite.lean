@@ -417,13 +417,13 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     apply cast_trg
     apply cfg_cfg
     congr
-    . rw [Nat.liftnWk_add]; rfl
-    . funext i
+    · rw [Nat.liftnWk_add]; rfl
+    · funext i
       simp only [Fin.comp_addCases_apply]
       simp only [Fin.addCases]
       split
-      . simp [Nat.liftnWk_add, *]
-      . simp only [Function.comp_apply, eq_rec_constant, Region.lwk_lwk]
+      · simp [Nat.liftnWk_add, *]
+      · simp only [Function.comp_apply, eq_rec_constant, Region.lwk_lwk]
         congr
         funext k
         simp only [Function.comp_apply, Nat.liftnWk]

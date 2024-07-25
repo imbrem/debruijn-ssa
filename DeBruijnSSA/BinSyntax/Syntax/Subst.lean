@@ -40,8 +40,8 @@ theorem Subst.liftn_zero (σ : Subst φ) : σ.liftn 0 = σ := by
   funext n
   simp only [liftn]
   split
-  . rename_i H; cases H
-  . exact (σ n).wk_id
+  · rename_i H; cases H
+  · exact (σ n).wk_id
 
 theorem Subst.liftn_one (σ : Subst φ) : σ.liftn 1 = σ.lift := by funext m; cases m <;> rfl
 
@@ -53,19 +53,19 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
     rw [I]
     simp only [lift]
     split
-    . rfl
-    . simp only [liftn]
+    · rfl
+    · simp only [liftn]
       split
-      . split
-        . rfl
-        . split
-          . rfl
-          . rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
-      . split
-        . rename_i H; simp_arith at H
-        . split
-          . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [Term.wk_wk]
+      · split
+        · rfl
+        · split
+          · rfl
+          · rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
+      · split
+        · rename_i H; simp_arith at H
+        · split
+          · rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
+          · simp only [Term.wk_wk]
             apply congr
             apply congrArg
             funext v
@@ -166,16 +166,16 @@ theorem subst_liftn (n : ℕ) (σ : Subst φ) (t : Term φ)
     --TODO: how should this be factored?
     simp only [wk, subst, Nat.liftnWk, Subst.liftn]
     split
-    . split
-      . simp [Nat.liftnWk, *]
-      . rename_i H C; exact (C (Nat.le_step H)).elim
-    . rename_i C
+    · split
+      · simp [Nat.liftnWk, *]
+      · rename_i H C; exact (C (Nat.le_step H)).elim
+    · rename_i C
       simp_arith only [ite_false, wk_wk]
       apply congr
-      . apply congrArg
+      · apply congrArg
         funext v
         simp_arith [Function.comp_apply, Zero.zero, Nat.liftnWk]
-      . simp [Nat.succ_add, Nat.succ_sub_succ, Nat.add_sub_assoc]
+      · simp [Nat.succ_add, Nat.succ_sub_succ, Nat.add_sub_assoc]
   | _ => simp [
     <-Subst.liftn_succ, <-Nat.liftnWk_succ_apply', <-Nat.liftnWk_add_apply', Subst.liftn_liftn', *]
 
@@ -589,6 +589,12 @@ theorem Region.lwk_vsubst (σ : Term.Subst φ) (ρ : ℕ -> ℕ) (r : Region φ)
 
 theorem Region.vsubst_lwk (σ : Term.Subst φ) (ρ : ℕ -> ℕ) (r : Region φ)
   : (r.lwk ρ).vsubst σ = (r.vsubst σ).lwk ρ := Eq.symm $ Region.lwk_vsubst σ ρ r
+
+theorem Region.lwk1_vsubst (σ : Term.Subst φ) (r : Region φ)
+  : (r.vsubst σ).lwk1 = (r.lwk1).vsubst σ := by rw [lwk1, lwk_vsubst]
+
+theorem Region.vsubst_lwk1 (σ : Term.Subst φ) (r : Region φ)
+  : (r.lwk1).vsubst σ = (r.vsubst σ).lwk1 := by rw [lwk1, vsubst_lwk]
 
 /-- Substitute the free variables in a `CFG` using `σ` -/
 def CFG.vsubst (σ : Term.Subst φ) (G : CFG φ) : CFG φ where
@@ -1567,6 +1573,9 @@ theorem vsubst_lift_lift_comp_vwk1 {ρ : Term.Subst φ}
     simp only [Term.Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
       Term.Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ]
     rfl
+
+theorem vsubst_lift₂_vwk1 {ρ : Term.Subst φ} {r : Region φ}
+  : r.vwk1.vsubst ρ.lift.lift = (r.vsubst ρ.lift).vwk1 := congrFun vsubst_lift_lift_comp_vwk1 r
 
 theorem vsubst_lift_lift_comp_vlift {ρ : Term.Subst φ} {σ : Subst φ}
   : (vsubst ρ.lift.lift ∘ σ.vlift) = Subst.vlift (vsubst ρ.lift ∘ σ) := by

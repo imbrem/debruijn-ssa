@@ -138,6 +138,13 @@ theorem Eqv.cfg_quot
   {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.cfg R β G⟧ := InS.cfg_q
 
+theorem Eqv.cfg_eq_quot {R : LCtx α}
+  {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  {β' : InS φ Γ (R ++ L)} {G' : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  (hβ : β = ⟦β'⟧) (hG : ∀i, G i = ⟦G' i⟧)
+  : cfg R β G = ⟦InS.cfg R β' G'⟧ := by
+  rw [hβ, funext hG, cfg_quot]
+
 def Eqv.induction
   {motive : (Γ : Ctx α ε) → (L : LCtx α) → Eqv φ Γ L → Prop}
   (br : ∀{Γ L A} (ℓ) (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (Eqv.br ℓ a hℓ))

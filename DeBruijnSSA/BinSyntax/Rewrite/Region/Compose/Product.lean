@@ -76,8 +76,8 @@ theorem Eqv.rtimes_rtimes {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   apply congrArg
   rw [vwk1_seq, vwk1_seq, seq_assoc]
   congr 1
-  . simp [vwk1, vwk_vwk]
-  . sorry
+  · simp [vwk1, vwk_vwk]
+  · sorry
 
 theorem Eqv.vwk_lift_rtimes {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Δ) (B::L)} {ρ : Γ.InS Δ}

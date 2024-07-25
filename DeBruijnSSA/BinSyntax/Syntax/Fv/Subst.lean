@@ -97,8 +97,8 @@ theorem Region.fvs_vsubst0_le (t : Region φ) (s : Term φ)
   : (t.vsubst s.subst0).fvs ⊆ s.fvs ∪ t.fvs.liftFv := by
   rw [fvs_vsubst0]
   split
-  . rw [Set.union_comm]
-  . simp
+  · rw [Set.union_comm]
+  · simp
 
 
 -- TODO: {Terminator, Region}.Subst.{fv, fl}

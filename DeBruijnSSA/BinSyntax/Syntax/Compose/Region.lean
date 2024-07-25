@@ -101,7 +101,8 @@ theorem lsubst_alpha_case (k) (e : Term φ) (s t r : Region φ)
   := by
   simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
 
-theorem case_append (e : Term φ) (s t r : Region φ) : case e s t ++ r = case e (s ++ r.vwk1) (t ++ r.vwk1)
+theorem case_append (e : Term φ) (s t r : Region φ)
+  : case e s t ++ r = case e (s ++ r.vwk1) (t ++ r.vwk1)
   := by simp only [append_def, lsubst, vlift_alpha, vwk_vwk, vwk1, ← Nat.liftWk_comp]
 
 theorem lsubst_alpha_cfg (β n G k) (r : Region φ)
@@ -157,6 +158,16 @@ theorem vsubst_lift_lsubst_alpha_vwk1 {r₀ r₁ : Region φ} {ρ : Term.Subst �
   cases k with
   | zero => rfl
   | succ k => simp [Term.Subst.comp, Term.subst_fromWk, Term.wk_wk, Term.Subst.liftn]
+
+theorem vwk_lift_append {r₀ r₁ : Region φ}
+  : (r₀ ++ r₁).vwk (Nat.liftWk ρ)
+  = r₀.vwk (Nat.liftWk ρ) ++ r₁.vwk (Nat.liftWk ρ) := by
+  simp only [append_def, vwk_liftWk_lsubst_alpha_vwk1]
+
+theorem vsubst_lift_append {r₀ r₁ : Region φ} {ρ : Term.Subst φ}
+  : (r₀ ++ r₁).vsubst ρ.lift
+  = r₀.vsubst ρ.lift ++ r₁.vsubst ρ.lift := by
+  simp only [append_def, vsubst_lift_lsubst_alpha_vwk1]
 
 -- def RewriteD.lsubst_alpha {r₀ r₀'}
 --   (p : RewriteD r₀ r₀') (n) (r₁ : Region φ)
@@ -590,7 +601,27 @@ def right_exit : Region φ :=
     (br 0 (Term.var 0))
     (br 1 (Term.var 0))
 
-def fixpoint (r : Region φ) : Region φ := cfg nil 1 (λ_ => r.vwk1.lwk1 ++ left_exit)
+def fixpoint (r : Region φ) : Region φ := cfg nil 1 (Fin.elim1 (r.vwk1.lwk1 ++ left_exit))
+
+theorem vwk_lift_fixpoint (r : Region φ)
+  : r.fixpoint.vwk (Nat.liftWk ρ) = (r.vwk $ Nat.liftWk ρ).fixpoint := by
+  simp only [fixpoint, vwk]
+  congr
+  funext i
+  cases i using Fin.elim1 with
+  | zero =>
+    rw [Fin.elim1_zero, vwk_lift_append, vwk_lwk1, vwk_liftWk₂_vwk1]
+    rfl
+
+theorem vsubst_lift_fixpoint (r : Region φ) {ρ : Term.Subst φ}
+  : r.fixpoint.vsubst ρ.lift = (r.vsubst ρ.lift).fixpoint := by
+  simp only [fixpoint, vsubst]
+  congr
+  funext i
+  cases i using Fin.elim1 with
+  | zero =>
+    rw [Fin.elim1_zero, vsubst_lift_append, vsubst_lwk1, vsubst_lift₂_vwk1]
+    rfl
 
 def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
 

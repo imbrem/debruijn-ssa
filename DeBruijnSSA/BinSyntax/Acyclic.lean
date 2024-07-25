@@ -180,8 +180,8 @@ theorem SAcyclic'.acyclic' (h : SAcyclic' D r) : Acyclic' D r := by
     apply Acyclic'.antitone _ (IG i)
     apply Set.union_subset_iff.mpr
     constructor
-    . simp
-    . intro x hx'
+    · simp
+    · intro x hx'
       right
       cases hx'.lt_or_eq with
       | inl h => exact lt_of_lt_of_le h (le_refl _)
@@ -331,19 +331,19 @@ theorem SAcyclic'.of_sacyclic {r : Region φ} (h : SAcyclic r) (hD : ∀x ∈ r.
   | let2 e _ Is => exact SAcyclic'.let2 e (Is (λi hi => hD i (by simp [hi])))
   | cfg hβ hG hG' Iβ IG =>
     apply SAcyclic'.cfg
-    . apply Iβ
+    · apply Iβ
       simp only [Set.mem_image, not_exists, not_and]
       intro i hi j hj c
       cases c
       apply hD j
       simp [Multiset.mem_liftnFv, hi]
       exact hj
-    . intro i
+    · intro i
       apply IG
       intro j hj
       simp only [Set.mem_union, Set.mem_image, not_or, not_exists, not_and]
       constructor
-      . intro x hx c
+      · intro x hx c
         cases c
         apply hD x
         simp only [fl, Multiset.mem_add, Multiset.mem_liftnFv]
@@ -352,7 +352,7 @@ theorem SAcyclic'.of_sacyclic {r : Region φ} (h : SAcyclic r) (hD : ∀x ∈ r.
         simp only [Finset.mem_univ, Multiset.mem_liftnFv, true_and]
         exact ⟨_, hj⟩
         exact hx
-      . exact Nat.not_lt_of_le $ (SAcyclic.cfg hβ hG hG').successors_ge i j hj
+      · exact Nat.not_lt_of_le $ (SAcyclic.cfg hβ hG hG').successors_ge i j hj
 
 -- TODO: relationship between SAcyclic and SACyclic'
 
@@ -410,7 +410,7 @@ theorem Acyclic'.of_acyclic {r : Region φ} (h : Acyclic r) (hD : ∀x ∈ r.fl,
   | let2 e _ Is => exact Acyclic'.let2 e (Is (λi hi => hD i (by simp [hi])))
   | cfg _ _ hG Iβ IG =>
     apply Acyclic'.cfg
-    . apply Iβ
+    · apply Iβ
       intro i hi
       simp only [Set.mem_image, not_exists, not_and]
       intro j hj hj'
@@ -418,12 +418,12 @@ theorem Acyclic'.of_acyclic {r : Region φ} (h : Acyclic r) (hD : ∀x ∈ r.fl,
       apply hD j
       simp [Multiset.mem_liftnFv, hi]
       exact hj
-    . intro i
+    · intro i
       apply IG
       intro j hj
       simp only [Set.mem_union, Set.mem_image, not_or, not_exists, not_and]
       constructor
-      . intro x hx c
+      · intro x hx c
         cases c
         apply hD x
         simp only [fl, Multiset.mem_add, Multiset.mem_liftnFv]
@@ -432,7 +432,7 @@ theorem Acyclic'.of_acyclic {r : Region φ} (h : Acyclic r) (hD : ∀x ∈ r.fl,
         simp only [Finset.mem_univ, Multiset.mem_liftnFv, true_and]
         exact ⟨_, hj⟩
         exact hx
-      . intro c
+      · intro c
         have c' := Ancestors.of_split hj c
         apply hG ⟨j, c'.lt⟩ c'
 

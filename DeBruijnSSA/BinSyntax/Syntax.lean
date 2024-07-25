@@ -301,12 +301,12 @@ theorem TRegion.IsTerminator.eq_cfg (k : ℕ) {r : TRegion φ} (h : r.IsTerminat
     simp only [toTerminator, tsub_zero, ↓reduceDIte, Terminator.lwk_id',
     cfg.injEq, heq_eq_eq, true_and]
     constructor
-    . simp only [Nat.sub_zero, Nat.not_lt_zero, ↓reduceDIte, Terminator.lsubst_id_apply',
+    · simp only [Nat.sub_zero, Nat.not_lt_zero, ↓reduceDIte, Terminator.lsubst_id_apply',
       Terminator.lwk_id']
       induction k with
       | zero => rfl
       | succ k I => rw [<-I]
-    . funext i; exact i.elim0
+    · funext i; exact i.elim0
 
 def Region.isBlock : Region φ → Bool
   | br _ _ => true
@@ -350,8 +350,8 @@ theorem TRegion.coe_toRegion_append_cfg (r : TRegion φ) (G' : TCFG φ)
     funext i
     simp only [Fin.addCases]
     split
-    . rfl
-    . simp only [Function.comp_apply, eq_rec_constant, TRegion.toRegion_lwk]
+    · rfl
+    · simp only [Function.comp_apply, eq_rec_constant, TRegion.toRegion_lwk]
   | _ => simp [Region.append_cfg, *]
 
 @[simp]
@@ -420,8 +420,8 @@ theorem TRegion.toRegion_toTerminator (r : TRegion φ) (k : ℕ)
     congr
     funext i
     split
-    . rw [I]
-    . rfl
+    · rw [I]
+    · rfl
 
 theorem Region.IsTerminator.toTRegion_eq_cfg (k : ℕ) {r : Region φ} (h : r.IsTerminator)
   : r.toTRegion = TRegion.cfg (r.toTerminator k) 0 Fin.elim0 := by

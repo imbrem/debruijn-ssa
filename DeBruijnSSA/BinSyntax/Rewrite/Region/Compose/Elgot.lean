@@ -33,39 +33,52 @@ theorem Eqv.Pure.distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 -- TODO: "naturality"
 
-def Eqv.control {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+def Eqv.left_exit {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (B::A::L) :=
   case (var 0 Ctx.Var.shead)
     (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩)
     (ret (var 0 (by simp)))
 
+theorem Eqv.left_exit_def {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : left_exit (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) = ⟦InS.left_exit⟧ := rfl
+
 @[simp]
-theorem Eqv.vwk1_control {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : (control (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted) = control
+theorem Eqv.vwk1_left_exit {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (left_exit (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted) = left_exit
   := rfl
 
 @[simp]
-theorem Eqv.vwk2_control {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : (control (φ := φ) (A := A) (B := B) (Γ := (X::Γ)) (L := L)).vwk2 (inserted := inserted)
-  = control
+theorem Eqv.vwk2_left_exit {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (left_exit (φ := φ) (A := A) (B := B) (Γ := (X::Γ)) (L := L)).vwk2 (inserted := inserted)
+  = left_exit
   := rfl
 
 def Eqv.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
-  : Eqv φ (⟨A, ⊥⟩::Γ) (B::L) := cfg [A] nil (λ| ⟨0, _⟩ => f.vwk1.lwk1 ;; control)
+  : Eqv φ (⟨A, ⊥⟩::Γ) (B::L) := cfg [A] nil (Fin.elim1 (f.vwk1.lwk1 ;; left_exit))
+
+theorem Eqv.fixpoint_quot {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : InS φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
+  : fixpoint ⟦f⟧ = ⟦f.fixpoint⟧ := by
+  simp only [fixpoint, nil, List.append_eq, List.nil_append, List.length_singleton,
+    List.get_eq_getElem, List.singleton_append, Fin.zero_eta, Fin.isValue, Fin.val_zero,
+    List.getElem_cons_zero, vwk1_quot, lwk1_quot, left_exit_def, seq_quot]
+  apply Eqv.cfg_eq_quot rfl
+  intro i
+  cases i using Fin.elim1; rfl
 
 theorem Eqv.fixpoint_iter_cfg {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
-  : fixpoint f = cfg [A] (f.lwk1 ;; control) (λ| ⟨0, _⟩ => f.vwk1.lwk1 ;; control) := by
+  : fixpoint f = cfg [A] (f.lwk1 ;; left_exit) (Fin.elim1 (f.vwk1.lwk1 ;; left_exit)) := by
   rw [fixpoint, <-ret_nil, ret, cfg_br_lt (hℓ' := by simp)]
   congr
-  simp only [List.singleton_append, List.length_singleton, Nat.zero_eq, Fin.zero_eta, Fin.isValue,
-    List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, List.append_eq, List.nil_append,
-    vwk_id_eq, let1_beta]
+  simp only [List.cons_append, List.nil_append, List.length_cons, List.length_nil, Nat.reduceAdd,
+    Nat.zero_eq, Fin.zero_eta, Fin.isValue, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, List.append_eq, Fin.elim1_zero, vwk_id_eq, let1_beta]
   rw [lwk1_vwk1, seq, vsubst_lsubst, seq]
   congr
-  . rw [vsubst_alpha0]
+  · rw [vsubst_alpha0]
     rfl
-  . induction f using Quotient.inductionOn
+  · induction f using Quotient.inductionOn
     simp only [Term.Eqv.nil, var, subst0_quot, lwk1_quot, vwk1_quot, vsubst_quot]
     apply congrArg
     ext
@@ -80,7 +93,7 @@ theorem Eqv.fixpoint_iter_cfg {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))
   (h : Eqv φ (⟨C, ⊥⟩::Γ) (C::D::L))
-  : cfg [C] (f.lwk1 ;; g) (λ⟨0, _⟩ => h.vwk1) = f ;; cfg [C] g (λ⟨0, _⟩ => h.vwk1)
+  : cfg [C] (f.lwk1 ;; g) (Fin.elim1 h.vwk1) = f ;; cfg [C] g (Fin.elim1 h.vwk1)
   := sorry
 
 theorem Eqv.ret_var_zero_eq_nil_vwk1 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
@@ -91,24 +104,23 @@ theorem Eqv.fixpoint_iter {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
   : fixpoint f = f ;; coprod nil (fixpoint f) := by
   apply Eq.trans f.fixpoint_iter_cfg
-  rw [lwk1_vwk1, <-vwk1_control]
-  simp only [<-vwk1_seq (left := f.lwk1) (right := control)]
+  rw [lwk1_vwk1, <-vwk1_left_exit]
+  simp only [<-vwk1_seq (left := f.lwk1) (right := left_exit)]
   rw [seq_cont]
   congr
   conv =>
     lhs
     lhs
-    rw [control]
+    rw [left_exit]
   rw [cfg_case, cfg_br_ge (ℓ := 1) (hℓ' := by simp)]
   simp only [List.length_singleton, Nat.sub_self, coprod]
   congr
   rw [fixpoint, vwk1_cfg]
   congr
   funext i
-  cases i using Fin.cases with
-  | zero =>
-    simp only [vwk1_seq, vwk1_control, vwk2_seq, vwk2_control, lwk1_vwk1, vwk1_vwk2]
-  | succ i => exact i.elim0
+  cases i using Fin.elim1 with
+  | zero => simp only [
+      Fin.elim1_zero, vwk1_seq, vwk1_left_exit, vwk2_seq, vwk2_left_exit, lwk1_vwk1, vwk1_vwk2]
 
 theorem Eqv.fixpoint_naturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
