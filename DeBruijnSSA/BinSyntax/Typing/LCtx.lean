@@ -164,6 +164,15 @@ theorem Trg.step {n} {A : Ty α} (h : L.Trg n A) : Trg (B::L) (n + 1) A
 theorem Trg.tail {n} {A : Ty α} (h : Trg (B::L) (n + 1) A) : Trg L n A
   := ⟨Nat.lt_of_succ_lt_succ h.length, h.getElem⟩
 
+theorem Trg.of_add {n} {A : Ty α} (h : Trg (R ++ L) (n + R.length) A) : Trg L n A
+  := by induction R with
+  | nil => exact h
+  | cons A R ih => exact ih h.tail
+
+theorem Trg.of_ge {n} {A : Ty α} (h : Trg (R ++ L) n A) (hn : R.length ≤ n) : Trg L (n - R.length) A
+  := have hn' : n = (n - R.length) + R.length := by omega;
+  (hn' ▸ h).of_add
+
 @[simp]
 theorem Trg.step_iff {n} {A : Ty α} {L : LCtx α} : Trg (B::L) (n + 1) A ↔ Trg L n A
   := ⟨λh => h.tail, λh => h.step⟩

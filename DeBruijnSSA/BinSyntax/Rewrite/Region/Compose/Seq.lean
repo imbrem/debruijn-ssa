@@ -213,6 +213,13 @@ theorem Eqv.vwk1_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (left ;; right).vwk1 (inserted := inserted)
   = left.vwk1 ;; right.vwk1 := vwk_lift_seq ⟨Nat.succ, (by simp)⟩ left right
 
+theorem Eqv.vwk2_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : Eqv φ (⟨A, ⊥⟩::X::Γ) (B::L))
+  (right : Eqv φ (⟨B, ⊥⟩::X::Γ) (C::L))
+  : (left ;; right).vwk2 (inserted := inserted)
+  = left.vwk2 ;; right.vwk2 := by
+  simp only [vwk2, <-Ctx.InS.lift_wk1, vwk_lift_seq]
+
 theorem Eqv.vsubst_lift_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   (σ : Term.Subst.Eqv φ Γ Δ)
   (left : Eqv φ (⟨A, ⊥⟩::Δ) (B::L))
@@ -382,5 +389,12 @@ theorem Eqv.Pure.vwk1 {L : LCtx α}
   | ⟨pr, hpr⟩ => by
     rw [hpr, Eqv.vwk1_ret]
     exact ⟨_, rfl⟩
+
+theorem Eqv.vsubst_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (σ : Term.Subst.Eqv φ Γ Δ)
+  (r : Eqv φ (⟨A, ⊥⟩::Δ) (B::L))
+  : r.alpha0.vsubst σ = (r.vsubst (σ.lift (le_refl _))).alpha0 := by
+  induction r using Quotient.inductionOn;
+  induction σ using Quotient.inductionOn;
+  simp [InS.vsubst_alpha0]
 
 -- TODO: lwk lift, vsubst, lsubst lift

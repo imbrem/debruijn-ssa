@@ -82,6 +82,11 @@ theorem InS.vlift_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS �
   simp only [Subst.InS.vlift, Set.mem_setOf_eq, alpha0, vlift_alpha]
   rfl
 
+theorem InS.vsubst_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (σ : Term.Subst.InS φ Γ Δ)
+  (r : InS φ (⟨A, ⊥⟩::Δ) (B::L))
+  : r.alpha0.vsubst σ = (r.vsubst (σ.lift (le_refl _))).alpha0
+  := by ext k; cases k <;> rfl
+
 def InS.seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L)) : InS φ (⟨A, ⊥⟩::Γ) (C::L)
   := left.lsubst right.vwk1.alpha0

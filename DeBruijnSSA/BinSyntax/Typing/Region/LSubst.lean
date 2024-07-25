@@ -25,6 +25,11 @@ instance Region.Subst.InS.instCoeOut {Γ : Ctx α ε} {L K : LCtx α}
   : CoeOut (Region.Subst.InS φ Γ L K) (Region.Subst φ)
   := ⟨λr => r.1⟩
 
+@[ext]
+theorem Region.Subst.InS.ext (σ τ : Region.Subst.InS φ Γ L K)
+  (h : ∀i, σ.val i = τ.val i) : σ = τ
+  := Subtype.eq (funext h)
+
 theorem Region.Subst.Wf.nonempty (hσ : σ.Wf Γ L K) : Nonempty (σ.WfD Γ L K)
   := ⟨λi => Classical.choice (hσ i).nonempty⟩
 
@@ -181,6 +186,25 @@ def Region.Subst.WfD.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.S
 theorem Region.Subst.Wf.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
   (hσ : σ.Wf Γ K J) (hτ : τ.Wf Γ L K) : (σ.comp τ).Wf Γ L J
   := λi => (hτ i).lsubst hσ.vlift
+
+def Region.Subst.InS.vsubst {Γ Δ : Ctx α ε}
+  (ρ : Term.Subst.InS φ Γ Δ) (σ : Region.Subst.InS φ Δ L K)
+  : Region.Subst.InS φ Γ L K
+  := ⟨Region.vsubst ρ.val.lift ∘ σ.val, (λi => (σ.prop i).vsubst ρ.prop.slift)⟩
+
+@[simp]
+theorem Region.Subst.InS.coe_vsubst {Γ Δ : Ctx α ε}
+  (ρ : Term.Subst.InS φ Γ Δ) (σ : Region.Subst.InS φ Δ L K)
+  : (σ.vsubst ρ : Region.Subst φ) = Region.vsubst ρ.val.lift ∘ (σ : Region.Subst φ)
+  := rfl
+
+-- TODO: vsubst_id, vsubst_comp, and other lore...
+
+theorem Region.InS.vsubst_lsubst {Γ Δ : Ctx α ε}
+  {σ : Region.Subst.InS φ Δ L K} {ρ : Term.Subst.InS φ Γ Δ}
+  {r : Region.InS φ Δ L}
+  : (r.lsubst σ).vsubst ρ = (r.vsubst ρ).lsubst (σ.vsubst ρ)
+  := by ext; simp [Region.vsubst_lsubst]
 
 end RegionSubst
 

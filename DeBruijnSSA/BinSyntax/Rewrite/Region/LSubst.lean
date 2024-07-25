@@ -97,4 +97,23 @@ theorem Eqv.lsubst_case {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L
 
 -- TODO: lsubst_cfg
 
+def Subst.Eqv.vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
+  (ρ : Term.Subst.Eqv φ Γ Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K
+  := Quotient.liftOn₂ ρ σ (λρ σ => ⟦σ.vsubst ρ⟧) sorry
+
+@[simp]
+theorem Subst.Eqv.vsubst_quot {Γ Δ : Ctx α ε} {L K : LCtx α}
+  {ρ : Term.Subst.InS φ Γ Δ} {σ : Subst.InS φ Δ L K}
+  : vsubst ⟦ρ⟧ ⟦σ⟧ = ⟦σ.vsubst ρ⟧ := rfl
+
+theorem Eqv.vsubst_lsubst {Γ Δ : Ctx α ε}
+  {L K : LCtx α} {σ : Subst.Eqv φ Δ L K} {ρ : Term.Subst.Eqv φ Γ Δ}
+  {r : Eqv φ Δ L}
+  : (r.lsubst σ).vsubst ρ = (r.vsubst ρ).lsubst (σ.vsubst ρ)
+  := by
+  induction σ using Quotient.inductionOn
+  induction ρ using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  simp [InS.vsubst_lsubst]
+
 end Region
