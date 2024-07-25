@@ -230,8 +230,8 @@ theorem Eqv.vsubst_lift_seq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   induction right using Quotient.inductionOn;
   induction σ using Quotient.inductionOn;
   apply Eqv.eq_of_reg_eq
-  simp only [Set.mem_setOf_eq, InS.coe_vsubst, Term.Subst.coe_lift, InS.coe_lsubst, InS.coe_alpha0,
-    InS.coe_vwk, Ctx.InS.coe_wk1, vsubst_lift_lsubst_alpha,
+  simp only [Set.mem_setOf_eq, InS.coe_vsubst, Term.Subst.InS.coe_lift, InS.coe_lsubst,
+    InS.coe_alpha0, InS.coe_vwk, Ctx.InS.coe_wk1, vsubst_lift_lsubst_alpha,
     <-Region.vsubst_fromWk, Region.vsubst_vsubst]
   congr
   apply congrArg

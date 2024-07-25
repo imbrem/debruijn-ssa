@@ -202,9 +202,16 @@ theorem InS.coe_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     heq_eq_eq, true_and]
   ext i; cases i using Fin.elim1; rfl
 
-theorem InS.vwk_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+theorem InS.vwk_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {r : InS φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
   {ρ : Ctx.InS Γ Δ}
   : r.fixpoint.vwk ρ.slift = (r.vwk ρ.slift).fixpoint := by
   ext
-  sorry
+  simp only [coe_fixpoint, coe_vwk, Ctx.InS.coe_slift, Region.vwk_lift_fixpoint]
+
+theorem InS.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {r : InS φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
+  {σ : Term.Subst.InS φ Γ Δ}
+  : r.fixpoint.vsubst (σ.lift (le_refl _)) = (r.vsubst (σ.lift (le_refl _))).fixpoint := by
+  ext
+  simp only [coe_fixpoint, coe_vsubst, Term.Subst.InS.coe_lift, Region.vsubst_lift_fixpoint]

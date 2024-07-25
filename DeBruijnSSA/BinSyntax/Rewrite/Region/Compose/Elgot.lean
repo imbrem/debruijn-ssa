@@ -56,6 +56,7 @@ theorem Eqv.vwk2_left_exit {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 def Eqv.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
   : Eqv φ (⟨A, ⊥⟩::Γ) (B::L) := cfg [A] nil (Fin.elim1 (f.vwk1.lwk1 ;; left_exit))
 
+@[simp]
 theorem Eqv.fixpoint_quot {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : InS φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
   : fixpoint ⟦f⟧ = ⟦f.fixpoint⟧ := by
@@ -65,6 +66,21 @@ theorem Eqv.fixpoint_quot {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   apply Eqv.cfg_eq_quot rfl
   intro i
   cases i using Fin.elim1; rfl
+
+theorem Eqv.vwk_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
+  {ρ : Ctx.InS Γ Δ}
+  : r.fixpoint.vwk ρ.slift = (r.vwk ρ.slift).fixpoint := by
+  induction r using Quotient.inductionOn
+  simp [InS.vwk_lift_fixpoint]
+
+theorem Eqv.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
+  {σ : Term.Subst.Eqv φ Γ Δ}
+  : r.fixpoint.vsubst (σ.lift (le_refl _)) = (r.vsubst (σ.lift (le_refl _))).fixpoint := by
+  induction r using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  simp [InS.vsubst_lift_fixpoint]
 
 theorem Eqv.fixpoint_iter_cfg {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
@@ -94,7 +110,11 @@ theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))
   (h : Eqv φ (⟨C, ⊥⟩::Γ) (C::D::L))
   : cfg [C] (f.lwk1 ;; g) (Fin.elim1 h.vwk1) = f ;; cfg [C] g (Fin.elim1 h.vwk1)
-  := sorry
+  := by sorry
+  -- let Γ' := (A, ⊥)::Γ;
+  -- let L' := B::L;
+  -- induction f using Eqv.induction with
+  -- | _ => sorry
 
 theorem Eqv.ret_var_zero_eq_nil_vwk1 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : ret (var 0 (by simp)) = (nil (φ := φ) (ty := A) (rest := Γ) (targets := L)).vwk1 (inserted := X)

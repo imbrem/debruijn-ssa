@@ -47,7 +47,7 @@ def Subst.InS.lift (h : V ≤ V') (σ : InS φ Γ Δ) : InS φ (V::Γ) (V'::Δ)
   := ⟨Subst.lift σ, σ.prop.lift h⟩
 
 @[simp]
-theorem Subst.coe_lift {h : V ≤ V'} {σ : InS φ Γ Δ}
+theorem Subst.InS.coe_lift {h : V ≤ V'} {σ : InS φ Γ Δ}
   : (σ.lift h : Subst φ) = Subst.lift σ
   := rfl
 
@@ -56,6 +56,14 @@ def Subst.WfD.slift {head} (hσ : σ.WfD Γ Δ) : σ.lift.WfD (head::Γ) (head::
 
 theorem Subst.Wf.slift {head} (hσ : σ.Wf Γ Δ) : σ.lift.Wf (head::Γ) (head::Δ)
   := hσ.lift (le_refl head)
+
+def Subst.InS.slift {head} (σ : Subst.InS φ Γ Δ) : Subst.InS φ (head::Γ) (head::Δ)
+  := σ.lift (le_refl _)
+
+@[simp]
+theorem Subst.coe_slift {head} {σ : Subst.InS φ Γ Δ}
+  : (σ.slift (head := head) : Subst φ) = (σ : Subst φ).lift
+  := rfl
 
 def Subst.WfD.lift₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (hσ : σ.WfD Γ Δ)
   : σ.lift.lift.WfD (V₁::V₂::Γ) (V₁'::V₂'::Δ)

@@ -506,8 +506,8 @@ theorem Eqv.braid_rtimes {A B B' : Ty α} {Γ : Ctx α ε}
   apply congrArg
   ext
   simp only [Set.mem_setOf_eq, InS.coe_wk0, Term.wk0, InS.coe_wk1, Term.wk1, ← subst_fromWk, ←
-    Subst.fromWk_lift, Term.subst_subst, InS.coe_subst, InS.coe_subst0, InS.coe_var, Subst.coe_lift,
-    ← Subst.lift_comp]
+    Subst.fromWk_lift, Term.subst_subst, InS.coe_subst, InS.coe_subst0, InS.coe_var,
+    Subst.InS.coe_lift, ←Subst.lift_comp]
   congr
   funext k
   cases k <;> rfl
@@ -585,7 +585,8 @@ theorem Eqv.Pure.left_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   induction l using Quotient.inductionOn
   apply eq_of_term_eq
   simp only [Set.mem_setOf_eq, InS.coe_wk, Ctx.InS.coe_wk0, Ctx.InS.coe_wk1, ← subst_fromWk,
-    Term.subst_subst, InS.coe_subst, Subst.coe_lift, InS.coe_subst0, InS.coe_var, Ctx.InS.coe_wk2]
+    Term.subst_subst, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_var,
+    Ctx.InS.coe_wk2]
   congr
   funext k
   cases k <;> rfl

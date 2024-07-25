@@ -227,6 +227,75 @@ theorem InS.induction
     simp only [Fin.cast_eq_self] at *
     exact cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩) Iβ IG
 
+def output_first (R : LCtx α) (Y : Ty α) (L : LCtx α) : Ty α
+  := (R ++ (Y::L))[0]
+
+def output_rest (R : LCtx α) (Y : Ty α) (L : LCtx α) : LCtx α
+  := (R ++ (Y::L)).drop 1
+
+theorem output_reshuffle_helper {R : LCtx α} {Y : Ty α} {L : LCtx α}
+  : (R ++ (Y::L)) = (output_first R Y L)::(output_rest R Y L)
+  := by cases R <;> rfl
+
+theorem InS.arrow_induction
+  {motive : (X : Ty α) → (Γ : Ctx α ε) → (Y : Ty α) → (L : LCtx α)
+    → InS φ ((X, ⊥)::Γ) (Y::L) → Prop}
+  (br : ∀{X Γ Y L A} (ℓ)
+    (a : Term.InS φ ((X, ⊥)::Γ) ⟨A, ⊥⟩) (hℓ : LCtx.Trg (Y::L) ℓ A), motive X Γ Y L (InS.br ℓ a hℓ))
+  (let1 : ∀{X Γ Y L A e} (a : Term.InS φ ((X, ⊥)::Γ) ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)),
+    motive _ _ _ _ t → motive _ Γ _ L (InS.let1 a t))
+  (let2 : ∀{X Γ Y L A B e}
+    (a : Term.InS φ ((X, ⊥)::Γ) ⟨Ty.prod A B, e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)),
+    motive _ _ _ _ t → motive _ Γ _ L (InS.let2 a t))
+  (case : ∀{X Γ Y L A B e} (a : Term.InS φ ((X, ⊥)::Γ) ⟨Ty.coprod A B, e⟩)
+    (s : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)) (t : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)),
+    motive _ _ _ _ s → motive _ _ _ _ t → motive _ Γ _ L (InS.case a s t))
+  (cfg : ∀{X Γ Y L} (R)
+    (dβ : InS φ ((X, ⊥)::Γ) (R ++ (Y :: L)))
+    (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::⟨X, ⊥⟩::Γ) (R ++ (Y :: L))),
+    motive X Γ _ _ (dβ.cast rfl output_reshuffle_helper)
+    → (∀i, motive _ _ _ _ ((dG i).cast rfl output_reshuffle_helper))
+    → motive _ Γ _ L (InS.cfg R dβ dG))
+  {X Γ Y L} : (h : InS φ ((X, ⊥)::Γ) (Y::L)) → motive _ _ _ _ h
+  | ⟨r, hr⟩ => by
+    let Γr := (X, ⊥)::Γ
+    generalize hΓ' : Γr = Γ'
+    have hΓ' : (X, ⊥)::Γ = Γ' := hΓ'
+    let Lr := Y::L
+    generalize hL' : Lr = L'
+    have hL' : Y::L = L' := hL'
+    rw [hΓ', hL'] at hr
+    induction hr generalizing X Γ Y L with
+    | br hℓ ha =>
+      cases hΓ'
+      cases hL'
+      exact br _ ⟨_, ha⟩ hℓ
+    | let1 ha hr Ir =>
+      cases hΓ'
+      cases hL'
+      exact let1 ⟨_, ha⟩ ⟨_, hr⟩ (Ir hr rfl rfl rfl rfl)
+    | let2 ha hr Ir =>
+      cases hΓ'
+      cases hL'
+      exact let2 ⟨_, ha⟩ ⟨_, hr⟩ (Ir hr rfl rfl rfl rfl)
+    | case ha hl hr Il Ir =>
+      cases hΓ'
+      cases hL'
+      exact case ⟨_, ha⟩ ⟨_, hl⟩ ⟨_, hr⟩ (Il hl rfl rfl rfl rfl) (Ir hr rfl rfl rfl rfl)
+    | cfg n R hR dβ dG Iβ IG =>
+      cases hΓ'
+      cases hL'
+      cases hR
+      simp only [Fin.cast_eq_self] at *
+      apply cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩)
+      exact Iβ (output_reshuffle_helper ▸ dβ) rfl rfl
+        output_reshuffle_helper.symm
+        output_reshuffle_helper.symm
+      intro i
+      apply IG i (output_reshuffle_helper ▸ dG i) rfl rfl
+        output_reshuffle_helper.symm
+        output_reshuffle_helper.symm
+
 def InD (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) : Type _
   := Σr : Region φ, r.WfD Γ L
 

@@ -21,7 +21,8 @@ namespace Region
 def Eqv (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L : LCtx α) := Quotient (InS.Setoid φ Γ L)
 
 def Eqv.cast {Γ : Ctx α ε} {L : LCtx α} (hΓ : Γ = Γ') (hL : L = L') (r : Eqv φ Γ L)
-  : Eqv φ Γ' L' := hΓ ▸ hL ▸ r
+  : Eqv φ Γ' L' := Quotient.liftOn r (λr => ⟦r.cast hΓ hL⟧)
+    (λ_ _ h => Quotient.sound (by cases hΓ; cases hL; exact h))
 
 def InS.q (a : InS φ Γ L) : Eqv φ Γ L := Quotient.mk _ a
 
@@ -171,6 +172,40 @@ def Eqv.induction
       have res := cfg R ⟦β⟧ (λi => ⟦G i⟧) Iβ IG
       rw [cfg_quot] at res
       exact res
+
+
+
+theorem Eqv.arrow_induction
+  {motive : (X : Ty α) → (Γ : Ctx α ε) → (Y : Ty α) → (L : LCtx α)
+    → Eqv φ ((X, ⊥)::Γ) (Y::L) → Prop}
+  (br : ∀{X Γ Y L A} (ℓ)
+    (a : Term.Eqv φ ((X, ⊥)::Γ) ⟨A, ⊥⟩) (hℓ : LCtx.Trg (Y::L) ℓ A), motive X Γ Y L (Eqv.br ℓ a hℓ))
+  (let1 : ∀{X Γ Y L A e} (a : Term.Eqv φ ((X, ⊥)::Γ) ⟨A, e⟩) (t : Eqv φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)),
+    motive _ _ _ _ t → motive _ Γ _ L (Eqv.let1 a t))
+  (let2 : ∀{X Γ Y L A B e}
+    (a : Term.Eqv φ ((X, ⊥)::Γ) ⟨Ty.prod A B, e⟩) (t : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)),
+    motive _ _ _ _ t → motive _ Γ _ L (Eqv.let2 a t))
+  (case : ∀{X Γ Y L A B e} (a : Term.Eqv φ ((X, ⊥)::Γ) ⟨Ty.coprod A B, e⟩)
+    (s : Eqv φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)) (t : Eqv φ (⟨B, ⊥⟩::⟨X, ⊥⟩::Γ) (Y::L)),
+    motive _ _ _ _ s → motive _ _ _ _ t → motive _ Γ _ L (Eqv.case a s t))
+  (cfg : ∀{X Γ Y L} (R)
+    (dβ : Eqv φ ((X, ⊥)::Γ) (R ++ (Y :: L)))
+    (dG : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::⟨X, ⊥⟩::Γ) (R ++ (Y :: L))),
+    motive X Γ _ _ (dβ.cast rfl output_reshuffle_helper)
+    → (∀i, motive _ _ _ _ ((dG i).cast rfl output_reshuffle_helper))
+    → motive _ Γ _ L (Eqv.cfg R dβ dG))
+  {X Γ Y L} (r : Eqv φ ((X, ⊥)::Γ) (Y::L)) : motive _ _ _ _ r := by
+  induction r using Quotient.inductionOn with
+  | h r =>
+    induction r using InS.arrow_induction with
+    | br ℓ a hℓ => exact br ℓ ⟦a⟧ hℓ
+    | let1 a r Ir => exact let1 ⟦a⟧ ⟦r⟧ Ir
+    | let2 a r Ir => exact let2 ⟦a⟧ ⟦r⟧ Ir
+    | case a r s Ir Is => exact case ⟦a⟧ ⟦r⟧ ⟦s⟧ Ir Is
+    | cfg R β G Iβ IG =>
+      have h := cfg R ⟦β⟧ (λi => ⟦G i⟧) Iβ IG
+      rw [cfg_quot] at h
+      exact h
 
 def Eqv.vwk
   {Γ Δ : Ctx α ε} {L : LCtx α} (ρ : Γ.InS Δ) (r : Eqv φ Δ L)

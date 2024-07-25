@@ -1221,7 +1221,7 @@ theorem Eqv.let1_wk_eff_let1 {Γ : Ctx α ε}
   induction c using Quotient.inductionOn
   induction a using Quotient.inductionOn
   apply Eqv.eq_of_term_eq
-  simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.coe_lift, InS.coe_subst0, InS.coe_wk0,
+  simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_wk0,
     InS.coe_wk, Ctx.InS.coe_swap01, ← subst_fromWk, Term.subst_subst]
   congr
   funext k
