@@ -34,6 +34,27 @@ theorem Eqv.vsubst_ret {tyIn tyIn' tyOut : Ty α} {rest: Ctx α ε} {targets : L
   induction t using Quotient.inductionOn
   rfl
 
+@[simp]
+theorem Eqv.lwk_lift_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (ρ : LCtx.InS targets targets')
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (ret (targets := targets) t).lwk ρ.slift = ret t := by
+  induction t using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.lwk1_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  : (ret (targets := targets) t).lwk1 (inserted := inserted) = ret t := by
+  induction t using Quotient.inductionOn
+  rfl
+
+theorem Eqv.br_zero_eq_ret {tyIn tyOut : Ty α} {rest: Ctx α ε} {targets : LCtx α}
+  (t : Term.Eqv φ (⟨tyIn, ⊥⟩::rest) ⟨tyOut, ⊥⟩)
+  (hℓ : LCtx.Trg (tyOut'::targets) 0 tyOut)
+  : br 0 t hℓ = ret (t.wk_res (by simp [hℓ.get0]))
+  := by induction t using Quotient.inductionOn; rfl
+
 abbrev Eqv.nil {ty : Ty α} {rest: Ctx α ε} {targets : LCtx α}
   : Eqv φ (⟨ty, ⊥⟩::rest) (ty::targets) := ⟦InS.nil⟧
 
@@ -271,6 +292,22 @@ theorem Eqv.ret_br {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.br_of_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {b : Term.Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩} {hℓ : LCtx.Trg (D::L) ℓ C}
   : br ℓ (a ;;' b) hℓ = ret (targets := L) a ;; br ℓ b hℓ := ret_br.symm
+
+@[simp]
+theorem Eqv.br_succ_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {hℓ : LCtx.Trg (C::L) (ℓ + 1) B}
+  {r : Eqv φ (⟨C, ⊥⟩::Γ) (D::L)}
+  : br (ℓ + 1) a hℓ ;; r = br (ℓ + 1) a hℓ.tail.step
+  := by
+  induction a using Quotient.inductionOn;
+  induction r using Quotient.inductionOn;
+  rfl
+
+theorem Eqv.br_succ_seq_eq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {hℓ : LCtx.Trg (C::L) (ℓ + 1) B}
+  {r r' : Eqv φ (⟨C, ⊥⟩::Γ) (D::L)}
+  : br (ℓ + 1) a hℓ ;; r = br (ℓ + 1) a hℓ ;; r'
+  := by rw [br_succ_seq, br_succ_seq]
 
 theorem Eqv.ret_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩}

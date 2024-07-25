@@ -18,7 +18,9 @@ structure Trg (L : LCtx α) (n : ℕ) (A : Ty α) : Prop where
   length : n < L.length
   getElem : A ≤ L[n]
 
-def Trg.get (L : LCtx α) {n A} (h : L.Trg n A) : A ≤ L.get ⟨n, h.length⟩ := h.getElem
+theorem Trg.get (L : LCtx α) {n A} (h : L.Trg n A) : A ≤ L.get ⟨n, h.length⟩ := h.getElem
+
+theorem Trg.get0 (L : LCtx α) {lo hi} (h : LCtx.Trg (hi::L) 0 lo) : lo ≤ hi := h.getElem
 
 instance : Append (LCtx α) := (inferInstance : Append (List (Ty α)))
 

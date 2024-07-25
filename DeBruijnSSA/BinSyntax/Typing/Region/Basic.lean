@@ -134,6 +134,16 @@ theorem InS.ext {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   (h : (r : Region φ) = r') : r = r'
   := by cases r; cases r'; cases h; rfl
 
+theorem InS.ext_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+  : r = r' ↔ (r : Region φ) = r'
+  := ⟨congrArg _, λh => InS.ext h⟩
+
+@[simp]
+theorem InS.cast_inj {Γ Γ' : Ctx α ε} {L L' : LCtx α} {r r' : InS φ Γ L}
+  {hΓ : Γ = Γ'} {hL : L = L'}
+  : r.cast hΓ hL = r'.cast hΓ hL ↔ r = r'
+  := by simp [ext_iff]
+
 def Wf.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.Wf Γ L) : InS φ Γ L
   := ⟨r, h⟩
 
@@ -237,6 +247,44 @@ theorem output_reshuffle_helper {R : LCtx α} {Y : Ty α} {L : LCtx α}
   : (R ++ (Y::L)) = (output_first R Y L)::(output_rest R Y L)
   := by cases R <;> rfl
 
+def InS.shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ (R ++ (Y::L))) : InS φ Γ ((output_first R Y L)::(output_rest R Y L))
+  := d.cast rfl output_reshuffle_helper
+
+def InS.ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ ((output_first R Y L)::(output_rest R Y L))) : InS φ Γ (R ++ (Y::L))
+  := d.cast rfl output_reshuffle_helper.symm
+
+@[simp]
+theorem InS.shf_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ (R ++ (Y::L))) : d.shf.ushf = d
+  := by cases d; rfl
+
+@[simp]
+theorem InS.ushf_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ ((output_first R Y L)::(output_rest R Y L))) : d.ushf.shf = d
+  := by cases d; rfl
+
+@[simp]
+theorem InS.coe_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ (R ++ (Y::L))) : (d.shf : Region φ) = (d : Region φ)
+  := rfl
+
+@[simp]
+theorem InS.coe_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  (d : InS φ Γ ((output_first R Y L)::(output_rest R Y L))) : (d.ushf : Region φ) = (d : Region φ)
+  := rfl
+
+@[simp]
+theorem InS.shf_inj {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {r r' : InS φ Γ (R ++ (Y::L))} : r.shf = r'.shf ↔ r = r'
+  := cast_inj
+
+@[simp]
+theorem InS.ushf_inj {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {r r' : InS φ Γ ((output_first R Y L)::(output_rest R Y L))} : r.ushf = r'.ushf ↔ r = r'
+  := cast_inj
+
 theorem InS.arrow_induction
   {motive : (X : Ty α) → (Γ : Ctx α ε) → (Y : Ty α) → (L : LCtx α)
     → InS φ ((X, ⊥)::Γ) (Y::L) → Prop}
@@ -253,8 +301,8 @@ theorem InS.arrow_induction
   (cfg : ∀{X Γ Y L} (R)
     (dβ : InS φ ((X, ⊥)::Γ) (R ++ (Y :: L)))
     (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::⟨X, ⊥⟩::Γ) (R ++ (Y :: L))),
-    motive X Γ _ _ (dβ.cast rfl output_reshuffle_helper)
-    → (∀i, motive _ _ _ _ ((dG i).cast rfl output_reshuffle_helper))
+    motive X Γ _ _ dβ.shf
+    → (∀i, motive _ _ _ _ ((dG i).shf))
     → motive _ Γ _ L (InS.cfg R dβ dG))
   {X Γ Y L} : (h : InS φ ((X, ⊥)::Γ) (Y::L)) → motive _ _ _ _ h
   | ⟨r, hr⟩ => by

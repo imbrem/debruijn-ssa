@@ -106,15 +106,54 @@ theorem Eqv.fixpoint_iter_cfg {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     funext k
     cases k <;> rfl
 
+theorem Eqv.seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ C::L))
+  (G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ C::L))
+  : f ;; cfg R g (λi => (G i).vwk1)
+  = cfg R
+    ((f.lwk sorry ;; g.cast rfl output_reshuffle_helper).cast rfl output_reshuffle_helper.symm)
+    (λi => (G i).vwk1)
+  := sorry
+
 theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))
   (h : Eqv φ (⟨C, ⊥⟩::Γ) (C::D::L))
-  : cfg [C] (f.lwk1 ;; g) (Fin.elim1 h.vwk1) = f ;; cfg [C] g (Fin.elim1 h.vwk1)
-  := by sorry
-  -- let Γ' := (A, ⊥)::Γ;
-  -- let L' := B::L;
-  -- induction f using Eqv.induction with
-  -- | _ => sorry
+  : f ;; cfg [C] g (Fin.elim1 h.vwk1) = cfg [C] (f.lwk1 ;; g) (Fin.elim1 h.vwk1)
+  := by
+  induction f using Eqv.arrow_induction with
+  | br ℓ a hℓ =>
+    cases ℓ with
+    | zero =>
+      simp only [List.append_eq, List.nil_append, br_zero_eq_ret, wk_res_self, lwk1_ret, ret_seq,
+        List.length_singleton, List.get_eq_getElem, List.singleton_append, vwk1_cfg, vsubst_cfg]
+      congr
+      funext i
+      cases i using Fin.elim1
+      induction h using Quotient.inductionOn
+      induction a using Quotient.inductionOn
+      apply Eqv.eq_of_reg_eq
+      simp only [Set.mem_setOf_eq, InS.coe_vwk, Ctx.InS.coe_wk1, Fin.isValue, Fin.val_zero,
+        List.getElem_cons_zero, InS.coe_vsubst, Term.Subst.InS.coe_lift, Term.InS.coe_subst0,
+        Ctx.InS.coe_wk2, Region.vwk_vwk]
+      simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+      congr
+      funext i
+      cases i <;> rfl
+    | succ ℓ => simp [cfg_br_ge]
+  | let1 a r Ir =>
+    apply Eq.symm
+    rw [lwk1_let1, let1_seq, cfg_let1, let1_seq]
+    congr
+    apply Eq.trans (Ir g.vwk1 h.vwk1).symm
+    simp only [vwk1_cfg]
+    congr
+    funext i
+    cases i using Fin.elim1
+    simp [vwk1_vwk2]
+  | let2 a r Ir =>
+    sorry
+  | case a l r Il Ir => sorry
+  | cfg R β G Iβ IG => sorry
 
 theorem Eqv.ret_var_zero_eq_nil_vwk1 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : ret (var 0 (by simp)) = (nil (φ := φ) (ty := A) (rest := Γ) (targets := L)).vwk1 (inserted := X)
@@ -126,7 +165,7 @@ theorem Eqv.fixpoint_iter {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   apply Eq.trans f.fixpoint_iter_cfg
   rw [lwk1_vwk1, <-vwk1_left_exit]
   simp only [<-vwk1_seq (left := f.lwk1) (right := left_exit)]
-  rw [seq_cont]
+  rw [<-seq_cont]
   congr
   conv =>
     lhs

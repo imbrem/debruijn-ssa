@@ -173,8 +173,6 @@ def Eqv.induction
       rw [cfg_quot] at res
       exact res
 
-
-
 theorem Eqv.arrow_induction
   {motive : (X : Ty α) → (Γ : Ctx α ε) → (Y : Ty α) → (L : LCtx α)
     → Eqv φ ((X, ⊥)::Γ) (Y::L) → Prop}
@@ -516,6 +514,49 @@ theorem Eqv.lwk1_vwk1
 theorem Eqv.lwk1_quot
   {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ (head::L)}
   : Eqv.lwk1 (inserted := inserted) ⟦r⟧ = ⟦r.lwk1⟧ := rfl
+
+@[simp]
+theorem Eqv.lwk1_br_zero {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {hℓ : LCtx.Trg (C::L) 0 B}
+  : (br 0 a hℓ).lwk1 (inserted := inserted)
+  = br 0 a ⟨by simp, by simp [hℓ.get0]⟩ := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.lwk1_br_succ {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {hℓ : LCtx.Trg (C::L) (ℓ + 1) B}
+  : (br (ℓ + 1) a hℓ).lwk1 (inserted := inserted)
+  = br (ℓ + 2) a ⟨
+    by have h := hℓ.length; simp at h; simp [h],
+    by have h := hℓ.getElem; simp at h; simp [h]
+  ⟩ := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.lwk1_let1 {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ Γ ⟨A, e⟩} {r : Eqv φ ((A, ⊥)::Γ) (head::L)}
+  : Eqv.lwk1 (inserted := inserted) (let1 a r) = let1 a (r.lwk1) := by
+  induction a using Quotient.inductionOn; induction r using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.lwk1_let2 {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ Γ ⟨Ty.prod A B, e⟩} {r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) (head::L)}
+  : Eqv.lwk1 (inserted := inserted) (let2 a r) = let2 a (r.lwk1) := by
+  induction a using Quotient.inductionOn; induction r using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.lwk1_case {Γ : Ctx α ε} {L : LCtx α}
+  {e : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩}
+  {r : Eqv φ ((A, ⊥)::Γ) (head::L)} {s : Eqv φ ((B, ⊥)::Γ) (head::L)}
+  : Eqv.lwk1 (inserted := inserted) (case e r s) = case e (r.lwk1) (s.lwk1) := by
+  induction e using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  rfl
 
 open Term.Eqv
 

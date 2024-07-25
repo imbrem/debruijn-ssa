@@ -651,6 +651,9 @@ theorem Eqv.wk_res_self {a : Eqv φ Γ e} : a.wk_res (by simp) = a := by
   rfl
 
 @[simp]
+theorem Eqv.wk_res_quot {a : InS φ Γ lo} {hV : lo ≤ hi} : wk_res hV ⟦a⟧ = ⟦a.wk_res hV⟧ := rfl
+
+@[simp]
 theorem Eqv.var0_subst0 {Γ : Ctx α ε} {a : Eqv φ Γ lo} {h : Ctx.Var (lo::Γ) 0 hi}
   : (var 0 h).subst a.subst0 = a.wk_res h.get := by
   induction a using Quotient.inductionOn;
