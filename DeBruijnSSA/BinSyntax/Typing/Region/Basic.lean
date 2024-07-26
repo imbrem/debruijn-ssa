@@ -212,6 +212,20 @@ theorem InS.coe_update {ι : Type _} [DecidableEq ι] {Γ : ι → Ctx α ε} {L
         case isTrue h => cases h; rfl
         case isFalse h => rfl
 
+def InS.ccfg {Γ : Ctx α ε} {L D : LCtx α} (R : LCtx α) (dβ : InS φ Γ D) (hD : D = R ++ L)
+  (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : InS φ Γ L := InS.cfg R (dβ.cast rfl hD) dG
+
+@[simp]
+theorem InS.coe_ccfg {Γ : Ctx α ε} {L D : LCtx α} (R : LCtx α) (dβ : InS φ Γ D) (hD : D = R ++ L)
+  (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : (InS.ccfg R dβ hD dG : Region φ) = (InS.cfg R (dβ.cast rfl hD) dG : Region φ)
+  := rfl
+
+theorem InS.ccfg_rfl {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α) (dβ : InS φ Γ (R ++ L))
+  (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : ccfg R dβ rfl dG = cfg R dβ dG := rfl
+
 theorem InS.induction
   {motive : (Γ : Ctx α ε) → (L : LCtx α) → InS φ Γ L → Prop}
   (br : ∀{Γ L A} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (InS.br ℓ a hℓ))
@@ -236,6 +250,32 @@ theorem InS.induction
     cases hR
     simp only [Fin.cast_eq_self] at *
     exact cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩) Iβ IG
+
+theorem InS.induction_ccfg
+  {motive : (Γ : Ctx α ε) → (L : LCtx α) → InS φ Γ L → Prop}
+  (br : ∀{Γ L A} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A), motive Γ L (InS.br ℓ a hℓ))
+  (let1 : ∀{Γ L A e} (a : Term.InS φ Γ ⟨A, e⟩) (t : InS φ (⟨A, ⊥⟩::Γ) L),
+    motive _ _ t → motive Γ L (InS.let1 a t))
+  (let2 : ∀{Γ L A B e} (a : Term.InS φ Γ ⟨Ty.prod A B, e⟩) (t : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L),
+    motive _ _ t → motive Γ L (InS.let2 a t))
+  (case : ∀{Γ L A B e} (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩)
+    (s : InS φ (⟨A, ⊥⟩::Γ) L) (t : InS φ (⟨B, ⊥⟩::Γ) L),
+    motive _ _ s → motive _ _ t → motive Γ L (InS.case a s t))
+  (ccfg : ∀{Γ L D} (R)
+    (dβ : InS φ Γ D)
+    (hD : D = R ++ L)
+    (dG : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)),
+    motive _ _ dβ → (∀i, motive _ _ (dG i)) → motive Γ L (InS.ccfg R dβ hD dG))
+  {Γ L} : (h : InS φ Γ L) → motive _ _ h
+  | ⟨r, hr⟩ => by induction hr with
+  | br hℓ ha => exact br _ ⟨_, ha⟩ hℓ
+  | let1 ha hr Ir => exact let1 ⟨_, ha⟩ ⟨_, hr⟩ Ir
+  | let2 ha hr Ir => exact let2 ⟨_, ha⟩ ⟨_, hr⟩ Ir
+  | case ha hl hr Il Ir => exact case ⟨_, ha⟩ ⟨_, hl⟩ ⟨_, hr⟩ Il Ir
+  | cfg n R hR dβ dG Iβ IG =>
+    cases hR
+    simp only [Fin.cast_eq_self] at *
+    exact ccfg R ⟨_, dβ⟩ rfl (λi => ⟨_, dG i⟩) Iβ IG
 
 def InS.shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
   (d : InS φ Γ (R ++ (Y::L))) : InS φ Γ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))
