@@ -559,6 +559,9 @@ theorem InS.coe_vswap02 {Γ : Ctx α ε} {L} {r : InS φ (left::mid::right::Γ) 
 def InS.lwk {Γ : Ctx α ε} (ρ : L.InS K) (r : InS φ Γ L) : InS φ Γ K
   := ⟨(r : Region φ).lwk ρ, r.2.lwk ρ.prop⟩
 
+def InS.lwk0 {Γ : Ctx α ε} {L} (r : InS φ Γ L) : InS φ Γ (head::L)
+  := r.lwk LCtx.InS.wk0
+
 def InS.lwk1 {Γ : Ctx α ε} (r : InS φ Γ (head::L)) : InS φ Γ (head::inserted::L)
   := r.lwk LCtx.InS.wk1
 
@@ -567,8 +570,16 @@ theorem InS.lwk_equiv {Γ : Ctx α ε} {ρ ρ' : L.InS K} (r : InS φ Γ L) (h :
   := sorry
 
 @[simp]
-theorem coe_lwk {Γ : Ctx α ε} {ρ : L.InS K} {r : InS φ Γ L}
+theorem InS.coe_lwk {Γ : Ctx α ε} {ρ : L.InS K} {r : InS φ Γ L}
   : (r.lwk ρ : Region φ) = (r : Region φ).lwk ρ := rfl
+
+@[simp]
+theorem InS.coe_lwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L}
+  : (r.lwk0 (head := head) : Region φ) = (r : Region φ).lwk0 := rfl
+
+@[simp]
+theorem InS.coe_lwk1 {Γ : Ctx α ε} {L} {r : InS φ Γ (head::L)}
+  : (r.lwk1 (inserted := inserted) : Region φ) = (r : Region φ).lwk1 := rfl
 
 theorem InS.lwk_lwk {Γ : Ctx α ε} {L K J}
   {ρ : L.InS K} {σ : K.InS J}
@@ -612,6 +623,47 @@ theorem InS.lwk_lwk_id {Γ : Ctx α ε} {L K J} {ρ : L.InS K} {h : K.Wkn J id}
   {r : InS φ Γ L}
   : (r.lwk ρ).lwk_id h = r.lwk ⟨ρ, (h.comp ρ.prop)⟩ := by
   cases r; simp [lwk, lwk_id, lwk_lwk]
+
+theorem InS.shf_vwk {Γ Δ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
+  {ρ : Ctx.InS Γ Δ}
+  {d : InS φ Δ (R ++ (Y::L))}
+  : (d.vwk ρ).shf = d.shf.vwk ρ := rfl
+
+theorem InS.vwk_shf {Γ Δ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
+  {ρ : Ctx.InS Γ Δ}
+  {d : InS φ Δ (R ++ (Y::L))}
+  : d.shf.vwk ρ = (d.vwk ρ).shf := rfl
+
+theorem InS.shf_vwk1 {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d : InS φ (head::Γ) (R ++ (Y::L))}
+  : (d.vwk1).shf = d.shf.vwk1 (inserted := inserted) := rfl
+
+theorem InS.vwk1_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d : InS φ (head::Γ) (R ++ (Y::L))}
+  : d.shf.vwk1 (inserted := inserted) = (d.vwk1).shf := rfl
+
+theorem InS.ushf_vwk {Γ Δ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
+  {ρ : Ctx.InS Γ Δ}
+  {d : InS φ Δ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))}
+  : (d.vwk ρ).ushf = d.ushf.vwk ρ := rfl
+
+theorem InS.vwk_ushf {Γ Δ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
+  {ρ : Ctx.InS Γ Δ}
+  {d : InS φ Δ ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))}
+  : d.ushf.vwk ρ = (d.vwk ρ).ushf := rfl
+
+theorem InS.ushf_vwk1 {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d : InS φ (head::Γ) ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))}
+  : (d.vwk1 (inserted := inserted)).ushf = d.ushf.vwk1 := rfl
+
+theorem InS.vwk1_ushf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d : InS φ (head::Γ) ((LCtx.shf_first R Y L)::(LCtx.shf_rest R Y L))}
+  : d.ushf.vwk1 = (d.vwk1 (inserted := inserted)).ushf := rfl
+
+-- theorem InS.lwk1_shf {Γ : Ctx α ε} {L : LCtx α}
+--   {d : InS φ Γ (head::(R ++ (Y::L)))}
+--   : (d.lwk1 (inserted := inserted)).shf (R := (head::inserted::R))
+--   = d.shf.lwk1 (inserted := inserted) := sorry
 
 -- TODO: normalize Region to TRegion; type preservation
 

@@ -839,7 +839,13 @@ theorem Region.lwk_vwk1 (t : Region φ) : t.vwk1.lwk ρ = (t.lwk ρ).vwk1 := lwk
 
 theorem Region.vwk1_lwk (t : Region φ) : (t.lwk ρ).vwk1 = t.vwk1.lwk ρ := t.lwk_vwk1.symm
 
+def Region.lwk0 : Region φ → Region φ := lwk Nat.succ
+
 def Region.lwk1 : Region φ → Region φ := lwk (Nat.liftWk Nat.succ)
+
+theorem Region.lwk0_vwk1 (r : Region φ) : r.vwk1.lwk0 = r.lwk0.vwk1 := by rw [vwk1, lwk0, vwk_lwk]
+
+theorem Region.vwk1_lwk0 (r : Region φ) : r.lwk0.vwk1 = r.vwk1.lwk0 := r.lwk0_vwk1.symm
 
 theorem Region.lwk1_vwk1 (r : Region φ) : r.vwk1.lwk1= r.lwk1.vwk1 := by rw [vwk1, lwk1, vwk_lwk]
 

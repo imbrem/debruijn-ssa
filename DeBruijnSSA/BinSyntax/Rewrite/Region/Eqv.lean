@@ -354,6 +354,16 @@ theorem Eqv.vwk_id_eq
   : Eqv.vwk_id hρ r = r := by
   induction r using Quotient.inductionOn; rfl
 
+theorem Eqv.shf_vwk {Γ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
+  {ρ : Ctx.InS Γ Δ}
+  {d : Eqv φ Δ (R ++ (Y::L))}
+  : (d.vwk ρ).shf = d.shf.vwk ρ := by induction d using Quotient.inductionOn; rfl
+
+theorem Eqv.vwk_shf {Γ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
+  {ρ : Ctx.InS Γ Δ}
+  {d : Eqv φ Δ (R ++ (Y::L))}
+  : d.shf.vwk ρ = (d.vwk ρ).shf := by induction d using Quotient.inductionOn; rfl
+
 def Eqv.lwk {Γ : Ctx α ε} {L K : LCtx α} (ρ : L.InS K) (r : Eqv φ Γ L)
   : Eqv φ Γ K := Quotient.liftOn r
     (λr => InS.q (r.lwk ρ))
@@ -586,6 +596,16 @@ theorem Eqv.vwk1_lwk {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
   {r : Eqv φ (head::Γ) L}
   : (r.lwk ρ).vwk1 = (r.vwk1 (inserted := inserted)).lwk ρ := by
   induction r using Quotient.inductionOn; simp [InS.vwk1_lwk]
+
+theorem Eqv.shf_vwk1 {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d : Eqv φ (head::Γ) (R ++ (Y::L))}
+  : (d.vwk1).shf = d.shf.vwk1 (inserted := inserted) := by
+  induction d using Quotient.inductionOn; rfl
+
+theorem Eqv.vwk1_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
+  {d : Eqv φ (head::Γ) (R ++ (Y::L))}
+  : d.shf.vwk1 (inserted := inserted) = (d.vwk1).shf := by
+  induction d using Quotient.inductionOn; rfl
 
 @[simp]
 theorem Eqv.vwk1_br {Γ : Ctx α ε} {L : LCtx α}

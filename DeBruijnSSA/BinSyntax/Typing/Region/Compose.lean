@@ -169,6 +169,129 @@ theorem InS.coe_append {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (((l : InS φ (⟨A, ⊥⟩::Γ) (B::L)) ++ (r : InS φ (⟨B, ⊥⟩::Γ) (C::L))) : Region φ)
   = (l : Region φ) ++ (r : Region φ) := rfl
 
+def InS.wseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L)) : InS φ (⟨A, ⊥⟩::Γ) (C::L)
+  := cfg [B] left.lwk1 (Fin.elim1 right.lwk0.vwk1)
+
+@[simp]
+theorem InS.coe_wseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {left : InS φ (⟨A, ⊥⟩::Γ) (B::L)} {right : InS φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : ((left.wseq right) : Region φ) = (left : Region φ).wseq (right : Region φ) := by
+  simp only [wseq, coe_cfg, coe_lwk1]
+  congr
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+def InS.wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L)) : InS φ Γ (C::L)
+  := cfg [B] left.lwk1 (Fin.elim1 right.lwk0)
+
+@[simp]
+theorem InS.coe_wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {left : InS φ Γ (B::L)} {right : InS φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : ((left.wrseq right) : Region φ) = (left : Region φ).wrseq (right : Region φ) := by
+  simp only [wrseq, coe_cfg, coe_lwk1]
+  congr
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+def InS.wthen {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
+  := cfg [B] left (Fin.elim1 right.lwk0)
+
+@[simp]
+theorem InS.coe_wthen {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {left : InS φ Γ (B::L)} {right : InS φ (⟨B, ⊥⟩::Γ) L}
+  : ((left.wthen right) : Region φ) = (left : Region φ).wthen (right : Region φ) := by
+  simp only [wthen, coe_cfg]
+  congr
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+theorem InS.wseq_eq_wrseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))
+  : left.wseq right = left.wrseq right.vwk1 := by ext; simp [Region.wseq_eq_wrseq]
+
+theorem InS.wseq_eq_wthen {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))
+  : left.wseq right = left.lwk1.wthen right.vwk1 := by ext; simp [Region.wseq_eq_wthen]
+
+theorem InS.wrseq_eq_wthen {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))
+  : left.wrseq right = left.lwk1.wthen right := by ext; simp [Region.wrseq_eq_wthen]
+
+theorem InS.vwk_lift_wseq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Ctx.InS Γ Δ}
+  {left : InS φ (⟨A, ⊥⟩::Δ) (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Δ) (C::L)}
+  : (left.wseq right).vwk (ρ.lift (le_refl _))
+  = (left.vwk (ρ.lift (le_refl _))).wseq (right.vwk (ρ.lift (le_refl _))) := by
+  ext; simp only [coe_vwk, coe_wseq, Ctx.InS.coe_lift, Region.vwk_lift_wseq]
+
+theorem InS.vwk_slift_wseq {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Ctx.InS Γ Δ}
+  {left : InS φ (⟨A, ⊥⟩::Δ) (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Δ) (C::L)}
+  : (left.wseq right).vwk ρ.slift
+  = (left.vwk ρ.slift).wseq (right.vwk ρ.slift) := vwk_lift_wseq
+
+theorem InS.lwk_lift_wseq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : InS φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left.wseq right).lwk (ρ.lift (le_refl _))
+  = (left.lwk (ρ.lift (le_refl _))).wseq (right.lwk (ρ.lift (le_refl _))) := by
+  ext; simp only [coe_lwk, coe_wseq, LCtx.InS.coe_lift, Region.lwk_lift_wseq]
+
+theorem InS.lwk_slift_wseq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : InS φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left.wseq right).lwk ρ.slift
+  = (left.lwk ρ.slift).wseq (right.lwk ρ.slift) := lwk_lift_wseq
+
+theorem InS.vwk_wrseq {B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Ctx.InS Γ Δ}
+  {left : InS φ Δ (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Δ) (C::L)}
+  : (left.wrseq right).vwk ρ
+  = (left.vwk ρ).wrseq (right.vwk ρ.slift) := by
+  ext; simp only [coe_vwk, coe_wrseq, Ctx.InS.coe_lift, Region.vwk_wrseq]
+
+theorem InS.lwk_lift_wrseq {B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : InS φ Γ (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left.wrseq right).lwk (ρ.lift (le_refl _))
+  = (left.lwk (ρ.lift (le_refl _))).wrseq (right.lwk (ρ.lift (le_refl _))) := by
+  ext; simp only [coe_lwk, coe_wrseq, LCtx.InS.coe_lift, Region.lwk_lift_wrseq]
+
+theorem InS.lwk_slift_wrseq {B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : InS φ Γ (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left.wrseq right).lwk ρ.slift
+  = (left.lwk ρ.slift).wrseq (right.lwk ρ.slift) := lwk_lift_wrseq
+
+theorem InS.vwk_wthen {B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Ctx.InS Γ Δ}
+  {left : InS φ Δ (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Δ) L}
+  : (left.wthen right).vwk ρ
+  = (left.vwk ρ).wthen (right.vwk ρ.slift) := by
+  ext; simp only [coe_vwk, coe_wthen, Ctx.InS.coe_lift, Region.vwk_wthen]
+
+theorem InS.lwk_wthen {B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : InS φ Γ (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Γ) L}
+  : (left.wthen right).lwk ρ
+  = (left.lwk ρ.slift).wthen (right.lwk ρ) := by
+  ext; simp only [coe_lwk, coe_wthen, LCtx.InS.coe_slift, Region.lwk_wthen]
+
 theorem Wf.left_exit {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
     : left_exit.Wf (φ := φ) (⟨A.coprod B, e⟩::Γ) (B::A::L) :=
   case (Term.Wf.var Ctx.Var.shead)

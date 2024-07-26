@@ -67,6 +67,9 @@ theorem Wkn.id (L : LCtx α) : L.Wkn L id := λ_ hi => ⟨hi, le_refl _⟩
 
 def InS.id (L : LCtx α) : InS L L := ⟨_root_.id, Wkn.id _⟩
 
+@[simp]
+theorem InS.coe_id (L : LCtx α) : (InS.id L : ℕ → ℕ) = _root_.id := rfl
+
 theorem Wkn_def : L.Wkn K ρ ↔
   ∀i, (h : i < L.length) → K.Trg (ρ i) L[i] := Iff.rfl
 
@@ -83,11 +86,19 @@ theorem Wkn.lift {lo hi : Ty α} (h : lo ≤ hi) (hρ : Wkn L K ρ)
 def InS.lift {lo hi : Ty α} (h : lo ≤ hi) (ρ : L.InS K) : InS (lo::L) (hi::K)
   := ⟨Nat.liftWk ρ, ρ.prop.lift h⟩
 
+@[simp]
+theorem InS.coe_lift {lo hi : Ty α} (h : lo ≤ hi) (ρ : L.InS K)
+  : (ρ.lift h : ℕ → ℕ) = Nat.liftWk ρ := rfl
+
 theorem Wkn.slift {head : Ty α} (hρ : Wkn L K ρ) : Wkn (head::L) (head::K) (Nat.liftWk ρ)
   := hρ.lift (le_refl head)
 
 def InS.slift {head : Ty α} (ρ : L.InS K) : InS (head::L) (head::K)
   := ρ.lift (le_refl head)
+
+@[simp]
+theorem InS.coe_slift {head : Ty α} (ρ : L.InS K)
+  : (ρ.slift (head := head) : ℕ → ℕ) = Nat.liftWk ρ := rfl
 
 theorem Wkn.step {head : Ty α} (h : L.Wkn K ρ) : Wkn L (head::K) (Nat.stepWk ρ)
   := Wkn_iff.mpr ((Wkn_iff.mp h).step _)
@@ -101,6 +112,10 @@ theorem Wkn.liftn_append {L K : LCtx α} {ρ : ℕ → ℕ} (R : LCtx α) (h : L
 
 def InS.liftn_append {L K : LCtx α} (R : LCtx α) : InS L K → InS (R ++ L) (R ++ K)
   := λρ => ⟨Nat.liftnWk R.length ρ, ρ.2.liftn_append R⟩
+
+@[simp]
+theorem InS.coe_liftn_append {L K : LCtx α} (R : LCtx α) (ρ : L.InS K)
+  : (ρ.liftn_append R : ℕ → ℕ) = Nat.liftnWk R.length ρ := rfl
 
 theorem Wkn.comp {L K J : LCtx α} {ρ σ}
   : K.Wkn J ρ → L.Wkn K σ → L.Wkn J (ρ ∘ σ)
@@ -116,12 +131,20 @@ theorem Wkn.succ {head} {L : LCtx α}
 def InS.wk0 {head : Ty α} {L : LCtx α} : InS L (head::L)
   := ⟨Nat.succ, Wkn.succ⟩
 
+@[simp]
+theorem InS.coe_wk0 {head : Ty α} {L : LCtx α}
+  : (InS.wk0 (head := head) (L := L) : ℕ → ℕ) = Nat.succ := rfl
+
 theorem Wkn.wk1 {head inserted : Ty α} {L : LCtx α}
   : Wkn (head::L) (head::inserted::L) (Nat.liftWk Nat.succ)
   := succ.slift
 
 def InS.wk1 {head inserted : Ty α} {L : LCtx α} : InS (head::L) (head::inserted::L)
   := ⟨Nat.liftWk Nat.succ, Wkn.wk1⟩
+
+@[simp]
+theorem InS.coe_wk1 {head inserted : Ty α} {L : LCtx α}
+  : (InS.wk1 (head := head) (inserted := inserted) (L := L) : ℕ → ℕ) = Nat.liftWk Nat.succ := rfl
 
 def InS.comp {L K J : LCtx α} (ρ : InS K J) (σ : InS L K) : InS L J
   := ⟨(ρ : ℕ → ℕ) ∘ (σ : ℕ → ℕ), ρ.2.comp σ.2⟩
@@ -139,6 +162,10 @@ theorem Wkn.add_left_append (original added : LCtx α)
 
 def InS.add_left_append (original added : LCtx α) : InS original (added ++ original)
   := ⟨(· + added.length), Wkn.add_left_append original added⟩
+
+@[simp]
+theorem InS.coe_add_left_append (original added : LCtx α)
+  : (InS.add_left_append original added : ℕ → ℕ) = (· + added.length) := rfl
 
 theorem Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
@@ -227,3 +254,7 @@ theorem Wkn.shf {R : LCtx α} {Y : Ty α} {L : LCtx α}
 
 def InS.shf {R : LCtx α} {Y : Ty α} {L : LCtx α} : L.InS (shf_rest R Y L)
   := ⟨(· + R.length), Wkn.shf⟩
+
+@[simp]
+theorem InS.coe_shf {R : LCtx α} {Y : Ty α} {L : LCtx α}
+  : (InS.shf (R := R) (Y := Y) (L := L) : ℕ → ℕ) = (· + R.length) := rfl
