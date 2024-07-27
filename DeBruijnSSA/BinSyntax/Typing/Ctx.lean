@@ -266,6 +266,14 @@ theorem InS.coe_slift {head : Ty α × ε} {Γ Δ} (hρ : InS Γ Δ)
   : (InS.slift (head := head) hρ : ℕ → ℕ) = Nat.liftWk hρ
   := rfl
 
+theorem InS.lift_congr {lo hi : Ty α × ε} {ρ ρ' : InS Γ Δ} (h : lo ≤ hi) (hρ : ρ ≈ ρ')
+  : ρ.lift h ≈ ρ'.lift h
+  := λ | 0, _ => rfl | n + 1, hi => by simp [hρ n (Nat.lt_of_succ_lt_succ hi)]
+
+theorem InS.slift_congr {head : Ty α × ε} {ρ ρ' : InS Γ Δ} (hρ : ρ ≈ ρ')
+  : ρ.slift (head := head) ≈ ρ'.slift
+  := lift_congr (le_refl _) hρ
+
 @[simp]
 theorem InS.lift_wk0 {head inserted} {Γ : Ctx α ε}
   : wk0.lift (le_refl _) = (wk1 : InS (head::inserted::Γ) (head::Γ))
@@ -380,6 +388,14 @@ theorem InS.coe_liftn₂ {V₁ V₁' V₂ V₂' : Ty α × ε} (hV₁ : V₁ ≤
 theorem InS.coe_sliftn₂ {left right : Ty α × ε} (h : InS Γ Δ)
   : (InS.sliftn₂ (left := left) (right := right) h : ℕ → ℕ) = Nat.liftnWk 2 h
   := rfl
+
+theorem InS.liftn₂_congr {ρ ρ' : InS Γ Δ} (h : lo ≤ hi) (h' : lo' ≤ hi') (hρ : ρ ≈ ρ')
+  : ρ.liftn₂ h h' ≈ ρ'.liftn₂ h h'
+  := by simp only [<-InS.lift_lift]; exact lift_congr h (lift_congr h' hρ)
+
+theorem InS.sliftn₂_congr {left right : Ty α × ε} {ρ ρ' : InS Γ Δ} (hρ : ρ ≈ ρ')
+  : ρ.sliftn₂ (left := left) (right := right) ≈ ρ'.sliftn₂
+  := liftn₂_congr (le_refl _) (le_refl _) hρ
 
 @[simp]
 theorem InS.lift_wk1 {left right inserted} {Γ : Ctx α ε}

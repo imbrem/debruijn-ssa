@@ -514,8 +514,16 @@ theorem InS.vwk_cfg {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {R : LCtx α}
 
 theorem InS.vwk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} {L} (r : InS φ Δ L) (h : ρ ≈ ρ')
   : r.vwk ρ = r.vwk ρ'
-  := by induction r using InS.induction with
-  | _ => sorry
+  := by induction r using InS.induction generalizing Γ with
+  | br ℓ a hℓ => simp [a.wk_equiv h]
+  | let1 a r Ir => simp [a.wk_equiv h, Ir (Ctx.InS.slift_congr h)]
+  | let2 a r Ir => simp [a.wk_equiv h, Ir (Ctx.InS.sliftn₂_congr h)]
+  | case a s t Is It => simp [a.wk_equiv h, Is (Ctx.InS.slift_congr h), It (Ctx.InS.slift_congr h)]
+  | cfg R dβ dG Iβ IG =>
+    simp only [vwk_cfg, Iβ h, List.get_eq_getElem]
+    congr
+    funext i
+    simp [IG i (Ctx.InS.slift_congr h)]
 
 @[simp]
 theorem InS.coe_vwk {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {r : InS φ Δ L}

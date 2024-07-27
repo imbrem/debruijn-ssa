@@ -210,6 +210,18 @@ theorem Region.InS.vsubst_lsubst {Γ Δ : Ctx α ε}
   : (r.lsubst σ).vsubst ρ = (r.vsubst ρ).lsubst (σ.vsubst ρ)
   := by ext; simp [Region.vsubst_lsubst]
 
+def LCtx.InS.toSubst {Γ : Ctx α ε} {L K : LCtx α} (ρ : L.InS K) : Region.Subst.InS φ Γ L K
+  := ⟨Region.Subst.fromLwk ρ, λℓ => Region.Wf.br (ρ.prop ℓ ℓ.prop) (Term.Wf.var Ctx.Var.shead)⟩
+
+@[simp]
+theorem LCtx.InS.coe_toSubst {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K}
+  : (ρ.toSubst (φ := φ) (Γ := Γ) : Region.Subst φ) = Region.Subst.fromLwk ρ
+  := rfl
+
+def Region.InS.lsubst_toSubst {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : Region.InS φ Γ L}
+  : r.lsubst (ρ.toSubst) = r.lwk ρ
+  := by ext; simp [Region.lsubst_fromLwk]
+
 end RegionSubst
 
 end BinSyntax

@@ -338,3 +338,61 @@ theorem InS.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   : r.fixpoint.vsubst (σ.lift (le_refl _)) = (r.vsubst (σ.lift (le_refl _))).fixpoint := by
   ext
   simp only [coe_fixpoint, coe_vsubst, Term.Subst.InS.coe_lift, Region.vsubst_lift_fixpoint]
+
+def InS.cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
+  (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : Subst.InS φ Γ (R ++ L) L := ⟨
+    Region.cfgSubst R.length (λi => G i),
+    λℓ => Wf.cfg (hR := rfl)
+      (Wf.br ⟨ℓ.prop, by simp⟩ (Term.Wf.var Ctx.Var.shead))
+      (λi => (G i).prop.vwk1)⟩
+
+@[simp]
+theorem InS.coe_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
+  (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : (InS.cfgSubst R G : Region.Subst φ) = Region.cfgSubst R.length (λi => G i) := rfl
+
+def InS.cfgSubst' {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
+  (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : Subst.InS φ Γ (R ++ L) L := ⟨
+    Region.cfgSubst' R.length (λi => G i),
+    λℓ => if h : ℓ < R.length then by
+        simp only [Region.cfgSubst', h, ↓reduceIte]
+        exact Wf.cfg (hR := rfl)
+          (Wf.br ⟨ℓ.prop, by simp⟩ (Term.Wf.var Ctx.Var.shead))
+          (λi => (G i).prop.vwk1)
+      else by
+        simp only [Region.cfgSubst', h, ↓reduceIte]
+        apply Wf.br _ (Term.Wf.var Ctx.Var.shead)
+        constructor
+        · simp only [List.get_eq_getElem]
+          rw [List.getElem_append_right]
+          exact h
+        · rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt h)]
+          have h := ℓ.prop
+          simp at h
+          exact h
+    ⟩
+
+@[simp]
+theorem InS.coe_cfgSubst' {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
+  (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : (InS.cfgSubst' R G : Region.Subst φ) = Region.cfgSubst' R.length (λi => G i) := rfl
+
+def InS.ucfg {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : InS φ Γ L := β.lsubst (InS.cfgSubst R G)
+
+@[simp]
+theorem InS.coe_ucfg {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : (InS.ucfg R β G : Region φ) = Region.ucfg R.length β (λi => (G i)) := rfl
+
+def InS.ucfg' {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : InS φ Γ L := β.lsubst (InS.cfgSubst' R G)
+
+@[simp]
+theorem InS.coe_ucfg' {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : (InS.ucfg' R β G : Region φ) = Region.ucfg' R.length β (λi => (G i)) := rfl

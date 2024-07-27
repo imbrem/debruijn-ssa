@@ -292,3 +292,14 @@ def Subst.InS.fromWk {Γ Δ : Ctx α ε} (h : Γ.InS Δ) : Subst.InS φ Γ Δ
 theorem Subst.InS.coe_fromWk {Γ Δ : Ctx α ε} (h : Γ.InS Δ)
   : ((fromWk h : Subst.InS φ Γ Δ) : Subst φ) = Subst.fromWk h
   := rfl
+
+def _root_.BinSyntax.Ctx.InS.toSubst {Γ Δ : Ctx α ε} (h : Γ.InS Δ) : Subst.InS φ Γ Δ
+  := ⟨Subst.fromWk h, λx => by have h := h.prop x.val x.prop; simp at h; simp [h]⟩
+
+@[simp]
+theorem _root_.BinSyntax.Ctx.InS.coe_toSubst {Γ Δ : Ctx α ε} {h : Γ.InS Δ}
+  : ((h.toSubst : Subst.InS φ Γ Δ) : Subst φ) = Subst.fromWk h
+  := rfl
+
+theorem InS.subst_toSubst {Γ Δ : Ctx α ε} {h : Γ.InS Δ} {a : InS φ Δ V}
+  : a.subst h.toSubst = a.wk h := by ext; simp [Term.subst_fromWk]

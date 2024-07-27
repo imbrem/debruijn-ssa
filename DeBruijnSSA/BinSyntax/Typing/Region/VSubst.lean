@@ -66,3 +66,6 @@ theorem Region.InS.vsubst_vsubst {Γ Δ Ξ : Ctx α ε}
   {σ : Term.Subst.InS φ Γ Δ} {τ : Term.Subst.InS φ Δ Ξ}
   (r : InS φ Ξ L) : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ)
   := by ext; simp [Region.vsubst_vsubst]
+
+theorem Region.InS.vsubst_toSubst {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {r : InS φ Δ L}
+  : r.vsubst ρ.toSubst = r.vwk ρ := by ext; simp [Region.vsubst_fromWk]

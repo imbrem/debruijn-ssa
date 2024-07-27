@@ -129,4 +129,74 @@ theorem Eqv.vsubst_lsubst {Γ Δ : Ctx α ε}
   induction r using Quotient.inductionOn
   simp [InS.vsubst_lsubst]
 
-end Region
+def Eqv.cfgSubstInner {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α)
+  (G : Quotient (α := ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)) inferInstance)
+  : Subst.Eqv φ Γ (R ++ L) L
+  := Quotient.liftOn G (λG => ⟦InS.cfgSubst R G⟧) sorry
+
+def Eqv.cfgSubst {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α) (G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Subst.Eqv φ Γ (R ++ L) L
+  := cfgSubstInner R (Quotient.finChoice G)
+
+theorem Eqv.cfgSubst_quot {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfgSubst R (λi => ⟦G i⟧) = ⟦InS.cfgSubst R G⟧ := sorry
+
+def Eqv.cfgSubstInner' {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α)
+  (G : Quotient (α := ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)) inferInstance)
+  : Subst.Eqv φ Γ (R ++ L) L
+  := Quotient.liftOn G (λG => ⟦InS.cfgSubst' R G⟧) sorry
+
+def Eqv.cfgSubst' {Γ : Ctx α ε} {L : LCtx α}
+  (R : LCtx α) (G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Subst.Eqv φ Γ (R ++ L) L
+  := cfgSubstInner' R (Quotient.finChoice G)
+
+theorem Eqv.cfgSubst'_quot {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfgSubst' R (λi => ⟦G i⟧) = ⟦InS.cfgSubst' R G⟧ := sorry
+
+theorem Eqv.cfgSubst_eq_cfgSubst' {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfgSubst R G = cfgSubst' R G := sorry
+
+def Eqv.ucfg
+  (R : LCtx α)
+  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Eqv φ Γ L := β.lsubst (cfgSubst R G)
+
+theorem Eqv.ucfg_quot
+  {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.ucfg R β G⟧ := sorry
+
+def Eqv.ucfg'
+  (R : LCtx α)
+  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Eqv φ Γ L := β.lsubst (cfgSubst' R G)
+
+theorem Eqv.ucfg'_quot
+  {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg' R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.ucfg' R β G⟧ := sorry
+
+theorem Eqv.ucfg_eq_ucfg'
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg R β G = ucfg' R β G := by rw [ucfg, ucfg', cfgSubst_eq_cfgSubst']
+
+theorem Eqv.cfg_eq_ucfg'
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R β G = ucfg' R β G := sorry
+
+theorem Eqv.cfg_eq_ucfg
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R β G = ucfg R β G := by rw [cfg_eq_ucfg', ucfg_eq_ucfg']
+
+theorem Eqv.ucfg'_eq_cfg
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg' R β G = cfg R β G := Eqv.cfg_eq_ucfg'.symm
+
+theorem Eqv.ucfg_eq_cfg
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg R β G = cfg R β G := Eqv.cfg_eq_ucfg.symm

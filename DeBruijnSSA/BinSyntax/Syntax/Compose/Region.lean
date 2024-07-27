@@ -410,6 +410,24 @@ theorem vsubst_lift_fixpoint (r : Region φ) {ρ : Term.Subst φ}
 
 def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
 
--- end Region
+def cfgSubst (n : ℕ) (G : Fin n → Region φ) : Subst φ
+  := λℓ => cfg (br ℓ (Term.var 0)) n (λi => (G i).vwk1)
 
--- end BinSyntax
+def cfgSubst' (n : ℕ) (G : Fin n → Region φ) : Subst φ
+  := λℓ => if ℓ < n then cfg (br ℓ (Term.var 0)) n (λi => (G i).vwk1) else br (ℓ - n) (Term.var 0)
+
+def ucfg (n : ℕ) (β : Region φ) (G : Fin n → Region φ) : Region φ
+  := β.lsubst (cfgSubst n G)
+
+def ucfg' (n : ℕ) (β : Region φ) (G : Fin n → Region φ) : Region φ
+  := β.lsubst (cfgSubst' n G)
+
+-- TODO: vsubst_ucfg
+
+-- TODO: vwk_ucfg
+
+-- TODO: lsubst_ucfg
+
+-- TODO: lwk_ucfg
+
+-- TODO: likewise for prime...

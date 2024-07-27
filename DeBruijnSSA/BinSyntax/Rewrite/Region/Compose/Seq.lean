@@ -561,7 +561,9 @@ theorem Eqv.wthen_cfg {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   = cfg R
     ((f.lwk (LCtx.InS.add_left_append _ _).slift).wthen g)
     (λi => (G i))
-  := sorry
+  := by
+  simp only [wthen, cfg_eq_ucfg, ucfg, lsubst_lsubst]
+  sorry
 
 theorem Eqv.wrseq_cfg {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ Γ (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ C::L))
