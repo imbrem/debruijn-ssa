@@ -215,6 +215,76 @@ theorem Eqv.wk2_var0 {hn : Ctx.Var (left::right::Γ) 0 V}
 theorem Eqv.wk2_var1 {hn : Ctx.Var (left::right::Γ) 1 V}
   : wk2 (inserted := inserted) (var (φ := φ) 1 hn) = var 1 (Ctx.Var.head hn.get _).step := rfl
 
+def Eqv.wk_id {Γ Δ : Ctx α ε} (hΓ : Γ.Wkn Δ id) (a : Eqv φ Δ V) : Eqv φ Γ V
+  := Quotient.liftOn a (λa => ⟦a.wk_id hΓ⟧) (λ_ _ h => sorry)
+
+@[simp]
+theorem Eqv.wk_id_var {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {n : ℕ} {hn : Δ.Var n V}
+  : wk_id hΓ (var n hn) = var (φ := φ) n (hn.wk hΓ) := rfl
+
+@[simp]
+theorem Eqv.wk_id_let1 {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨A, e⟩}
+  {b : Eqv φ (⟨A, ⊥⟩::Δ) ⟨B, e⟩}
+  : wk_id hΓ (let1 a b) = let1 (a.wk_id hΓ) (b.wk_id hΓ.slift_id) := by
+  induction a using Quotient.inductionOn;
+  induction b using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_pair {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨A, e⟩}
+  {b : Eqv φ Δ ⟨B, e⟩}
+  : wk_id hΓ (pair a b) = pair (a.wk_id hΓ) (b.wk_id hΓ) := by
+  induction a using Quotient.inductionOn;
+  induction b using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_let2 {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨Ty.prod A B, e⟩}
+  {b : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ) ⟨C, e⟩}
+  : wk_id hΓ (let2 a b) = let2 (a.wk_id hΓ) (b.wk_id hΓ.slift_id₂) := by
+  induction a using Quotient.inductionOn;
+  induction b using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_inl {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨A, e⟩}
+  : wk_id hΓ (inl (B := B) a) = inl (a.wk_id hΓ) := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_inr {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨B, e⟩}
+  : wk_id hΓ (inr (A := A) a) = inr (a.wk_id hΓ) := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_case {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨Ty.coprod A B, e⟩}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Δ) ⟨C, e⟩}
+  : wk_id hΓ (case a l r) = case (a.wk_id hΓ) (l.wk_id hΓ.slift_id) (r.wk_id hΓ.slift_id) := by
+  induction a using Quotient.inductionOn;
+  induction l using Quotient.inductionOn;
+  induction r using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_unit {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {e}
+  : wk_id hΓ (unit (φ := φ) e) = unit e := rfl
+
+@[simp]
+theorem Eqv.wk_id_abort {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : Eqv φ Δ ⟨Ty.empty, e⟩} {A}
+  : wk_id hΓ (abort a A) = abort (a.wk_id hΓ) A := by
+  induction a using Quotient.inductionOn;
+  rfl
+
+@[simp]
+theorem Eqv.wk_id_quot {Γ Δ : Ctx α ε} {hΓ : Γ.Wkn Δ id} {a : InS φ Δ V}
+  : wk_id hΓ ⟦a⟧ = ⟦a.wk_id hΓ⟧ := rfl
+
+theorem Eqv.wk_eq_wk_id  {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {a : Term.Eqv φ Δ V}
+  : a.wk ⟨_root_.id, h⟩ = a.wk_id h
+  := by induction a using Quotient.inductionOn; simp [Term.InS.wk_eq_wk_id]
+
 def Eqv.swap01 (a : Eqv φ (left::right::Γ) V) : Eqv φ (right::left::Γ) V := wk Ctx.InS.swap01 a
 
 @[simp]
@@ -488,27 +558,6 @@ theorem Subst.Eqv.lift_lift (h₁ : lo₁ ≤ hi₁) (h₂ : lo₂ ≤ hi₂)
 @[simp]
 theorem Eqv.subst_quot {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V} : subst ⟦σ⟧ ⟦a⟧ = ⟦a.subst σ⟧ := rfl
 
-def Subst.Eqv.comp (σ : Subst.Eqv φ Γ Δ) (τ : Subst.Eqv φ Δ Ξ)
-  : Subst.Eqv φ Γ Ξ := Quotient.liftOn₂ σ τ (λσ τ => ⟦σ.comp τ⟧)
-    (λ_ _ _ _ h h' => sound $ Term.Subst.InS.comp_congr h h')
-
-@[simp]
-theorem Subst.Eqv.comp_quot {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ}
-  : comp ⟦σ⟧ ⟦τ⟧ = ⟦σ.comp τ⟧ := rfl
-
-theorem Subst.Eqv.lift_comp_lift {he : lo ≤ mid} {he' : mid ≤ hi} {σ : Eqv φ Γ Δ} {τ : Eqv φ Δ Ξ}
-  : (σ.lift he).comp (τ.lift he') = (σ.comp τ).lift (le_trans he he') := by
-  induction σ using Quotient.inductionOn
-  induction τ using Quotient.inductionOn
-  simp [Subst.InS.lift_comp_lift]
-
-theorem Eqv.subst_subst {σ : Subst.Eqv φ Γ Δ} {τ : Subst.Eqv φ Δ Ξ} {a : Eqv φ Ξ V}
-  : subst σ (subst τ a) = subst (σ.comp τ) a := by
-  induction a using Quotient.inductionOn
-  induction σ using Quotient.inductionOn
-  induction τ using Quotient.inductionOn
-  simp [InS.subst_subst]
-
 @[simp]
 theorem Eqv.subst_lift_var_zero {σ : Subst.Eqv φ Γ Δ} {he : lo ≤ med} {hn : Ctx.Var (med::Δ) 0 hi}
   : subst (σ.lift he) (var 0 hn) = var 0 ⟨by simp, by simp [le_trans he hn.get]⟩ := by
@@ -550,7 +599,58 @@ theorem Eqv.subst_var_wk0 {σ : Subst.Eqv φ Γ Δ} {n : ℕ}
 
 def Subst.Eqv.fromWk (ρ : Γ.InS Δ) : Eqv φ Γ Δ := ⟦Subst.InS.fromWk ρ⟧
 
--- TODO: subst_var lore
+theorem Eqv.get_of_quot_eq {σ τ : Subst.InS φ Γ Δ}
+  (h : (⟦σ⟧ : Subst.Eqv φ Γ Δ) = ⟦τ⟧) (i : Fin Δ.length)
+  : (⟦σ.get i⟧ : Term.Eqv φ _ _) = ⟦τ.get i⟧ := Quotient.sound $ Quotient.exact h i
+
+def Subst.Eqv.get (σ : Subst.Eqv φ Γ Δ) (i : Fin Δ.length) : Term.Eqv φ Γ (Δ.get i) :=
+  Quotient.liftOn σ (λσ => ⟦σ.get i⟧) (λ_ _ h => Quotient.sound $ h i)
+
+@[simp]
+theorem Subst.Eqv.get_quot {σ : Subst.InS φ Γ Δ} {i : Fin Δ.length}
+  : get ⟦σ⟧ i = ⟦σ.get i⟧ := rfl
+
+theorem Subst.Eqv.ext_quot {σ τ : Subst.InS φ Γ Δ}
+  (h : ∀i, (⟦σ.get i⟧ : Term.Eqv φ _ _) = ⟦τ.get i⟧) : (⟦σ⟧ : Subst.Eqv φ Γ Δ) = ⟦τ⟧
+  := Quotient.sound (λi => Quotient.exact $ h i)
+
+@[ext]
+theorem Subst.Eqv.ext {σ τ : Subst.Eqv φ Γ Δ} (h : ∀i, get σ i = get τ i)
+  : σ = τ := by
+  induction σ using Quotient.inductionOn
+  induction τ using Quotient.inductionOn
+  exact ext_quot h
+
+theorem Subst.Eqv.ext_iff {σ τ : Subst.Eqv φ Γ Δ}
+  : σ = τ ↔ ∀i, get σ i = get τ i := ⟨λh => by simp [h], ext⟩
+
+-- TODO: rewrite to use get, eliminating a sorry implicitly?
+def Subst.Eqv.comp (σ : Subst.Eqv φ Γ Δ) (τ : Subst.Eqv φ Δ Ξ)
+  : Subst.Eqv φ Γ Ξ := Quotient.liftOn₂ σ τ (λσ τ => ⟦σ.comp τ⟧)
+    (λ_ _ _ _ h h' => sound $ Term.Subst.InS.comp_congr h h')
+
+@[simp]
+theorem Subst.Eqv.comp_quot {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ}
+  : comp ⟦σ⟧ ⟦τ⟧ = ⟦σ.comp τ⟧ := rfl
+
+theorem Subst.Eqv.lift_comp_lift {he : lo ≤ mid} {he' : mid ≤ hi} {σ : Eqv φ Γ Δ} {τ : Eqv φ Δ Ξ}
+  : (σ.lift he).comp (τ.lift he') = (σ.comp τ).lift (le_trans he he') := by
+  induction σ using Quotient.inductionOn
+  induction τ using Quotient.inductionOn
+  simp [Subst.InS.lift_comp_lift]
+
+theorem Eqv.subst_subst {σ : Subst.Eqv φ Γ Δ} {τ : Subst.Eqv φ Δ Ξ} {a : Eqv φ Ξ V}
+  : subst σ (subst τ a) = subst (σ.comp τ) a := by
+  induction a using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  induction τ using Quotient.inductionOn
+  simp [InS.subst_subst]
+
+theorem Subst.Eqv.get_comp {σ : Subst.Eqv φ Γ Δ} {τ : Subst.Eqv φ Δ Ξ} {i : Fin Ξ.length}
+  : (σ.comp τ).get i = (τ.get i).subst σ := by
+  induction σ using Quotient.inductionOn
+  induction τ using Quotient.inductionOn
+  rfl
 
 @[simp]
 theorem Eqv.subst_op {σ : Subst.Eqv φ Γ Δ} {a : Eqv φ Δ ⟨A, e⟩} {f : φ} {hf : Φ.EFn f A B e}
@@ -658,6 +758,11 @@ theorem Eqv.wk_res_self {a : Eqv φ Γ e} : a.wk_res (by simp) = a := by
 
 @[simp]
 theorem Eqv.wk_res_quot {a : InS φ Γ lo} {hV : lo ≤ hi} : wk_res hV ⟦a⟧ = ⟦a.wk_res hV⟧ := rfl
+
+theorem Eqv.subst_var {σ : Subst.Eqv φ Γ Δ} {i : ℕ}
+  {hn : Ctx.Var Δ i V} : subst σ (var i hn) = (σ.get ⟨i, hn.length⟩).wk_res hn.getElem := by
+  induction σ using Quotient.inductionOn
+  rfl
 
 @[simp]
 theorem Eqv.var0_subst0 {Γ : Ctx α ε} {a : Eqv φ Γ lo} {h : Ctx.Var (lo::Γ) 0 hi}

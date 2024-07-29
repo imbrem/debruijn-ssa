@@ -562,8 +562,49 @@ theorem Eqv.wthen_cfg {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     ((f.lwk (LCtx.InS.add_left_append _ _).slift).wthen g)
     (λi => (G i))
   := by
-  simp only [wthen, cfg_eq_ucfg, ucfg, lsubst_lsubst]
-  sorry
+  simp only [wthen, cfg_eq_ucfg, ucfg, lsubst_lsubst, <-lsubst_toSubst]
+  congr
+  ext i
+  simp only [
+    Subst.Eqv.get_comp, Subst.Eqv.get_toSubst, lsubst_br,
+    LCtx.InS.coe_slift, LCtx.InS.coe_add_left_append
+  ]
+  cases i using Fin.cases with
+  | zero =>
+    simp only [
+      Subst.Eqv.get_vlift, vwk_id_eq, cfgSubst_get, Fin.val_zero, Nat.liftWk, vwk1_cfg, vsubst_cfg,
+      lsubst_cfg, vwk1_br, vsubst_br, lsubst_br
+    ]
+    congr
+    · simp [-Subst.Eqv.liftn_append_singleton]
+    · funext i
+      cases i using Fin.elim1
+      simp only [Fin.elim1_zero, vwk1_vwk2]
+      simp only [
+        vwk1_lwk0, vsubst_lwk0, Subst.Eqv.liftn_append_singleton, Subst.Eqv.vlift_slift,
+        lsubst_slift_lwk0, <-vlift_cfgSubst, Subst.Eqv.vwk1_lsubst_vlift
+      ]
+      congr
+      simp only [vwk1, vwk_vwk]
+      simp only [<-vsubst_toSubst, vsubst_vsubst]
+      congr
+      ext
+      funext k
+      cases k <;> rfl
+  | succ i =>
+    simp only [List.singleton_append, List.append_eq, List.nil_append, List.get_eq_getElem,
+      List.length_cons, Fin.val_succ, List.getElem_cons_succ, List.length_singleton,
+      Nat.liftWk_succ, Set.mem_setOf_eq, Subst.Eqv.get_vlift]
+    rw [cfgSubst_get_ge (by simp), cfgSubst_get_ge (by simp)]
+    simp only [add_tsub_cancel_right, vwk1_br,
+      Term.Eqv.wk1_var0, vwk_id_br,
+      Term.Eqv.wk_id_var, vsubst_br, Term.Eqv.var0_subst0, List.append_eq, List.nil_append,
+      Nat.liftWk_succ, LCtx.InS.coe_slift, LCtx.InS.coe_add_left_append, id_eq,
+      Term.Eqv.wk_res_var, lsubst_br, Nat.add_succ_sub_one, Nat.add_zero,
+      Int.reduceNeg, eq_mpr_eq_cast, cast_eq, Subst.Eqv.get_vlift, vwk_id_eq]
+    rw [cfgSubst_get_ge (by simp), vwk1_br, vsubst_br]
+    simp
+    rfl
 
 theorem Eqv.wrseq_cfg {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ Γ (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ C::L))
@@ -604,49 +645,6 @@ theorem Eqv.seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     ((f.lwk LCtx.InS.shf.slift ;; g.shf).ushf)
     (λi => (G i).vwk1)
   := by simp only [<-wseq_eq_seq, wseq_cfg]
-  -- induction f using Eqv.arrow_induction with
-  -- | br ℓ a hl =>
-  --   cases ℓ with
-  --   | zero =>
-  --     stop
-  --     -- simp only [List.append_eq, List.nil_append, br_zero_eq_ret, wk_res_self, lwk1_ret, ret_seq,
-  --     --   List.length_singleton, List.get_eq_getElem, List.singleton_append, vwk1_cfg, vsubst_cfg]
-  --     congr
-  --     sorry
-  --     funext i
-  --     induction (G i) using Quotient.inductionOn
-  --     induction a using Quotient.inductionOn
-  --     apply Eqv.eq_of_reg_eq
-  --     simp only [Set.mem_setOf_eq, InS.coe_vwk, Ctx.InS.coe_wk1, Fin.isValue, Fin.val_zero,
-  --       List.getElem_cons_zero, InS.coe_vsubst, Term.Subst.InS.coe_lift, Term.InS.coe_subst0,
-  --       Ctx.InS.coe_wk2, Region.vwk_vwk]
-  --     simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
-  --     congr
-  --     funext i
-  --     cases i <;> rfl
-  --   | succ ℓ => sorry
-  -- | let1 a r Ir =>
-  --   rw [let1_seq, vwk1_cfg]
-  --   simp only [vwk1_vwk2]
-  --   rw [Ir, <-cfg_let1]
-  --   congr
-  --   sorry
-  -- | let2 a r Ir =>
-  --   simp only [let2_seq, vwk1_cfg, vwk1_vwk2]
-  --   rw [Ir, <-cfg_let2]
-  --   congr
-  --   sorry
-  -- | case a l r Il Ir =>
-  --   simp only [case_seq, vwk1_cfg, vwk1_vwk2, Il, Ir]
-  --   rw [<-cfg_case]
-  --   congr
-  --   sorry
-  -- | cfg β dβ dG Iβ IG =>
-  --   conv =>
-  --     rhs
-  --     simp only [lwk_cfg, seq, lsubst_cfg, ushf_eq_cast, cast_cfg]
-  --     rw [cfg_cfg_eq_cfg']
-  --   sorry
 
 theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))

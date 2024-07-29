@@ -352,6 +352,20 @@ theorem InS.coe_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
   (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
   : (InS.cfgSubst R G : Region.Subst φ) = Region.cfgSubst R.length (λi => G i) := rfl
 
+theorem InS.vlift_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
+  (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : (InS.cfgSubst R G).vlift = InS.cfgSubst R (λi => (G i).vwk1 (inserted := inserted)) := by
+  ext k
+  simp only [
+    Region.Subst.vlift, Region.cfgSubst, Subst.InS.coe_vlift, coe_cfgSubst, coe_vwk1,
+    Function.comp_apply, Region.vwk1, Region.vwk, Term.wk, Nat.liftWk, Region.vwk_vwk
+  ]
+  congr
+  funext ℓ
+  congr
+  funext k
+  cases k <;> rfl
+
 def InS.cfgSubst' {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
   (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
   : Subst.InS φ Γ (R ++ L) L := ⟨

@@ -354,6 +354,45 @@ theorem Eqv.vwk_id_eq
   : Eqv.vwk_id hρ r = r := by
   induction r using Quotient.inductionOn; rfl
 
+@[simp]
+theorem Eqv.vwk_id_br {Γ Δ : Ctx α ε} {L : LCtx α} {ℓ : ℕ} {A : Ty α} {hΓ : Γ.Wkn Δ id}
+  (a : Term.Eqv φ Δ ⟨A, ⊥⟩) (hℓ : L.Trg ℓ A)
+  : Eqv.vwk_id hΓ (br ℓ a hℓ) = br ℓ (a.wk_id hΓ) hℓ := by
+  induction a using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.vwk_id_let1 {Γ Δ : Ctx α ε} {L : LCtx α} {A : Ty α} {e : ε} {hΓ : Γ.Wkn Δ id}
+  (a : Term.Eqv φ Δ ⟨A, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Δ) L)
+  : Eqv.vwk_id hΓ (let1 a r) = let1 (a.wk_id hΓ) (Eqv.vwk_id hΓ.slift_id r) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.vwk_id_let2 {Γ Δ : Ctx α ε} {L : LCtx α} {A B : Ty α} {e : ε} {hΓ : Γ.Wkn Δ id}
+  (a : Term.Eqv φ Δ ⟨Ty.prod A B, e⟩) (r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ) L)
+  : Eqv.vwk_id hΓ (let2 a r) = let2 (a.wk_id hΓ) (Eqv.vwk_id hΓ.slift_id₂ r) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.vwk_id_case {Γ Δ : Ctx α ε} {L : LCtx α} {A B : Ty α} {e : ε} {hΓ : Γ.Wkn Δ id}
+  (a : Term.Eqv φ Δ ⟨Ty.coprod A B, e⟩) (r : Eqv φ (⟨A, ⊥⟩::Δ) L) (s : Eqv φ (⟨B, ⊥⟩::Δ) L)
+  : Eqv.vwk_id hΓ (case a r s)
+  = case (a.wk_id hΓ) (Eqv.vwk_id hΓ.slift_id r) (Eqv.vwk_id hΓ.slift_id s) := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.vwk_id_cfg {Γ Δ : Ctx α ε} {L : LCtx α} {R : LCtx α} {hΓ : Γ.Wkn Δ id}
+  (dβ : Eqv φ Δ (R ++ L)) (dG : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Δ) (R ++ L))
+  : Eqv.vwk_id hΓ (cfg R dβ dG) = cfg R (Eqv.vwk_id hΓ dβ)
+  (λi => Eqv.vwk_id hΓ.slift_id (dG i)) := by sorry
+
 theorem Eqv.shf_vwk {Γ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
   {ρ : Ctx.InS Γ Δ}
   {d : Eqv φ Δ (R ++ (Y::L))}
@@ -488,6 +527,10 @@ theorem Eqv.vsubst_vsubst {Γ Δ Ξ : Ctx α ε} {L : LCtx α} {r : Eqv φ Ξ L}
   induction τ using Quotient.inductionOn
   induction r using Quotient.inductionOn
   simp [InS.vsubst_vsubst]
+
+theorem Eqv.vsubst_toSubst {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {r : Eqv φ Δ L}
+  : r.vsubst ⟦ρ.toSubst⟧ = r.vwk ρ
+  := by induction r using Quotient.inductionOn; simp [InS.vsubst_toSubst]
 
 @[simp]
 theorem Eqv.vsubst_br {Γ : Ctx α ε} {L : LCtx α}
@@ -671,10 +714,33 @@ def Eqv.lwk0
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ L)
   : Eqv φ Γ (head::L) := Eqv.lwk LCtx.InS.wk0 r
 
--- @[simp]
--- theorem Eqv.lwk0_quot
---   {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}
---   : Eqv.lwk0 ⟦r⟧ = ⟦r.lwk0⟧ := rfl
+theorem Eqv.vwk1_lwk0 {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (head::Γ) L}
+  : (r.lwk0 (head := head')).vwk1 (inserted := inserted) = r.vwk1.lwk0
+  := by rw [lwk0, vwk1, vwk_lwk]; rfl
+
+theorem Eqv.lwk0_vwk1 {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (head::Γ) L}
+  : r.vwk1.lwk0 = (r.lwk0 (head := head')).vwk1 (inserted := inserted) := by rw [vwk1_lwk0]
+
+theorem Eqv.vsubst_lwk0 {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ L}
+  : r.lwk0.vsubst σ = (r.vsubst σ).lwk0 (head := head) := by
+  induction σ using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp [Region.vsubst_lwk]
+
+theorem Eqv.lwk0_vsubst {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ L}
+  : (r.vsubst σ).lwk0 (head := head) = r.lwk0.vsubst σ := by
+  induction σ using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp [Region.vsubst_lwk]
+
+@[simp]
+theorem Eqv.lwk0_quot
+  {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}
+  : Eqv.lwk0 (head := head) ⟦r⟧ = ⟦r.lwk0⟧ := rfl
 
 def Eqv.lwk1
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ (head::L))

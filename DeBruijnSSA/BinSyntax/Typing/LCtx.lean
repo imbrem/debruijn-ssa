@@ -206,6 +206,14 @@ theorem Trg.of_ge {n} {A : Ty α} (h : Trg (R ++ L) n A) (hn : R.length ≤ n) :
   (hn' ▸ h).of_add
 
 @[simp]
+theorem Trg.of_le_getElem {n} {L : LCtx α} (hn : n < L.length) (hn' : A ≤ L[n]) : Trg L n A
+  := ⟨hn, hn'⟩
+
+@[simp]
+theorem Trg.of_getElem {n} {L : LCtx α} (hn : n < L.length) : Trg L n L[n]
+  := ⟨hn, le_refl _⟩
+
+@[simp]
 theorem Trg.step_iff {n} {A : Ty α} {L : LCtx α} : Trg (B::L) (n + 1) A ↔ Trg L n A
   := ⟨λh => h.tail, λh => h.step⟩
 

@@ -370,4 +370,7 @@ theorem InS.subst0_congr {Γ Δ : Ctx α ε} {V}
 {r r' : InS φ Δ V} (hr : r ≈ r') : r.subst0 ≈ r'.subst0
   := sorry
 
+theorem InS.get_congr {σ τ : Subst.InS φ Γ Δ} (h : σ ≈ τ) (i : Fin Δ.length)
+  : σ.get i ≈ τ.get i := h i
+
 -- TODO: stick rules down here...

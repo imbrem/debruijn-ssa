@@ -151,6 +151,11 @@ def InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩
   (hℓ : L.Trg ℓ A) : InS φ Γ L
   := ⟨Region.br ℓ a, Wf.br hℓ a.2⟩
 
+@[simp]
+theorem InS.coe_br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
+  (hℓ : L.Trg ℓ A) : (InS.br ℓ a hℓ : Region φ) = Region.br ℓ a
+  := rfl
+
 def InS.let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
   (a : Term.InS φ Γ ⟨A, e⟩)
   (t : InS φ (⟨A, ⊥⟩::Γ) L) : InS φ Γ L

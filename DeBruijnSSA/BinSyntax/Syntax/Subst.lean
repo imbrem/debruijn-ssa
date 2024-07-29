@@ -803,6 +803,8 @@ def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Terminator.br (ρ n) (Te
 
 theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ = @fromLwk φ σ := rfl
 
+theorem Subst.vwk1_comp_fromLwk (σ) : vwk1 ∘ fromLwk σ = @fromLwk φ σ := rfl
+
 @[simp]
 theorem Subst.fromLwk_vlift (ρ) : (@fromLwk φ ρ).vlift = fromLwk ρ := rfl
 
@@ -1224,6 +1226,9 @@ def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Region.br (ρ n) (Term.v
 theorem Subst.vwk_lift_comp_fromLwk (ρ σ) : vwk (Nat.liftWk ρ) ∘ fromLwk σ = @fromLwk φ σ := rfl
 
 @[simp]
+theorem Subst.vwk1_comp_fromLwk (σ) : vwk1 ∘ fromLwk σ = @fromLwk φ σ := rfl
+
+@[simp]
 theorem Subst.vwk_lift_comp_id (ρ) : vwk (Nat.liftWk ρ) ∘ Subst.id = @Subst.id φ := rfl
 
 @[simp]
@@ -1430,8 +1435,8 @@ theorem Subst.liftn_lwk_comp (σ : Subst φ) (ρ) (n)
   funext i
   simp only [liftn, Function.comp_apply, lwk, Nat.liftnWk]
   split
-  . simp [Nat.liftnWk, *]
-  . rw [lwk_lwk, lwk_lwk, Nat.liftnWk_comp_add]
+  · simp [Nat.liftnWk, *]
+  · rw [lwk_lwk, lwk_lwk, Nat.liftnWk_comp_add]
 
 theorem lwk_lsubst (σ ρ) (t : Region φ)
   : (t.lsubst σ).lwk ρ = t.lsubst (lwk ρ ∘ σ)

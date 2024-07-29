@@ -683,7 +683,7 @@ def Term.WfD.wk0 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD Γ r L)
   : WfD (A::Γ) (r.wk Nat.succ) L
   := dr.wk Ctx.Wkn.succ
 
-def Term.WfD.wk_id {Γ Δ : Ctx α ε} {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a ⟨A, e⟩ → WfD Γ a ⟨A, e⟩
+def Term.WfD.wk_id {Γ Δ : Ctx α ε} {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ a V → WfD Γ a V
   | var dv => var (dv.wk h)
   | op df de => op df (de.wk_id h)
   | let1 da db => let1 (da.wk_id h) (db.wk_id h.slift_id)
@@ -694,3 +694,18 @@ def Term.WfD.wk_id {Γ Δ : Ctx α ε} {a : Term φ} (h : Γ.Wkn Δ id) : WfD Δ
   | case da dl dr => case (da.wk_id h) (dl.wk_id h.slift_id) (dr.wk_id h.slift_id)
   | abort da => abort (da.wk_id h)
   | unit e => unit e
+
+theorem Term.Wf.wk_id {Γ Δ : Ctx α ε} {a : Term φ} (h : Γ.Wkn Δ id) (ha : Wf Δ a V) : Wf Γ a V
+  := a.wk_id ▸ ha.wk h
+
+def Term.InS.wk_id {Γ Δ : Ctx α ε} (h : Γ.Wkn Δ id) (a : Term.InS φ Δ V) : Term.InS φ Γ V
+  := ⟨a, a.prop.wk_id h⟩
+
+@[simp]
+theorem Term.InS.coe_wk_id {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {a : Term.InS φ Δ V}
+  : (a.wk_id h : Term φ) = (a : Term φ)
+  := rfl
+
+theorem Term.InS.wk_eq_wk_id {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {a : Term.InS φ Δ V}
+  : a.wk ⟨_root_.id, h⟩ = a.wk_id h
+  := by ext; simp
