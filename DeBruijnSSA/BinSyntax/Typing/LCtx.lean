@@ -52,6 +52,9 @@ def InS (L K : LCtx α) : Type _ := {ρ : ℕ → ℕ | L.Wkn K ρ}
 instance inSCoe : CoeOut (InS L K) (ℕ → ℕ)
   := ⟨λt => t.val⟩
 
+@[ext]
+theorem InS.ext (ρ σ : InS L K) (h : ∀n, ρ.val n = σ.val n) : ρ = σ := Subtype.eq $ funext h
+
 instance InS.instSetoid : Setoid (InS L K) where
   r ρ σ := ∀i, i < L.length → (ρ : ℕ → ℕ) i = (σ : ℕ → ℕ) i
   iseqv := {
@@ -145,6 +148,10 @@ def InS.wk1 {head inserted : Ty α} {L : LCtx α} : InS (head::L) (head::inserte
 @[simp]
 theorem InS.coe_wk1 {head inserted : Ty α} {L : LCtx α}
   : (InS.wk1 (head := head) (inserted := inserted) (L := L) : ℕ → ℕ) = Nat.liftWk Nat.succ := rfl
+
+theorem InS.slift_wk0 {head : Ty α} {L : LCtx α}
+  : (InS.wk0 (head := inserted) (L := L)).slift (head := head) = InS.wk1
+  := rfl
 
 def InS.comp {L K J : LCtx α} (ρ : InS K J) (σ : InS L K) : InS L J
   := ⟨(ρ : ℕ → ℕ) ∘ (σ : ℕ → ℕ), ρ.2.comp σ.2⟩

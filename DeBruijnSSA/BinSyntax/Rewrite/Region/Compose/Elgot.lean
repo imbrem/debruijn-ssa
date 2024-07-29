@@ -53,6 +53,25 @@ theorem Eqv.vwk2_left_exit {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   = left_exit
   := rfl
 
+theorem Eqv.left_exit_eq_coprod {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : left_exit (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) =
+    coprod (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩) (ret (var 0 (by simp)))
+  := rfl
+
+theorem Eqv.lwk1_sum_seq_left_exit {A B A' B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L)} {g : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L)}
+  : (sum f g).lwk1 ;; left_exit
+  = coprod (f.lwk1 ;; (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩)) g.lwk1
+  := by rw [left_exit_eq_coprod, lwk1_sum, sum_seq_coprod, ret_var_zero, seq_nil]
+
+theorem Eqv.lwk1_sum_seq_left_exit' {A B A' B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L)} {g : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L)}
+  : (sum f g).lwk1 ;; left_exit
+  = case (Term.Eqv.var 0 Ctx.Var.shead)
+    (f.vwk1.lwk1 ;; (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩))
+    g.vwk1.lwk1 := by
+  rw [lwk1_sum_seq_left_exit, coprod, vwk1_seq, vwk1_lwk1, vwk1_br, Term.Eqv.wk1_var0, vwk1_lwk1]
+
 def Eqv.fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
   : Eqv φ (⟨A, ⊥⟩::Γ) (B::L) := cfg [A] nil (Fin.elim1 (f.vwk1.lwk1 ;; left_exit))
 
@@ -81,6 +100,23 @@ theorem Eqv.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   induction r using Quotient.inductionOn
   induction σ using Quotient.inductionOn
   simp [InS.vsubst_lift_fixpoint]
+
+theorem Eqv.lsubst_fixpoint_seq_helper {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)} {σ : Subst.Eqv φ (⟨A, ⊥⟩::Γ) (B::L) K}
+  : f.fixpoint.lsubst σ
+  = cfg [A] nil (Fin.elim1 ((f.vwk1.lwk1 ;; left_exit).lsubst σ.slift.vlift)) := by
+  rw [fixpoint, lsubst_cfg]
+  congr
+  · simp
+  · funext i
+    cases i using Fin.elim1
+    simp
+
+theorem Eqv.lsubst_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)} {σ : Subst.Eqv φ (⟨A, ⊥⟩::Γ) (B::L) K}
+  : f.fixpoint.lsubst σ
+  = cfg [A] nil (Fin.elim1 ((f.vwk1.lwk1.lsubst σ.slift.vlift ;; left_exit.lsubst σ.slift.vlift)))
+  := by rw [lsubst_fixpoint_seq_helper, lsubst_vlift_slift_seq]
 
 theorem Eqv.fixpoint_iter_cfg {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
@@ -132,10 +168,51 @@ theorem Eqv.fixpoint_iter {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   | zero => simp only [
       Fin.elim1_zero, vwk1_seq, vwk1_left_exit, vwk2_seq, vwk2_left_exit, lwk1_vwk1, vwk1_vwk2]
 
+theorem Eqv.fixpoint_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
+  (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
+  : (fixpoint f) ;; g = fixpoint (f ;; sum g nil) := by
+  rw [seq, lsubst_fixpoint, fixpoint]
+  apply congrArg
+  apply congrArg
+  rw [vwk1_seq, lwk1_seq, seq_assoc]
+  congr 1
+  · simp only [lwk1, <-lsubst_toSubst, lsubst_lsubst]
+    induction f using Quotient.inductionOn
+    induction g using Quotient.inductionOn
+    apply Eqv.eq_of_reg_eq
+    simp only [
+      InS.coe_lsubst, Subst.InS.coe_comp, Subst.InS.coe_vlift, Subst.InS.coe_slift, InS.coe_alpha0,
+      InS.coe_vwk, Ctx.InS.coe_wk1, LCtx.InS.coe_toSubst, LCtx.InS.coe_wk1
+    ]
+    congr
+    funext k
+    cases k <;> rfl
+  · rw [
+      vwk1_sum, lwk1_sum_seq_left_exit, coprod, vwk1_seq, nil_vwk1, nil_lwk1, nil_vwk1, vwk1_br,
+      wk1_var0, left_exit, lsubst_case
+    ]
+    induction g using Quotient.inductionOn
+    congr 1
+    apply Eqv.eq_of_reg_eq
+    simp only [InS.lsubst_br, InS.coe_vsubst, Term.InS.coe_subst0, Term.InS.coe_var, InS.coe_vwk_id,
+      Subst.InS.coe_get, Subst.InS.coe_vlift, Subst.InS.coe_slift, InS.coe_alpha0, InS.coe_vwk,
+      Ctx.InS.coe_wk1, InS.vwk_br, Term.InS.wk_var, Nat.liftWk_zero, InS.coe_lsubst, InS.coe_br,
+      InS.coe_lwk, LCtx.InS.coe_wk1, Region.vwk_lwk, Region.vwk_vwk, Region.Subst.vlift,
+      Region.Subst.lift, Function.comp_apply, Region.vwk1_lwk, Region.vsubst_lwk, Region.alpha,
+      Function.update_same]
+    simp only [<-Region.lsubst_fromLwk, Region.vwk1, Region.vwk_vwk, Region.lsubst_lsubst]
+    simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+    congr
+    funext k
+    cases k <;> rfl
+    funext k
+    cases k <;> rfl
+
 theorem Eqv.fixpoint_naturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
   (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
-  : fixpoint (f ;; sum g nil) = (fixpoint f) ;; g := sorry
+  : fixpoint (f ;; sum g nil) = (fixpoint f) ;; g := by rw [fixpoint_seq]
 
 theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))

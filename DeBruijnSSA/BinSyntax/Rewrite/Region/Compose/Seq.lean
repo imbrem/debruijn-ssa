@@ -73,6 +73,11 @@ theorem Eqv.nil_vwk1 {Γ : Ctx α ε} {L : LCtx α}
   : (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L)).vwk1 (inserted := inserted)
   = Eqv.nil := rfl
 
+@[simp]
+theorem Eqv.nil_lwk1 {Γ : Ctx α ε} {L : LCtx α}
+  : (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L)).lwk1 (inserted := inserted)
+  = Eqv.nil := rfl
+
 theorem Eqv.let1_0_nil
   : Eqv.let1 (Term.Eqv.var 0 ⟨by simp, le_refl _⟩) Eqv.nil
   = Eqv.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)
@@ -321,6 +326,21 @@ theorem Eqv.ret_of_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.ret_nil : ret Term.Eqv.nil = nil (φ := φ) (ty := A) (rest := Γ) (targets := L)  := rfl
 
+theorem Eqv.ret_var_zero {Γ : Ctx α ε} {L : LCtx α}
+  : ret (Term.Eqv.var 0 ⟨by simp, le_refl _⟩)
+  = nil (φ := φ) (ty := A) (rest := Γ) (targets := L) := rfl
+
+@[simp]
+theorem Eqv.ret_lsubst_slift
+   {σ : Subst.Eqv φ _ targets targets'} {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩}
+  : (Eqv.ret a (targets := targets)).lsubst σ.slift = Eqv.ret a
+  := by induction a using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.nil_lsubst_slift (σ : Subst.Eqv φ _ targets targets')
+  : (Eqv.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)).lsubst σ.slift = Eqv.nil
+  := by rw [<-ret_nil, ret_lsubst_slift]; rfl
+
 def Eqv.wseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)
   := cfg [B] left.lwk1 (Fin.elim1 right.lwk0.vwk1)
@@ -457,6 +477,43 @@ theorem Eqv.wseq_eq_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
   : left.wseq right = left ;; right := by
   sorry
+
+theorem Eqv.lwk_lift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left ;; right).lwk (ρ.lift (le_refl _))
+  = (left.lwk (ρ.lift (le_refl _))) ;; (right.lwk (ρ.lift (le_refl _))) := by
+  simp only [<-wseq_eq_seq, lwk_lift_wseq]
+
+theorem Eqv.lwk_slift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : LCtx.InS L K}
+  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left ;; right).lwk ρ.slift
+  = (left.lwk ρ.slift) ;; (right.lwk ρ.slift) := lwk_lift_seq
+
+theorem Eqv.lwk1_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left ;; right).lwk1 (inserted := inserted) = left.lwk1 ;; right.lwk1 := by
+  simp only [lwk1, <-LCtx.InS.slift_wk0, lwk_slift_seq]
+
+theorem Eqv.lsubst_vlift_slift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : Subst.Eqv φ Γ L K}
+  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left ;; right).lsubst σ.slift.vlift
+  = left.lsubst σ.slift.vlift ;; right.lsubst σ.slift.vlift
+  := sorry
+
+theorem Eqv.lsubst_slift_vlift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : Subst.Eqv φ Γ L K}
+  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
+  {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (left ;; right).lsubst σ.vlift.slift
+  = left.lsubst σ.vlift.slift ;; right.lsubst σ.vlift.slift
+  := sorry
 
 theorem Eqv.wrseq_assoc {B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ Γ (B::L)) (middle : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) (right : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))

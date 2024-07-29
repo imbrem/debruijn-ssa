@@ -15,6 +15,28 @@ def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (C::L)
   := case (var 0 Ctx.Var.shead) l.vwk1 r.vwk1
 
+theorem Eqv.lwk_slift_coprod {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : L.InS K} {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (l.coprod r).lwk ρ.slift = (l.lwk ρ.slift).coprod (r.lwk ρ.slift)
+  := by simp only [coprod, lwk_case, vwk1_lwk]
+
+theorem Eqv.lwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (l.coprod r).lwk1 (inserted := inserted) = (l.lwk1).coprod (r.lwk1)
+  := by simp only [lwk1, <-LCtx.InS.slift_wk0, lwk_slift_coprod]
+
+theorem Eqv.vwk_slift_coprod {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Γ.InS Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Δ) (C::L)}
+  : (l.coprod r).vwk ρ.slift = (l.vwk ρ.slift).coprod (r.vwk ρ.slift) := by
+  simp only [coprod, vwk_case, vwk1, vwk_vwk]
+  congr 2 <;> ext k <;> cases k <;> rfl
+
+theorem Eqv.vwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (l.coprod r).vwk1 (inserted := inserted) = l.vwk1.coprod r.vwk1 := by
+  simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_coprod]
+
 theorem Eqv.Pure.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} (hl : l.Pure)
   {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)} (hr : r.Pure)
@@ -77,6 +99,26 @@ def Eqv.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ((C.coprod D)::L)
   := coprod (l ;; inj_l) (r ;; inj_r)
+
+theorem Eqv.lwk_slift_sum {A B C D : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : L.InS K} {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L)}
+  : (l.sum r).lwk ρ.slift = (l.lwk ρ.slift).sum (r.lwk ρ.slift)
+  := by simp only [sum, lwk_slift_coprod, lwk_slift_seq]; rfl
+
+theorem Eqv.lwk1_sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L)}
+  : (l.sum r).lwk1 (inserted := inserted) = (l.lwk1).sum (r.lwk1)
+  := by simp only [lwk1, <-LCtx.InS.slift_wk0, lwk_slift_sum]
+
+theorem Eqv.vwk_slift_sum {A B C D : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Γ.InS Δ} {l : Eqv φ (⟨A, ⊥⟩::Δ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Δ) (D::L)}
+  : (l.sum r).vwk ρ.slift = (l.vwk ρ.slift).sum (r.vwk ρ.slift)
+  := by simp only [sum, vwk_slift_coprod, vwk_lift_seq]; rfl
+
+theorem Eqv.vwk1_sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L)}
+  : (l.sum r).vwk1 (inserted := inserted) = l.vwk1.sum r.vwk1
+  := by simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_sum]
 
 theorem Eqv.Pure.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} (hl : l.Pure)
