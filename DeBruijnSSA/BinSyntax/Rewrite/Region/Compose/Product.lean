@@ -26,6 +26,14 @@ theorem Eqv.rtimes_eq_ret {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp only [Eqv.rtimes, vwk1_ret, ret_ret, let2_ret, Term.Eqv.rtimes_def']
   rfl
 
+theorem Eqv.vwk1_rtimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)}
+  : (X ⋊ r).vwk1 (inserted := inserted) = X ⋊ r.vwk1 := by
+  simp only [rtimes, vwk1, vwk_let2, vwk_lift_seq, vwk_vwk, <-Ctx.InS.lift_lift, vwk_ret]
+  congr 3
+  ext k
+  cases k <;> rfl
+
 theorem Eqv.Pure.rtimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (tyLeft : Ty α) {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)}
   (hp : Eqv.Pure r) : Eqv.Pure (tyLeft ⋊ r) := let ⟨_, hp⟩ := hp; ⟨_, hp ▸ rtimes_eq_ret⟩
@@ -154,6 +162,12 @@ theorem Eqv.runit_eq_ret {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.vwk1_pi_l {Γ : Ctx α ε} {L : LCtx α}
   : (pi_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted) = pi_l := rfl
 
+theorem Eqv.ret_pair_seq_pi_l {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {a : Term.Eqv φ ((X, ⊥)::Γ) (A, ⊥)} {b : Term.Eqv φ ((X, ⊥)::Γ) (B, ⊥)}
+  : ret (targets := L) (a.pair b) ;; pi_l = ret a
+  := sorry
+
+@[simp]
 theorem Eqv.Pure.pi_l {Γ : Ctx α ε} {L : LCtx α}
   : (pi_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).Pure := ⟨_, pi_l_eq_ret⟩
 
@@ -194,6 +208,16 @@ theorem Eqv.lunit_eq_ret {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp only [Eqv.lunit, ret_ret]
   rfl
 
+@[simp]
+theorem Eqv.vwk1_pi_r {Γ : Ctx α ε} {L : LCtx α}
+  : (pi_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted) = pi_r := rfl
+
+theorem Eqv.ret_pair_seq_pi_r {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {a : Term.Eqv φ ((X, ⊥)::Γ) (A, ⊥)} {b : Term.Eqv φ ((X, ⊥)::Γ) (B, ⊥)}
+  : ret (targets := L) (a.pair b) ;; pi_r = ret b
+  := sorry
+
+@[simp]
 theorem Eqv.Pure.pi_r {Γ : Ctx α ε} {L : LCtx α}
   : (pi_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).Pure := ⟨_, pi_r_eq_ret⟩
 

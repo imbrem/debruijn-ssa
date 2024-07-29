@@ -23,6 +23,39 @@ def Eqv.distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     (ret $ inl (pair (var 2 (by simp)) (var 0 Ctx.Var.shead)))
     (ret $ inr (pair (var 2 (by simp)) (var 0 Ctx.Var.shead)))
 
+theorem Eqv.distl_inv_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)
+  = (let2 (var 0 Ctx.Var.shead) $
+    coprod
+      (ret $ inl (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)))
+      (ret $ inr (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)))) := rfl
+
+theorem Eqv.vwk_slift_distl_inv {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Ctx.InS Γ Δ}
+  : distl_inv.vwk ρ.slift = distl_inv (φ := φ) (A := A) (B := B) (C := C) (L := L) := rfl
+
+theorem Eqv.vwk1_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (distl_inv (Γ := Γ)).vwk1 (inserted := inserted)
+  = distl_inv (φ := φ) (A := A) (B := B) (C := C) (L := L) := rfl
+
+theorem Eqv.vsubst_lift_distl_inv {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Term.Subst.Eqv φ Γ Δ}
+  : distl_inv.vsubst (ρ.lift (le_refl _))
+  = distl_inv (φ := φ) (A := A) (B := B) (C := C) (L := L)
+  := by induction ρ using Quotient.inductionOn; rfl
+
+theorem Eqv.let2_eta_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : ret (φ := φ) ((var 1 Ctx.Var.shead.step).pair (var 0 Ctx.Var.shead))
+    ;; distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := _::Γ) (L := L)
+  = coprod
+      (ret $ inl (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)))
+      (ret $ inr (pair (var 1 (by simp)) (var 0 Ctx.Var.shead))) := by
+  rw [
+    ret_seq, vwk1_distl_inv, distl_inv, vsubst_let2, var0_subst0, wk_res_self, let2_pair,
+    let1_beta, let1_beta
+  ]
+  rfl
+
 theorem Eqv.Pure.distl {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (distl (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure := sorry
 
@@ -92,6 +125,11 @@ theorem Eqv.vwk_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   : r.fixpoint.vwk ρ.slift = (r.vwk ρ.slift).fixpoint := by
   induction r using Quotient.inductionOn
   simp [InS.vwk_lift_fixpoint]
+
+theorem Eqv.vwk1_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : r.fixpoint.vwk1 (inserted := inserted) = (r.vwk1).fixpoint := by
+  simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_lift_fixpoint]
 
 theorem Eqv.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
@@ -229,9 +267,90 @@ theorem Eqv.fixpoint_uniformity {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (hfg : h ;; f = g ;; sum nil h)
   : h ;; (fixpoint f) = fixpoint g := sorry
 
+theorem Eqv.pi_r_fixpoint_uniform_inner {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)} : pi_r ;; f = X ⋊ f ;; distl_inv ;; sum pi_r pi_r := by
+  simp only [rtimes, let2_seq, vwk1_distl_inv, vwk1_sum, vwk1_pi_r]
+  rw [distl_inv_coprod, seq_assoc, let2_seq]
+  simp only [vwk1_sum, vwk1_seq, vwk1_pi_r, nil_vwk1, nil_seq, seq_nil]
+  rw [
+    coprod_seq, <-ret_seq_inj_l, seq_assoc, seq_assoc, inj_l_seq_sum, <-ret_seq_inj_r, seq_assoc,
+    inj_r_seq_sum, <-seq_assoc, <-seq_assoc, <-seq_assoc, ret_pair_seq_pi_r, ret_pair_seq_pi_r,
+    <-sum, ret_var_zero, ret_var_zero, sum_nil, <-ret_var_zero, <-pi_r, seq_assoc,
+    ret_pair_seq_pi_r, ret_var_zero, seq_nil
+  ]
+  induction f using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.lsubst_let2, InS.lsubst_br, List.length_cons, Fin.zero_eta,
+    List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, InS.coe_let2, Term.InS.coe_var,
+    InS.coe_vsubst, Term.InS.coe_subst0, InS.coe_vwk_id, Subst.InS.coe_get, Subst.InS.coe_vliftn₂,
+    Subst.vliftn, InS.coe_alpha0, alpha, InS.coe_vwk, Ctx.InS.coe_wk1, Function.comp_apply,
+    Function.update_same, let2.injEq, true_and]
+  simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+  congr
+  funext k
+  cases k <;> rfl
+
+theorem Eqv.pi_r_fixpoint {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : pi_r ;; fixpoint f = fixpoint (X ⋊ f ;; distl_inv) ;; pi_r := by
+  rw [<-fixpoint_naturality]
+  apply fixpoint_uniformity
+  · simp
+  · rw [seq_assoc, seq_assoc, sum_seq_sum]
+    simp [pi_r_fixpoint_uniform_inner, seq_assoc]
+
+theorem Eqv.ret_eta_fixpoint_uniform_inner {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : ret ((Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
+    ;; (X ⋊ f ;; distl_inv)
+  = f ;; sum
+    (ret ((Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead)))
+    (ret ((Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))) := by
+  rw [
+    ret_seq, vwk1_seq, vwk1_distl_inv, vwk1_rtimes, rtimes, let2_seq, vsubst_let2,
+    var0_subst0, wk_res_self, <-Term.Subst.Eqv.lift_lift, vsubst_lift_seq, vsubst_lift_seq
+  ]
+  simp only [
+    vsubst_br, subst_pair, subst_lift_var_succ, subst_lift_var_zero, wk0_var, zero_add,
+    vwk1_distl_inv, vsubst_lift_distl_inv
+  ]
+  rw [
+    <-ret, seq_assoc, let2_eta_seq_distl_inv, <-ret_seq_inj_l, <-ret_seq_inj_r, <-sum,
+    let2_pair, let1_beta, let1_beta, wk_var
+  ]
+  simp only [Nat.succ_eq_add_one, zero_add, vsubst_vsubst, seq, vsubst_lsubst]
+  congr
+  · simp only [var, subst0_quot, sum, coprod, pair_quot, br_quot, inj_l, inl_quot, seq_quot,
+    vwk1_quot, inj_r, inr_quot, case_quot, alpha0_quot, Subst.Eqv.vsubst_quot]
+    apply congrArg
+    ext k; cases k <;> rfl
+  · induction f using Quotient.inductionOn
+    apply Eqv.eq_of_reg_eq
+    simp only [InS.coe_vsubst, Term.Subst.InS.coe_comp, Term.InS.coe_subst0,
+      Term.InS.coe_var, Term.Subst.InS.coe_lift, Term.InS.coe_pair, InS.coe_vwk, Ctx.InS.coe_wk1,
+      <-Region.vsubst_fromWk, Region.vsubst_vsubst]
+    rw [Region.vsubst_id']
+    funext k; cases k <;> rfl
+
+theorem Eqv.ret_eta_fixpoint {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : ret ((Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
+    ;; fixpoint (X ⋊ f ;; distl_inv)
+  = fixpoint f ;;  ret ((Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
+  := by
+  rw [<-fixpoint_naturality]
+  apply fixpoint_uniformity
+  · exact ⟨_, rfl⟩
+  · rw [seq_assoc, sum_seq_sum, nil_seq, seq_nil, ret_eta_fixpoint_uniform_inner]
+
 theorem Eqv.fixpoint_strong_left {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L))
-  : X ⋊ fixpoint f = fixpoint (X ⋊ f ;; distl_inv) := sorry
+  : X ⋊ fixpoint f = fixpoint (X ⋊ f ;; distl_inv) := by
+  apply Eq.trans _ let2_eta_seq
+  simp only [vwk1_fixpoint, vwk1_seq, vwk1_distl_inv, vwk1_rtimes]
+  rw [ret_eta_fixpoint]
+  simp only [<-vwk1_fixpoint]
+  rfl
 
 end Region
 

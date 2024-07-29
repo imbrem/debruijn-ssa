@@ -77,6 +77,13 @@ def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A, ⊥⟩::Γ) (A.coprod B::L)
   := ret (inl (var 0 Ctx.Var.shead))
 
+theorem Eqv.ret_seq_inj_l {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) (B, ⊥)}
+  : ret (targets := L) a ;; inj_l (B := C) = ret a.inl := by
+  rw [inj_l, ret_seq]
+  induction a using Quotient.inductionOn;
+  rfl
+
 def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨B, ⊥⟩::Γ) (A.coprod B::L)
   := ret (inr (var 0 Ctx.Var.shead))
@@ -94,6 +101,13 @@ theorem Eqv.Pure.inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.Pure.inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (inj_r (φ := φ) (Γ := Γ) (L := L) (A := A) (B := B)).Pure
   := ⟨inr (var 0 Ctx.Var.shead), rfl⟩
+
+theorem Eqv.ret_seq_inj_r {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨B, ⊥⟩::Γ) (C, ⊥)}
+  : ret (targets := L) a ;; inj_r (A := A) = ret a.inr := by
+  rw [inj_r, ret_seq]
+  induction a using Quotient.inductionOn;
+  rfl
 
 def Eqv.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L))

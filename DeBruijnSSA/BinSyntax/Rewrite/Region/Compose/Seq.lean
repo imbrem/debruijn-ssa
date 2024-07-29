@@ -717,3 +717,23 @@ theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     apply Eqv.eq_of_reg_eq
     rfl
   · rename Fin 1 => i; cases i using Fin.elim1; rfl
+
+theorem Eqv.let2_eta_nil {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : let2 (Term.Eqv.var 0 Ctx.Var.shead)
+    (ret $ (Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
+  = nil (φ := φ) (ty := A.prod B) (rest := Γ) (targets := L) := by
+  rw [let2_ret, Term.Eqv.let2_eta]; rfl
+
+theorem Eqv.let2_eta_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ ((A, ⊥)::Γ) (B.prod C, ⊥)}
+  : let2 a
+    (ret $ (Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
+  = ret (targets := L) a := by
+  rw [let2_ret, Term.Eqv.let2_eta]
+
+theorem Eqv.let2_eta_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ ((A.prod B, ⊥)::Γ) (C::L)}
+  : let2 (Term.Eqv.var 0 Ctx.Var.shead)
+    ((ret $ (Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
+      ;; f.vwk1.vwk1)
+  = f := by rw [<-let2_seq, let2_eta_nil, nil_seq]
