@@ -139,6 +139,12 @@ theorem Eqv.cfg_quot
   {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.cfg R β G⟧ := InS.cfg_q
 
+@[simp]
+theorem Eqv.cfg1_quot
+  {β : InS φ Γ (B::L)} {G : InS φ (⟨B, ⊥⟩::Γ) (B::L)}
+  : cfg [B] ⟦β⟧ (Fin.elim1 ⟦G⟧) = ⟦InS.cfg [B] β (Fin.elim1 G)⟧ := by
+  rw [<-cfg_quot]; congr; funext i; cases i using Fin.elim1; rfl
+
 theorem Eqv.cfg_eq_quot {R : LCtx α}
   {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   {β' : InS φ Γ (R ++ L)} {G' : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
@@ -470,6 +476,12 @@ theorem Eqv.vwk_cfg {Γ : Ctx α ε} {L : LCtx α}
   induction β using Quotient.inductionOn
   sorry
 
+theorem Eqv.vwk_cfg1 {Γ : Ctx α ε} {L : LCtx α}
+  {B : Ty α} {β : Eqv φ Δ (B::L)} {G : Eqv φ (⟨B, ⊥⟩::Δ) (B::L)}
+  {ρ : Γ.InS Δ}
+  : Eqv.vwk ρ (cfg [B] β (Fin.elim1 G)) = cfg [B] (β.vwk ρ) (Fin.elim1 (G.vwk ρ.slift)) := by
+  rw [Eqv.vwk_cfg]; congr; funext i; cases i using Fin.elim1; rfl
+
 theorem InS.lwk_q {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {r : InS φ Γ L}
    : (r.q).lwk ρ = (r.lwk ρ).q := rfl
 
@@ -582,6 +594,13 @@ theorem Eqv.vsubst_cfg {Γ : Ctx α ε} {L : LCtx α}
   induction σ using Quotient.inductionOn
   induction β using Quotient.inductionOn
   sorry
+
+theorem Eqv.vsubst_cfg1 {Γ : Ctx α ε} {L : LCtx α}
+  {B : Ty α} {β : Eqv φ Δ (B::L)} {G : Eqv φ (⟨B, ⊥⟩::Δ) (B::L)}
+  {σ : Term.Subst.Eqv φ Γ Δ}
+  : (Eqv.vsubst σ (Eqv.cfg [B] β (Fin.elim1 G)))
+  = (Eqv.cfg [B] (Eqv.vsubst σ β) (Fin.elim1 (Eqv.vsubst (σ.lift (le_refl _)) G)))
+  := by rw [vsubst_cfg]; congr; funext i; cases i using Fin.elim1; rfl
 
 theorem InS.lwk_id_q {Γ : Ctx α ε} {L K : LCtx α} {r : InS φ Γ L}
   (hρ : L.Wkn K id) : (r.q).lwk_id hρ = (r.lwk_id hρ).q := rfl

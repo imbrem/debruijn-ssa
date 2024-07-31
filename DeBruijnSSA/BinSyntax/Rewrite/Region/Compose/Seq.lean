@@ -737,3 +737,29 @@ theorem Eqv.let2_eta_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     ((ret $ (Term.Eqv.var 1 Ctx.Var.shead.step).pair (Term.Eqv.var 0 Ctx.Var.shead))
       ;; f.vwk1.vwk1)
   = f := by rw [<-let2_seq, let2_eta_nil, nil_seq]
+
+theorem Eqv.uniform_wseq {Γ : Ctx α ε} {L : LCtx α}
+  {β : Eqv φ Γ (A::L)} {e : Term.Eqv φ ((A, ⊥)::Γ) (B, ⊥)}
+  {r : Eqv φ ((B, ⊥)::Γ) (B::L)} {s : Eqv φ ((A, ⊥)::Γ) (A::L)}
+  (hrs : (ret e).wseq r = s.wseq (ret e))
+  : cfg [B] (β.wrseq (ret e)) (Fin.elim1 r) = cfg [A] β (Fin.elim1 s) := by
+  induction β using Quotient.inductionOn with
+  | h β => induction e using Quotient.inductionOn with
+  | h e => induction r using Quotient.inductionOn with
+  | h r => induction s using Quotient.inductionOn with
+  | h s =>
+    simp only [
+      br_quot, wrseq_quot, List.length_singleton, List.get_eq_getElem, List.singleton_append
+    ]
+    apply Quotient.sound
+    simp only [br_quot, wseq_quot] at hrs
+    convert InS.uniform (β := β) (e := e) (r := r) (s := s) (Quotient.exact hrs) using 2
+    <;> funext i <;> cases i using Fin.elim1 <;> rfl
+
+theorem Eqv.uniform {Γ : Ctx α ε} {L : LCtx α}
+  {β : Eqv φ Γ (A::L)} {e : Term.Eqv φ ((A, ⊥)::Γ) (B, ⊥)}
+  {r : Eqv φ ((B, ⊥)::Γ) (B::L)} {s : Eqv φ ((A, ⊥)::Γ) (A::L)}
+  (hrs : (ret e) ;; r = s ;; (ret e))
+  : cfg [B] (β.wrseq (ret e)) (Fin.elim1 r) = cfg [A] β (Fin.elim1 s) := by
+  simp only [<-wseq_eq_seq] at hrs
+  exact Eqv.uniform_wseq hrs

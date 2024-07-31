@@ -279,11 +279,38 @@ theorem Eqv.fixpoint_codiagonal {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   rw [fixpoint, fixpoint, vwk1_fixpoint, lwk1_fixpoint, fixpoint_seq, fixpoint]
   sorry
 
+theorem Eqv.seq_fixpoint_eq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (h : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  (f : Eqv φ (⟨B, ⊥⟩::Γ) ((C.coprod B)::L))
+  : h ;; fixpoint f = cfg [B] h.lwk1 (Fin.elim1 (f.lwk1.vwk1 ;; left_exit)) := by
+  sorry
+
+theorem Eqv.seq_fixpoint_eq_wrseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (h : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
+  (f : Eqv φ (⟨B, ⊥⟩::Γ) ((C.coprod B)::L))
+  : h ;; fixpoint f = cfg [B] (nil.wrseq h.lwk1.vwk1) (Fin.elim1 (f.lwk1.vwk1 ;; left_exit)) := by
+  sorry
+
 theorem Eqv.fixpoint_uniformity {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)) (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod C)::L))
   (h : Eqv φ (⟨C, ⊥⟩::Γ) (A::L)) (hh : h.Pure)
   (hfg : h ;; f = g ;; sum nil h)
-  : h ;; (fixpoint f) = fixpoint g := sorry
+  : h ;; (fixpoint f) = fixpoint g := by
+  rw [seq_fixpoint_eq_wrseq, fixpoint]
+  have ⟨e, he⟩ := hh
+  cases he
+  rw [lwk1_ret, vwk1_ret]
+  apply uniform
+  rw [
+    <-seq_assoc, <-lwk1_ret, vwk1_lwk1, <-lwk1_seq, <-vwk1_ret, <-vwk1_seq, hfg, vwk1_seq, lwk1_seq,
+    seq_assoc, seq_assoc
+  ]
+  congr 1
+  simp only [vwk1_ret, lwk1_ret, vwk1_sum, lwk1_sum, nil_vwk1, nil_lwk1]
+  simp only [
+    left_exit_eq_coprod, sum_seq_coprod, nil_seq, ret_var_zero, seq_nil, coprod_seq,
+    br_succ_seq
+  ]
 
 theorem Eqv.pi_r_fixpoint_uniform_inner {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)} : pi_r ;; f = X ⋊ f ;; distl_inv ;; sum pi_r pi_r := by

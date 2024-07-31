@@ -585,3 +585,20 @@ theorem InS.vsubst_congr {Γ Δ : Ctx α ε} {L : LCtx α}
   {σ σ' : Term.Subst.InS φ Γ Δ} (hσ : σ ≈ σ') {r r' : InS φ Δ L} (hr : r ≈ r')
   : r.vsubst σ ≈ r'.vsubst σ'
   := (vsubst_subst_equiv hσ r).trans (vsubst_congr_right _ hr)
+
+theorem InS.uniform {Γ : Ctx α ε} {L : LCtx α}
+  {β : InS φ Γ (A::L)} {e : Term.InS φ ((A, ⊥)::Γ) (B, ⊥)}
+  {r : InS φ ((B, ⊥)::Γ) (B::L)} {s : InS φ ((A, ⊥)::Γ) (A::L)}
+  (hrs : (ret e).wseq r ≈ s.wseq (ret e))
+  : cfg [B] (β.wrseq (ret e)) (Fin.elim1 r) ≈ cfg [A] β (Fin.elim1 s) := by
+  simp only [eqv_def, Set.mem_setOf_eq, coe_wseq, coe_ret] at hrs
+  have h := Uniform.uniform (P := TStep) β.prop e.prop r.prop s.prop hrs;
+  simp only [List.length_singleton, List.get_eq_getElem, List.singleton_append, eqv_def,
+    Set.mem_setOf_eq, coe_cfg, coe_wrseq, coe_ret]
+  convert h
+  rename Fin 1 => i
+  cases i using Fin.elim1
+  rfl
+  rename Fin 1 => i
+  cases i using Fin.elim1
+  rfl
