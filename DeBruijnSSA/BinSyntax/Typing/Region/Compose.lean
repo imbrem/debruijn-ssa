@@ -183,6 +183,14 @@ theorem InS.coe_wseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   cases i using Fin.elim1
   rfl
 
+theorem Wf.wseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α} {left right : Region φ}
+  (hleft : Region.Wf (⟨A, ⊥⟩::Γ) left (B::L)) (hright : Region.Wf (⟨B, ⊥⟩::Γ) right (C::L))
+  : (left.wseq right).Wf (⟨A, ⊥⟩::Γ) (C::L)
+  := by
+  have h := (InS.wseq ⟨left, hleft⟩ ⟨right, hright⟩).prop
+  simp at h
+  exact h
+
 def InS.wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L)) : InS φ Γ (C::L)
   := cfg [B] left.lwk1 (Fin.elim1 right.lwk0)
@@ -197,6 +205,14 @@ theorem InS.coe_wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   cases i using Fin.elim1
   rfl
 
+theorem Wf.wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α} {left right : Region φ}
+  (hleft : Region.Wf Γ left (B::L)) (hright : Region.Wf (⟨B, ⊥⟩::Γ) right (C::L))
+  : (left.wrseq right).Wf Γ (C::L)
+  := by
+  have h := (InS.wrseq ⟨left, hleft⟩ ⟨right, hright⟩).prop
+  simp at h
+  exact h
+
 def InS.wthen {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) L) : InS φ Γ L
   := cfg [B] left (Fin.elim1 right.lwk0)
@@ -210,6 +226,14 @@ theorem InS.coe_wthen {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   funext i
   cases i using Fin.elim1
   rfl
+
+theorem Wf.wthen {B : Ty α} {Γ : Ctx α ε} {L : LCtx α} {left right : Region φ}
+  (hleft : Region.Wf Γ left (B::L)) (hright : Region.Wf (⟨B, ⊥⟩::Γ) right L)
+  : (left.wthen right).Wf Γ L
+  := by
+  have h := (InS.wthen ⟨left, hleft⟩ ⟨right, hright⟩).prop
+  simp at h
+  exact h
 
 theorem InS.wseq_eq_wrseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))

@@ -569,6 +569,14 @@ theorem Region.ext_vsubst (σ τ : Term.Subst φ)
     simp at h'
     exact h'
 
+theorem Region.vsubst_cfg (σ : Term.Subst φ) (β : Region φ) (n : ℕ) (G : Fin n -> Region φ)
+  : (cfg β n G).vsubst σ = cfg (β.vsubst σ) n (λi => (G i).vsubst σ.lift) := rfl
+
+theorem Region.vsubst_cfg1 (σ : Term.Subst φ) (β : Region φ) (G : Region φ)
+  : (cfg β 1 (Fin.elim1 G)).vsubst σ = cfg (β.vsubst σ) 1 (Fin.elim1 (G.vsubst σ.lift)) := by
+  simp only [vsubst, cfg.injEq, heq_eq_eq, true_and]
+  funext i; cases i using Fin.elim1; rfl
+
 -- i.e. vsubst is a faithful functor
 theorem Region.vsubst_injective : Function.Injective (@Region.vsubst φ)
   := λσ τ h => funext (λn => Region.ext_vsubst σ τ (λ_ => h ▸ rfl) n)
@@ -1227,6 +1235,12 @@ theorem lsubst_id' : @lsubst φ (λi => Region.br i (Term.var 0)) = id := funext
 theorem lsubst_cfg
   : @lsubst φ σ (cfg β n G) = cfg (lsubst (σ.liftn n) β) n (lsubst (σ.liftn n).vlift ∘ G)
   := rfl
+
+theorem lsubst_cfg1
+  : @lsubst φ σ (cfg β 1 (Fin.elim1 G))
+  = cfg (lsubst σ.lift β) 1 (Fin.elim1 $ lsubst σ.lift.vlift G) := by
+  simp only [lsubst, cfg.injEq, heq_eq_eq, true_and, Subst.liftn_one]
+  funext i; cases i using Fin.elim1; rfl
 
 /-- Create a substitution from a label renaming -/
 def Subst.fromLwk (ρ : ℕ -> ℕ): Subst φ := λn => Region.br (ρ n) (Term.var 0)

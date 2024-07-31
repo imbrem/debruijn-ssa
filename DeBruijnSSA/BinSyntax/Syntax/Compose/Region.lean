@@ -16,6 +16,14 @@ def alpha (ℓ : ℕ) (r : Region φ) : Subst φ
 
 def ret (e : Term φ) := br 0 e
 
+theorem vwk_ret (e : Term φ) : vwk ρ (ret e) = ret (Term.wk ρ e) := rfl
+
+theorem lwk_lift_ret (e : Term φ) : lwk (Nat.liftWk ρ) (ret e) = ret e := rfl
+
+theorem vsubst_ret (e : Term φ) : vsubst ρ (ret e) = ret (Term.subst ρ e) := rfl
+
+theorem lsubst_lift_ret (e : Term φ) {ρ : Subst φ} : lsubst ρ.lift (ret e) = ret e := rfl
+
 def nil : Region φ := ret (Term.var 0)
 
 @[simp]
@@ -283,18 +291,19 @@ theorem wrseq_eq_wthen (r r' : Region φ) : r.wrseq r' = r.lwk1.wthen r'
 
 theorem vwk_wrseq (r r' : Region φ)
   : (r.wrseq r').vwk ρ = (r.vwk ρ).wrseq (r'.vwk (Nat.liftWk ρ)) := by
-  simp only [wrseq, vwk]
-  congr
-  rw [lwk1, vwk_lwk]
-  funext i; cases i using Fin.elim1
-  simp only [vwk1, lwk0, vwk_lwk, Fin.elim1_zero, vwk_vwk]
+  simp only [wrseq, vwk_cfg1, lwk1, lwk0, vwk_lwk]
+
+theorem vsubst_wrseq (r r' : Region φ) {ρ : Term.Subst φ}
+  : (r.wrseq r').vsubst ρ = (r.vsubst ρ).wrseq (r'.vsubst ρ.lift) := by
+  simp only [wrseq, vsubst_cfg1, lwk1, lwk0, vsubst_lwk]
 
 theorem vwk_wthen (r r' : Region φ)
   : (r.wthen r').vwk ρ = (r.vwk ρ).wthen (r'.vwk (Nat.liftWk ρ)) := by
-  simp only [wthen, vwk]
-  congr
-  funext i; cases i using Fin.elim1
-  simp only [vwk1, lwk0, vwk_lwk, Fin.elim1_zero, vwk_vwk]
+  simp only [wthen, vwk_cfg1, lwk1, lwk0, vwk_lwk]
+
+theorem vsubst_wthen (r r' : Region φ) {ρ : Term.Subst φ}
+  : (r.wthen r').vsubst ρ = (r.vsubst ρ).wthen (r'.vsubst ρ.lift) := by
+  simp only [wthen, vsubst_cfg1, lwk1, lwk0, vsubst_lwk]
 
 theorem lwk_wthen (r r' : Region φ)
   : (r.wthen r').lwk ρ = (r.lwk (Nat.liftWk ρ)).wthen (r'.lwk ρ) := by
@@ -303,6 +312,12 @@ theorem lwk_wthen (r r' : Region φ)
   funext i; cases i using Fin.elim1
   simp only [lwk0, lwk_lwk, Fin.elim1_zero]
   rfl
+
+theorem lsubst_wthen (r r' : Region φ) {σ : Region.Subst φ}
+  : (r.wthen r').lsubst σ = (r.lsubst σ.lift).wthen (r'.lsubst σ.vlift) := by
+  simp only [wthen, lsubst_cfg1, lwk0, <-lsubst_fromLwk, lsubst_lsubst]
+  congr; apply congrArg; congr; funext k; cases k
+  <;> simp [Subst.vlift, Subst.comp, Subst.lift, vsubst0_var0_vwk1, lsubst_fromLwk, lwk_vwk1]
 
 theorem lwk_lift_wrseq (r r' : Region φ)
   : (r.wrseq r').lwk (Nat.liftWk ρ) = (r.lwk (Nat.liftWk ρ)).wrseq (r'.lwk (Nat.liftWk ρ)) := by
@@ -313,15 +328,53 @@ theorem lwk_lift_wrseq (r r' : Region φ)
   simp only [Fin.elim1_zero, lwk_lwk]
   rfl
 
+theorem lsubst_lift_wrseq (r r' : Region φ) {σ : Region.Subst φ}
+  : (r.wrseq r').lsubst σ.lift = (r.lsubst σ.lift).wrseq (r'.lsubst σ.lift.vlift) := by
+  simp only [wrseq_eq_wthen, lsubst_wthen, lwk1, <-lsubst_fromLwk, lsubst_lsubst]
+  congr
+  funext k
+  cases k with
+  | zero => rfl
+  | succ k =>
+    simp only [Subst.comp, lsubst, Subst.vlift, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Function.comp_apply, Subst.lift, lwk_lwk, vsubst0_var0_vwk1, Subst.vwk1_comp_fromLwk,
+      lsubst_fromLwk, Nat.liftWk_succ_comp_succ]
+    rfl
+
 theorem vwk_lift_wseq (r r' : Region φ)
   : (r.wseq r').vwk (Nat.liftWk ρ) = (r.vwk (Nat.liftWk ρ)).wseq (r'.vwk (Nat.liftWk ρ)) := by
   simp only [wseq_eq_wrseq, vwk_wrseq, vwk1, vwk_vwk]
   congr
   funext k; cases k <;> rfl
 
+theorem vsubst_lift_wseq (r r' : Region φ) {ρ : Term.Subst φ}
+  : (r.wseq r').vsubst ρ.lift = (r.vsubst ρ.lift).wseq (r'.vsubst ρ.lift) := by
+  simp only [wseq_eq_wrseq, vsubst_wrseq, vwk1, <-vsubst_fromWk, vsubst_vsubst]
+  congr
+  funext k; cases k with
+  | zero => rfl
+  | succ k =>
+    simp only [
+      Term.Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Term.Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ
+    ]
+    rfl
+
 theorem lwk_lift_wseq (r r' : Region φ)
   : (r.wseq r').lwk (Nat.liftWk ρ) = (r.lwk (Nat.liftWk ρ)).wseq (r'.lwk (Nat.liftWk ρ)) := by
   simp only [wseq_eq_wrseq, lwk_lift_wrseq, vwk1, lwk_vwk]
+
+theorem lsubst_lift_vlift_wseq (r r' : Region φ) {σ : Region.Subst φ}
+  : (r.wseq r').lsubst σ.vlift.lift = (r.lsubst σ.vlift.lift).wseq (r'.lsubst σ.vlift.lift) := by
+  simp only [wseq_eq_wrseq, lsubst_lift_wrseq, vwk1_lsubst]
+  congr
+  rw [<-Subst.vlift_lift_comm]
+  funext k
+  simp [Subst.vlift, vwk2_vwk1]
+
+theorem lsubst_vlift_lift_wseq (r r' : Region φ) {σ : Region.Subst φ}
+  : (r.wseq r').lsubst σ.lift.vlift = (r.lsubst σ.lift.vlift).wseq (r'.lsubst σ.lift.vlift) := by
+  simp only [Subst.vlift_lift_comm, lsubst_lift_vlift_wseq]
 
 -- def Subst.left_label_distrib (e : Term φ) : Subst φ
 --   := λℓ => br ℓ (Term.pair (e.wk Nat.succ) (Term.var 0))

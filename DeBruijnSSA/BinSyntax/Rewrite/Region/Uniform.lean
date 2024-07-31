@@ -40,15 +40,12 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
   | uniform {e : Term φ} {β r s : Region φ}
     : β.Wf Γ (A::L)
     → e.Wf (⟨A, ⊥⟩::Γ) (B, ⊥)
-    → r.Wf (⟨B, ⊥⟩::Γ) ((C.coprod B)::L)
-    → s.Wf (⟨A, ⊥⟩::Γ) ((C.coprod A)::L)
-    → Uniform P (⟨A, ⊥⟩::Γ)
-      ((C.coprod B)::L)
-      (r.vsubst e.subst0)
-      (s.lsubst (ret (sum Term.nil e)).lsubst0)
-    → Uniform P Γ (C::L)
-      (cfg (β.wseq (ret e)) 1 (Fin.elim1 (r.vwk1.lwk1.wseq left_exit)))
-      (cfg β 1 (Fin.elim1 (s.vwk1.lwk1.wseq left_exit)))
+    → r.Wf (⟨B, ⊥⟩::Γ) (B::L)
+    → s.Wf (⟨A, ⊥⟩::Γ) (A::L)
+    → Uniform P (⟨A, ⊥⟩::Γ) (B::L) ((ret e).wseq r) (s.wseq (ret e))
+    → Uniform P Γ L
+      (cfg (β.wrseq (ret e)) 1 (Fin.elim1 r))
+      (cfg β 1 (Fin.elim1 s))
   | refl : r.Wf Γ L → Uniform P Γ L r r
   -- TODO: this should be a theorem, later
   -- | let1_equiv {a a' : Term φ} {r : Region φ}
@@ -120,8 +117,14 @@ theorem Uniform.wf {P : Ctx α ε → LCtx α → Region φ → Region φ → Pr
     split
     case isTrue h => exact h ▸ dg'
     case isFalse h => apply dG
-  | uniform => sorry
-  --| uniform de dr ds => exact ⟨Wf.vsubst de.subst0 dr.fixpoint, ds.fixpoint⟩
+  | uniform dβ de dr ds =>
+    constructor
+    · apply Wf.cfg (R := [_]) (n := 1) (hR := rfl)
+      · exact (dβ.wrseq (Wf.ret de))
+      · exact Fin.elim1 dr
+    · apply Wf.cfg (R := [_]) (n := 1) (hR := rfl)
+      · exact dβ
+      · exact Fin.elim1 ds
   | refl h => exact ⟨h, h⟩
   -- | let1_equiv da dr => exact ⟨dr.let1 (da.left TStep.wf),
   --                              dr.let1 (da.right TStep.wf)⟩
@@ -152,15 +155,24 @@ theorem Uniform.vwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
   | symm _ I => exact (I hρ).symm
   | trans _ _ Il Ir => exact (Il hρ).trans (Ir hρ)
   | refl h => exact refl (h.vwk hρ)
-  | case_left he hr hs Ir => exact case_left (he.wk hρ) (Ir hρ.slift) (hs.vwk hρ.slift)
-  | case_right he hr hs Is => exact case_right (he.wk hρ) (hr.vwk hρ.slift) (Is hρ.slift)
-  | let1 ha hr Ir => exact let1 (ha.wk hρ) (Ir hρ.slift)
-  | let2 ha hr Ir => exact let2 (ha.wk hρ) (Ir hρ.sliftn₂)
-  | cfg_entry R hR hβ hG Iβ => exact cfg_entry R hR (Iβ hρ) (λi => (hG i).vwk hρ.slift)
-  | cfg_block R hR hβ hG i hG' IG' =>
+  | case_left he _hr hs Ir => exact case_left (he.wk hρ) (Ir hρ.slift) (hs.vwk hρ.slift)
+  | case_right he hr _hs Is => exact case_right (he.wk hρ) (hr.vwk hρ.slift) (Is hρ.slift)
+  | let1 ha _hr Ir => exact let1 (ha.wk hρ) (Ir hρ.slift)
+  | let2 ha _hr Ir => exact let2 (ha.wk hρ) (Ir hρ.sliftn₂)
+  | cfg_entry R hR _hβ hG Iβ => exact cfg_entry R hR (Iβ hρ) (λi => (hG i).vwk hρ.slift)
+  | cfg_block R hR hβ hG i _h IG' =>
     simp only [Region.vwk, Function.comp_update_apply]
     exact cfg_block R hR (hβ.vwk hρ) (λi => (hG i).vwk hρ.slift) i (IG' hρ.slift)
-  | uniform => sorry
+  | uniform dβ de dr ds _ Ih =>
+    rw [vwk_cfg1, vwk_wrseq, vwk_cfg1]
+    apply uniform
+    · exact dβ.vwk hρ
+    · exact de.wk hρ.slift
+    · exact dr.vwk hρ.slift
+    · exact ds.vwk hρ.slift
+    · have Ih := Ih hρ.slift
+      simp only [vwk_lift_wseq] at Ih
+      exact Ih
 
 theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLwk : ∀{Γ L K ρ r r'}, L.Wkn K ρ → P Γ L r r' → Q Γ K (r.lwk ρ) (r'.lwk ρ))
@@ -171,19 +183,28 @@ theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
   | symm _ I => exact (I hρ).symm
   | trans _ _ Il Ir => exact (Il hρ).trans (Ir hρ)
   | refl h => exact refl (h.lwk hρ)
-  | case_left de dr ds Ir => exact case_left de (Ir hρ) (ds.lwk hρ)
-  | case_right de dr ds Is => exact case_right de (dr.lwk hρ) (Is hρ)
-  | let1 de dr Ir => exact let1 de (Ir hρ)
-  | let2 de dr Ir => exact let2 de (Ir hρ)
-  | cfg_entry R hR dβ dG Iβ =>
+  | case_left de _dr ds Ir => exact case_left de (Ir hρ) (ds.lwk hρ)
+  | case_right de dr _ds Is => exact case_right de (dr.lwk hρ) (Is hρ)
+  | let1 de _dr Ir => exact let1 de (Ir hρ)
+  | let2 de _dr Ir => exact let2 de (Ir hρ)
+  | cfg_entry R hR _dβ dG Iβ =>
     exact cfg_entry R hR (Iβ (hR ▸ hρ.liftn_append _)) (λi => (dG i).lwk (hR ▸ hρ.liftn_append _))
-  | cfg_block R hR dβ dG i hG' IG' =>
+  | cfg_block R hR dβ dG i _hG' IG' =>
     simp only [Region.lwk, Function.comp_update_apply]
     exact cfg_block R hR
       (dβ.lwk (hR ▸ hρ.liftn_append _))
       (λi => (dG i).lwk (hR ▸ hρ.liftn_append _)) i
       (IG' (hR ▸ hρ.liftn_append _))
-  | uniform => sorry -- TODO: lwk_fixpoint
+  | uniform dβ de dr ds _ Ih =>
+    rw [lwk_cfg1, lwk_lift_wrseq, lwk_cfg1]
+    apply uniform
+    · exact dβ.lwk hρ.slift
+    · exact de
+    · exact dr.lwk hρ.slift
+    · exact ds.lwk hρ.slift
+    · have Ih := Ih hρ.slift
+      simp only [lwk_lift_wseq] at Ih
+      exact Ih
 
 theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Q Γ L (r.vsubst σ) (r'.vsubst σ))
@@ -194,16 +215,25 @@ theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
   | symm _ I => exact (I hσ).symm
   | trans _ _ Il Ir => exact (Il hσ).trans (Ir hσ)
   | refl h => exact refl (h.vsubst hσ)
-  | case_left de dr ds Ir => exact case_left (de.subst hσ) (Ir hσ.slift) (ds.vsubst hσ.slift)
-  | case_right de dr ds Is => exact case_right (de.subst hσ) (dr.vsubst hσ.slift) (Is hσ.slift)
-  | let1 de dr Ir => exact let1 (de.subst hσ) (Ir hσ.slift)
-  | let2 de dr Ir => exact let2 (de.subst hσ) (Ir hσ.sliftn₂)
-  | cfg_entry R hR dβ dG Iβ =>
+  | case_left de _dr ds Ir => exact case_left (de.subst hσ) (Ir hσ.slift) (ds.vsubst hσ.slift)
+  | case_right de dr _ds Is => exact case_right (de.subst hσ) (dr.vsubst hσ.slift) (Is hσ.slift)
+  | let1 de _dr Ir => exact let1 (de.subst hσ) (Ir hσ.slift)
+  | let2 de _dr Ir => exact let2 (de.subst hσ) (Ir hσ.sliftn₂)
+  | cfg_entry R hR _dβ dG Iβ =>
     exact cfg_entry R hR (Iβ hσ) (λi => (dG i).vsubst hσ.slift)
-  | cfg_block R hR dβ dG i hG' IG' =>
+  | cfg_block R hR dβ dG i _hG' IG' =>
     simp only [Region.vsubst, Function.comp_update_apply]
     exact cfg_block R hR (dβ.vsubst hσ) (λi => (dG i).vsubst hσ.slift) i (IG' hσ.slift)
-  | uniform => sorry -- TODO: vsubst_fixpoint
+  | uniform dβ de dr ds _ Ih =>
+    rw [vsubst_cfg1, vsubst_wrseq, vsubst_cfg1]
+    apply uniform
+    · exact dβ.vsubst hσ
+    · exact de.subst hσ.slift
+    · exact dr.vsubst hσ.slift
+    · exact ds.vsubst hσ.slift
+    · have Ih := Ih hσ.slift
+      simp only [vsubst_lift_wseq] at Ih
+      exact Ih
 
 theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Q Γ K (r.lsubst σ) (r'.lsubst σ))
@@ -214,21 +244,30 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
   | symm _ I => exact (I hσ).symm
   | trans _ _ Il Ir => exact (Il hσ).trans (Ir hσ)
   | refl h => exact refl (h.lsubst hσ)
-  | case_left de dr ds Ir => exact case_left de (Ir hσ.vlift) (ds.lsubst hσ.vlift)
-  | case_right de dr ds Is => exact case_right de (dr.lsubst hσ.vlift) (Is hσ.vlift)
-  | let1 de dr Ir => exact let1 de (Ir hσ.vlift)
-  | let2 de dr Ir => exact let2 de (Ir hσ.vliftn₂)
-  | cfg_entry R hR dβ dG Iβ =>
+  | case_left de _dr ds Ir => exact case_left de (Ir hσ.vlift) (ds.lsubst hσ.vlift)
+  | case_right de dr _ds Is => exact case_right de (dr.lsubst hσ.vlift) (Is hσ.vlift)
+  | let1 de _dr Ir => exact let1 de (Ir hσ.vlift)
+  | let2 de _dr Ir => exact let2 de (Ir hσ.vliftn₂)
+  | cfg_entry R hR _dβ dG Iβ =>
     exact cfg_entry R hR
       (Iβ (hσ.liftn_append' hR.symm))
       (λi => (dG i).lsubst (hσ.liftn_append' hR.symm).vlift)
-  | cfg_block R hR dβ dG i hG' IG' =>
+  | cfg_block R hR dβ dG i _hG' IG' =>
     simp only [Region.lsubst, Function.comp_update_apply]
     exact cfg_block R hR
       (dβ.lsubst (hσ.liftn_append' hR.symm))
       (λi => (dG i).lsubst (hσ.liftn_append' hR.symm).vlift) i
       (IG' (hσ.liftn_append' hR.symm).vlift)
-  | uniform => sorry -- TODO: lsubst_fixpoint
+  | uniform dβ de dr ds _ Ih =>
+    rw [lsubst_cfg1, lsubst_lift_wrseq, lsubst_cfg1]
+    apply uniform
+    · exact dβ.lsubst hσ.slift
+    · exact de
+    · exact dr.lsubst hσ.slift.vlift
+    · exact ds.lsubst hσ.slift.vlift
+    · have Ih := Ih hσ.slift.vlift
+      simp only [lsubst_vlift_lift_wseq] at Ih
+      exact Ih
 
 theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))

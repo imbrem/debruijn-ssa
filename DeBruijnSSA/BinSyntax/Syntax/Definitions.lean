@@ -236,6 +236,14 @@ def Region.vwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | let2 e t => let2 (e.wk ρ) (vwk (Nat.liftnWk 2 ρ) t)
   | cfg β n f => cfg (vwk ρ β) n (λ i => (f i).vwk (Nat.liftWk ρ))
 
+theorem Region.vwk_cfg (ρ : ℕ → ℕ) (β : Region φ) (n : ℕ) (G : Fin n → Region φ)
+  : (cfg β n G).vwk ρ = cfg (β.vwk ρ) n (λ i => (G i).vwk (Nat.liftWk ρ))
+  := rfl
+
+theorem Region.vwk_cfg1 (ρ : ℕ → ℕ) (β : Region φ) (G : Region φ)
+  : (cfg β 1 (Fin.elim1 G)).vwk ρ = cfg (β.vwk ρ) 1 (Fin.elim1 $ G.vwk (Nat.liftWk ρ))
+  := by simp only [vwk, cfg.injEq, heq_eq_eq, true_and]; funext i; cases i using Fin.elim1; rfl
+
 /-- Rename the labels in a `Region` using `ρ` -/
 @[simp]
 def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
@@ -244,6 +252,16 @@ def Region.lwk (ρ : ℕ → ℕ) : Region φ → Region φ
   | let1 e t => let1 e (lwk ρ t)
   | let2 e t => let2 e (lwk ρ t)
   | cfg β n f => cfg (lwk (Nat.liftnWk n ρ) β) n (λ i => (f i).lwk (Nat.liftnWk n ρ))
+
+theorem Region.lwk_cfg (ρ : ℕ → ℕ) (β : Region φ) (n : ℕ) (G : Fin n → Region φ)
+  : (cfg β n G).lwk ρ = cfg (β.lwk (Nat.liftnWk n ρ)) n (λ i => (G i).lwk (Nat.liftnWk n ρ))
+  := rfl
+
+theorem Region.lwk_cfg1 (ρ : ℕ → ℕ) (β : Region φ) (G : Region φ)
+  : (cfg β 1 (Fin.elim1 G)).lwk ρ = cfg (β.lwk (Nat.liftWk ρ)) 1 (Fin.elim1 $ G.lwk (Nat.liftWk ρ))
+  := by
+  simp only [lwk, cfg.injEq, heq_eq_eq, true_and, Nat.liftnWk_one];
+  funext i; cases i using Fin.elim1; rfl
 
 /-- A control-flow graph with `length` entry-point regions -/
 structure CFG (φ : Type _) : Type _ where
