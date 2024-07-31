@@ -581,8 +581,17 @@ theorem Region.vsubst_fromWk_apply (ρ : ℕ -> ℕ) (r : Region φ)
 theorem Region.vsubst_fromWk (ρ : ℕ -> ℕ)
   : vsubst (Term.Subst.fromWk ρ) = @vwk φ ρ := funext (vsubst_fromWk_apply ρ)
 
+theorem Region.vsubst0_var0_vwk1 (r : Region φ)
+  : r.vwk1.vsubst (Term.subst0 (Term.var 0)) = r := by
+  rw [vwk1, <-vsubst_fromWk, vsubst_vsubst, vsubst_id']
+  funext k; cases k <;> rfl
+
 theorem Region.vsubst_comp_fromWk
   : @vsubst φ ∘ Term.Subst.fromWk = @vwk φ := funext vsubst_fromWk
+
+theorem Region.vsubst0_var0_comp_vwk1
+  : vsubst (Term.subst0 (Term.var 0)) ∘ vwk1 (φ := φ) = id
+  := funext vsubst0_var0_vwk1
 
 theorem Region.lwk_vsubst (σ : Term.Subst φ) (ρ : ℕ -> ℕ) (r : Region φ)
   : (r.vsubst σ).lwk ρ = (r.lwk ρ).vsubst σ := by induction r generalizing σ ρ <;> simp [*]
@@ -633,8 +642,8 @@ theorem Subst.liftn_zero (σ : Subst φ) : σ.liftn 0 = σ := by
   funext n
   simp only [liftn]
   split
-  . rename_i H; cases H
-  . exact (σ n).lwk_id
+  · rename_i H; cases H
+  · exact (σ n).lwk_id
 
 theorem Subst.liftn_one (σ : Subst φ) : σ.liftn 1 = σ.lift := by funext m; cases m <;> rfl
 
@@ -646,19 +655,19 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
     rw [I]
     simp only [lift]
     split
-    . rfl
-    . simp only [liftn]
+    · rfl
+    · simp only [liftn]
       split
-      . split
-        . rfl
-        . split
-          . rfl
-          . rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
-      . split
-        . rename_i H; simp_arith at H
-        . split
-          . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [Terminator.lwk_lwk]
+      · split
+        · rfl
+        · split
+          · rfl
+          · rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
+      · split
+        · rename_i H; simp_arith at H
+        · split
+          · rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
+          · simp only [Terminator.lwk_lwk]
             apply congr
             apply congrArg
             funext v
@@ -848,10 +857,10 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Terminator φ)
   | br ℓ e =>
     simp only [lwk, lsubst, Nat.liftnWk, Subst.liftn]
     split
-    . split
-      . simp [lwk, Nat.liftnWk, *]
-      . rename_i H C; exact (C (Nat.le_step H)).elim
-    . rename_i C
+    · split
+      · simp [lwk, Nat.liftnWk, *]
+      · rename_i H C; exact (C (Nat.le_step H)).elim
+    · rename_i C
       simp_arith only [ite_false]
       rw [Nat.succ_eq_add_one]
       have h : ℓ - n + 1 + n - (n + 1) = ℓ - n := by
@@ -1053,8 +1062,8 @@ theorem Subst.liftn_zero (σ : Subst φ) : σ.liftn 0 = σ := by
   funext n
   simp only [liftn]
   split
-  . rename_i H; cases H
-  . exact (σ n).lwk_id
+  · rename_i H; cases H
+  · exact (σ n).lwk_id
 
 theorem Subst.liftn_one (σ : Subst φ) : σ.liftn 1 = σ.lift := by funext m; cases m <;> rfl
 
@@ -1066,19 +1075,19 @@ theorem Subst.liftn_succ (n) (σ: Subst φ) : σ.liftn n.succ = (σ.liftn n).lif
     rw [I]
     simp only [lift]
     split
-    . rfl
-    . simp only [liftn]
+    · rfl
+    · simp only [liftn]
       split
-      . split
-        . rfl
-        . split
-          . rfl
-          . rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
-      . split
-        . rename_i H; simp_arith at H
-        . split
-          . rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
-          . simp only [Region.lwk_lwk]
+      · split
+        · rfl
+        · split
+          · rfl
+          · rename_i H C; exact (C (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ H))).elim
+      · split
+        · rename_i H; simp_arith at H
+        · split
+          · rename_i C H; exact (C (Nat.succ_lt_succ (Nat.succ_lt_succ H))).elim
+          · simp only [Region.lwk_lwk]
             apply congr
             apply congrArg
             funext v
@@ -1277,10 +1286,10 @@ theorem lsubst_liftn (n : ℕ) (σ : Subst φ) (t : Region φ)
   | br ℓ e =>
     simp only [lwk, lsubst, Nat.liftnWk, Subst.liftn]
     split
-    . split
-      . simp [lwk, Nat.liftnWk, *]
-      . rename_i H C; exact (C (Nat.le_step H)).elim
-    . rename_i C
+    · split
+      · simp [lwk, Nat.liftnWk, *]
+      · rename_i H C; exact (C (Nat.le_step H)).elim
+    · rename_i C
       simp_arith only [ite_false]
       rw [Nat.succ_eq_add_one]
       have h : ℓ - n + 1 + n - (n + 1) = ℓ - n := by
@@ -1404,6 +1413,10 @@ theorem vwk_lsubst (σ ρ) (t : Region φ)
       vwk, lsubst,
       Subst.vwk_liftWk_liftWk_comp_vlift, Subst.vwk_liftWk_liftnWk_comp_vliftn,
       Subst.vwk_liftWk_comp_liftn, *]
+
+theorem vwk1_lsubst (σ) (t : Region φ)
+  : (t.lsubst σ).vwk1 = t.vwk1.lsubst (vwk2 ∘ σ)
+  := by rw [vwk1, vwk_lsubst, vwk2, Nat.liftnWk_two]; rfl
 
 theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
   : (σ.comp τ).vliftn n = (σ.vliftn n).comp (τ.vliftn n)

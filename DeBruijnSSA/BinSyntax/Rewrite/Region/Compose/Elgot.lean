@@ -131,6 +131,18 @@ theorem Eqv.vwk1_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : r.fixpoint.vwk1 (inserted := inserted) = (r.vwk1).fixpoint := by
   simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_lift_fixpoint]
 
+theorem Eqv.lwk_lift_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
+  {ρ : L.InS K}
+  : r.fixpoint.lwk ρ.slift = (r.lwk ρ.slift).fixpoint := by
+  induction r using Quotient.inductionOn
+  --simp [InS.lwk_lift_fixpoint]
+  sorry
+
+theorem Eqv.lwk1_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : r.fixpoint.lwk1 (inserted := inserted) = (r.lwk1).fixpoint := sorry
+
 theorem Eqv.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
   {σ : Term.Subst.Eqv φ Γ Δ}
@@ -252,14 +264,20 @@ theorem Eqv.fixpoint_naturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : fixpoint (f ;; sum g nil) = (fixpoint f) ;; g := by rw [fixpoint_seq]
 
+-- TODO: this is derivable, probably: see Proposition 16 in Unifying Guarded and Unguarded Iteration
+-- by Goncharov et al
 theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
   (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
-  : fixpoint (f ;; coprod inj_l g) = f ;; coprod nil (fixpoint (g ;; coprod inj_l f)) := sorry
+  : fixpoint (f ;; coprod inj_l g) = f ;; coprod nil (fixpoint (g ;; coprod inj_l f))
+  := by
+  sorry
 
 theorem Eqv.fixpoint_codiagonal {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (((B.coprod A).coprod A)::L))
-  : fixpoint (f ;; coprod nil inj_r) = fixpoint (fixpoint f) := sorry
+  : fixpoint (f ;; coprod nil inj_r) = fixpoint (fixpoint f) := by
+  rw [fixpoint, fixpoint, vwk1_fixpoint, lwk1_fixpoint, fixpoint_seq, fixpoint]
+  sorry
 
 theorem Eqv.fixpoint_uniformity {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)) (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod C)::L))

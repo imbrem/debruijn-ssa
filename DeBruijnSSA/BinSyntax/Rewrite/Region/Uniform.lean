@@ -37,15 +37,18 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
     (i : Fin n) →
     Uniform P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L) (G i) g' →
     Uniform P Γ L (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
-  | uniform {e : Term φ} {r s : Region φ}
-    : e.Wf (⟨A, ⊥⟩::Γ) (B, ⊥)
-    → r.Wf (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ((C.coprod B)::L)
+  | uniform {e : Term φ} {β r s : Region φ}
+    : β.Wf Γ (A::L)
+    → e.Wf (⟨A, ⊥⟩::Γ) (B, ⊥)
+    → r.Wf (⟨B, ⊥⟩::Γ) ((C.coprod B)::L)
     → s.Wf (⟨A, ⊥⟩::Γ) ((C.coprod A)::L)
     → Uniform P (⟨A, ⊥⟩::Γ)
       ((C.coprod B)::L)
       (r.vsubst e.subst0)
       (s.lsubst (ret (sum Term.nil e)).lsubst0)
-    → Uniform P (⟨A, ⊥⟩::Γ) (C::L) (r.fixpoint.vsubst e.subst0) s.fixpoint
+    → Uniform P Γ (C::L)
+      (cfg (β.wseq (ret e)) 1 (Fin.elim1 (r.vwk1.lwk1.wseq left_exit)))
+      (cfg β 1 (Fin.elim1 (s.vwk1.lwk1.wseq left_exit)))
   | refl : r.Wf Γ L → Uniform P Γ L r r
   -- TODO: this should be a theorem, later
   -- | let1_equiv {a a' : Term φ} {r : Region φ}
@@ -117,7 +120,8 @@ theorem Uniform.wf {P : Ctx α ε → LCtx α → Region φ → Region φ → Pr
     split
     case isTrue h => exact h ▸ dg'
     case isFalse h => apply dG
-  | uniform de dr ds => exact ⟨Wf.vsubst de.subst0 dr.fixpoint, ds.fixpoint⟩
+  | uniform => sorry
+  --| uniform de dr ds => exact ⟨Wf.vsubst de.subst0 dr.fixpoint, ds.fixpoint⟩
   | refl h => exact ⟨h, h⟩
   -- | let1_equiv da dr => exact ⟨dr.let1 (da.left TStep.wf),
   --                              dr.let1 (da.right TStep.wf)⟩
@@ -156,7 +160,7 @@ theorem Uniform.vwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
   | cfg_block R hR hβ hG i hG' IG' =>
     simp only [Region.vwk, Function.comp_update_apply]
     exact cfg_block R hR (hβ.vwk hρ) (λi => (hG i).vwk hρ.slift) i (IG' hρ.slift)
-  | uniform he hr hs hS IS => sorry -- TODO: vwk_fixpoint
+  | uniform => sorry
 
 theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLwk : ∀{Γ L K ρ r r'}, L.Wkn K ρ → P Γ L r r' → Q Γ K (r.lwk ρ) (r'.lwk ρ))
@@ -179,7 +183,7 @@ theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
       (dβ.lwk (hR ▸ hρ.liftn_append _))
       (λi => (dG i).lwk (hR ▸ hρ.liftn_append _)) i
       (IG' (hR ▸ hρ.liftn_append _))
-  | uniform he hr hs hS IS => sorry -- TODO: lwk_fixpoint
+  | uniform => sorry -- TODO: lwk_fixpoint
 
 theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Q Γ L (r.vsubst σ) (r'.vsubst σ))
@@ -199,7 +203,7 @@ theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
   | cfg_block R hR dβ dG i hG' IG' =>
     simp only [Region.vsubst, Function.comp_update_apply]
     exact cfg_block R hR (dβ.vsubst hσ) (λi => (dG i).vsubst hσ.slift) i (IG' hσ.slift)
-  | uniform de dr ds hS IS => sorry -- TODO: vsubst_fixpoint
+  | uniform => sorry -- TODO: vsubst_fixpoint
 
 theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Q Γ K (r.lsubst σ) (r'.lsubst σ))
@@ -224,7 +228,7 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
       (dβ.lsubst (hσ.liftn_append' hR.symm))
       (λi => (dG i).lsubst (hσ.liftn_append' hR.symm).vlift) i
       (IG' (hσ.liftn_append' hR.symm).vlift)
-  | uniform de dr ds hS IS => sorry -- TODO: lsubst_fixpoint
+  | uniform => sorry -- TODO: lsubst_fixpoint
 
 theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))

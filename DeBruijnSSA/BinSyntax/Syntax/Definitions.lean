@@ -772,6 +772,15 @@ def Region.vwk3 : Region φ → Region φ := vwk (Nat.liftnWk 3 Nat.succ)
 
 def Region.vwk4 : Region φ → Region φ := vwk (Nat.liftnWk 4 Nat.succ)
 
+theorem Region.vwk1_vwk1 (r : Region φ) : r.vwk1.vwk1 = r.vwk1.vwk2 := by
+  simp only [vwk1, vwk2, vwk_vwk]; congr; funext k; cases k <;> rfl
+
+theorem Region.vwk2_vwk1 (r : Region φ) : r.vwk1.vwk2 = r.vwk1.vwk1 := by rw [vwk1_vwk1]
+
+theorem Region.vwk1_comp_vwk1 : vwk1 (φ := φ) ∘ vwk1 = vwk2 ∘ vwk1 := funext Region.vwk1_vwk1
+
+theorem Region.vwk2_comp_vwk1 : vwk2 (φ := φ) ∘ vwk1 = vwk1 ∘ vwk1 := funext Region.vwk2_vwk1
+
 def Region.vswap01 : Region φ → Region φ := vwk (Nat.swap0 1)
 
 def Region.vswap02 : Region φ → Region φ := vwk (Nat.swap0 2)
