@@ -77,6 +77,14 @@ def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A, ⊥⟩::Γ) (A.coprod B::L)
   := ret (inl (var 0 Ctx.Var.shead))
 
+theorem Eqv.vwk1_inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (inj_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
+  = inj_l := rfl
+
+theorem Eqv.lwk1_inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (inj_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).lwk1 (inserted := inserted)
+  = inj_l := rfl
+
 theorem Eqv.ret_seq_inj_l {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) (B, ⊥)}
   : ret (targets := L) a ;; inj_l (B := C) = ret a.inl := by
@@ -87,6 +95,14 @@ theorem Eqv.ret_seq_inj_l {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨B, ⊥⟩::Γ) (A.coprod B::L)
   := ret (inr (var 0 Ctx.Var.shead))
+
+theorem Eqv.vwk1_inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (inj_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
+  = inj_r := rfl
+
+theorem Eqv.lwk1_inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (inj_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).lwk1 (inserted := inserted)
+  = inj_r := rfl
 
 theorem Eqv.Pure.lzero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
   : (lzero (φ := φ) (Γ := Γ) (L := L) (A := A)).Pure := sorry

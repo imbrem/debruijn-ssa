@@ -83,14 +83,6 @@ theorem Eqv.let1_0_nil
   = Eqv.nil (φ := φ) (ty := ty) (rest := rest) (targets := targets)
   := by rw [let1_beta]; rfl
 
-def Wf.lsubst0 {Γ : Ctx α ε} {L : LCtx α} {r : Region φ} (hr : r.Wf (⟨A, ⊥⟩::Γ) L)
-  : r.lsubst0.Wf Γ (A::L) L
-  := Fin.cases hr (λi => Wf.br ⟨i.prop, le_refl _⟩ (by simp))
-
-def InS.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) L)
-  : Subst.InS φ Γ (A::L) L
-  := ⟨(r : Region φ).lsubst0, r.prop.lsubst0⟩
-
 theorem InS.lsubst0_congr {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ (⟨A, ⊥⟩::Γ) L}
   (h : r ≈ r') : InS.lsubst0 r ≈ InS.lsubst0 r'
   | ⟨0, _⟩ => by simp [Subst.InS.get, InS.lsubst0, Region.lsubst0, h]
@@ -763,3 +755,20 @@ theorem Eqv.uniform {Γ : Ctx α ε} {L : LCtx α}
   : cfg [B] (β.wrseq (ret e)) (Fin.elim1 r) = cfg [A] β (Fin.elim1 s) := by
   simp only [<-wseq_eq_seq] at hrs
   exact Eqv.uniform_wseq hrs
+
+theorem Eqv.codiagonal {Γ : Ctx α ε} {L : LCtx α}
+  {β : Eqv φ Γ (A::L)} {G : Eqv φ (⟨A, ⊥⟩::Γ) (A::A::L)}
+  : cfg [A] β (Fin.elim1 (cfg [A] nil (Fin.elim1 G.vwk1)))
+  = cfg [A] β (Fin.elim1 (G.lsubst nil.lsubst0)) := by
+  induction β using Quotient.inductionOn with
+  | h β => induction G using Quotient.inductionOn with
+  | h G =>
+    have h := Quotient.sound $ InS.codiagonal (β := β) (G := G)
+    simp only [<-cfg_quot] at h
+    convert h using 2 <;> funext i <;> cases i using Fin.elim1
+    · simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
+      List.getElem_cons_zero, List.singleton_append, List.append_eq, List.nil_append, vwk1_quot,
+      Fin.elim1_zero, <-cfg_quot]
+      congr
+      funext i; cases i using Fin.elim1; rfl
+    · rfl

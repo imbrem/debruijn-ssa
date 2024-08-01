@@ -426,6 +426,13 @@ theorem InS.coe_ucfg {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
   : (InS.ucfg R β G : Region φ) = Region.ucfg R.length β (λi => (G i)) := rfl
 
+theorem Wf.ucfg {Γ : Ctx α ε} {L : LCtx α}
+  (n : ℕ) (R : LCtx α) (hR : R.length = n)
+  {β : Region φ} {G : Fin n → Region φ}
+  (dβ : β.Wf Γ (R ++ L)) (dG : ∀i : Fin n, (G i).Wf ((R.get (i.cast hR.symm), ⊥)::Γ) (R ++ L))
+  : (Region.ucfg n β G).Wf Γ L
+  := by cases hR; exact (InS.ucfg R ⟨β, dβ⟩ (λi => ⟨G i, dG i⟩)).prop
+
 def InS.ucfg' {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
   : InS φ Γ L := β.lsubst (InS.cfgSubst' R G)
@@ -434,3 +441,22 @@ def InS.ucfg' {Γ : Ctx α ε} {L : LCtx α}
 theorem InS.coe_ucfg' {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α) (β : InS φ Γ (R ++ L)) (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
   : (InS.ucfg' R β G : Region φ) = Region.ucfg' R.length β (λi => (G i)) := rfl
+
+theorem Wf.ucfg' {Γ : Ctx α ε} {L : LCtx α}
+  (n : ℕ) (R : LCtx α) (hR : R.length = n)
+  {β : Region φ} {G : Fin n → Region φ}
+  (dβ : β.Wf Γ (R ++ L)) (dG : ∀i : Fin n, (G i).Wf ((R.get (i.cast hR.symm), ⊥)::Γ) (R ++ L))
+  : (Region.ucfg' n β G).Wf Γ L
+  := by cases hR; exact (InS.ucfg' R ⟨β, dβ⟩ (λi => ⟨G i, dG i⟩)).prop
+
+def Wf.lsubst0 {Γ : Ctx α ε} {L : LCtx α} {r : Region φ} (hr : r.Wf (⟨A, ⊥⟩::Γ) L)
+  : r.lsubst0.Wf Γ (A::L) L
+  := Fin.cases hr (λi => Wf.br ⟨i.prop, le_refl _⟩ (by simp))
+
+def InS.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) L)
+  : Subst.InS φ Γ (A::L) L
+  := ⟨(r : Region φ).lsubst0, r.prop.lsubst0⟩
+
+@[simp]
+theorem InS.coe_lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) L)
+  : (r.lsubst0 : Region.Subst φ) = (r : Region φ).lsubst0 := rfl

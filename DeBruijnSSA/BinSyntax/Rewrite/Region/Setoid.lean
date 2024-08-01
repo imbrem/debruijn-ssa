@@ -602,3 +602,9 @@ theorem InS.uniform {Γ : Ctx α ε} {L : LCtx α}
   rename Fin 1 => i
   cases i using Fin.elim1
   rfl
+
+theorem InS.codiagonal {Γ : Ctx α ε} {L : LCtx α}
+  {β : InS φ Γ (A::L)} {G : InS φ (⟨A, ⊥⟩::Γ) (A::A::L)}
+  : cfg [A] β (Fin.elim1 (cfg [A] nil (Fin.elim1 G.vwk1)))
+  ≈ cfg [A] β (Fin.elim1 (G.lsubst nil.lsubst0)) := by
+  sorry

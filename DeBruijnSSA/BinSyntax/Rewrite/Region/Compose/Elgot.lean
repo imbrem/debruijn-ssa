@@ -119,6 +119,11 @@ theorem Eqv.fixpoint_quot {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   intro i
   cases i using Fin.elim1; rfl
 
+theorem Eqv.fixpoint_eq_vwk1 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
+  : f.fixpoint = cfg [A] nil (Fin.elim1 ((f.lwk1 ;; left_exit).vwk1))
+  := by rw [vwk1_seq, vwk1_left_exit, vwk1_lwk1]; rfl
+
 theorem Eqv.vwk_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
   {ρ : Ctx.InS Γ Δ}
@@ -275,21 +280,45 @@ theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.fixpoint_codiagonal {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (((B.coprod A).coprod A)::L))
-  : fixpoint (f ;; coprod nil inj_r) = fixpoint (fixpoint f) := by
-  rw [fixpoint, fixpoint, vwk1_fixpoint, lwk1_fixpoint, fixpoint_seq, fixpoint]
-  sorry
+  : fixpoint (fixpoint f) = fixpoint (f ;; coprod nil inj_r) := by
+  rw [
+    fixpoint, vwk1_fixpoint, lwk1_fixpoint, fixpoint_seq, fixpoint_eq_vwk1,
+  ]
+  apply Eq.trans codiagonal
+  rw [fixpoint]
+  congr
+  apply congrArg
+  rw [
+    lwk1_seq, seq_assoc, lwk1_sum_seq_left_exit, left_exit_eq_coprod, lwk1_coprod, coprod_seq,
+    nil_lwk1, lwk1_br_succ, br_succ_seq, lwk1_ret, ret_seq, vwk1_br, vsubst_br,
+    subst0_var0_wk1, vwk1_seq, vwk1_coprod, nil_vwk1, vwk1_inj_r, lwk1_seq, lwk1_coprod,
+    nil_lwk1, lwk1_inj_r, seq_assoc, coprod_seq, inj_r_coprod
+  ]
+  simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
+    List.getElem_cons_zero, List.singleton_append, List.append_eq, List.nil_append, Nat.zero_eq,
+    List.getElem_cons_succ, List.length_cons, Nat.reduceAdd, nil_seq]
+  induction f using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_var, Ctx.InS.coe_wk1, Nat.liftWk_zero,
+    InS.vwk_case, Ctx.InS.lift_wk1, Ctx.InS.coe_wk2, Ctx.InS.coe_lift, InS.coe_lsubst,
+    InS.coe_lsubst0, InS.coe_nil, InS.coe_alpha0, InS.coe_case, Term.InS.coe_var, InS.coe_br,
+    InS.coe_vwk, Region.vwk, Term.wk, InS.coe_lwk, LCtx.InS.coe_wk1, Region.lwk_lwk]
+  simp only [<-Region.lsubst_fromLwk, Region.lsubst_lsubst]
+  congr
+  funext k
+  cases k <;> rfl
 
 theorem Eqv.seq_fixpoint_eq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (h : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   (f : Eqv φ (⟨B, ⊥⟩::Γ) ((C.coprod B)::L))
-  : h ;; fixpoint f = cfg [B] h.lwk1 (Fin.elim1 (f.lwk1.vwk1 ;; left_exit)) := by
-  sorry
+  : h ;; fixpoint f = cfg [B] h.lwk1 (Fin.elim1 (f.lwk1.vwk1 ;; left_exit)) := by rw [
+    fixpoint, <-vwk1_left_exit, lwk1_vwk1, <-vwk1_seq, seq_cont, seq_nil, vwk1_seq, vwk1_left_exit]
 
 theorem Eqv.seq_fixpoint_eq_wrseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (h : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   (f : Eqv φ (⟨B, ⊥⟩::Γ) ((C.coprod B)::L))
   : h ;; fixpoint f = cfg [B] (nil.wrseq h.lwk1.vwk1) (Fin.elim1 (f.lwk1.vwk1 ;; left_exit)) := by
-  sorry
+  rw [seq_fixpoint_eq_cfg, <-wseq_eq_wrseq, wseq_eq_seq, nil_seq]
 
 theorem Eqv.fixpoint_uniformity {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)) (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod C)::L))

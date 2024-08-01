@@ -46,6 +46,17 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
     → Uniform P Γ L
       (cfg (β.wrseq (ret e)) 1 (Fin.elim1 r))
       (cfg β 1 (Fin.elim1 s))
+  | codiagonal {β G : Region φ}
+    : β.Wf Γ (A::L) →
+      G.Wf (⟨A, ⊥⟩::Γ) (A::A::L) →
+      Uniform P Γ L
+        (cfg β 1 (Fin.elim1 $ cfg nil 1 (Fin.elim1 G.vwk1)))
+        (cfg β 1 (Fin.elim1 $ G.lsubst nil.lsubst0))
+  | ucfg {R : LCtx α} {β : Region φ} {G : Fin n → Region φ}
+    : (hR : R.length = n)
+      → β.Wf Γ (R ++ L)
+      → (∀i : Fin n, (G i).Wf ((R.get (i.cast hR.symm), ⊥)::Γ) (R ++ L)) →
+      Uniform P Γ L (cfg β n G) (ucfg' n β G)
   | refl : r.Wf Γ L → Uniform P Γ L r r
   -- TODO: this should be a theorem, later
   -- | let1_equiv {a a' : Term φ} {r : Region φ}
@@ -125,6 +136,17 @@ theorem Uniform.wf {P : Ctx α ε → LCtx α → Region φ → Region φ → Pr
     · apply Wf.cfg (R := [_]) (n := 1) (hR := rfl)
       · exact dβ
       · exact Fin.elim1 ds
+  | codiagonal dβ dG =>
+    constructor
+    · apply Wf.cfg (R := [_]) (n := 1) (hR := rfl) dβ
+      intro i; cases i using Fin.elim1;
+      apply Wf.cfg (R := [_]) (n := 1) (hR := rfl) Wf.nil
+      intro i; cases i using Fin.elim1;
+      exact dG.vwk1
+    · apply Wf.cfg (R := [_]) (n := 1) (hR := rfl) dβ
+      intro i; cases i using Fin.elim1;
+      apply dG.lsubst Wf.nil.lsubst0
+  | ucfg hR dβ dG => exact ⟨Wf.cfg _ _ hR dβ dG, Wf.ucfg' _ _ hR dβ dG⟩
   | refl h => exact ⟨h, h⟩
   -- | let1_equiv da dr => exact ⟨dr.let1 (da.left TStep.wf),
   --                              dr.let1 (da.right TStep.wf)⟩
@@ -173,6 +195,16 @@ theorem Uniform.vwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
     · have Ih := Ih hρ.slift
       simp only [vwk_lift_wseq] at Ih
       exact Ih
+  | codiagonal dβ dG =>
+    simp only [vwk_cfg1, nil_vwk_lift, lsubst_lsubst0_nil, vwk_lwk]
+    rw [<-lsubst_lsubst0_nil]
+    have h := codiagonal (P := Q) (dβ.vwk hρ) (dG.vwk hρ.slift)
+    convert h using 5
+    simp only [vwk1, vwk_vwk]
+    congr; funext k; cases k <;> rfl
+  | ucfg hR dβ dG =>
+    simp only [vwk_cfg]
+    sorry
 
 theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLwk : ∀{Γ L K ρ r r'}, L.Wkn K ρ → P Γ L r r' → Q Γ K (r.lwk ρ) (r'.lwk ρ))
@@ -205,6 +237,8 @@ theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
     · have Ih := Ih hρ.slift
       simp only [lwk_lift_wseq] at Ih
       exact Ih
+  | codiagonal => sorry
+  | ucfg hR dβ dG => sorry
 
 theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Q Γ L (r.vsubst σ) (r'.vsubst σ))
@@ -234,6 +268,8 @@ theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
     · have Ih := Ih hσ.slift
       simp only [vsubst_lift_wseq] at Ih
       exact Ih
+  | codiagonal => sorry
+  | ucfg hR dβ dG => sorry
 
 theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Q Γ K (r.lsubst σ) (r'.lsubst σ))
@@ -268,6 +304,8 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
     · have Ih := Ih hσ.slift.vlift
       simp only [lsubst_vlift_lift_wseq] at Ih
       exact Ih
+  | codiagonal => sorry
+  | ucfg hR dβ dG => sorry
 
 theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))

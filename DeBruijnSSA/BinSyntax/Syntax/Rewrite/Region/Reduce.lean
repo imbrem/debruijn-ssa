@@ -8,6 +8,7 @@ import Discretion.Correspondence.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Subst
 import DeBruijnSSA.BinSyntax.Syntax.Fv
+import DeBruijnSSA.BinSyntax.Syntax.Compose.Region
 
 namespace BinSyntax
 
@@ -45,6 +46,11 @@ inductive ReduceD : Region φ → Region φ → Type _
     ReduceD
       (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
       (cfg β m G')
+  -- | ucfg (β n G) : ReduceD (cfg β n G) (ucfg n β G)
+  -- | codiagonal (β G : Region φ) :
+  --   ReduceD
+  --     (cfg β 1 (Fin.elim1 (cfg nil 1 (Fin.elim1 G.vwk1))))
+  --     (cfg β 1 (Fin.elim1 $ G.lsubst nil.lsubst0))
 
 inductive Reduce : Region φ → Region φ → Prop
   | case_inl (e r s) : Reduce (case (inl e) r s) (let1 e r)
@@ -57,6 +63,11 @@ inductive Reduce : Region φ → Region φ → Prop
     Reduce
       (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
       (cfg β m G')
+  -- | ucfg (β n G) : Reduce (cfg β n G) (ucfg n β G)
+  -- | codiagonal (β G : Region φ) :
+  --   Reduce
+  --     (cfg β 1 (Fin.elim1 (cfg nil 1 (Fin.elim1 G.vwk1))))
+  --     (cfg β 1 (Fin.elim1 $ G.lsubst nil.lsubst0))
 
 theorem ReduceD.reduce {r r' : Region φ} (p : ReduceD r r') : Reduce r r'
   := by cases p <;> constructor
@@ -87,6 +98,7 @@ theorem Reduce.fvs_le {r r' : Region φ} (p : Reduce r r') : r'.fvs ⊆ r.fvs :=
     simp only [fvs, fvs_lwk, Fin.comp_addCases_apply, Set.iUnion_addCases, Function.comp_apply]
     apply Set.union_subset_union_right
     apply Set.subset_union_right
+  -- | ucfg β n G => sorry
 
 def ReduceD.cast_trg {r₀ r₁ r₁' : Region φ} (p : ReduceD r₀ r₁) (h : r₁ = r₁')
   : ReduceD r₀ r₁' := h ▸ p
@@ -103,6 +115,8 @@ def ReduceD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : Reduc
     simp only [Region.vwk, wk, Function.comp_apply, vwk_lwk, Fin.comp_addCases_apply]
     rw [<-Function.comp.assoc, vwk_comp_lwk, Function.comp.assoc]
     apply dead_cfg_left
+  -- | ucfg β n G =>
+  --   sorry
   | _ =>
     simp only [Region.vwk, wk, Function.comp_apply, vwk_lwk]
     constructor
@@ -126,6 +140,8 @@ def ReduceD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : Reduc
     simp only [Region.lwk, Region.lwk_lwk, Function.comp_apply, Fin.liftnWk_comp_toNatWk]
     simp only [<-Region.lwk_lwk]
     apply wk_cfg
+  -- | ucfg β n G =>
+  --   sorry
   | _ =>
     simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk]
     constructor
@@ -150,3 +166,5 @@ theorem ReduceD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : ReduceD r r'
     apply sup_le_sup_left
     apply le_sup_of_le_right
     rw [<-Function.comp.assoc, effect_comp_lwk]
+  -- | ucfg β n G =>
+  --   sorry

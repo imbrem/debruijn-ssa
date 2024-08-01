@@ -30,6 +30,27 @@ def nil : Region φ := ret (Term.var 0)
 theorem nil_vwk1 : nil.vwk1 = @nil φ := rfl
 
 @[simp]
+theorem nil_vwk_lift : nil.vwk (Nat.liftWk ρ) = nil (φ := φ) := rfl
+
+@[simp]
+theorem nil_vsubst_lift {ρ : Term.Subst φ} : nil.vsubst ρ.lift = nil (φ := φ) := rfl
+
+@[simp]
+theorem nil_lwk1 : nil.lwk1 = @nil φ := rfl
+
+@[simp]
+theorem nil_lwk_lift : nil.lwk (Nat.liftWk ρ) = nil (φ := φ) := rfl
+
+@[simp]
+theorem nil_lsubst_lift {ρ : Subst φ} : nil.lsubst ρ.lift = nil (φ := φ) := rfl
+
+theorem lsubst0_nil : lsubst0 nil = Subst.fromLwk (φ := φ) Nat.pred
+  := by funext k; cases k <;> rfl
+
+theorem lsubst_lsubst0_nil {r : Region φ} : r.lsubst (lsubst0 nil) = r.lwk Nat.pred := by
+  simp only [lsubst, lsubst0_nil, lsubst_fromLwk]
+
+@[simp]
 theorem alpha0_nil : alpha 0 nil = @Subst.id φ := by
   rw [alpha, Function.update_eq_self_iff]
   rfl
@@ -533,9 +554,49 @@ def ucfg (n : ℕ) (β : Region φ) (G : Fin n → Region φ) : Region φ
 def ucfg' (n : ℕ) (β : Region φ) (G : Fin n → Region φ) : Region φ
   := β.lsubst (cfgSubst' n G)
 
--- TODO: vsubst_ucfg
+theorem vwk_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
+  : (ucfg n β G).vwk ρ = ucfg n (β.vwk ρ) (λi => (G i).vwk (Nat.liftWk ρ)) := by
+  simp only [ucfg, vwk_lsubst]
+  congr
+  funext k
+  simp only [Function.comp_apply, vwk, Term.wk, Nat.liftWk_zero, cfgSubst, cfg.injEq,
+    heq_eq_eq, true_and]
+  funext i
+  simp only [vwk1, vwk_vwk]
+  congr
+  funext k; cases k <;> rfl
 
--- TODO: vwk_ucfg
+theorem vsubst_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ} {ρ : Term.Subst φ}
+  : (ucfg n β G).vsubst ρ = ucfg n (β.vsubst ρ) (λi => (G i).vsubst ρ.lift) := by
+  simp only [ucfg, vsubst_lsubst]
+  congr
+  funext k
+  simp only [
+    Term.Subst.lift, Function.comp_apply, vsubst, Term.subst, cfgSubst, cfg.injEq, heq_eq_eq,
+    true_and
+  ]
+  funext i
+  simp only [vwk1, <-vsubst_fromWk, vsubst_vsubst]
+  congr
+  funext k; cases k with
+  | zero => rfl
+  | succ k =>
+    simp only [Term.Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
+    Term.Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ]
+    rfl
+
+theorem lsubst_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ} {ρ : Subst φ}
+  : (ucfg n β G).lsubst ρ = ucfg n (β.lsubst ρ) (λi => (G i).lsubst ρ.lift.vlift) := by
+  simp only [ucfg, lsubst_lsubst]
+  congr
+  funext k
+  simp only [cfgSubst, Subst.comp]
+
+-- theorem lwk_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
+--   : (ucfg n β G).lwk ρ = ucfg n (β.lwk (Nat.liftnWk n ρ)) (λi => (G i).lwk (Nat.liftnWk n ρ)) := by
+--   simp only [ucfg, lwk_lsubst, lsubst_lwk]
+--   congr
+--   simp [cfgSubst]
 
 -- TODO: lsubst_ucfg
 
