@@ -591,6 +591,7 @@ theorem lsubst_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ} {ρ : S
   congr
   funext k
   simp only [cfgSubst, Subst.comp]
+  sorry
 
 -- theorem lwk_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
 --   : (ucfg n β G).lwk ρ = ucfg n (β.lwk (Nat.liftnWk n ρ)) (λi => (G i).lwk (Nat.liftnWk n ρ)) := by
