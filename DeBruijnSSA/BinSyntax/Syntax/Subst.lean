@@ -1232,6 +1232,9 @@ theorem lsubst_id_apply' (t : Region φ) : t.lsubst (λi => Region.br i (Term.va
 @[simp]
 theorem lsubst_id' : @lsubst φ (λi => Region.br i (Term.var 0)) = id := funext lsubst_id_apply'
 
+theorem lsubst_id_eq {t : Region φ} {σ : Subst φ} (hσ : σ = Subst.id)
+  : t.lsubst σ = t := by cases hσ; simp
+
 theorem lsubst_cfg
   : @lsubst φ σ (cfg β n G) = cfg (lsubst (σ.liftn n) β) n (lsubst (σ.liftn n).vlift ∘ G)
   := rfl
