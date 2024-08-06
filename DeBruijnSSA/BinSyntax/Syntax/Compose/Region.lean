@@ -585,22 +585,66 @@ theorem vsubst_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ} {ρ : T
     Term.Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ]
     rfl
 
-theorem lsubst_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ} {ρ : Subst φ}
-  : (ucfg n β G).lsubst ρ = ucfg n (β.lsubst ρ) (λi => (G i).lsubst ρ.lift.vlift) := by
-  simp only [ucfg, lsubst_lsubst]
+theorem lwk_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
+  : (ucfg n β G).lwk ρ
+  = ucfg n (β.lwk (Nat.liftnWk n ρ)) (λi => (G i).lwk (Nat.liftnWk n ρ)) := by
+  simp only [ucfg, lwk_lsubst, lsubst_lwk]
   congr
   funext k
-  simp only [cfgSubst, Subst.comp]
-  sorry
+  simp only [Function.comp_apply, lwk, cfgSubst, cfg.injEq, heq_eq_eq, true_and]
+  funext i
+  simp only [vwk1, lwk_vwk]
 
--- theorem lwk_ucfg {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
---   : (ucfg n β G).lwk ρ = ucfg n (β.lwk (Nat.liftnWk n ρ)) (λi => (G i).lwk (Nat.liftnWk n ρ)) := by
---   simp only [ucfg, lwk_lsubst, lsubst_lwk]
---   congr
---   simp [cfgSubst]
+-- NOTE: I believe lsubst_ucfg is false...
 
--- TODO: lsubst_ucfg
+theorem vwk_ucfg' {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
+  : (ucfg' n β G).vwk ρ = ucfg' n (β.vwk ρ) (λi => (G i).vwk (Nat.liftWk ρ)) := by
+  simp only [ucfg', vwk_lsubst]
+  congr
+  funext k
+  simp only [Function.comp_apply, cfgSubst']
+  split
+  · simp only [Function.comp_apply, vwk, Term.wk, Nat.liftWk_zero, cfgSubst, cfg.injEq,
+      heq_eq_eq, true_and]
+    funext i
+    simp only [vwk1, vwk_vwk]
+    congr
+    funext k; cases k <;> rfl
+  · rfl
 
--- TODO: lwk_ucfg
+theorem vsubst_ucfg' {n : ℕ} {β : Region φ} {G : Fin n → Region φ} {ρ : Term.Subst φ}
+  : (ucfg' n β G).vsubst ρ = ucfg' n (β.vsubst ρ) (λi => (G i).vsubst ρ.lift) := by
+  simp only [ucfg', vsubst_lsubst]
+  congr
+  funext k
+  simp only [Function.comp_apply, cfgSubst']
+  split
+  · simp only [
+      Term.Subst.lift, Function.comp_apply, vsubst, Term.subst, cfgSubst, cfg.injEq, heq_eq_eq,
+      true_and
+    ]
+    funext i
+    simp only [vwk1, <-vsubst_fromWk, vsubst_vsubst]
+    congr
+    funext k; cases k with
+    | zero => rfl
+    | succ k =>
+      simp only [Term.Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Term.Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ]
+      rfl
+  · rfl
 
--- TODO: likewise for prime...
+theorem lwk_ucfg' {n : ℕ} {β : Region φ} {G : Fin n → Region φ}
+  : (ucfg' n β G).lwk ρ
+  = ucfg' n (β.lwk (Nat.liftnWk n ρ)) (λi => (G i).lwk (Nat.liftnWk n ρ)) := by
+  simp only [ucfg', lwk_lsubst, lsubst_lwk]
+  congr
+  funext k
+  simp only [Function.comp_apply, cfgSubst', Nat.liftnWk]
+  split
+  · simp only [lwk, Nat.liftnWk, ↓reduceIte, cfg.injEq, heq_eq_eq, true_and, *]
+    funext i
+    simp only [vwk1, lwk_vwk]
+  · simp_arith
+
+-- NOTE: I believe lsubst_ucfg' is false...
