@@ -7,13 +7,6 @@ namespace Region
 
 variable {φ : Type u} {ε : Type v} [Φ: EffectSet φ ε] [SemilatticeSup ε] [OrderBot ε]
 
-def lsubst0 (r : Region φ) : Subst φ
-  | 0 => r
-  | ℓ + 1 => br ℓ (Term.var 0)
-
-def alpha (ℓ : ℕ) (r : Region φ) : Subst φ
-  := Function.update Subst.id ℓ r
-
 def ret (e : Term φ) := br 0 e
 
 theorem vwk_ret (e : Term φ) : vwk ρ (ret e) = ret (Term.wk ρ e) := rfl

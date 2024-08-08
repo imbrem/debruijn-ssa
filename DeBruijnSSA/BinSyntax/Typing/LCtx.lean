@@ -170,9 +170,23 @@ theorem Wkn.add_left_append (original added : LCtx α)
 def InS.add_left_append (original added : LCtx α) : InS original (added ++ original)
   := ⟨(· + added.length), Wkn.add_left_append original added⟩
 
+theorem Wkn.id_right_append {original added : LCtx α}
+  : original.Wkn (original ++ added) _root_.id
+  := λi hi => ⟨
+    by simp only [id_eq, List.length_append]; omega,
+    by rw [List.getElem_append_left]; rfl
+  ⟩
+
+def InS.right_append {original added : LCtx α} : InS original (original ++ added)
+  := ⟨_root_.id, Wkn.id_right_append⟩
+
 @[simp]
 theorem InS.coe_add_left_append (original added : LCtx α)
   : (InS.add_left_append original added : ℕ → ℕ) = (· + added.length) := rfl
+
+@[simp]
+theorem InS.coe_right_append {original added : LCtx α}
+  : (InS.right_append (original := original) (added := added) : ℕ → ℕ) = _root_.id := rfl
 
 theorem Trg.wk (h : L.Wkn K ρ) (hK : L.Trg n A) : K.Trg (ρ n) A where
   length := (h n hK.length).1
@@ -211,6 +225,42 @@ theorem Trg.of_add {n} {A : Ty α} (h : Trg (R ++ L) (n + R.length) A) : Trg L n
 theorem Trg.of_ge {n} {A : Ty α} (h : Trg (R ++ L) n A) (hn : R.length ≤ n) : Trg L (n - R.length) A
   := have hn' : n = (n - R.length) + R.length := by omega;
   (hn' ▸ h).of_add
+
+theorem Trg.of_lt {n} {A : Ty α} (h : Trg (L ++ R) n A) (hn : n < L.length) : Trg L n A
+  := ⟨hn, List.getElem_append _ hn ▸ h.getElem⟩
+
+theorem Trg.add {n} {A : Ty α} (h : Trg L n A) (R) : Trg (R ++ L) (n + R.length) A
+  := by induction R with
+  | nil => exact h
+  | cons A R ih => exact ih.step
+
+theorem Trg.ge {n} {A : Ty α} (h : Trg L (n - R.length) A) (hn : R.length ≤ n) : Trg (R ++ L) n A
+  := by convert (h.add R); simp [*]
+
+theorem Trg.extend {n} {A : Ty α} (h : Trg L n A) : Trg (L ++ R) n A
+  := ⟨Nat.lt_of_lt_of_le h.length (by simp), List.getElem_append _ h.length ▸ h.getElem⟩
+
+theorem Trg.add_iff {n} {A : Ty α} {R : LCtx α} : Trg (R ++ L) (n + R.length) A ↔ Trg L n A
+  := ⟨λh => h.of_add, λh => h.add R⟩
+
+theorem Trg.ge_iff {n} {A : Ty α} {R : LCtx α} (hn : R.length ≤ n)
+  : Trg (R ++ L) n A ↔ Trg L (n - R.length) A := ⟨λh => h.of_ge hn, λh => h.ge hn⟩
+
+theorem Trg.lt_iff {n} {A : Ty α} {R : LCtx α} (hn : n < L.length)
+  : Trg (L ++ R) n A ↔ Trg L n A := ⟨λh => h.of_lt hn, λh => h.extend⟩
+
+theorem Trg.append {n} {A : Ty α} {R : LCtx α} (h : Trg (L ++ R) n A) :
+  Trg L n A ∨ Trg R (n - L.length) A
+  := if hn : n < L.length then Or.inl (h.of_lt hn) else Or.inr (h.of_ge (Nat.ge_of_not_lt hn))
+
+theorem Trg.append_strict {n} {A : Ty α} {R : LCtx α} (h : Trg (L ++ R) n A) :
+  Trg L n A ∨ (n ≥ L.length) ∧ Trg R (n - L.length) A
+  := if hn : n < L.length then Or.inl (h.of_lt hn) else
+  have hn := Nat.ge_of_not_lt hn; Or.inr ⟨hn, h.of_ge hn⟩
+
+theorem Trg.append_iff {n} {A : Ty α} {R : LCtx α}
+  : Trg (L ++ R) n A ↔ Trg L n A ∨ ((n ≥ L.length) ∧ Trg R (n - L.length) A)
+  := ⟨Trg.append_strict, λh => h.elim Trg.extend (λ⟨hn, h⟩ => h.ge hn)⟩
 
 @[simp]
 theorem Trg.of_le_getElem {n} {L : LCtx α} (hn : n < L.length) (hn' : A ≤ L[n]) : Trg L n A

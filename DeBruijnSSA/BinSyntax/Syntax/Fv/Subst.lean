@@ -100,6 +100,20 @@ theorem Region.fvs_vsubst0_le (t : Region φ) (s : Term φ)
   · rw [Set.union_comm]
   · simp
 
+theorem Term.subst_eqOn_fvs {t : Term φ} {σ σ' : Subst φ} (h : t.fvs.EqOn σ σ')
+  : t.subst σ = t.subst σ' := by sorry
+
+theorem Term.subst_eqOn_fvi {t : Term φ} {σ σ' : Subst φ} (h : (Set.Iio t.fvi).EqOn σ σ')
+  : t.subst σ = t.subst σ' := t.subst_eqOn_fvs (h.mono t.fvs_fvi)
+
+theorem Region.vsubst_eqOn_fvs {r : Region φ} {σ σ' : Term.Subst φ} (h : r.fvs.EqOn σ σ')
+  : r.vsubst σ = r.vsubst σ' := by sorry
+
+theorem Region.vsubst_eqOn_fvi {r : Region φ} {σ σ' : Term.Subst φ} (h : (Set.Iio r.fvi).EqOn σ σ')
+  : r.vsubst σ = r.vsubst σ' := r.vsubst_eqOn_fvs (h.mono r.fvs_fvi)
+
+theorem Region.lsubst_eqOn_fls {r : Region φ} {σ σ' : Subst φ} (h : r.fls.EqOn σ σ')
+  : r.lsubst σ = r.lsubst σ' := by sorry
 
 -- TODO: {Terminator, Region}.Subst.{fv, fl}
 

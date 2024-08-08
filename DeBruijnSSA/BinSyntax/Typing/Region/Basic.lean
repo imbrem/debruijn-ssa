@@ -134,7 +134,7 @@ theorem InS.ext {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   (h : (r : Region φ) = r') : r = r'
   := by cases r; cases r'; cases h; rfl
 
-theorem InS.ext_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
+theorem InS.ext_iff' {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   : r = r' ↔ (r : Region φ) = r'
   := ⟨congrArg _, λh => InS.ext h⟩
 
@@ -142,7 +142,7 @@ theorem InS.ext_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
 theorem InS.cast_inj {Γ Γ' : Ctx α ε} {L L' : LCtx α} {r r' : InS φ Γ L}
   {hΓ : Γ = Γ'} {hL : L = L'}
   : r.cast hΓ hL = r'.cast hΓ hL ↔ r = r'
-  := by simp [ext_iff]
+  := by simp [ext_iff']
 
 def Wf.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.Wf Γ L) : InS φ Γ L
   := ⟨r, h⟩
@@ -483,9 +483,15 @@ theorem Wf.lwk_id {Γ : Ctx α ε} {L} {r : Region φ} (h : L.Wkn K id)
   (d : Wf Γ r L) : Wf Γ r K
   := r.lwk_id ▸ d.lwk h
 
+theorem Wf.extend {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r L) : Wf Γ r (L ++ R)
+  := d.lwk_id LCtx.Wkn.id_right_append
+
 theorem Wf.lwk1 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r (head::L))
   : Wf Γ r.lwk1 (head::inserted::L)
   := d.lwk LCtx.Wkn.wk1
+
+theorem Wf.fls {r : Region φ} (h : Wf Γ r L) : r.fls ⊆ Set.Iio L.length
+  := sorry
 
 def InS.vwk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨(r : Region φ).vwk ρ, r.prop.vwk ρ.prop⟩
@@ -676,6 +682,9 @@ theorem InS.lwk_lwk_id {Γ : Ctx α ε} {L K J} {ρ : L.InS K} {h : K.Wkn J id}
   {r : InS φ Γ L}
   : (r.lwk ρ).lwk_id h = r.lwk ⟨ρ, (h.comp ρ.prop)⟩ := by
   cases r; simp [lwk, lwk_id, lwk_lwk]
+
+abbrev InS.extend {Γ : Ctx α ε} {L} (r : InS φ Γ L) : InS φ Γ (L ++ R)
+  := r.lwk_id LCtx.Wkn.id_right_append
 
 theorem InS.shf_vwk {Γ Δ : Ctx α ε} {L R : LCtx α} {Y : Ty α}
   {ρ : Ctx.InS Γ Δ}

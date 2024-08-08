@@ -608,3 +608,10 @@ theorem InS.codiagonal {Γ : Ctx α ε} {L : LCtx α}
   : cfg [A] β (Fin.elim1 (cfg [A] nil (Fin.elim1 G.vwk1)))
   ≈ cfg [A] β (Fin.elim1 (G.lsubst nil.lsubst0)) := by
   sorry
+
+theorem InS.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
+  {σ : Subst.InS φ Γ R R'} {β : InS φ Γ (R ++ L)}
+  {G : (i : Fin R'.length) → InS φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R' (β.lsubst σ.extend) (λi => (G i).lsubst σ.extend.vlift)
+  = cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst G).vlift)
+  := sorry

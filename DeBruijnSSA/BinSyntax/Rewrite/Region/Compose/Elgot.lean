@@ -269,15 +269,6 @@ theorem Eqv.fixpoint_naturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
   : fixpoint (f ;; sum g nil) = (fixpoint f) ;; g := by rw [fixpoint_seq]
 
--- TODO: this is derivable, probably: see Proposition 16 in Unifying Guarded and Unguarded Iteration
--- by Goncharov et al
-theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
-  (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
-  : fixpoint (f ;; coprod inj_l g) = f ;; coprod nil (fixpoint (g ;; coprod inj_l f))
-  := by
-  sorry
-
 theorem Eqv.fixpoint_codiagonal {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (((B.coprod A).coprod A)::L))
   : fixpoint (fixpoint f) = fixpoint (f ;; coprod nil inj_r) := by
@@ -425,6 +416,35 @@ theorem Eqv.fixpoint_strong_left {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   rw [ret_eta_fixpoint]
   simp only [<-vwk1_fixpoint]
   rfl
+
+-- TODO: this is derivable, probably: see Proposition 16 in Unifying Guarded and Unguarded Iteration
+-- by Goncharov et al
+theorem Eqv.fixpoint_dinaturality_seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
+  (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
+  : fixpoint (f ;; coprod inj_l g)
+  = cfg [A] (f.lwk1 ;; (inj_l.coprod g.lwk1 ;; left_exit))
+            (Fin.elim1 (f.lwk1 ;; (inj_l.coprod g.lwk1 ;; left_exit)).vwk1) := by
+  rw [fixpoint_iter_cfg]
+  simp only [
+    lwk1_seq, vwk1_seq, lwk1_coprod, vwk1_coprod, vwk1_inj_l, lwk1_inj_l, lwk1_vwk1,
+    seq_assoc
+  ]
+  rfl
+
+-- theorem Eqv.fixpoint_dinaturality_left_loop {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+--   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
+--   (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
+--   : fixpoint (f ;; coprod inj_l g)
+--   = cfg [A] f.lwk1
+--             (Fin.elim1 (f.lwk1 ;; (inj_l.coprod g.lwk1 ;; left_exit)).vwk1) := by
+--   sorry
+
+theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
+  (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
+  : fixpoint (f ;; coprod inj_l g) = f ;; coprod nil (fixpoint (g ;; coprod inj_l f))
+  := by sorry
 
 end Region
 

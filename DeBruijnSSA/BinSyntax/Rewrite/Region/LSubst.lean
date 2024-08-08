@@ -45,7 +45,7 @@ theorem Subst.Eqv.ext {σ τ : Subst.Eqv φ Γ L K} (h : ∀i, σ.get i = τ.get
   induction τ using Quotient.inductionOn
   exact Subst.Eqv.ext_quot h
 
-theorem Subst.Eqv.ext_iff {σ τ : Subst.Eqv φ Γ L K} : σ = τ ↔ ∀i, σ.get i = τ.get i := by
+theorem Subst.Eqv.ext_iff' {σ τ : Subst.Eqv φ Γ L K} : σ = τ ↔ ∀i, σ.get i = τ.get i := by
   refine ⟨λh i => h ▸ rfl, Subst.Eqv.ext⟩
 
 theorem Subst.Eqv.get_toSubst {Γ : Ctx α ε} {L K : LCtx α} {σ : L.InS K}
@@ -83,6 +83,13 @@ theorem Subst.Eqv.vliftn₂_eq_vlift_vlift {Γ : Ctx α ε} {L K : LCtx α} (σ 
   : σ.vliftn₂ (left := left) (right := right) = σ.vlift.vlift := by
   induction σ using Quotient.inductionOn;
   simp [Subst.InS.vliftn₂_eq_vlift_vlift]
+
+def Subst.Eqv.extend {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L K) : Eqv φ Γ (L ++ R) (K ++ R)
+  := Quotient.liftOn σ (λσ => ⟦σ.extend⟧) sorry
+
+@[simp]
+theorem Subst.Eqv.extend_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L K}
+  : extend (R := R) ⟦σ⟧ = ⟦σ.extend⟧ := rfl
 
 @[simp]
 theorem InS.lsubst_q {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K} {r : InS φ Γ L}
@@ -394,3 +401,15 @@ theorem Eqv.ucfg'_eq_cfg
 theorem Eqv.ucfg_eq_cfg
   {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : ucfg R β G = cfg R β G := Eqv.cfg_eq_ucfg.symm
+
+def Subst.Eqv.fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
+  (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) K)
+  : Subst.Eqv φ Γ L K
+  := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst G⟧) sorry
+
+theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
+  {σ : Subst.Eqv φ Γ R R'} {β : Eqv φ Γ (R ++ L)}
+  {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R' (β.lsubst σ.extend) (λi => (G i).lsubst σ.extend.vlift)
+  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG G).vlift)
+  := sorry

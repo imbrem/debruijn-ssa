@@ -621,7 +621,7 @@ theorem Subst.Eqv.ext {σ τ : Subst.Eqv φ Γ Δ} (h : ∀i, get σ i = get τ 
   induction τ using Quotient.inductionOn
   exact ext_quot h
 
-theorem Subst.Eqv.ext_iff {σ τ : Subst.Eqv φ Γ Δ}
+theorem Subst.Eqv.ext_iff' {σ τ : Subst.Eqv φ Γ Δ}
   : σ = τ ↔ ∀i, get σ i = get τ i := ⟨λh => by simp [h], ext⟩
 
 -- TODO: rewrite to use get, eliminating a sorry implicitly?

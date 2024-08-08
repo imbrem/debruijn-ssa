@@ -137,7 +137,6 @@ inductive TStep : (Γ : Ctx α ε) → (L : LCtx α) → (r r' : Region φ) → 
   | rewrite {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → Rewrite r r' → TStep Γ L r r'
   | reduce {Γ L r r'} : r.Wf Γ L → r'.Wf Γ L → Reduce r r' → TStep Γ L r r'
   | initial {Γ L} : Γ.IsInitial → r.Wf Γ L → r'.Wf Γ L → TStep Γ L r r'
-  -- TODO: replace "terminal" with general term rewriting... can be much nicer, maybe...
   | let1_equiv {Γ L} : Term.Uniform Term.TStep Γ ⟨A, e⟩ a a' → r.Wf (⟨A, ⊥⟩::Γ) L
     → TStep Γ L (let1 a r) (let1 a' r)
 

@@ -53,15 +53,35 @@ theorem Term.fvs_wk (ρ : ℕ → ℕ) (t : Term φ) : (t.wk ρ).fvs = ρ '' t.f
 theorem Term.fvs_wk1 (r : Term φ) : r.wk1.fvs = Nat.liftWk Nat.succ '' r.fvs := by
   simp [wk1, fvs_wk]
 
-theorem Term.fvs_eq (t : Term φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ t.fvs, ρ i = ρ' i)
+theorem Term.wk_eqOn_fvs (t : Term φ) {ρ ρ' : ℕ → ℕ} (h : t.fvs.EqOn ρ ρ')
   : t.wk ρ = t.wk ρ' := by
-  induction t with
-  | var x => simp [h x]
-  | pair l r Il Ir => simp [Il (λi hi => h i (by simp [hi])), Ir (λi hi => h i (by simp [hi]))]
+  induction t generalizing ρ ρ' with
+  | var x => simp [h rfl]
+  | pair l r Il Ir => simp [Il (λi hi => @h i (by simp [hi])), Ir (λi hi => @h i (by simp [hi]))]
   | op _ a Ia | inl a Ia | inr a Ia | abort a Ia => simp [Ia h]
-  | let1 => sorry
-  | let2 => sorry
-  | case => sorry
+  | let1 _ _ Ia Ib =>
+    simp only [wk]
+    rw [Ia (λi hi => @h i (by simp [hi])), Ib]
+    intro i hi
+    simp only [Nat.liftWk]
+    split
+    · rfl
+    · simp [@h _, Set.mem_liftFv, hi]
+  | let2 _ _ Ia Ib =>
+    simp only [wk]
+    rw [Ia (λi hi => @h i (by simp [hi])), Ib]
+    intro i hi
+    simp only [Nat.liftnWk]
+    split
+    case isTrue => rfl
+    case isFalse h' => simp [@h _, Set.mem_liftnFv, Nat.ge_of_not_lt h', hi]
+  | case _ _ _ Id Il Ir =>
+    simp only [wk]
+    rw [Id (λi hi => @h i (by simp [hi])), Il, Ir] <;>
+    intro i hi <;>
+    simp only [Nat.liftWk] <;>
+    split <;>
+    simp [@h _, Set.mem_liftFv, hi]
   | _ => rfl
 
 /-- Get the index of the highest free variable in this term, plus one -/
@@ -82,8 +102,17 @@ theorem Term.fvi_var_le_iff {x n : ℕ} : (@var φ x).fvi ≤ n ↔ x < n := by 
 
 theorem Term.fvi_op_le_iff {o : φ} {t : Term φ} {n} : (op o t).fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
 
+theorem Term.fvi_let1_le_iff {a e : Term φ} {n} : (let1 a e).fvi ≤ n ↔ a.fvi ≤ n ∧ e.fvi ≤ n + 1
+  := by simp
+
 theorem Term.fvi_pair_le_iff {l r : Term φ} {n} : (pair l r).fvi ≤ n ↔ l.fvi ≤ n ∧ r.fvi ≤ n
   := by simp
+
+theorem Term.fvi_let2_le_iff {a e : Term φ} {n} : (let2 a e).fvi ≤ n ↔ a.fvi ≤ n ∧ e.fvi ≤ n + 2
+  := by simp
+
+@[simp]
+theorem Term.fvi_unit_le {n} : (unit : Term φ).fvi ≤ n := by simp
 
 theorem Term.fvi_pair_le_left {l r : Term φ} {n} : (pair l r).fvi ≤ n → l.fvi ≤ n
   := by simp only [fvi, max_le_iff, and_imp]; exact λl _ => l
@@ -95,7 +124,60 @@ theorem Term.fvi_inl_le_iff {t : Term φ} {n : ℕ} : t.inl.fvi ≤ n ↔ t.fvi 
 
 theorem Term.fvi_inr_le_iff {t : Term φ} {n : ℕ} : t.inr.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
 
+theorem Term.fvi_case_le_iff {t : Term φ} {l r : Term φ} {n : ℕ}
+  : (t.case l r).fvi ≤ n ↔ t.fvi ≤ n ∧ l.fvi ≤ n + 1 ∧ r.fvi ≤ n + 1
+  := by simp
+
 theorem Term.fvi_abort_le_iff {t : Term φ} {n : ℕ} : t.abort.fvi ≤ n ↔ t.fvi ≤ n := Iff.rfl
+
+theorem Term.le_fvi_var_iff {x n : ℕ} : n ≤ (@var φ x).fvi ↔ n ≤ x + 1 := by simp
+
+theorem Term.le_fvi_op_iff {o : φ} {t : Term φ} {n} : n ≤ (op o t).fvi ↔ n ≤ t.fvi := Iff.rfl
+
+theorem Term.le_fvi_let1_iff {a e : Term φ} {n} : n ≤ (let1 a e).fvi ↔ n ≤ a.fvi ∨ n ≤ e.fvi - 1
+  := by simp
+
+theorem Term.le_fvi_pair_iff {l r : Term φ} {n} : n ≤ (pair l r).fvi ↔ n ≤ l.fvi ∨ n ≤ r.fvi
+  := by simp
+
+theorem Term.le_fvi_let2_iff {a e : Term φ} {n} : n ≤ (let2 a e).fvi ↔ n ≤ a.fvi ∨ n ≤ e.fvi - 2
+  := by simp
+
+theorem Term.le_fvi_inl_iff {t : Term φ} {n : ℕ} : n ≤ t.inl.fvi ↔ n ≤ t.fvi := Iff.rfl
+
+theorem Term.le_fvi_inr_iff {t : Term φ} {n : ℕ} : n ≤ t.inr.fvi ↔ n ≤ t.fvi := Iff.rfl
+
+theorem Term.le_fvi_case_iff {t : Term φ} {l r : Term φ} {n : ℕ}
+  : n ≤ (t.case l r).fvi ↔ n ≤ t.fvi ∨ n ≤ l.fvi - 1 ∨ n ≤ r.fvi - 1
+  := by simp
+
+theorem Term.le_fvi_abort_iff {t : Term φ} {n : ℕ} : n ≤ t.abort.fvi ↔ n ≤ t.fvi := Iff.rfl
+
+theorem Term.le_fvi_unit_iff {n : ℕ} : n ≤ (unit : Term φ).fvi ↔ n = 0 := by simp
+
+theorem Term.fvs_fvi {t : Term φ} : t.fvs ⊆ Set.Iio t.fvi := by
+  induction t with
+  | let1 =>
+    simp only [fvs, fvi, Set.union_subset_iff]
+    constructor
+    · sorry
+    · sorry
+  | pair => sorry
+  | let2 => sorry
+  | case => sorry
+  | _ => simp [*]
+
+theorem Term.wk_eqOn_fvi {t : Term φ} (h : (Set.Iio t.fvi).EqOn ρ ρ')
+  : t.wk ρ = t.wk ρ' := t.wk_eqOn_fvs (h.mono t.fvs_fvi)
+
+theorem Term.fvs_empty_of_fvi_zero {t : Term φ} (h : t.fvi = 0) : t.fvs = ∅ := by
+  sorry
+
+theorem Term.fvi_zero_of_fvs_empty {t : Term φ} (h : t.fvs = ∅) : t.fvi = 0 := by
+  sorry
+
+theorem Term.fvi_zero_iff_fvs_empty (t : Term φ) : t.fvi = 0 ↔ t.fvs = ∅
+  := ⟨Term.fvs_empty_of_fvi_zero, Term.fvi_zero_of_fvs_empty⟩
 
 theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
   stop induction t generalizing ρ <;> simp [*]
@@ -360,27 +442,27 @@ theorem Region.fvs_vwk1 (r : Region φ) : r.vwk1.fvs = Nat.liftWk Nat.succ '' r.
 theorem Region.fvs_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fvs = r.fvs := by
   induction r generalizing ρ <;> simp [*]
 
-theorem Region.fvs_eq (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ r.fvs, ρ i = ρ' i)
+theorem Region.vwk_eqOn_fvs (r : Region φ) {ρ ρ' : ℕ → ℕ} (h : r.fvs.EqOn ρ ρ')
   : r.vwk ρ = r.vwk ρ' := by
   induction r generalizing ρ ρ' with
-  | br n e => simp [e.fvs_eq _ _ h]
+  | br n e => simp [e.wk_eqOn_fvs h]
   | case e s t Is It =>
-    simp only [vwk, e.fvs_eq _ _ (λi hi => h i (by simp [hi]))]
+    simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
     rw [Is, It]
     sorry
     sorry
   | let1 e t It =>
-    simp only [vwk, e.fvs_eq _ _ (λi hi => h i (by simp [hi]))]
+    simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
     rw [It]
     sorry
   | let2 e t It =>
-    simp only [vwk, e.fvs_eq _ _ (λi hi => h i (by simp [hi]))]
+    simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
     rw [It]
     sorry
   | cfg β n G Iβ IG =>
     simp only [vwk]
     congr 1
-    exact Iβ _ _ sorry
+    exact Iβ sorry
     funext i
     apply IG
     sorry
@@ -448,6 +530,17 @@ theorem Region.fvi_cfg_le_blocks {β : Region φ} {n : ℕ} {f : Fin k → Regio
   : (cfg β k f).fvi ≤ n → ∀i, (f i).fvi ≤ n + 1
   := by rw [fvi_cfg_le_iff]; exact λ⟨_, hf⟩ i => hf i
 
+theorem Region.fvs_fvi {r : Region φ} : r.fvs ⊆ Set.Iio r.fvi := by
+  induction r with
+  | br _ e => simp [Term.fvs_fvi]
+  | case e s t => sorry
+  | let1 e t => sorry
+  | let2 e t => sorry
+  | cfg β _ f => sorry
+
+theorem Region.vwk_eqOn_fvi {r : Region φ} (h : (Set.Iio r.fvi).EqOn ρ ρ')
+  : r.vwk ρ = r.vwk ρ' := r.vwk_eqOn_fvs (h.mono r.fvs_fvi)
+
 /-- Get the count of how often a free variable occurs in this region -/
 @[simp]
 def Region.fvc (x : ℕ) : Region φ → ℕ
@@ -508,13 +601,13 @@ theorem Region.fls_vwk (ρ : ℕ → ℕ) (r : Region φ) : (r.vwk ρ).fls = r.f
 theorem Region.fls_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fls = ρ '' r.fls := by
   induction r generalizing ρ <;> simp [Set.image_union, Set.image_iUnion, *]
 
-theorem Region.fls_eq (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ r.fls, ρ i = ρ' i)
+theorem Region.lwk_eqOn_fls (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : r.fls.EqOn ρ ρ')
   : r.lwk ρ = r.lwk ρ' := by
   induction r generalizing ρ ρ' with
-  | br ℓ e => simp [h ℓ]
+  | br ℓ e => simp [@h ℓ]
   | case e s t Is It => simp [lwk,
-    Is ρ ρ' (λi hi => h i (by simp [hi])),
-    It ρ ρ' (λi hi => h i (by simp [hi]))]
+    Is ρ ρ' (λi hi => @h i (by simp [hi])),
+    It ρ ρ' (λi hi => @h i (by simp [hi]))]
   | let1 e t It | let2 e t It => simp [lwk, It ρ ρ' h]
   | cfg β n G Iβ IG =>
     simp only [lwk]
@@ -523,6 +616,8 @@ theorem Region.fls_eq (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : ∀i ∈ r.fls
     funext i
     apply IG
     sorry
+
+-- theorem Region.fls_fli {r : Region φ} : r.fls ⊆ Set.Iio r.fli := by sorry
 
 end Definitions
 

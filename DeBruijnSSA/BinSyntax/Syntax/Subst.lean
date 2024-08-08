@@ -1637,6 +1637,116 @@ theorem vsubst_lsubst (σ ρ) (t : Region φ)
       vsubst, lsubst, Term.Subst.liftn_two, Subst.vliftn_two, vsubst_lift_lift_comp_vlift,
       Subst.vsubst_lift_comp_liftn, *]
 
+def lsubst0 (r : Region φ) : Subst φ
+  | 0 => r
+  | ℓ + 1 => br ℓ (Term.var 0)
+
+def alpha (ℓ : ℕ) (r : Region φ) : Subst φ
+  := Function.update Subst.id ℓ r
+
+def Subst.toFCFG (σ : Subst φ) (n : ℕ) : Fin n → Region φ | i => σ i
+
+def Subst.fromFCFG (k : ℕ) (σ : Fin n → Region φ) : Subst φ
+  | i => if h : i < n then σ ⟨i, h⟩ else br (i - n + k) (Term.var 0)
+
+def Subst.extend (σ : Subst φ) (n : ℕ) (k : ℕ) : Subst φ
+  | i => if i < n then σ i else br (i - n + k) (Term.var 0)
+
+@[simp]
+theorem Subst.extend_lt {σ : Subst φ} {n k i} (hi : i < n)
+  : σ.extend n k i = σ i := by simp [extend, *]
+
+@[simp]
+theorem Subst.extend_ge {σ : Subst φ} {n k i} (hi : i ≥ n)
+  : σ.extend n k i = br (i - n + k) (Term.var 0) := by simp [extend, *]
+
+@[simp]
+theorem Subst.fromFCFG_lt {σ : Fin n → Region φ} {i : ℕ} (h : i < n)
+  : Subst.fromFCFG k σ i = σ ⟨i, h⟩ := by simp [Subst.fromFCFG, h]
+
+theorem Subst.fromFCFG_fin {σ : Fin n → Region φ} {i : Fin n}
+  : Subst.fromFCFG k σ i = σ i := by simp
+
+theorem Subst.fromFCFG_zero_zero {σ : Fin 0 → Region φ}
+  : Subst.fromFCFG 0 σ = Subst.id := by funext i; rfl
+
+theorem Subst.fromFCFG_zero_one {σ : Fin 1 → Region φ}
+  : Subst.fromFCFG 0 σ = (σ 0).lsubst0 := by funext i; cases i <;> rfl
+
+theorem Subst.fromFCFG_one_one {σ : Fin 1 → Region φ}
+  : Subst.fromFCFG 1 σ = (σ 0).alpha 0 := by funext i; cases i <;> rfl
+
+theorem Subst.fromFCFG_zero_elim1 {r : Region φ}
+  : Subst.fromFCFG 0 (Fin.elim1 r) = r.lsubst0 := by rw [Subst.fromFCFG_zero_one]; rfl
+
+theorem Subst.fromFCFG_one_elim1 {r : Region φ}
+  : Subst.fromFCFG 1 (Fin.elim1 r) = r.alpha 0 := by rw [Subst.fromFCFG_one_one]; rfl
+
+theorem Subst.toFCFG_fromFCFG (σ : Fin n → Region φ) : Subst.toFCFG (Subst.fromFCFG k σ) n = σ := by
+  funext i
+  cases i
+  simp [fromFCFG, toFCFG, *]
+
+theorem Subst.fromFCFG_toFCFG (σ : Subst φ) (n : ℕ)
+  : Subst.fromFCFG k (Subst.toFCFG σ n) = σ.extend n k
+  := by funext i; simp [fromFCFG, toFCFG, extend]
+
+def Subst.trunc (σ : Subst φ) (n : ℕ) : Subst φ
+  | i => if i < n then σ i else br i (Term.var 0)
+
+@[simp]
+theorem Subst.trunc_trunc {σ : Subst φ} {n m : ℕ}
+  : (σ.trunc n).trunc m = σ.trunc (min n m) := by
+  funext i
+  simp only [trunc, lt_min_iff]
+  split <;> split
+  case isFalse.isTrue h h' => exact (h h'.right).elim
+  all_goals simp [*]
+
+theorem Subst.trunc_trunc_self {σ : Subst φ} {n : ℕ}
+  : (σ.trunc n).trunc n = σ.trunc n := by simp
+
+theorem Subst.trunc_comm {σ : Subst φ} {n m : ℕ}
+  : (σ.trunc n).trunc m = (σ.trunc m).trunc n := by simp [min_comm]
+
+theorem Subst.extend_same {σ : Subst φ} {n : ℕ}
+  : σ.extend n n = σ.trunc n := by
+  funext i
+  simp only [extend, trunc]
+  split
+  case isTrue h => rfl
+  case isFalse h => simp [Nat.ge_of_not_lt h]
+
+theorem Subst.extend_eq_of_eq_on {σ τ : Subst φ} {n k : ℕ} (h : (Set.Iio n).EqOn σ τ)
+  : σ.extend n k = τ.extend n k := by
+  funext i
+  simp only [extend]
+  split
+  case isTrue h' => exact h h'
+  case isFalse h' => simp [Nat.ge_of_not_lt h']
+
+theorem Subst.eq_on_of_extend_eq {σ τ : Subst φ} {n k : ℕ}
+  (h : σ.extend n k = τ.extend n k)
+  : (Set.Iio n).EqOn σ τ := λi hi => by
+  have h := congrFun h i
+  simp only [extend, Set.mem_Iio.mp hi, ↓reduceIte] at h
+  exact h
+
+theorem Subst.extend_eq_iff {σ τ : Subst φ} {n k : ℕ}
+  : σ.extend n k = τ.extend n k ↔ (Set.Iio n).EqOn σ τ := ⟨
+    Subst.eq_on_of_extend_eq,
+    Subst.extend_eq_of_eq_on
+  ⟩
+
+theorem Subst.trunc_eq_iff {σ τ : Subst φ} {n : ℕ}
+  : σ.trunc n = τ.trunc n ↔ (Set.Iio n).EqOn σ τ := by simp only [<-extend_same, extend_eq_iff]
+
+theorem Subst.trunc_eq_of_eq_on {σ τ : Subst φ} {n : ℕ}
+  (h : (Set.Iio n).EqOn σ τ) : σ.trunc n = τ.trunc n := trunc_eq_iff.mpr h
+
+theorem Subst.eq_on_of_trunc_eq {σ τ : Subst φ} {n : ℕ}
+  (h : σ.trunc n = τ.trunc n) : (Set.Iio n).EqOn σ τ := trunc_eq_iff.mp h
+
 end Region
 
 /-- Substitute the free labels in this control-flow graph -/
