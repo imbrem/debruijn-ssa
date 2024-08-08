@@ -313,10 +313,6 @@ theorem Eqv.cfgSubst'_quot {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : cfgSubst' R (λi => ⟦G i⟧) = ⟦InS.cfgSubst' R G⟧ := sorry
 
-theorem Eqv.cfgSubst_eq_cfgSubst' {Γ : Ctx α ε} {L : LCtx α}
-  {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfgSubst R G = cfgSubst' R G := sorry
-
 theorem Eqv.cfgSubst_get {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} {i : Fin (R ++ L).length}
   : (cfgSubst R G).get i = cfg R (br i (Term.Eqv.var 0 Ctx.Var.shead) (by simp)) (λi => (G i).vwk1)
@@ -337,6 +333,87 @@ theorem Eqv.cfgSubst'_get {Γ : Ctx α ε} {L : LCtx α}
           omega
         )
   := sorry
+
+theorem Eqv.cfgSubst'_get_ge  {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} {i : Fin (R ++ L).length}
+  (h : i ≥ R.length) : (cfgSubst' R G).get i = br (i - R.length) (Term.Eqv.var 0 Ctx.Var.shead)
+    (by
+      simp only [List.get_eq_getElem]
+      rw [List.getElem_append_right]
+      apply LCtx.Trg.of_getElem
+      omega
+      have hi : i < R.length + L.length := List.length_append _ _ ▸ i.prop;
+      omega
+    )
+  := by rw [Eqv.cfgSubst'_get, dite_cond_eq_false]; simp [h]
+
+theorem Eqv.vlift_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
+  (G : ∀i : Fin R.length, Eqv φ ((R.get i, ⊥)::Γ) (R ++ L))
+  : (Eqv.cfgSubst R G).vlift = Eqv.cfgSubst R (λi => (G i).vwk1 (inserted := inserted)) := by
+  sorry
+
+def Eqv.ucfg
+  (R : LCtx α)
+  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Eqv φ Γ L := β.lsubst (cfgSubst R G)
+
+theorem Eqv.ucfg_quot
+  {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.ucfg R β G⟧ := by rw [ucfg, cfgSubst_quot]; rfl
+
+def Eqv.ucfg'
+  (R : LCtx α)
+  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+  : Eqv φ Γ L := β.lsubst (cfgSubst' R G)
+
+theorem Eqv.ucfg'_quot
+  {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg' R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.ucfg' R β G⟧ := by rw [ucfg', cfgSubst'_quot]; rfl
+
+theorem Eqv.cfg_eq_ucfg'
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R β G = ucfg' R β G := sorry
+
+theorem Eqv.cfg_br_ge {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.Eqv φ Γ ⟨A, ⊥⟩}
+  {R : LCtx α} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  {hℓ : (R ++ L).Trg ℓ A} (hℓ' : R.length ≤ ℓ)
+  : (Eqv.br ℓ a hℓ).cfg R G = Eqv.br (ℓ - R.length) a (hℓ.of_ge hℓ')
+  := by
+  rw [cfg_eq_ucfg', ucfg', lsubst_br, cfgSubst'_get_ge hℓ']
+  simp
+
+theorem Eqv.cfg_br_add {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.Eqv φ Γ ⟨A, ⊥⟩}
+  {R : LCtx α} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  {hℓ : (R ++ L).Trg (ℓ + R.length) A}
+  : (Eqv.br (ℓ + R.length) a hℓ).cfg R G = Eqv.br ℓ a hℓ.of_add
+  := by rw [cfg_br_ge] <;> simp
+
+theorem Eqv.cfgSubst_eq_cfgSubst' {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfgSubst R G = cfgSubst' R G := by
+  ext i;
+  rw [cfgSubst_get, cfgSubst'_get]
+  split
+  case isTrue => rfl
+  case isFalse h => rw [Eqv.cfg_br_ge (Nat.ge_of_not_lt h)]
+
+theorem Eqv.ucfg_eq_ucfg'
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg R β G = ucfg' R β G := by rw [ucfg, ucfg', cfgSubst_eq_cfgSubst']
+
+theorem Eqv.cfg_eq_ucfg
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R β G = ucfg R β G := by rw [cfg_eq_ucfg', ucfg_eq_ucfg']
+
+theorem Eqv.ucfg'_eq_cfg
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg' R β G = cfg R β G := Eqv.cfg_eq_ucfg'.symm
+
+theorem Eqv.ucfg_eq_cfg
+  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : ucfg R β G = cfg R β G := Eqv.cfg_eq_ucfg.symm
 
 theorem Eqv.cfgSubst_get' {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} {i : Fin (R ++ L).length}
@@ -367,49 +444,6 @@ theorem Eqv.cfgSubst_get_ge  {Γ : Ctx α ε} {L : LCtx α}
     )
   := by rw [Eqv.cfgSubst_get', dite_cond_eq_false]; simp [h]
 
-theorem Eqv.vlift_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
-  (G : ∀i : Fin R.length, Eqv φ ((R.get i, ⊥)::Γ) (R ++ L))
-  : (Eqv.cfgSubst R G).vlift = Eqv.cfgSubst R (λi => (G i).vwk1 (inserted := inserted)) := by
-  sorry
-
-def Eqv.ucfg
-  (R : LCtx α)
-  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
-  : Eqv φ Γ L := β.lsubst (cfgSubst R G)
-
-theorem Eqv.ucfg_quot
-  {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : ucfg R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.ucfg R β G⟧ := sorry
-
-def Eqv.ucfg'
-  (R : LCtx α)
-  (β : Eqv φ Γ (R ++ L)) (G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
-  : Eqv φ Γ L := β.lsubst (cfgSubst' R G)
-
-theorem Eqv.ucfg'_quot
-  {R : LCtx α} {β : InS φ Γ (R ++ L)} {G : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : ucfg' R ⟦β⟧ (λi => ⟦G i⟧) = ⟦InS.ucfg' R β G⟧ := sorry
-
-theorem Eqv.ucfg_eq_ucfg'
-  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : ucfg R β G = ucfg' R β G := by rw [ucfg, ucfg', cfgSubst_eq_cfgSubst']
-
-theorem Eqv.cfg_eq_ucfg'
-  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfg R β G = ucfg' R β G := sorry
-
-theorem Eqv.cfg_eq_ucfg
-  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfg R β G = ucfg R β G := by rw [cfg_eq_ucfg', ucfg_eq_ucfg']
-
-theorem Eqv.ucfg'_eq_cfg
-  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : ucfg' R β G = cfg R β G := Eqv.cfg_eq_ucfg'.symm
-
-theorem Eqv.ucfg_eq_cfg
-  {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : ucfg R β G = cfg R β G := Eqv.cfg_eq_ucfg.symm
-
 def Subst.Eqv.fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
   (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) K)
   : Subst.Eqv φ Γ L K
@@ -425,18 +459,28 @@ theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
   = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
-  := sorry
+  := by
+  induction σ using Quotient.inductionOn
+  induction β using Quotient.inductionOn
+  sorry
 
 theorem Eqv.dinaturality_from_one {Γ : Ctx α ε} {R L : LCtx α}
-  {σ : Subst.Eqv φ Γ R (A::L)} {β : Eqv φ Γ (R ++ L)}
-  {G : Eqv φ (⟨A, ⊥⟩::Γ) (R ++ L)}
-  : cfg [A] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
-  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append (L := [A]) (Fin.elim1 G)).vlift)
-  := dinaturality (Γ := Γ) (R := R) (R' := [A]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+  {σ : Subst.Eqv φ Γ R (B::L)} {β : Eqv φ Γ (R ++ L)}
+  {G : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ L)}
+  : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
+  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append (L := [B]) (Fin.elim1 G)).vlift)
+  := dinaturality (Γ := Γ) (R := R) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
 
 theorem Eqv.dinaturality_to_one {Γ : Ctx α ε} {R' L : LCtx α}
   {σ : Subst.Eqv φ Γ [A] (R' ++ L)} {β : Eqv φ Γ (A::L)}
   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (A::L)}
   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
-  = cfg [A] β (Fin.elim1 $ (σ.get ⟨0, by simp⟩).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
+  = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
   := dinaturality (Γ := Γ) (R := [A]) (R' := R') (L := L) (σ := σ) (β := β) (G := G)
+
+theorem Eqv.dinaturality_one {Γ : Ctx α ε} {L : LCtx α}
+  {σ : Subst.Eqv φ Γ [A] ([B] ++ L)} {β : Eqv φ Γ (A::L)}
+  {G : Eqv φ (⟨B, ⊥⟩::Γ) ([A] ++ L)}
+  : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
+  = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append (Fin.elim1 G)).vlift)
+  := dinaturality (Γ := Γ) (R := [A]) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)

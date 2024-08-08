@@ -234,66 +234,61 @@ theorem InS.case_bind {Γ : Ctx α ε} {L : LCtx α}
   ≈ let1 e (case (var 0 Ctx.Var.shead) r.vwk1 s.vwk1)
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let2_op {Γ : Ctx α ε} {L : LCtx α}
-  {r : InS φ (⟨C, ⊥⟩::⟨B, ⊥⟩::Γ) L}
-  (f : φ) (hf : Φ.EFn f A (Ty.prod B C) e)
-  (a : Term.InS φ Γ ⟨A, e⟩)
-    : r.let2 (a.op f hf) ≈ (
-      let1 a $
-      let2 ((var 0 (by simp)).op f hf) $
-      r.vwk (ρ := ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩))
-  := sorry
-  -- := Uniform.rel $
-  -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let2_op {Γ : Ctx α ε} {L : LCtx α}
+--   {r : InS φ (⟨C, ⊥⟩::⟨B, ⊥⟩::Γ) L}
+--   (f : φ) (hf : Φ.EFn f A (Ty.prod B C) e)
+--   (a : Term.InS φ Γ ⟨A, e⟩)
+--     : r.let2 (a.op f hf) ≈ (
+--       let1 a $
+--       let2 ((var 0 (by simp)).op f hf) $
+--       r.vwk (ρ := ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩))
+--   := sorry
+--   -- := Uniform.rel $
+--   -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 theorem InS.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   (a : Term.InS φ Γ ⟨A, e⟩)
   (b : Term.InS φ Γ ⟨B, e⟩)
-    : r.let2 (a.pair b) ≈ (
-      let1 a $
-      let1 (b.wk ⟨Nat.succ, (by simp)⟩) r)
-  := sorry
-  -- := Uniform.rel $
-  -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+    : r.let2 (a.pair b) ≈ (let1 a $ let1 b.wk0 r)
+  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
-  {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
-  (a : Term.InS φ Γ ⟨Ty.empty, e⟩)
-    : r.let2 (a.abort _) ≈ (
-      let1 a $
-      let2 ((var 0 (by simp)).abort (e := e') (A.prod B)) $
-      r.vwk ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩)
-    := sorry
-  -- := Uniform.rel $
-  -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
+--   {r : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+--   (a : Term.InS φ Γ ⟨Ty.empty, e⟩)
+--     : r.let2 (a.abort _) ≈ (
+--       let1 a $
+--       let2 ((var 0 (by simp)).abort (e := e') (A.prod B)) $
+--       r.vwk ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩)
+--     := sorry
+--   -- := Uniform.rel $
+--   -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.case_op {Γ : Ctx α ε} {L : LCtx α}
-  (f : φ) (hf : Φ.EFn f A (B.coprod C) e)
-  (a : Term.InS φ Γ ⟨A, e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) L) (s : InS φ (⟨C, ⊥⟩::Γ) L)
-  : r.case (a.op f hf) s ≈
-    (let1 a $ case (Term.InS.op f hf (var 0 (by simp))) r.vwk1 s.vwk1)
-  := sorry
-  -- := Uniform.rel $
-  -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.case_op {Γ : Ctx α ε} {L : LCtx α}
+--   (f : φ) (hf : Φ.EFn f A (B.coprod C) e)
+--   (a : Term.InS φ Γ ⟨A, e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) L) (s : InS φ (⟨C, ⊥⟩::Γ) L)
+--   : r.case (a.op f hf) s ≈
+--     (let1 a $ case (Term.InS.op f hf (var 0 (by simp))) r.vwk1 s.vwk1)
+--   := sorry
+--   -- := Uniform.rel $
+--   -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.case_abort {Γ : Ctx α ε} {L : LCtx α} (e' := ⊥)
-  (a : Term.InS φ Γ ⟨Ty.empty, e⟩) (r : InS φ (⟨A, ⊥⟩::Γ) L) (s : InS φ (⟨B, ⊥⟩::Γ) L)
-  : r.case (a.abort _) s ≈
-    (let1 a $ case (Term.InS.abort (e := e') (var 0 (by simp)) (A.coprod B)) r.vwk1 s.vwk1)
-  := sorry
-  -- := Uniform.rel $
-  -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.case_abort {Γ : Ctx α ε} {L : LCtx α} (e' := ⊥)
+--   (a : Term.InS φ Γ ⟨Ty.empty, e⟩) (r : InS φ (⟨A, ⊥⟩::Γ) L) (s : InS φ (⟨B, ⊥⟩::Γ) L)
+--   : r.case (a.abort _) s ≈
+--     (let1 a $ case (Term.InS.abort (e := e') (var 0 (by simp)) (A.coprod B)) r.vwk1 s.vwk1)
+--   := sorry
+--   -- := Uniform.rel $
+--   -- TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
--- TODO: replacements for let1_case, let2_case
+-- -- TODO: replacements for let1_case, let2_case
 
 theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
   (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
   (R : LCtx α)  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   (hℓ : (R ++ L).Trg ℓ A) (hℓ' : ℓ < R.length)
   : (InS.br ℓ a hℓ).cfg R G
-  ≈ (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (by simp only [Ctx.Wkn.lift_id_iff,
-    Prod.mk_le_mk, le_refl, and_true, Ctx.Wkn.id]; exact List.get_append ℓ hℓ' ▸ hℓ.get)).cfg R G
+  ≈ (let1 a $ (G ⟨ℓ, hℓ'⟩).vwk_id (hℓ.rec_to_wkn_id hℓ')).cfg R G
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 -- TODO: fix this statement ^
@@ -387,18 +382,18 @@ theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   ≈ cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
   := Uniform.rel $ TStep.reduce InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
-  (R S : LCtx α) (β : InS φ Γ (S ++ L))
-  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ S ++ L))
-  (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
-  : (β.lwk ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))).cfg'
-    (R.length + S.length) (R ++ S) (by rw [List.length_append])
-      (Fin.addCases
-        (λi => (G i).cast sorry rfl)
-        (λi => ((G' i).cast sorry rfl).lwk
-          ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))))
-    ≈ β.cfg S G'
-  := sorry
+-- theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
+--   (R S : LCtx α) (β : InS φ Γ (S ++ L))
+--   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ S ++ L))
+--   (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
+--   : (β.lwk ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))).cfg'
+--     (R.length + S.length) (R ++ S) (by rw [List.length_append])
+--       (Fin.addCases
+--         (λi => (G i).cast sorry rfl)
+--         (λi => ((G' i).cast sorry rfl).lwk
+--           ((LCtx.InS.add_left_append (S ++ L) R).cast rfl (by rw [List.append_assoc]))))
+--     ≈ β.cfg S G'
+--   := sorry
 
 theorem InS.case_inl {Γ : Ctx α ε} {L : LCtx α}
   (e : Term.InS φ Γ ⟨A, ea⟩)

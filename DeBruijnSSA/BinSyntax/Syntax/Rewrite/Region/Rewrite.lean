@@ -22,16 +22,6 @@ namespace Region
 
 open Term
 
--- TODO: let1_case and let2_case are NOT SEMANTICALLY VALID; must go fix!
--- also maybe rename case_let1/2, can get rid of ugly t...
-
--- TODO: we'll need a case_case and case_cfg too, probably :(
-
--- TODO: CongD is effect monotone/antitone iff underlying is
--- ==> CongD is effect preserving iff underlying is
-
--- TODO: make these rewrites bidirectional
-
 inductive RewriteD : Region φ → Region φ → Type _
   | let1_op (f a r) :
     RewriteD (let1 (op f a) r) (let1 a $ let1 (op f (var 0)) $ r.vwk1)
@@ -52,6 +42,8 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
   | let2_bind (e r) :
     RewriteD (let2 e r) (let1 e $ (let2 (Term.var 0) r.vwk2))
+  | let2_pair (a b r) :
+    RewriteD (let2 (pair a b) r) (let1 a $ let1 b.wk0 $ r)
   | case_bind (e r s) :
     RewriteD (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
@@ -119,6 +111,7 @@ theorem RewriteD.effect {Γ : ℕ → ε} {r r' : Region φ} (p : RewriteD r r')
     rfl
   | let1_case => sorry
   | let2_bind => sorry
+  | let2_pair => sorry
   | case_bind => sorry
   -- | let1_case a b r s =>
   --   simp only [Region.effect, Term.effect, Term.effect_liftBot_wk_succ]
@@ -215,6 +208,8 @@ inductive Rewrite : Region φ → Region φ → Prop
     Rewrite (let1 (abort e) r) (let1 e $ let1 (abort (var 0)) $ r.vwk1)
   | let2_bind (e r) :
     Rewrite (let2 e r) (let1 e $ (let2 (Term.var 0) r.vwk2))
+  | let2_pair (a b r) :
+    Rewrite (let2 (pair a b) r) (let1 a $ let1 b.wk0 $ r)
   | case_bind (e r s) :
     Rewrite (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   -- | let1_case (a b r s) :
@@ -287,6 +282,7 @@ theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (
 
 theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs := by cases p with
   | let1_case => sorry
+  | let2_pair => sorry
   -- | let1_case a b r s =>
   --   simp only [fvs, fvs_wk, Nat.succ_eq_add_one, Set.liftnFv_of_union, Set.liftnFv_map_add,
   --     <-Set.union_assoc]
@@ -360,6 +356,7 @@ theorem Rewrite.fvs_eq {r r' : Region φ} (p : Rewrite r r') : r.fvs = r'.fvs :=
 
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
   := by cases d with
+  | let2_pair => sorry
   | cfg_cfg β n G n' G' =>
     simp only [Region.vwk, wk, Fin.comp_addCases_apply]
     rw [<-Function.comp.assoc, Region.vwk_comp_lwk, Function.comp.assoc]
