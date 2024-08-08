@@ -426,3 +426,17 @@ theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
   = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
   := sorry
+
+theorem Eqv.dinaturality_from_one {Γ : Ctx α ε} {R L : LCtx α}
+  {σ : Subst.Eqv φ Γ R (A::L)} {β : Eqv φ Γ (R ++ L)}
+  {G : Eqv φ (⟨A, ⊥⟩::Γ) (R ++ L)}
+  : cfg [A] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
+  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append (L := [A]) (Fin.elim1 G)).vlift)
+  := dinaturality (Γ := Γ) (R := R) (R' := [A]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+
+theorem Eqv.dinaturality_to_one {Γ : Ctx α ε} {R' L : LCtx α}
+  {σ : Subst.Eqv φ Γ [A] (R' ++ L)} {β : Eqv φ Γ (A::L)}
+  {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (A::L)}
+  : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
+  = cfg [A] β (Fin.elim1 $ (σ.get ⟨0, by simp⟩).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
+  := dinaturality (Γ := Γ) (R := [A]) (R' := R') (L := L) (σ := σ) (β := β) (G := G)
