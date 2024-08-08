@@ -91,6 +91,14 @@ def Subst.Eqv.extend {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L K) : E
 theorem Subst.Eqv.extend_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L K}
   : extend (R := R) ⟦σ⟧ = ⟦σ.extend⟧ := rfl
 
+def Subst.Eqv.extend_in {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L (K ++ R))
+  : Eqv φ Γ (L ++ R) (K ++ R)
+  := Quotient.liftOn σ (λσ => ⟦σ.extend_in⟧) sorry
+
+@[simp]
+theorem Subst.Eqv.extend_in_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L (K ++ R)}
+  : extend_in ⟦σ⟧ = ⟦σ.extend_in⟧ := rfl
+
 @[simp]
 theorem InS.lsubst_q {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K} {r : InS φ Γ L}
    : (r.q).lsubst ⟦σ⟧ = (r.lsubst σ).q := rfl
@@ -407,9 +415,14 @@ def Subst.Eqv.fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
   : Subst.Eqv φ Γ L K
   := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst G⟧) sorry
 
+def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
+  (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) (K ++ R))
+  : Subst.Eqv φ Γ (L ++ R) (K ++ R)
+  := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst_append G⟧) sorry
+
 theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
-  {σ : Subst.Eqv φ Γ R R'} {β : Eqv φ Γ (R ++ L)}
+  {σ : Subst.Eqv φ Γ R (R' ++ L)} {β : Eqv φ Γ (R ++ L)}
   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfg R' (β.lsubst σ.extend) (λi => (G i).lsubst σ.extend.vlift)
-  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG G).vlift)
+  : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
+  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
   := sorry
