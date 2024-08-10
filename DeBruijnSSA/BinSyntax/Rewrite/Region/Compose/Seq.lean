@@ -772,3 +772,43 @@ theorem Eqv.codiagonal {Γ : Ctx α ε} {L : LCtx α}
       congr
       funext i; cases i using Fin.elim1; rfl
     · rfl
+
+def Eqv.loop {Γ : Ctx α ε} {L : LCtx α} : Eqv φ Γ L
+  := cfg [Ty.unit] (Eqv.br 0 (Term.Eqv.unit _) LCtx.Trg.shead) (Fin.elim1 nil)
+
+theorem Eqv.loop_def {Γ : Ctx α ε} {L : LCtx α}
+  : Eqv.loop (φ := φ) (Γ := Γ) (L := L) = ⟦InS.loop⟧ := by
+  simp only [loop, Term.Eqv.unit_quot, Term.InS.unit, br_quot, nil]
+  apply Eq.trans cfg1_quot
+  apply Eqv.eq_of_reg_eq
+  simp only [List.length_singleton, InS.coe_cfg, InS.coe_br, Region.loop, cfg.injEq, heq_eq_eq,
+    true_and, InS.coe_loop]
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+@[simp]
+theorem Eqv.vwk_loop {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Ctx.InS Γ Δ}
+  : Eqv.loop.vwk ρ = Eqv.loop (φ := φ) (L := L) := by simp [loop_def]
+
+@[simp]
+theorem Eqv.vsubst_loop {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ}
+  : loop.vsubst σ = loop (φ := φ) (L := L) := by
+  induction σ using Quotient.inductionOn
+  simp [loop_def]
+
+@[simp]
+theorem Eqv.lwk_loop {Γ : Ctx α ε} {L K : LCtx α} {ρ : LCtx.InS L K}
+  : loop.lwk ρ = loop (φ := φ) (Γ := Γ) := by simp [loop_def]
+
+@[simp]
+theorem Eqv.lsubst_loop {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  : loop.lsubst σ = loop (φ := φ) := by
+  induction σ using Quotient.inductionOn
+  simp [loop_def]
+
+@[simp]
+theorem Eqv.loop_seq {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ ((B, ⊥)::Γ) (C::L)}
+  : loop (Γ := (A, ⊥)::Γ) (L := B::L) ;; r = loop := by
+  induction r using Quotient.inductionOn
+  simp [loop_def, Region.InS.append_def]

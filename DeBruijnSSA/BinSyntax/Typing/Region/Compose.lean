@@ -460,3 +460,61 @@ def InS.lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, �
 @[simp]
 theorem InS.coe_lsubst0 {A : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : InS φ (⟨A, ⊥⟩::Γ) L)
   : (r.lsubst0 : Region.Subst φ) = (r : Region φ).lsubst0 := rfl
+
+def loop : Region φ := cfg (br 0 Term.unit) 1 (Fin.elim1 (br 0 (Term.var 0)))
+
+@[simp]
+theorem vwk_loop : loop.vwk ρ = loop (φ := φ) := by
+  simp only [vwk, Term.wk, loop, cfg.injEq, heq_eq_eq, true_and]
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+@[simp]
+theorem lwk_loop : loop.lwk ρ = loop (φ := φ) := by
+  simp only [lwk, Nat.liftnWk, zero_lt_one, ↓reduceIte, loop, cfg.injEq, heq_eq_eq, true_and]
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+@[simp]
+theorem vsubst_loop {σ : Term.Subst φ} : loop.vsubst σ = loop (φ := φ) := by
+  simp only [vsubst, loop, cfg.injEq, heq_eq_eq, true_and, Term.subst]
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+@[simp]
+theorem lsubst_loop {σ : Subst φ} : loop.lsubst σ = loop (φ := φ) := by
+  simp only [lsubst, vsubst, loop, cfg.injEq, heq_eq_eq, true_and, Term.subst, Term.subst0]
+  funext i
+  cases i using Fin.elim1
+  rfl
+
+@[simp]
+theorem Wf.loop {Γ : Ctx α ε} {L : LCtx α} : Wf Γ (loop (φ := φ)) L
+  := Wf.cfg 1 [Ty.unit] rfl
+    (Wf.br LCtx.Trg.shead (by simp))
+    (Fin.elim1 (Wf.br LCtx.Trg.shead (by simp)))
+
+def InS.loop : InS φ Γ L := ⟨Region.loop, Wf.loop⟩
+
+@[simp]
+theorem InS.coe_loop {Γ : Ctx α ε} {L : LCtx α}
+  : (InS.loop (φ := φ) (Γ := Γ) (L := L) : Region φ) = Region.loop := rfl
+
+@[simp]
+theorem InS.vwk_loop {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Ctx.InS Γ Δ}
+  : InS.loop.vwk ρ = InS.loop (φ := φ) (L := L) := ext Region.vwk_loop
+
+@[simp]
+theorem InS.vsubst_loop {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.InS φ Γ Δ}
+  : InS.loop.vsubst σ = InS.loop (φ := φ) (L := L) := ext Region.vsubst_loop
+
+@[simp]
+theorem InS.lwk_loop {Γ : Ctx α ε} {L K : LCtx α} {ρ : LCtx.InS L K}
+  : InS.loop.lwk ρ = InS.loop (φ := φ) (Γ := Γ) := ext Region.lwk_loop
+
+@[simp]
+theorem InS.lsubst_loop {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
+  : InS.loop.lsubst σ = InS.loop (φ := φ) := ext Region.lsubst_loop

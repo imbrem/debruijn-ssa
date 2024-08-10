@@ -41,8 +41,15 @@ theorem Region.Subst.Wf.lwk_exit_id (hσ : σ.Wf Γ L K) (hρ : K.Wkn J _root_.i
   convert hσ.lwk_exit hρ
   simp
 
+@[simp]
+theorem Region.Subst.Wf.id {Γ : Ctx α ε} {L : LCtx α} : Wf (φ := φ) Γ L L Subst.id
+  := λi => Wf.br (by simp) (Term.Wf.var Ctx.Var.shead)
+
 def Region.Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L K : LCtx α) : Type _
   := {σ : Region.Subst φ | σ.Wf Γ L K}
+
+def Region.Subst.InS.id {Γ : Ctx α ε} {L : LCtx α} : Region.Subst.InS φ Γ L L
+  := ⟨Subst.id, Region.Subst.Wf.id⟩
 
 def Region.CFG (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L K : LCtx α) : Type _
   := ∀i : Fin L.length, Region.InS φ (⟨L.get i, ⊥⟩::Γ) K
@@ -66,6 +73,10 @@ instance Region.Subst.InS.instCoeOut {Γ : Ctx α ε} {L K : LCtx α}
 instance Region.CFG.instCoeOut {Γ : Ctx α ε} {L K : LCtx α}
   : CoeOut (Region.CFG φ Γ L K) (Fin L.length → Region φ)
   := ⟨λσ i => σ i⟩
+
+@[simp]
+theorem Region.Subst.InS.coe_id {Γ : Ctx α ε} {L : LCtx α}
+  : (Region.Subst.InS.id (φ := φ) (Γ := Γ) (L := L) : Region.Subst φ) = Subst.id := rfl
 
 @[simp]
 theorem Region.Subst.coe_cfg_apply {σ : Region.Subst.InS φ Γ L K} {i : Fin L.length}
@@ -456,6 +467,14 @@ theorem Region.Subst.InS.coe_comp {Γ : Ctx α ε}
   {σ : Region.Subst.InS φ Γ K J} {τ : Region.Subst.InS φ Γ L K}
   : (σ.comp τ : Region.Subst φ) = (σ : Region.Subst φ).comp τ := rfl
 
+@[simp]
+theorem Region.Subst.InS.id_comp {Γ : Ctx α ε} {L K : LCtx α} {σ : Region.Subst.InS φ Γ L K}
+  : id.comp σ = σ := by ext; simp
+
+@[simp]
+theorem Region.Subst.InS.comp_id {Γ : Ctx α ε} {L K : LCtx α} {σ : Region.Subst.InS φ Γ L K}
+  : σ.comp id = σ := by ext; simp
+
 theorem Region.InS.lsubst_lsubst {Γ : Ctx α ε}
   {σ : Region.Subst.InS φ Γ K J} {τ : Region.Subst.InS φ Γ L K}
   {r : Region.InS φ Γ L}
@@ -582,6 +601,18 @@ theorem Region.InS.extend_comp {Γ : Ctx α ε} {L K J R : LCtx α}
   · simp [Subst.vlift]
     sorry -- TODO: fv_eq lore...
   · simp [Subst.vlift]
+
+theorem Region.Wf.csubst {Γ : Ctx α ε} {L : LCtx α} {r : Region φ} {hr : Wf ((A, ⊥)::Γ) r L}
+  : Subst.Wf Γ [A] L r.csubst := Fin.elim1 hr
+
+def Region.InS.csubst {Γ : Ctx α ε} {L : LCtx α} (r : Region.InS φ ((A, ⊥)::Γ) L)
+  : Region.Subst.InS φ Γ [A] L
+  := ⟨r.val.csubst, r.prop.csubst⟩
+
+@[simp]
+theorem Region.InS.coe_csubst {Γ : Ctx α ε} {L : LCtx α} {r : Region.InS φ ((A, ⊥)::Γ) L}
+  : (r.csubst : Region.Subst φ) = r.val.csubst
+  := rfl
 
 end RegionSubst
 

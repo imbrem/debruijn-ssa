@@ -24,6 +24,19 @@ def Eqv.cast {Γ : Ctx α ε} {L : LCtx α} (hΓ : Γ = Γ') (hL : L = L') (r : 
   : Eqv φ Γ' L' := Quotient.liftOn r (λr => ⟦r.cast hΓ hL⟧)
     (λ_ _ h => Quotient.sound (by cases hΓ; cases hL; exact h))
 
+@[simp]
+theorem Eqv.cast_rfl {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ L)
+  : r.cast rfl rfl = r := by
+  induction r using Quotient.inductionOn
+  rfl
+
+@[simp]
+theorem Eqv.cast_cast {Γ Γ' Γ'' : Ctx α ε} {L L' L'' : LCtx α}
+  (hΓ : Γ = Γ') (hL : L = L') (hΓ' : Γ' = Γ'') (hL' : L' = L'') (r : Eqv φ Γ L)
+  : (r.cast hΓ hL).cast hΓ' hL' = r.cast (hΓ.trans hΓ') (hL.trans hL') := by
+  induction r using Quotient.inductionOn
+  rfl
+
 def InS.q (a : InS φ Γ L) : Eqv φ Γ L := Quotient.mk _ a
 
 theorem Eqv.quot_def {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}

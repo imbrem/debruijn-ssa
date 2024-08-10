@@ -29,6 +29,22 @@ instance : Membership (Ty α) (LCtx α) := (inferInstance : Membership (Ty α) (
 def IsInitial (L : LCtx α) : Prop := ∀A ∈ L, Ty.IsInitial A
 
 @[simp]
+theorem IsInitial.empty : IsInitial (α := α) [] := λA h => by cases h
+
+theorem IsInitial.head {A} {L : LCtx α} (h : IsInitial (A::L)) : A.IsInitial
+  := h A (List.mem_cons_self _ _)
+
+theorem IsInitial.tail {A} {L : LCtx α}
+  (h : IsInitial (A::L)) : IsInitial L := λB hB => h B (List.mem_cons_of_mem _ hB)
+
+theorem IsInitial.cons {A} {L : LCtx α} (h : A.IsInitial) (h' : IsInitial L) : IsInitial (A::L)
+  := λB hB => by cases hB with | head => exact h | tail _ hB => exact h' B hB
+
+@[simp]
+theorem IsInitial.cons_iff {A} {L : LCtx α} : IsInitial (A::L) ↔ Ty.IsInitial A ∧ IsInitial L
+  := ⟨λh => ⟨h.head, h.tail⟩, λ⟨h, h'⟩ => cons h h'⟩
+
+@[simp]
 theorem IsInitial.append (L K : LCtx α) : (L ++ K).IsInitial ↔ L.IsInitial ∧ K.IsInitial
   := ⟨
     λh => ⟨λV hV => h V (List.mem_append_left _ hV), λV hV => h V (List.mem_append_right _ hV)⟩,
@@ -323,3 +339,37 @@ def InS.shf {R : LCtx α} {Y : Ty α} {L : LCtx α} : L.InS (shf_rest R Y L)
 @[simp]
 theorem InS.coe_shf {R : LCtx α} {Y : Ty α} {L : LCtx α}
   : (InS.shf (R := R) (Y := Y) (L := L) : ℕ → ℕ) = (· + R.length) := rfl
+
+end LCtx
+
+@[simp]
+def LCtx.pack : LCtx α → Ty α
+  | [] => Ty.empty
+  | A::L => Ty.coprod A (pack L)
+
+theorem LCtx.IsInitial.pack_iff {L : LCtx α} : L.pack.IsInitial ↔ L.IsInitial := by
+  induction L <;> simp [*]
+
+theorem LCtx.IsInitial.pack {L : LCtx α} : L.IsInitial → Ty.IsInitial (LCtx.pack L)
+  := pack_iff.mpr
+
+@[simp]
+def LCtx.pack' : LCtx α → Ty α
+  | [] => Ty.empty
+  | [A] => A
+  | A::L => Ty.coprod A (pack' L)
+
+theorem LCtx.IsInitial.pack_iff' {L : LCtx α} : L.pack'.IsInitial ↔ L.IsInitial := by
+  induction L with | nil => simp | cons _ L I => cases L <;> simp [*]
+
+theorem LCtx.IsInitial.pack' {L : LCtx α} : L.IsInitial → Ty.IsInitial (LCtx.pack L)
+  := pack_iff.mpr
+
+def Ty.unpack_sum : Ty α → LCtx α
+  | Ty.empty => []
+  | Ty.coprod A B => A :: unpack_sum B
+  | A => [A]
+
+def Ty.unpack_sum' : Ty α → LCtx α
+  | Ty.coprod A B => A :: unpack_sum B
+  | A => [A]

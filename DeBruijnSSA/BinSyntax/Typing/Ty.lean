@@ -27,6 +27,116 @@ inductive Ty.IsInitial : Ty α → Prop
   | coprod : ∀{A B}, IsInitial A → IsInitial B → IsInitial (coprod A B)
   | empty : IsInitial empty
 
+theorem Ty.IsInitial.of_prod {A B : Ty α} : IsInitial (Ty.prod A B) → IsInitial A ∨ IsInitial B
+  | prod_left hi => Or.inl hi
+  | prod_right hi => Or.inr hi
+
+@[simp]
+theorem Ty.IsInitial.prod_iff {A B : Ty α} : IsInitial (Ty.prod A B) ↔ IsInitial A ∨ IsInitial B
+  := ⟨of_prod, λ| Or.inl hi => prod_left hi | Or.inr hi => prod_right hi⟩
+
+theorem Ty.IsInitial.coprod_left {A B : Ty α} (hi : IsInitial (Ty.coprod A B)) : IsInitial A
+  := match hi with | coprod hi _ => hi
+
+theorem Ty.IsInitial.coprod_right {A B : Ty α} (hi : IsInitial (Ty.coprod A B)) : IsInitial B
+  := match hi with | coprod _ hi => hi
+
+theorem Ty.IsInitial.of_coprod {A B : Ty α} : IsInitial (Ty.coprod A B) → IsInitial A ∧ IsInitial B
+  | coprod hi₁ hi₂ => ⟨hi₁, hi₂⟩
+
+@[simp]
+theorem Ty.IsInitial.coprod_iff {A B : Ty α} : IsInitial (Ty.coprod A B) ↔ IsInitial A ∧ IsInitial B
+  := ⟨of_coprod, λ| ⟨hi₁, hi₂⟩ => coprod hi₁ hi₂⟩
+
+@[simp]
+theorem Ty.IsInitial.empty' : IsInitial (Ty.empty (α := α))
+  := empty
+
+@[simp]
+theorem Ty.IsInitial.unit : ¬IsInitial (Ty.unit (α := α))
+  := λh => by cases h
+
+@[simp]
+theorem Ty.IsInitial.base {x : α} : ¬IsInitial (Ty.base x)
+  := λh => by cases h
+
+inductive Ty.IsTerminal : Ty α → Prop
+  | prod : IsTerminal A → IsTerminal B → IsTerminal (prod A B)
+  | coprod_left : IsTerminal A → IsInitial B → IsTerminal (coprod A B)
+  | coprod_right : IsInitial A → IsTerminal B → IsTerminal (coprod A B)
+  | unit : IsTerminal unit
+
+theorem Ty.IsTerminal.prod_left {A B : Ty α} (h : IsTerminal (Ty.prod A B)) : IsTerminal A
+  := match h with | prod ht _ => ht
+
+theorem Ty.IsTerminal.prod_right {A B : Ty α} (h : IsTerminal (Ty.prod A B)) : IsTerminal B
+  := match h with | prod _ ht => ht
+
+theorem Ty.IsTerminal.of_prod {A B : Ty α} : IsTerminal (Ty.prod A B) → IsTerminal A ∧ IsTerminal B
+  | prod ht₁ ht₂ => ⟨ht₁, ht₂⟩
+
+@[simp]
+theorem Ty.IsTerminal.prod_iff {A B : Ty α} : IsTerminal (Ty.prod A B) ↔ IsTerminal A ∧ IsTerminal B
+  := ⟨Ty.IsTerminal.of_prod, λ| ⟨ht₁, ht₂⟩ => prod ht₁ ht₂⟩
+
+theorem Ty.IsTerminal.coprod_terminal {A B : Ty α}
+  (h : IsTerminal (Ty.coprod A B)) : IsTerminal A ∨ IsTerminal B
+  := match h with
+  | coprod_left ht _ => Or.inl ht
+  | coprod_right _ ht => Or.inr ht
+
+theorem Ty.IsTerminal.coprod_initial {A B : Ty α}
+  (h : IsTerminal (Ty.coprod A B)) : IsInitial A ∨ IsInitial B
+  := match h with
+  | coprod_left _ hi => Or.inr hi
+  | coprod_right hi _ => Or.inl hi
+
+theorem Ty.IsTerminal.of_coprod {A B : Ty α}
+  : IsTerminal (Ty.coprod A B) → (IsTerminal A ∧ IsInitial B) ∨ (IsInitial A ∧ IsTerminal B)
+  | coprod_left ht hi => Or.inl ⟨ht, hi⟩
+  | coprod_right hi ht => Or.inr ⟨hi, ht⟩
+
+theorem Ty.IsInitial.not_terminal {A : Ty α} (h : IsInitial A) : ¬IsTerminal A := by
+  intro c
+  induction h with
+  | prod_left _ I => exact I c.prod_left
+  | prod_right _ I => exact I c.prod_right
+  | coprod _ _ IA IB =>
+    cases c.coprod_terminal with
+    | inl c => exact IA c
+    | inr c => exact IB c
+  | empty => cases c
+
+theorem Ty.IsTerminal.not_initial {A : Ty α} (h : IsTerminal A) : ¬IsInitial A :=
+  λc => c.not_terminal h
+
+theorem Ty.IsTerminal.coprod' {A B : Ty α}
+  (terminal : IsTerminal A ∨ IsTerminal B) (initial : IsInitial A ∨ IsInitial B)
+  : IsTerminal (Ty.coprod A B)
+  := by
+  cases terminal <;> cases initial
+  case inl.inl t i => exact (t.not_initial i).elim
+  case inl.inr t i => exact coprod_left t i
+  case inr.inl t i => exact coprod_right i t
+  case inr.inr t i => exact (t.not_initial i).elim
+
+@[simp]
+theorem Ty.IsTerminal.coprod_iff {A B : Ty α}
+  : IsTerminal (Ty.coprod A B) ↔ (IsTerminal A ∨ IsTerminal B) ∧ (IsInitial A ∨ IsInitial B)
+  := ⟨λh => ⟨h.coprod_terminal, h.coprod_initial⟩, λ⟨t, i⟩ => coprod' t i⟩
+
+@[simp]
+theorem Ty.IsTerminal.unit' : IsTerminal (Ty.unit (α := α))
+  := unit
+
+@[simp]
+theorem Ty.IsTerminal.empty : ¬IsTerminal (Ty.empty (α := α))
+  := λh => by cases h
+
+@[simp]
+theorem Ty.IsTerminal.base {x : α} : ¬IsTerminal (Ty.base x)
+  := λh => by cases h
+
 inductive Ty.LE : Ty α → Ty α → Prop where
   | base {x y} : x ≤ y → LE (base x) (base y)
   | prod {x₁ x₂ y₁ y₂} : LE x₁ y₁ → LE x₂ y₂ → LE (prod x₁ x₂) (prod y₁ y₂)

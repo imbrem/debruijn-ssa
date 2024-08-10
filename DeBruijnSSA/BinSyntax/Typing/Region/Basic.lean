@@ -82,7 +82,6 @@ theorem Wf.nonempty {Γ : Ctx α ε} {r : Region φ} {L} : r.Wf Γ L → Nonempt
 theorem Wf.nonempty_iff {Γ : Ctx α ε} {r : Region φ} {L} : r.Wf Γ L ↔ Nonempty (r.WfD Γ L)
   := ⟨Wf.nonempty, λ⟨h⟩ => h.toWf⟩
 
-@[simp]
 theorem Wf.br_iff {Γ : Ctx α ε} {ℓ} {a : Term φ} {L}
   : (Region.br ℓ a).Wf Γ L ↔ ∃A, L.Trg ℓ A ∧ a.Wf Γ ⟨A, ⊥⟩
   := ⟨λ| Wf.br hℓ da => ⟨_, hℓ, da⟩, λ⟨_, hℓ, da⟩ => Wf.br hℓ da⟩
@@ -485,6 +484,9 @@ theorem Wf.lwk_id {Γ : Ctx α ε} {L} {r : Region φ} (h : L.Wkn K id)
 
 theorem Wf.extend {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r L) : Wf Γ r (L ++ R)
   := d.lwk_id LCtx.Wkn.id_right_append
+
+theorem Wf.lwk0 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r L) : Wf Γ r.lwk0 (head::L)
+  := d.lwk LCtx.Wkn.succ
 
 theorem Wf.lwk1 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r (head::L))
   : Wf Γ r.lwk1 (head::inserted::L)

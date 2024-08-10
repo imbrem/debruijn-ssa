@@ -1747,6 +1747,25 @@ theorem Subst.trunc_eq_of_eq_on {σ τ : Subst φ} {n : ℕ}
 theorem Subst.eq_on_of_trunc_eq {σ τ : Subst φ} {n : ℕ}
   (h : σ.trunc n = τ.trunc n) : (Set.Iio n).EqOn σ τ := trunc_eq_iff.mp h
 
+def csubst (r : Region φ) : Subst φ := λ_ => r
+
+@[simp]
+theorem Subst.csubst_apply {r : Region φ} {i : ℕ} : r.csubst i = r := rfl
+
+theorem Subst.extend_alphan {r : Region φ}
+  : (r.alpha n).extend (k + n + 1) (k + n + 1) = r.alpha n := by
+  funext i
+  simp [extend, Subst.id, alpha, Function.update]
+  intro h
+  rw [ite_cond_eq_false]
+  simp only [br.injEq, and_true]
+  omega
+  simp only [eq_iff_iff, iff_false]
+  omega
+
+theorem Subst.extend_alpha0 {r : Region φ} : (r.alpha 0).extend (k + 1) (k + 1) = r.alpha 0
+  := by rw [extend_alphan]
+
 end Region
 
 /-- Substitute the free labels in this control-flow graph -/

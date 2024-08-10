@@ -484,3 +484,55 @@ theorem Eqv.dinaturality_one {Γ : Ctx α ε} {L : LCtx α}
   : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
   = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append (Fin.elim1 G)).vlift)
   := dinaturality (Γ := Γ) (R := [A]) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+
+def Subst.InS.initial {Γ : Ctx α ε} {L : LCtx α}
+  : Subst.InS φ Γ [] L := ⟨Subst.id, λi => i.elim0⟩
+
+def Subst.Eqv.initial {Γ : Ctx α ε} {L : LCtx α}
+  : Subst.Eqv φ Γ [] L := ⟦Subst.InS.initial⟧
+
+theorem Subst.Eqv.initial_eq {Γ : Ctx α ε} {L : LCtx α} {σ σ' : Subst.Eqv φ Γ [] L}
+  : σ = σ' := by
+  induction σ using Quotient.inductionOn
+  induction σ' using Quotient.inductionOn
+  apply Quotient.sound
+  intro i
+  exact i.elim0
+
+def Eqv.csubst {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ ((A, ⊥)::Γ) L) : Subst.Eqv φ Γ [A] L
+  := Quotient.liftOn r (λr => ⟦r.csubst⟧) sorry
+
+@[simp]
+theorem Eqv.csubst_quot {Γ : Ctx α ε} {L : LCtx α} {r : InS φ ((A, ⊥)::Γ) L}
+  : csubst ⟦r⟧ = ⟦r.csubst⟧ := rfl
+
+@[simp]
+theorem Eqv.csubst_get {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ ((A, ⊥)::Γ) L} {i : Fin [A].length}
+  : (r.csubst).get i = r.cast (by simp) rfl := by
+  induction r using Quotient.inductionOn
+  rfl
+
+theorem Eqv.fromFCFG_elim1 {Γ : Ctx α ε} {G : Region.Eqv φ ((A, ⊥)::Γ) [A]}
+  : Subst.Eqv.fromFCFG (Fin.elim1 G) = G.csubst := by
+  ext i
+  induction i using Fin.elim1
+  induction G using Quotient.inductionOn
+  rfl
+
+def Subst.Eqv.id {Γ : Ctx α ε} {L : LCtx α} : Subst.Eqv φ Γ L L := ⟦Subst.InS.id⟧
+
+@[simp]
+theorem Subst.Eqv.id_comp {Γ : Ctx α ε} {L : LCtx α} {σ : Subst.Eqv φ Γ L L}
+  : id.comp σ = σ := by
+  induction σ using Quotient.inductionOn
+  simp [id]
+
+@[simp]
+theorem Subst.Eqv.comp_id {Γ : Ctx α ε} {L : LCtx α} {σ : Subst.Eqv φ Γ L L}
+  : σ.comp id = σ := by
+  induction σ using Quotient.inductionOn
+  simp [id]
+
+theorem Subst.Eqv.get_id {Γ : Ctx α ε} {L : LCtx α} {i : Fin L.length}
+  : (id : Subst.Eqv φ Γ L L).get i = Eqv.br i (Term.Eqv.var 0 Ctx.Var.shead) (by simp) := by
+  rfl
