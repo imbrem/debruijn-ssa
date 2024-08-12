@@ -768,15 +768,15 @@ theorem Eqv.assoc_inv_assoc {A B C : Ty α} {Γ : Ctx α ε}
   : assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) ;;' assoc = nil := by
   rw [seq_prod_assoc, assoc_inv, reassoc_reassoc_inv]
 
-theorem Eqv.reassoc_left {A B C A' : Ty α} {Γ : Ctx α ε}
-  (l : Eqv φ (⟨A, ⊥⟩::Γ) (A', e))
-  : ((l ⋉' B) ⋉' C).reassoc = assoc ;;' l ⋉' (B.prod C) := by
-  conv => rhs; rw [assoc, reassoc, seq_let2, seq_let2]
-  simp only [wk1_ltimes]
+
+theorem Eqv.reassoc_tensor {A B C A' B' C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (A', e)} {m : Eqv φ (⟨B, ⊥⟩::Γ) (B', e)} {r : Eqv φ (⟨C, ⊥⟩::Γ) (C', e)}
+  : (tensor (tensor l m) r).reassoc = assoc ;;' tensor l (tensor m r) := by
+  conv => rhs; rw [assoc, reassoc, seq_let2, seq_let2]; simp only [wk1_tensor]
   conv =>
     lhs
     simp only [
-      reassoc, ltimes, tensor, wk1_nil, wk1_let2, wk_pair, wk_liftn₂_nil, wk0_let2, wk0_nil,
+      reassoc, tensor, wk1_nil, wk1_let2, wk_pair, wk_liftn₂_nil, wk0_let2, wk0_nil,
       wk2_pair, wk2_nil, let2_let2, wk2_let2, wk2_var1, List.length_cons, Fin.mk_one,
       List.get_eq_getElem, Fin.val_one, List.getElem_cons_succ, List.getElem_cons_zero, wk_var,
       Set.mem_setOf_eq, Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, le_refl,
@@ -788,20 +788,69 @@ theorem Eqv.reassoc_left {A B C A' : Ty α} {Γ : Ctx α ε}
       Nat.liftWk_succ
     ]
   congr 2
-  simp only [seq_ltimes, let2_pair, wk0_pair, let1_beta_var1]
+  simp only [seq_tensor, let2_pair, let1_beta_var1]
+  apply Eq.symm
+  rw [let1_beta' (a' := (pair (var 1 (by simp)) (var 3 (by simp))))]
+  simp only [subst_pair, subst0_wk0, wk1_tensor]
+  rw [Eqv.Pure.let1_let2_of_right' (b := var 0 (by simp))]
+  simp only [tensor, subst_let2, nil_subst0, wk_eff_pair, wk_eff_var, subst_pair, let2_pair,
+    wk0_var, Nat.reduceAdd, subst_let1, var_succ_subst0, subst_lift_var_succ, let1_beta_var0,
+    let1_beta_var2]
+  conv => rhs; simp only [wk1_let2, wk1_var0]
+  rw [let2_bind' (r := let1 r.wk1.wk1.wk0.wk0.wk0.wk1
+    (pair (var 2 (by simp)) (pair (var 1 (by simp)) (var 0 (by simp)))))]
+  rw [let1_pair_var_succ]
+  rw [let1_pair_var_1_left, let1_eta, let2_pair, let1_pair_var_1_left]
+  conv =>
+    rhs
+    rhs
+    rhs
+    tactic =>
+      rw [<-wk1_var0, <-wk1_pair, <-wk0_let1]
+      simp
+  rw [let1_pair_right, let1_eta, let1_pair_right, let1_eta]
+  congr
+  simp only [wk1, wk0, wk2, wk_wk]
+  simp only [<-subst_fromWk, subst_subst]
+  congr
+  apply Subst.Eqv.eq_of_subst_eq
+  intro k
+  cases k using Fin.cases <;> rfl
+  simp only [wk1, wk0, wk2, wk_wk]
+  simp only [<-subst_fromWk, subst_subst]
+  congr
+  apply Subst.Eqv.eq_of_subst_eq
+  intro k
+  cases k using Fin.cases <;> rfl
+  simp only [wk1, wk0, wk2, wk_wk]
+  simp only [<-subst_fromWk, subst_subst]
+  congr
+  apply Subst.Eqv.eq_of_subst_eq
+  intro k
+  cases k using Fin.cases <;> rfl
+  simp
+  simp
+  simp only [wk_let1, swap02, wk_pair, wk1, wk0, wk2, wk_wk]
+  rfl
+  exact ⟨var 0 (by simp), rfl⟩
+  rfl
+  rfl
 
 theorem Eqv.assoc_left_nat {A B C A' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (A', e))
   : (l ⋉' B) ⋉' C ;;' assoc = assoc ;;' l ⋉' (B.prod C) := by
-  rw [seq_prod_assoc, reassoc_left]
+  simp only [seq_prod_assoc, ltimes, reassoc_tensor, tensor_nil_nil]
 
 theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε}
   (m : Eqv φ (⟨B, ⊥⟩::Γ) (B', e))
-  : (A ⋊' m) ⋉' C ;;' assoc = assoc ;;' A ⋊' (m ⋉' C) := sorry
+  : (A ⋊' m) ⋉' C ;;' assoc = assoc ;;' A ⋊' (m ⋉' C) := by
+  simp only [seq_prod_assoc, ltimes, rtimes, reassoc_tensor]
 
 theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε}
   (r : Eqv φ (⟨C, ⊥⟩::Γ) (C', e))
-  : (A.prod B) ⋊' r ;;' assoc = assoc ;;' A ⋊' (B ⋊' r) := sorry
+  : (A.prod B) ⋊' r ;;' assoc = assoc ;;' A ⋊' (B ⋊' r) := by
+  rw [rtimes, <-tensor_nil_nil, seq_prod_assoc, reassoc_tensor]
+  rfl
 
 theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := X) (B := Ty.unit) (C := Y) (e := e) ;;' X ⋊' pi_r

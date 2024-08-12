@@ -310,6 +310,12 @@ theorem InS.coe_swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
   : (InS.swap02 (Γ := Γ) (first := first) (second := second) (third := third) : ℕ → ℕ) = Nat.swap0 2
   := rfl
 
+def Nat.swap20 : ℕ → ℕ
+  | 0 => 2
+  | 1 => 0
+  | 2 => 1
+  | n + 3 => n + 3
+
 @[simp]
 theorem Wkn.add2 {first second} {Γ : Ctx α ε}
   : Wkn (first::second::Γ) Γ (· + 2)
