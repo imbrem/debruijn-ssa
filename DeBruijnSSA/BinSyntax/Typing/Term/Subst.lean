@@ -22,6 +22,11 @@ def Subst.InS (φ) [EffInstSet φ (Ty α) ε] (Γ Δ : Ctx α ε) : Type _ := {�
 def Subst.InS.get (r : Subst.InS φ Γ Δ) (i : Fin Δ.length) : Term.InS φ Γ Δ[i]
   := ⟨r.1 i, r.2 i⟩
 
+@[simp]
+theorem Subst.InS.coe_get {r : Subst.InS φ Γ Δ} {i : Fin Δ.length}
+  : (r.get i : Term φ) = r.val i
+  := rfl
+
 instance Subst.InS.instCoeOut {Γ Δ : Ctx α ε} : CoeOut (Subst.InS φ Γ Δ) (Subst φ)
   := ⟨λr => r.1⟩
 
@@ -129,6 +134,11 @@ def Subst.InS.liftn₂ (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (σ : Sub
   : Subst.InS φ (V₁::V₂::Γ) (V₁'::V₂'::Δ)
   := ⟨Subst.liftn 2 σ, σ.prop.liftn₂ h₁ h₂⟩
 
+@[simp]
+theorem Subst.InS.coe_liftn₂ {h₁ : V₁ ≤ V₁'} {h₂ : V₂ ≤ V₂'} {σ : Subst.InS φ Γ Δ}
+  : (σ.liftn₂ h₁ h₂ : Subst φ) = Subst.liftn 2 σ
+  := rfl
+
 theorem Subst.InS.lift_lift (h₁ : V₁ ≤ V₁') (h₂ : V₂ ≤ V₂') (σ : Subst.InS φ Γ Δ)
   : (σ.lift h₂).lift h₁ = (σ.liftn₂ h₁ h₂)
   := by simp [lift, liftn₂, Subst.liftn_succ]
@@ -174,6 +184,11 @@ theorem InS.coe_subst {σ : Subst.InS φ Γ Δ} {a : InS φ Δ V}
 
 def Subst.InS.var (n) (h : Δ.Var n V) (σ : Subst.InS φ Γ Δ) : Term.InS φ Γ V
   := ⟨σ.val n, Ctx.Var.subst' σ.prop h⟩
+
+@[simp]
+theorem Subst.InS.coe_var {n} {h : Δ.Var n V} {σ : Subst.InS φ Γ Δ}
+  : (σ.var n h : Term φ) = σ.val n
+  := rfl
 
 @[simp]
 theorem InS.subst_var (σ : Subst.InS φ Γ Δ) (h : Δ.Var n V) :
@@ -303,3 +318,33 @@ theorem _root_.BinSyntax.Ctx.InS.coe_toSubst {Γ Δ : Ctx α ε} {h : Γ.InS Δ}
 
 theorem InS.subst_toSubst {Γ Δ : Ctx α ε} {h : Γ.InS Δ} {a : InS φ Δ V}
   : a.subst h.toSubst = a.wk h := by ext; simp [Term.subst_fromWk]
+
+@[simp]
+theorem Subst.Wf.id {Γ : Ctx α ε} : Subst.id.Wf (φ := φ) Γ Γ
+  := λi => Wf.var ⟨by simp, by simp⟩
+
+def Subst.InS.id {Γ : Ctx α ε} : InS φ Γ Γ := ⟨Subst.id, Subst.Wf.id⟩
+
+@[simp]
+theorem Subst.InS.coe_id {Γ : Ctx α ε} : (id (φ := φ) (Γ := Γ) : Subst φ) = Subst.id
+  := rfl
+
+@[simp]
+theorem InS.subst_id {Γ : Ctx α ε} {a : InS φ Γ V} : a.subst Subst.InS.id = a
+  := by ext; simp
+
+@[simp]
+theorem InS.subst_id' {Γ : Ctx α ε} {a : InS φ Γ V} {σ : Subst.InS φ Γ Γ}
+  (hσ : σ = Subst.InS.id) : a.subst σ = a := by simp [hσ]
+
+def Subst.InS.cast {Γ Δ : Ctx α ε} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+  (σ : Subst.InS φ Γ Δ) : Subst.InS φ Γ' Δ' := ⟨σ.val, hΔ ▸ hΓ ▸ σ.prop⟩
+
+@[simp]
+theorem Subst.InS.coe_cast {Γ Δ : Ctx α ε} {hΓ : Γ = Γ'} {hΔ : Δ = Δ'}
+  {σ : Subst.InS φ Γ Δ} : (σ.cast hΓ hΔ : Subst φ) = σ
+  := rfl
+
+-- @[simp]
+-- theorem InS.subst_id_cast {Γ : Ctx α ε} {a : InS φ Δ V} {σ : Subst.InS φ Γ Δ}
+--   (hσ : σ.val = Subst.id) : a.subst σ = a.cast  := by simp [hσ]

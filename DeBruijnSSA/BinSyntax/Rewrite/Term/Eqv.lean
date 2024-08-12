@@ -597,7 +597,28 @@ theorem Eqv.subst_var_wk0 {σ : Subst.Eqv φ Γ Δ} {n : ℕ}
   induction σ using Quotient.inductionOn
   rfl
 
-def Subst.Eqv.fromWk (ρ : Γ.InS Δ) : Eqv φ Γ Δ := ⟦Subst.InS.fromWk ρ⟧
+-- def Subst.Eqv.id (Γ : Ctx α ε) : Subst.Eqv φ Γ Γ := ⟦Subst.InS.id⟧
+
+-- theorem Eqv.subst_id {a : Eqv φ Γ V} : subst Subst.Eqv.id a = a := by
+--   induction a using Quotient.inductionOn
+--   simp [Subst.InS.subst_id]
+
+def Subst.Eqv.fromWk (ρ : Γ.InS Δ) : Eqv φ Γ Δ := ⟦ρ.toSubst⟧
+
+theorem Eqv.subst_fromWk {ρ : Γ.InS Δ} {a : Eqv φ Δ V}
+  : a.subst (Subst.Eqv.fromWk ρ) = a.wk ρ := by
+  induction a using Quotient.inductionOn
+  simp [Subst.Eqv.fromWk, InS.subst_toSubst]
+
+def Subst.Eqv.id {Γ : Ctx α ε} : Subst.Eqv φ Γ Γ := ⟦Subst.InS.id⟧
+
+@[simp]
+theorem Eqv.subst_id {a : Eqv φ Γ V} : a.subst Subst.Eqv.id = a := by
+  induction a using Quotient.inductionOn
+  simp [Subst.Eqv.id]
+
+theorem Eqv.subst_id' {a : Eqv φ Γ V} {σ : Subst.Eqv φ Γ Γ}
+  (h : σ = Subst.Eqv.id) : a.subst σ = a := by cases h; simp
 
 theorem Eqv.get_of_quot_eq {σ τ : Subst.InS φ Γ Δ}
   (h : (⟦σ⟧ : Subst.Eqv φ Γ Δ) = ⟦τ⟧) (i : Fin Δ.length)
@@ -620,6 +641,9 @@ theorem Subst.Eqv.ext {σ τ : Subst.Eqv φ Γ Δ} (h : ∀i, get σ i = get τ 
   induction σ using Quotient.inductionOn
   induction τ using Quotient.inductionOn
   exact ext_quot h
+
+theorem Subst.Eqv.eq_of_subst_eq {σ τ : Subst.InS φ Γ Δ}
+  (h : ∀i, σ.get i = τ.get i) : σ.q = τ.q := by ext k; simp [Subst.InS.q, h]
 
 theorem Subst.Eqv.ext_iff' {σ τ : Subst.Eqv φ Γ Δ}
   : σ = τ ↔ ∀i, get σ i = get τ i := ⟨λh => by simp [h], ext⟩
@@ -961,6 +985,11 @@ theorem Eqv.let2_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
   induction a using Quotient.inductionOn
   induction r using Quotient.inductionOn
   apply Eqv.sound; apply InS.let2_bind
+
+theorem Eqv.let2_bind' {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩} {s : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::_::Γ) ⟨C, e⟩}
+  (h : s = r.wk2)
+  : (let1 a $ let2 (var 0 (by simp)) $ s) = let2 a r := by cases h; rw [<-let2_bind]
 
 theorem Eqv.let2_let1 {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X, e⟩} {b : Eqv φ (⟨X, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩}
@@ -1336,7 +1365,7 @@ theorem Eqv.let1_wk_eff_let1 {Γ : Ctx α ε}
   induction a using Quotient.inductionOn
   apply Eqv.eq_of_term_eq
   simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_wk0,
-    InS.coe_wk, Ctx.InS.coe_swap01, ← subst_fromWk, Term.subst_subst]
+    InS.coe_wk, Ctx.InS.coe_swap01, ← Term.subst_fromWk, Term.subst_subst]
   congr
   funext k
   cases k with

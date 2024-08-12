@@ -27,6 +27,14 @@ theorem Eqv.wk2_nil {A : Ty α} {Γ : Ctx α ε}
   := rfl
 
 @[simp]
+theorem Eqv.wk_lift_nil {A : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  : (nil : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A, e⟩).wk (ρ.lift (le_refl _)) = nil := rfl
+
+@[simp]
+theorem Eqv.wk_liftn₂_nil {A : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  : (nil : Eqv φ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ) ⟨A, e⟩).wk (ρ.liftn₂ (le_refl _) (le_refl _)) = nil := rfl
+
+@[simp]
 theorem Eqv.subst_lift_nil {A : Ty α} {Γ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ} {h}
   : (nil : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A, e⟩).subst (σ.lift h) = nil := by
   induction σ using Quotient.inductionOn; rfl

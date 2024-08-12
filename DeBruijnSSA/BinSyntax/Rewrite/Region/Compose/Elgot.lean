@@ -339,9 +339,9 @@ theorem Eqv.pi_r_fixpoint_uniform_inner {X A B : Ty α} {Γ : Ctx α ε} {L : LC
   simp only [vwk1_sum, vwk1_seq, vwk1_pi_r, nil_vwk1, nil_seq, seq_nil]
   rw [
     coprod_seq, <-ret_seq_inj_l, seq_assoc, seq_assoc, inj_l_seq_sum, <-ret_seq_inj_r, seq_assoc,
-    inj_r_seq_sum, <-seq_assoc, <-seq_assoc, <-seq_assoc, ret_pair_seq_pi_r, ret_pair_seq_pi_r,
+    inj_r_seq_sum, <-seq_assoc, <-seq_assoc, <-seq_assoc, ret_pair_pi_r, ret_pair_pi_r,
     <-sum, ret_var_zero, ret_var_zero, sum_nil, <-ret_var_zero, <-pi_r, seq_assoc,
-    ret_pair_seq_pi_r, ret_var_zero, seq_nil
+    ret_pair_pi_r, ret_var_zero, seq_nil
   ]
   induction f using Quotient.inductionOn
   apply Eqv.eq_of_reg_eq

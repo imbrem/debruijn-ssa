@@ -70,6 +70,33 @@ def InS.tensor {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : InS φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : InS φ (⟨A.prod B, ⊥⟩::Γ) ⟨A'.prod B', e⟩ := let2 nil (pair l.wk1.wk0 r.wk1.wk1)
 
+@[simp]
+theorem InS.coe_tensor {A A' B B' : Ty α} {Γ : Ctx α ε}
+  (l : InS φ (⟨A, ⊥⟩::Γ) ⟨A', lo⟩) (r : InS φ (⟨B, ⊥⟩::Γ) ⟨B', lo⟩)
+  : (l.tensor r).val = Term.let2 Term.nil (Term.pair l.val.wk1.wk0 r.val.wk1.wk1) := by
+  rfl
+
+theorem InS.wk_slift_tensor {A A' B B' : Ty α} {Γ : Ctx α ε} {ρ : Γ.InS Δ}
+  (l : InS φ (⟨A, ⊥⟩::Δ) ⟨A', e⟩) (r : InS φ (⟨B, ⊥⟩::Δ) ⟨B', e⟩)
+  : (l.tensor r).wk ρ.slift = (l.wk ρ.slift).tensor (r.wk ρ.slift) := by
+  ext
+  simp only [Set.mem_setOf_eq, coe_wk, Term.wk, Ctx.InS.coe_lift, Nat.liftWk_zero, coe_wk0, coe_wk1,
+    coe_tensor]
+  congr 2
+  simp only [Term.wk1, Term.wk0, Term.wk_wk]
+  congr
+  funext k
+  cases k <;> rfl
+  simp only [Term.wk1, Term.wk0, Term.wk_wk]
+  congr
+  funext k
+  cases k <;> rfl
+
+theorem InS.wk1_tensor {A A' B B' : Ty α} {Γ : Ctx α ε}
+  (l : InS φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
+  : (l.tensor r).wk1 (inserted := inserted) = l.wk1.tensor r.wk1 := by
+  simp only [wk1, <-Ctx.InS.lift_wk0, wk_slift_tensor]
+
 theorem Wf.split {A : Ty α} {Γ : Ctx α ε} : split.Wf (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.prod A, e⟩
   := let1 nil (pair nil nil)
 
