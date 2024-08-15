@@ -17,6 +17,19 @@ def Eqv.swap {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : 
 def Eqv.pl {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨A, e⟩
   := let2 a (var 1 (by simp))
 
+theorem Eqv.wk_pl {A B : Ty α} {Γ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  {a : Eqv φ Δ ⟨A.prod B, e⟩}
+  : (a.pl).wk ρ = (a.wk ρ).pl := by
+  induction a using Quotient.inductionOn; rfl
+
+theorem Eqv.wk0_pl {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩}
+  : (a.pl).wk0 (head := head) = a.wk0.pl := by rw [wk0, wk_pl]; rfl
+
+theorem Eqv.wk1_pl {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ (head::Γ) ⟨A.prod B, e⟩}
+  : (a.pl).wk1 (inserted := inserted) = a.wk1.pl := by rw [wk1, wk_pl]; rfl
+
 def Eqv.pr {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨B, e⟩
   := let2 a (var 0 (by simp))
 
@@ -264,8 +277,16 @@ theorem Eqv.wk1_pi_l {A B : Ty α} {Γ : Ctx α ε}
   : (pi_l : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A, e⟩).wk1 (inserted := inserted) = pi_l := rfl
 
 @[simp]
+theorem Eqv.wk2_pi_l {A B : Ty α} {Γ : Ctx α ε}
+  : (pi_l : Eqv φ (⟨A.prod B, ⊥⟩::C::Γ) ⟨A, e⟩).wk2 (inserted := inserted) = pi_l := rfl
+
+@[simp]
 theorem Eqv.wk1_pi_r {A B : Ty α} {Γ : Ctx α ε}
   : (pi_r : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B, e⟩).wk1 (inserted := inserted) = pi_r := rfl
+
+@[simp]
+theorem Eqv.wk2_pi_r {A B : Ty α} {Γ : Ctx α ε}
+  : (pi_r : Eqv φ (⟨A.prod B, ⊥⟩::C::Γ) ⟨B, e⟩).wk2 (inserted := inserted) = pi_r := rfl
 
 @[simp]
 theorem Eqv.wk_eff_pi_l {A B : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
@@ -651,7 +672,8 @@ theorem Eqv.Pure.left_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   congr
   funext k
   cases k <;> rfl
-  sorry -- TODO: obviously, if something is pure so are its weakenings
+  have ⟨p, hp⟩ := hl;
+  exact ⟨p.wk1.wk0, by cases hp; induction p using Quotient.inductionOn; rfl⟩
 
 theorem Eqv.Pure.right_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩} (hr : r.Pure)
@@ -686,9 +708,18 @@ theorem Eqv.Pure.tensor_seq_right {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : 
   := tensor_seq_of_comm (hr.right_central _)
 
 theorem Eqv.Pure.dup {A B : Ty α} {Γ : Ctx α ε}
-  (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩)
-  (hl : l.Pure)
-  : l ;;' split = split ;;' l.tensor l := sorry
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩) : l.Pure → l ;;' split = split ;;' l.tensor l
+  | ⟨l, hl⟩ => by
+    cases hl
+    rw [seq_tensor]
+    simp only [seq, split, Eqv.nil, wk1_pair, wk1_var0, List.length_cons, Fin.zero_eta,
+      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, let1_beta, subst_pair, var0_subst0,
+      wk_res_eff, let2_pair, wk0_var, zero_add, let1_beta_var1, subst0_wk0, let1_beta_var0,
+      subst0_var0_wk1]
+    congr
+    rw [subst_subst, wk1, wk1, wk_wk, <-subst_fromWk, subst_subst, subst_id']
+    ext k
+    cases k using Fin.cases <;> rfl
 
 @[simp]
 theorem Eqv.wk_eff_split {A : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
@@ -714,8 +745,13 @@ theorem Eqv.split_tensor {A B C : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.split_reassoc {A : Ty α} {Γ : Ctx α ε}
   : (split (φ := φ) (A := A) (Γ := Γ) (e := e) ;;' split ⋉' _).reassoc
-  = split (φ := φ) (A := A) (Γ := Γ) (e := e) ;;' _ ⋊' split
-  := sorry
+  = split (φ := φ) (A := A) (Γ := Γ) (e := e) ;;' _ ⋊' split := by
+  simp only [split, ltimes, tensor, wk1_pair, wk1_nil, wk0_pair, wk0_nil, ← seq_reassoc, ←
+    let2_reassoc, rtimes]
+  rw [seq, seq, let1_beta' (a' := nil.pair nil), let1_beta' (a' := nil.pair nil)]
+  simp [wk1, Nat.liftnWk, nil, reassoc_beta, let2_pair, let1_beta_var0]
+  rfl
+  rfl
 
 theorem Eqv.split_reassoc_inv {A : Ty α} {Γ : Ctx α ε}
   : (split (φ := φ) (A := A) (Γ := Γ) (e := e) ;;' _ ⋊' split).reassoc_inv
@@ -854,7 +890,17 @@ theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := X) (B := Ty.unit) (C := Y) (e := e) ;;' X ⋊' pi_r
-  = pi_l ⋉' Y := sorry
+  = pi_l ⋉' Y := by
+  rw [assoc, reassoc, seq_let2, ltimes, tensor]
+  simp only [wk1_pi_l, wk1_pi_r, wk1_rtimes, wk1_nil, seq_rtimes, pi_l, wk1_pl, wk0_pl, wk0_nil]
+  congr
+  rw [pl, <-let2_pair_right, let2_let2]
+  congr
+  rw [let2_pair, let1_beta' (a' := (var 1 (by simp)).pair (var 3 (by simp))), let1_beta_var1]
+  simp only [subst_pair, wk2_pair, wk2_pi_r]
+  congr
+  simp [pi_r, pr, let2_pair, let1_beta_var0, let1_beta_var2, nil]
+  rfl
 
 theorem Eqv.pentagon {W X Y Z : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := W.prod X) (B := Y) (C := Z) (e := e) ;;' assoc
