@@ -243,6 +243,15 @@ theorem Eqv.reassoc_inv_wk2 {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ (left::right::Γ) ⟨A.prod (B.prod C), e⟩}
   : reassoc_inv a.wk2 = (reassoc_inv a).wk2 (inserted := inserted) := reassoc_inv_wk
 
+theorem Eqv.subst_reassoc {A B C : Ty α} {Γ Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {a : Eqv φ Δ ⟨(A.prod B).prod C, e⟩}
+  : (reassoc a).subst σ = reassoc (a.subst σ) := by
+  induction a using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+
+theorem Eqv.reassoc_subst {A B C : Ty α} {Γ Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {a : Eqv φ Δ ⟨(A.prod B).prod C, e⟩}
+  : reassoc (a.subst σ) = (reassoc a).subst σ := subst_reassoc.symm
+
 theorem Eqv.seq_reassoc {X Y A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ (⟨X, ⊥⟩::Γ) ⟨Y, e⟩} {b : Eqv φ ((Y, ⊥)::Γ) ⟨(A.prod B).prod C, e⟩}
   : a ;;' reassoc b = reassoc (a ;;' b) := by rw [seq, wk1_reassoc, let1_reassoc]; rfl
@@ -764,6 +773,10 @@ def Eqv.assoc {A B C : Ty α} {Γ : Ctx α ε}
 def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv (φ := φ) (⟨A.prod (B.prod C), ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩ := nil.reassoc_inv
 
+theorem Eqv.wk1_assoc {A B C : Ty α} {Γ : Ctx α ε}
+  : (assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).wk1 (inserted := inserted) = assoc
+  := rfl
+
 theorem Eqv.seq_prod_assoc {A B C : Ty α} {Γ : Ctx α ε}
   (r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩)
   : r ;;' assoc = r.reassoc := by rw [assoc, seq_reassoc, seq_nil]
@@ -902,10 +915,55 @@ theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε}
   simp [pi_r, pr, let2_pair, let1_beta_var0, let1_beta_var2, nil]
   rfl
 
+-- theorem Eqv.rtimes_let2 {A B C D E : Ty α} {Γ : Ctx α ε}
+--   {a : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B.prod C, e⟩}
+--   {b : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, e⟩}
+--   : E ⋊' (let2 a b) = let2 (pi_r ;;' a) sorry
+--   := sorry
+
 theorem Eqv.pentagon {W X Y Z : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := W.prod X) (B := Y) (C := Z) (e := e) ;;' assoc
-  = assoc ⋉' Z ;;' assoc ;;' W ⋊' assoc
-  := sorry
+  = assoc ⋉' Z ;;' assoc ;;' W ⋊' assoc := by
+  rw [seq_prod_assoc, seq_prod_assoc, assoc, assoc]
+  rw [reassoc, reassoc, reassoc, ltimes, tensor, let2_let2, let2_let2, let2_let2, seq_let2]
+  congr 1
+  simp only [wk1_reassoc, wk1_nil, wk0_reassoc, wk0_nil]
+  rw [let2_pair, let2_pair, reassoc, let1_let2, seq_let2]
+  congr 1
+  rw [let1_let2]
+  simp only [wk0_pair, wk0_var, zero_add, Nat.reduceAdd, wk2, wk_let2, wk_var, Set.mem_setOf_eq,
+    Ctx.InS.coe_wk2, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, wk_pair, Ctx.InS.coe_liftn₂,
+    Nat.ofNat_pos, lt_self_iff_false, le_refl, tsub_eq_zero_of_le, let1_beta_var1, subst_let1,
+    subst_pair, var_succ_subst0, subst_let2, subst_lift_var_succ, var0_subst0, List.length_cons,
+    ↓dreduceIte, Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta, List.get_eq_getElem,
+    Fin.val_zero, List.getElem_cons_zero, wk_res_eff, wk_eff_var, subst_liftn₂_var_one, ge_iff_le,
+    Prod.mk_le_mk, bot_le, and_self, subst_liftn₂_var_zero, subst_liftn₂_var_add_2,
+    subst_lift_var_zero, wk0_nil]
+  rw [
+    let1_beta' (a' := (var 0 (by simp)).pair (var 2 (by simp))) (by rfl),
+    subst_let2, seq_let2
+  ]
+  congr
+  rw [
+    let1_beta' (a' := (var 1 (by simp)).pair ((var 0 (by simp)).pair (var 2 (by simp)))) (by rfl),
+  ]
+  simp only [wk1_rtimes, wk1_assoc, seq_rtimes]
+  simp only [subst_pair, subst_liftn₂_var_one, ge_iff_le, Prod.mk_le_mk, le_refl, bot_le, and_self,
+    subst_liftn₂_var_zero, subst_liftn₂_var_add_2, var0_subst0, List.length_cons, Nat.reduceAdd,
+    Nat.add_zero, Nat.zero_eq, Set.mem_setOf_eq, Ctx.InS.coe_liftn₂, Ctx.InS.coe_wk2, Nat.liftnWk,
+    lt_self_iff_false, ↓dreduceIte, Nat.reduceSub, Nat.ofNat_pos, Nat.succ_eq_add_one, Fin.zero_eta,
+    List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_eff, wk_eff_pair, wk_eff_var,
+    wk0_pair, wk0_var, zero_add, wk1, wk_let2, wk_var, Ctx.InS.coe_wk1, Nat.liftWk_zero, wk_pair,
+    Nat.one_lt_ofNat, ↓reduceIte, Nat.reduceLT, Nat.liftWk_succ, subst_let2, id_eq, var_succ_subst0,
+    let2_pair, let1_beta_var1, subst_let1, subst_lift_var_succ, subst_lift_var_zero]
+  rw [let1_beta' (a' := (var 0 (by simp)).pair (var 2 (by simp))) (by rfl)]
+  simp [let2_pair, let1_beta_var1]
+  rw [
+    let1_beta' (a' := ((var 0 (by simp)).pair (var 2 (by simp))).pair (var 4 (by simp))) (by rfl),
+  ]
+  simp only [subst_pair, var_succ_subst0]
+  congr
+  simp [assoc, subst_reassoc, reassoc_beta]
 
 theorem Eqv.hexagon {X Y Z : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := X) (B := Y) (C := Z) (e := e) ;;' braid ;;' assoc
