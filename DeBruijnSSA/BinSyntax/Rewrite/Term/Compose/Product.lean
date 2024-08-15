@@ -426,10 +426,23 @@ theorem Eqv.pi_l_runit {A : Ty α} {Γ : Ctx α ε}
 def Eqv.braid {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩
   := let2 nil $ pair (var 0 (by simp)) (var 1 (by simp))
 
--- TODO: wk_lift_braid
-
 theorem Eqv.wk1_braid {A B : Ty α} {Γ : Ctx α ε}
   : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk1 (inserted := inserted) = braid := rfl
+
+theorem Eqv.wk0_braid {A B : Ty α} {Γ : Ctx α ε}
+  : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk0 (head := head)
+  = (let2 (var 1
+    (by simp only [Ctx.Var.step_iff, Ctx.Var.head_iff, Prod.mk_le_mk, bot_le, and_true]; rfl))
+    $ pair (var 0 (by simp)) (var 1 (by simp))) := rfl
+
+theorem Eqv.wk_lift_braid {A B : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Δ) ⟨B.prod A, e⟩).wk (ρ.lift (le_refl _))
+  = (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩) := rfl
+
+theorem Eqv.subst_lift_braid {A B : Ty α} {Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Δ) ⟨B.prod A, e⟩).subst (σ.lift (le_refl _))
+  = (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩) := by
+  induction σ using Quotient.inductionOn; rfl
 
 -- theorem Eqv.wk2_braid {A B : Ty α} {Γ : Ctx α ε}
 --   : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk2 (inserted := inserted) = braid := rfl
@@ -503,6 +516,37 @@ theorem Eqv.wk1_tensor {A A' B B' : Ty α} {Γ : Ctx α ε}
   induction r using Quotient.inductionOn
   simp [InS.wk1_tensor]
 
+theorem Eqv.wk_lift_tensor {A A' B B' : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A', e⟩} {r : Eqv φ (⟨B, ⊥⟩::Δ) ⟨B', e⟩}
+  : (tensor l r).wk (ρ.lift (le_refl _))
+  = tensor (l.wk (ρ.lift (le_refl _))) (r.wk (ρ.lift (le_refl _))) := by
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_wk, Term.wk, Ctx.InS.coe_lift, Nat.liftWk_zero,
+    Ctx.InS.coe_wk0, Ctx.InS.coe_wk1, Term.wk_wk, InS.coe_let2, InS.coe_var, InS.coe_pair]
+  congr <;> ext k <;> cases k <;> rfl
+
+theorem Eqv.subst_lift_tensor {A A' B B' : Ty α} {Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A', e⟩} {r : Eqv φ (⟨B, ⊥⟩::Δ) ⟨B', e⟩}
+  : (tensor l r).subst (σ.lift (le_refl _))
+  = tensor (l.subst (σ.lift (le_refl _))) (r.subst (σ.lift (le_refl _))) := by
+  induction l using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_subst, Term.subst, Subst.InS.coe_lift, Subst.lift_zero,
+    InS.coe_wk, Ctx.InS.coe_wk0, Ctx.InS.coe_wk1, InS.coe_let2, InS.coe_var, InS.coe_pair,
+    Term.wk_wk]
+  simp only [<-Term.subst_fromWk, Term.subst_subst]
+  congr <;> funext k <;> cases k with
+  | zero => rfl
+  | succ k =>
+    simp_arith only [Subst.comp, Term.subst, Subst.liftn, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Nat.reduceSubDiff, Subst.lift_succ, ↓reduceIte, Term.wk_wk, Function.comp_apply,
+      Term.subst_fromWk]
+    rfl
+
 def Eqv.ltimes {A A' : Ty α} {Γ : Ctx α ε} (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (B)
   : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A'.prod B, e⟩ := tensor l nil
 
@@ -536,6 +580,18 @@ theorem Eqv.wk1_ltimes {A A' B : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩}
   : (ltimes l B).wk1 (inserted := inserted) = ltimes l.wk1 B := by
   rw [ltimes, wk1_tensor]
+  rfl
+
+theorem Eqv.wk_lift_ltimes {A A' B : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A', e⟩}
+  : (ltimes l B).wk (ρ.lift (le_refl _)) = ltimes (l.wk (ρ.lift (le_refl _))) B := by
+  rw [ltimes, wk_lift_tensor]
+  rfl
+
+theorem Eqv.subst_lift_ltimes {A A' B : Ty α} {Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A', e⟩}
+  : (ltimes l B).subst (σ.lift (le_refl _)) = ltimes (l.subst (σ.lift (le_refl _))) B := by
+  rw [ltimes, subst_lift_tensor, subst_lift_nil]
   rfl
 
 theorem Eqv.ltimes_ltimes {A₀ A₁ A₂ B : Ty α} {Γ : Ctx α ε}
@@ -624,6 +680,18 @@ theorem Eqv.wk1_rtimes {A B B' : Ty α} {Γ : Ctx α ε}
   {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩}
   : (rtimes A r).wk1 (inserted := inserted) = rtimes A r.wk1 := by
   rw [rtimes, wk1_tensor]
+  rfl
+
+theorem Eqv.wk_lift_rtimes {A B B' : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  {r : Eqv φ (⟨B, ⊥⟩::Δ) ⟨B', e⟩}
+  : (rtimes A r).wk (ρ.lift (le_refl _)) = rtimes A (r.wk (ρ.lift (le_refl _))) := by
+  rw [rtimes, wk_lift_tensor]
+  rfl
+
+theorem Eqv.subst_lift_rtimes {A B B' : Ty α} {Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {r : Eqv φ (⟨B, ⊥⟩::Δ) ⟨B', e⟩}
+  : (rtimes A r).subst (σ.lift (le_refl _)) = rtimes A (r.subst (σ.lift (le_refl _))) := by
+  rw [rtimes, subst_lift_tensor, subst_lift_nil]
   rfl
 
 theorem Eqv.rtimes_rtimes {A B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
@@ -967,5 +1035,39 @@ theorem Eqv.pentagon {W X Y Z : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.hexagon {X Y Z : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := X) (B := Y) (C := Z) (e := e) ;;' braid ;;' assoc
-  = braid ⋉' Z ;;' assoc ;;' Y ⋊' braid
-  := sorry
+  = braid ⋉' Z ;;' assoc ;;' Y ⋊' braid := by
+  simp only [seq_prod_assoc, reassoc, seq_let2, wk1_braid, wk1_rtimes]
+  rw [ltimes, tensor, assoc, reassoc, seq_let2, let2_let2]
+  simp only [wk1_braid, wk0_braid, wk1_nil, seq_rtimes, let2_pair, wk0_pair, wk0_var, zero_add,
+    Nat.reduceAdd, let1_beta_var1, subst_let1, subst_pair, var_succ_subst0, subst_lift_var_succ,
+    var0_subst0, List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, wk_res_eff, wk_eff_var, subst_lift_braid, let2_let2, wk2, wk_let2,
+    wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk2, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, ←
+    Ctx.InS.lift_lift, wk_let1, wk_pair, Ctx.InS.coe_lift, Nat.liftWk_zero, Nat.liftWk_succ,
+    Nat.ofNat_pos, wk_lift_braid, wk0_nil, subst_let2, ← Subst.Eqv.lift_lift, subst_lift_var_zero,
+    ↓dreduceIte, Nat.reduceSub, Nat.succ_eq_add_one]
+  congr
+  simp only [seq_braid, let2_let2, wk2, wk_pair, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk2,
+    Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte, Nat.one_lt_ofNat, let2_pair, wk0_pair, wk0_var,
+    zero_add, Nat.reduceAdd, let1_beta_var1, subst_let1, subst_pair, var_succ_subst0,
+    subst_lift_var_zero, subst_lift_var_succ, var0_subst0, List.length_cons, ↓dreduceIte,
+    Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, wk_res_eff, wk_eff_var, wk_let2, Ctx.InS.coe_liftn₂, lt_self_iff_false,
+    le_refl, tsub_eq_zero_of_le, let2_let1, let1_beta_var0, subst_let2, subst_liftn₂_var_one,
+    ge_iff_le, Prod.mk_le_mk, bot_le, and_self, subst_liftn₂_var_zero, subst_liftn₂_var_add_2,
+    let1_beta_var2, Nat.add_zero, Nat.zero_eq, Ctx.InS.coe_lift, Nat.liftWk_succ, let1_let2, wk1,
+    Ctx.InS.coe_wk1, Nat.liftWk_zero, wk_let1, Nat.reduceLT, wk_lift_braid]
+  congr 1
+  rw [
+    let1_beta' (a' := (var 0 (by simp)).pair (var 2 (by simp))) (by rfl),
+    let1_beta' (a' := (var 0 (by simp)).pair (var 1 (by simp))) (by rfl),
+  ]
+  simp only [subst_let2, var0_subst0, List.length_cons, Nat.reduceAdd, Set.mem_setOf_eq,
+    Ctx.InS.coe_wk2, Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta, List.get_eq_getElem,
+    Fin.val_zero, List.getElem_cons_zero, wk_res_eff, wk_eff_pair, wk_eff_var, ←
+    Subst.Eqv.lift_lift, subst_pair, subst_lift_var_succ, subst_lift_var_zero, wk0_var, zero_add,
+    var_succ_subst0, let2_pair, let1_beta_var0, subst_let1, Nat.add_zero, Nat.zero_eq,
+    Ctx.InS.coe_liftn₂, Ctx.InS.coe_lift, Nat.liftWk_succ, Nat.liftWk_zero, let1_beta_var2,
+    Ctx.InS.coe_wk1, id_eq, subst_lift_braid, Nat.one_lt_ofNat, ↓dreduceIte]
+  rw [let1_beta' (a' := (var 1 (by simp)).pair (var 2 (by simp))) (by rfl)]
+  simp [braid, let2_pair, let1_beta_var1, let1_beta_var2]
