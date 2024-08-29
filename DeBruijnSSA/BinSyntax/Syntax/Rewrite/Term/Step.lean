@@ -1,8 +1,3 @@
-import Mathlib.Combinatorics.Quiver.Path
-import Mathlib.Combinatorics.Quiver.Symmetric
-import Mathlib.CategoryTheory.PathCategory
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-
 import Discretion.Correspondence.Definitions
 
 import DeBruijnSSA.BinSyntax.Syntax.Subst
@@ -43,7 +38,7 @@ inductive Rewrite : Term φ → Term φ → Prop
   | let2_pair (a b r) : Rewrite (let2 (pair a b) r) (let1 a $ let1 b.wk0 $ r)
   | let1_eta (a) : Rewrite (let1 a (var 0)) a
   | let2_bind (e r) :
-    Rewrite (let2 e r) (let1 e $ (let2 (var 0) (r.wk (Nat.liftnWk 2 Nat.succ))))
+    Rewrite (let2 e r) (let1 e $ (let2 (var 0) (r.wk2)))
   | case_bind (e r s) :
     Rewrite (case e r s) (let1 e $ case (var 0) (r.wk1) (s.wk1))
   | case_eta (a) : Rewrite (case a (inl (var 0)) (inr (var 0))) a
@@ -71,11 +66,85 @@ inductive Rewrite : Term φ → Term φ → Prop
       (let1 e $ pair (case (var 0) al.wk1 ar.wk1) (case (var 0) bl.wk1 br.wk1))
   | case_wk0_wk0 (e r) : Rewrite (case e (wk0 r) (wk0 r)) (let1 e r.wk0)
 
-theorem Rewrite.wk {e e' : Term φ} (h : e.Rewrite e') (ρ) : (e.wk ρ).Rewrite (e'.wk ρ)
-  := sorry
-
 theorem Rewrite.subst {e e' : Term φ} (h : e.Rewrite e') (σ) : (e.subst σ).Rewrite (e'.subst σ)
-  := sorry
+  := by induction h with
+  | let1_op f e r =>
+    simp only [Term.subst, Subst.lift_zero, <-wk1_subst_lift]
+    exact let1_op f (e.subst σ) (r.subst (σ.lift))
+  | let1_let1 a b r =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact let1_let1 (a.subst σ) (b.subst (σ.lift)) (r.subst (σ.lift))
+  | let1_pair a b r =>
+    simp only [Term.subst, Subst.lift_succ, wk, Nat.succ_eq_add_one, zero_add,
+      Subst.lift_zero, <-Term.wk1_subst_lift, Term.subst_lift]
+    exact let1_pair (a.subst σ) (b.subst σ) (r.subst (σ.lift))
+  | let1_let2 a b r =>
+    simp only [Term.subst, <-wk1_subst_lift, Subst.liftn_two]
+    exact let1_let2 (a.subst σ) (b.subst σ.lift.lift) (r.subst σ.lift)
+  | let1_inl e r =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact let1_inl (e.subst σ) (r.subst (σ.lift))
+  | let1_inr e r =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact let1_inr (e.subst σ) (r.subst (σ.lift))
+  | let1_case a l r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact let1_case (a.subst σ) (l.subst σ.lift) (r.subst σ.lift) (s.subst σ.lift)
+  | let1_abort e r =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact let1_abort (e.subst σ) (r.subst σ.lift)
+  | let2_eta a => exact let2_eta (a.subst σ)
+  | let2_pair a b r =>
+    simp only [Term.subst, <-wk1_subst_lift, Subst.liftn_two, <-wk0_subst]
+    exact let2_pair (a.subst σ) (b.subst σ) (r.subst σ.lift.lift)
+  | let1_eta a => exact let1_eta (a.subst σ)
+  | let2_bind e r =>
+    simp only [Term.subst, <-wk1_subst_lift, Subst.liftn_two, <-wk2_subst_lift_lift]
+    exact let2_bind (e.subst σ) (r.subst (σ.lift.lift))
+  | case_bind e r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_bind (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
+  | case_eta a => exact case_eta (a.subst σ)
+  | let1_let1_case a b r s =>
+    simp only [Term.subst, <-wk1_subst_lift, <-wk0_subst, <-swap01_subst_lift_lift]
+    exact let1_let1_case (a.subst σ) (b.subst σ.lift)
+      (r.subst σ.lift.lift.lift) (s.subst σ.lift.lift.lift)
+  | let1_let2_case a b r s =>
+    simp only [
+      Term.subst, <-wk1_subst_lift, <-wk0_subst, <-swap02_subst_lift_lift_lift, Subst.liftn_two]
+    exact let1_let2_case (a.subst σ) (b.subst σ.lift)
+      (r.subst σ.lift.lift.lift.lift) (s.subst σ.lift.lift.lift.lift)
+  | let1_case_case a d ll lr rl rr =>
+    simp only [
+      Term.subst, <-wk1_subst_lift, <-swap01_subst_lift_lift, <-swap01_subst_lift_lift,
+      <-wk0_subst
+    ]
+    exact let1_case_case (a.subst σ) (d.subst σ.lift)
+      (ll.subst σ.lift.lift.lift) (lr.subst σ.lift.lift.lift)
+      (rl.subst σ.lift.lift.lift) (rr.subst σ.lift.lift.lift)
+  | case_op_op e f r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_op_op (e.subst σ) f (r.subst σ.lift) (s.subst σ.lift)
+  | case_inl_inl e r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_inl_inl (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
+  | case_inr_inr e r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_inr_inr (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
+  | case_abort_abort e r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_abort_abort (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
+  | case_pair_pair e al bl ar br =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_pair_pair (e.subst σ)
+      (al.subst σ.lift) (bl.subst σ.lift)
+      (ar.subst σ.lift) (br.subst σ.lift)
+  | case_wk0_wk0 e r =>
+    simp only [Term.subst, <-wk1_subst_lift, <-wk0_subst]
+    exact case_wk0_wk0 (e.subst σ) (r.subst σ)
+
+theorem Rewrite.wk {e e' : Term φ} (h : e.Rewrite e') (ρ) : (e.wk ρ).Rewrite (e'.wk ρ)
+  := by simp only [<-Term.subst_fromWk]; exact h.subst _
 
 -- TODO: Cong.Rewrite induces a Setoid on Term... but we should maybe add more stuff?
 
@@ -83,10 +152,16 @@ inductive Reduce : Term φ → Term φ → Prop
   | case_inl (e r s) : Reduce (case (inl e) r s) (let1 e r)
   | case_inr (e r s) : Reduce (case (inr e) r s) (let1 e s)
 
-theorem Reduce.wk {e e' : Term φ} (h : e.Reduce e') (ρ) : (e.wk ρ).Reduce (e'.wk ρ)
-  := sorry
-
 theorem Reduce.subst {e e' : Term φ} (h : e.Reduce e') (σ) : (e.subst σ).Reduce (e'.subst σ)
-  := sorry
+  := by induction h with
+  | case_inl e r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_inl (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
+  | case_inr e r s =>
+    simp only [Term.subst, <-wk1_subst_lift]
+    exact case_inr (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
+
+theorem Reduce.wk {e e' : Term φ} (h : e.Reduce e') (ρ) : (e.wk ρ).Reduce (e'.wk ρ)
+  := by simp only [<-Term.subst_fromWk]; exact h.subst _
 
 -- TODO: Step, FStep, friends...

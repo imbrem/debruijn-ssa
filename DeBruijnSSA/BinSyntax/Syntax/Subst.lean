@@ -391,6 +391,77 @@ theorem wkn_comp_substn_succ (n : ℕ) (e : Term φ)
 @[simp]
 theorem alpha_var : (var n).alpha n = @Subst.id φ := by funext n; simp [alpha, Subst.id]
 
+theorem wk0_subst {σ : Subst φ} {e : Term φ}
+  : (e.subst σ).wk0 = e.wk0.subst σ.lift := (subst_lift e σ).symm
+
+theorem wk1_subst_lift {σ : Subst φ} {e : Term φ}
+  : (e.subst σ.lift).wk1 = e.wk1.subst σ.lift.lift := by
+  simp only [wk1, <-subst_fromWk, subst_subst]
+  congr
+  funext k
+  cases k with
+  | zero => rfl
+  | succ k =>
+    simp only [
+      Subst.comp, BinSyntax.Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one, Subst.lift_succ,
+      wk_wk, subst_fromWk, Nat.liftWk_succ_comp_succ
+    ]
+    rfl
+
+theorem wk2_subst_lift_lift {σ : Subst φ} {e : Term φ}
+  : (e.subst σ.lift.lift).wk2 = e.wk2.subst σ.lift.lift.lift := by
+  simp only [wk2, <-subst_fromWk, subst_subst]
+  congr
+  funext k
+  cases k with
+  | zero => rfl
+  | succ k =>
+    cases k with
+    | zero => rfl
+    | succ k =>
+      simp_arith only [
+        Subst.comp, BinSyntax.Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one, Subst.lift_succ,
+        wk_wk, subst_fromWk, Nat.liftWk_succ_comp_succ, Nat.liftnWk, ↓reduceIte
+      ]
+      rfl
+
+theorem swap01_subst_lift_lift {σ : Subst φ} {e : Term φ}
+  : (e.subst σ.lift.lift).swap01 = e.swap01.subst σ.lift.lift := by
+  simp only [swap01, <-subst_fromWk, subst_subst]
+  congr
+  funext k
+  cases k with
+  | zero => rfl
+  | succ k =>
+    cases k with
+    | zero => rfl
+    | succ k =>
+      simp_arith only [
+        Subst.comp, BinSyntax.Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one, Subst.lift_succ,
+        wk_wk, subst_fromWk, Nat.liftWk_succ_comp_succ, Nat.liftnWk, ↓reduceIte, Nat.swap0
+      ]
+      rfl
+
+theorem swap02_subst_lift_lift_lift {σ : Subst φ} {e : Term φ}
+  : (e.subst σ.lift.lift.lift).swap02 = e.swap02.subst σ.lift.lift.lift := by
+  simp only [swap02, <-subst_fromWk, subst_subst]
+  congr
+  funext k
+  cases k with
+  | zero => rfl
+  | succ k =>
+    cases k with
+    | zero => rfl
+    | succ k =>
+      cases k with
+      | zero => rfl
+      | succ k =>
+        simp_arith only [
+          Subst.comp, BinSyntax.Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one, Subst.lift_succ,
+          wk_wk, subst_fromWk, Nat.liftWk_succ_comp_succ, Nat.liftnWk, ↓reduceIte, Nat.swap0
+        ]
+        rfl
+
 end Term
 
 /-- Substitute the free variables in a body -/

@@ -69,7 +69,7 @@ theorem Eqv.reassoc_beta {A B C : Ty α} {Γ : Ctx α ε}
   rw [reassoc, let2_pair, let1_pair, let1_beta_let2_eta]
   simp only [wk1_let1, wk2_let2, wk2_var1, List.length_cons, Fin.mk_one, List.get_eq_getElem,
     Fin.val_one, List.getElem_cons_succ, List.getElem_cons_zero, wk_pair, wk_var, Set.mem_setOf_eq,
-    Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, Nat.ofNat_pos, lt_self_iff_false,
+    Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, lt_self_iff_false,
     le_refl, tsub_eq_zero_of_le, Ctx.InS.coe_wk2, zero_add, subst_let1, subst_let2,
     subst_lift_var_succ, var0_subst0, Fin.zero_eta, Fin.val_zero, wk_res_eff, wk_eff_pair,
     wk_eff_var, wk0_pair, wk0_var, Nat.reduceAdd, ← Subst.Eqv.lift_lift, subst_pair,
@@ -89,7 +89,7 @@ theorem Eqv.reassoc_inv_beta {A B C : Ty α} {Γ : Ctx α ε}
   simp only [wk1_let2, wk1_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
     List.getElem_cons_zero, wk_pair, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_liftn₂, Nat.liftnWk,
     Nat.reduceLT, ↓reduceIte, Nat.reduceSub, Ctx.InS.coe_wk1, Nat.liftWk_succ, Nat.succ_eq_add_one,
-    zero_add, Nat.reduceAdd, Nat.one_lt_ofNat, Nat.ofNat_pos, subst_let2, var0_subst0, wk_res_eff,
+    zero_add, Nat.reduceAdd, Nat.one_lt_ofNat, subst_let2, var0_subst0, wk_res_eff,
     wk_eff_pair, wk_eff_var, subst_pair, subst_liftn₂_var_add_2, var_succ_subst0, wk0_var,
     subst_liftn₂_var_one, ge_iff_le, Prod.mk_le_mk, le_refl, bot_le, and_self,
     subst_liftn₂_var_zero, let2_pair, let1_beta_var1, ↓dreduceIte, Nat.liftWk_zero]
@@ -897,7 +897,7 @@ theorem Eqv.reassoc_tensor {A B C A' B' C' : Ty α} {Γ : Ctx α ε}
       wk2_pair, wk2_nil, let2_let2, wk2_let2, wk2_var1, List.length_cons, Fin.mk_one,
       List.get_eq_getElem, Fin.val_one, List.getElem_cons_succ, List.getElem_cons_zero, wk_var,
       Set.mem_setOf_eq, Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, le_refl,
-      Nat.ofNat_pos, lt_self_iff_false, tsub_eq_zero_of_le, Ctx.InS.coe_wk2, zero_add, let2_pair,
+      lt_self_iff_false, tsub_eq_zero_of_le, Ctx.InS.coe_wk2, zero_add, let2_pair,
       let1_beta_var1, subst_let2, var_succ_subst0, subst_pair, subst_liftn₂_var_one, ge_iff_le,
       Prod.mk_le_mk, bot_le, and_self, subst_liftn₂_var_zero, subst_liftn₂_var_add_2, var0_subst0,
       Nat.reduceAdd, ↓dreduceIte, Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta, Fin.val_zero,
@@ -1001,7 +1001,7 @@ theorem Eqv.pentagon {W X Y Z : Ty α} {Γ : Ctx α ε}
   rw [let1_let2]
   simp only [wk0_pair, wk0_var, zero_add, Nat.reduceAdd, wk2, wk_let2, wk_var, Set.mem_setOf_eq,
     Ctx.InS.coe_wk2, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, wk_pair, Ctx.InS.coe_liftn₂,
-    Nat.ofNat_pos, lt_self_iff_false, le_refl, tsub_eq_zero_of_le, let1_beta_var1, subst_let1,
+    lt_self_iff_false, le_refl, tsub_eq_zero_of_le, let1_beta_var1, subst_let1,
     subst_pair, var_succ_subst0, subst_let2, subst_lift_var_succ, var0_subst0, List.length_cons,
     ↓dreduceIte, Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta, List.get_eq_getElem,
     Fin.val_zero, List.getElem_cons_zero, wk_res_eff, wk_eff_var, subst_liftn₂_var_one, ge_iff_le,
@@ -1019,7 +1019,7 @@ theorem Eqv.pentagon {W X Y Z : Ty α} {Γ : Ctx α ε}
   simp only [subst_pair, subst_liftn₂_var_one, ge_iff_le, Prod.mk_le_mk, le_refl, bot_le, and_self,
     subst_liftn₂_var_zero, subst_liftn₂_var_add_2, var0_subst0, List.length_cons, Nat.reduceAdd,
     Nat.add_zero, Nat.zero_eq, Set.mem_setOf_eq, Ctx.InS.coe_liftn₂, Ctx.InS.coe_wk2, Nat.liftnWk,
-    lt_self_iff_false, ↓dreduceIte, Nat.reduceSub, Nat.ofNat_pos, Nat.succ_eq_add_one, Fin.zero_eta,
+    lt_self_iff_false, ↓dreduceIte, Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta,
     List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_eff, wk_eff_pair, wk_eff_var,
     wk0_pair, wk0_var, zero_add, wk1, wk_let2, wk_var, Ctx.InS.coe_wk1, Nat.liftWk_zero, wk_pair,
     Nat.one_lt_ofNat, ↓reduceIte, Nat.reduceLT, Nat.liftWk_succ, subst_let2, id_eq, var_succ_subst0,
@@ -1044,11 +1044,11 @@ theorem Eqv.hexagon {X Y Z : Ty α} {Γ : Ctx α ε}
     List.getElem_cons_zero, wk_res_eff, wk_eff_var, subst_lift_braid, let2_let2, wk2, wk_let2,
     wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk2, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, ←
     Ctx.InS.lift_lift, wk_let1, wk_pair, Ctx.InS.coe_lift, Nat.liftWk_zero, Nat.liftWk_succ,
-    Nat.ofNat_pos, wk_lift_braid, wk0_nil, subst_let2, ← Subst.Eqv.lift_lift, subst_lift_var_zero,
+    wk_lift_braid, wk0_nil, subst_let2, ← Subst.Eqv.lift_lift, subst_lift_var_zero,
     ↓dreduceIte, Nat.reduceSub, Nat.succ_eq_add_one]
   congr
   simp only [seq_braid, let2_let2, wk2, wk_pair, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk2,
-    Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte, Nat.one_lt_ofNat, let2_pair, wk0_pair, wk0_var,
+    Nat.liftnWk, ↓reduceIte, Nat.one_lt_ofNat, let2_pair, wk0_pair, wk0_var,
     zero_add, Nat.reduceAdd, let1_beta_var1, subst_let1, subst_pair, var_succ_subst0,
     subst_lift_var_zero, subst_lift_var_succ, var0_subst0, List.length_cons, ↓dreduceIte,
     Nat.reduceSub, Nat.succ_eq_add_one, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,

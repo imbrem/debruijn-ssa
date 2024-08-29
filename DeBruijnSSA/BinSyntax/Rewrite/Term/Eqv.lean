@@ -1471,7 +1471,7 @@ theorem Eqv.Pure.let1_let2_of_left {Γ : Ctx α ε}
             Set.mem_setOf_eq, Subst.InS.get, Subst.InS.liftn₂, InS.coe_subst0, Subst.liftn,
             lt_self_iff_false, ↓reduceIte, le_refl, tsub_eq_zero_of_le, subst0_zero,
             Subst.InS.coe_comp, Subst.comp, Term.subst, Ctx.InS.coe_comp, Ctx.InS.coe_swap02,
-            Function.comp_apply, Nat.one_lt_ofNat, Nat.swap0_lt, Nat.ofNat_pos, InS.coe_wk,
+            Function.comp_apply, Nat.one_lt_ofNat, Nat.swap0_lt, InS.coe_wk,
             Ctx.InS.coe_wk0, Term.wk_wk]
           rfl
         | succ i => rfl
