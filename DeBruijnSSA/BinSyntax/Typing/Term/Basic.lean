@@ -1,5 +1,6 @@
 import Discretion.Wk.List
 import Discretion.Basic
+import Discretion.Utils.Set
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions
@@ -183,6 +184,30 @@ theorem Term.InS.induction
   | case ha hl hr Ia Il Ir => exact case _ _ _ Ia Il Ir
   | abort ha Ia => exact abort _ Ia
   | unit e => exact unit
+
+theorem Term.InS.induction'
+  {motive : (Γ : Ctx α ε) → (A : Ty α) → (e : ε) → InS φ Γ (A, e) → Prop}
+  (var : ∀{Γ A e} (n) (hv : Γ.Var n (A, e)), motive Γ A e (Term.InS.var n hv))
+  (op : ∀{Γ A B e} (f a) (hf : Φ.EFn f A B e) (_ha : motive Γ A e a),
+    motive Γ B e (Term.InS.op f hf a))
+  (let1 : ∀{Γ A B e} (a b) (_ha : motive Γ A e a) (_hb : motive (⟨A, ⊥⟩::Γ) B e b),
+    motive Γ B e (Term.InS.let1 a b))
+  (pair : ∀{Γ A B e} (a b) (_ha : motive Γ A e a) (_hb : motive Γ B e b),
+    motive Γ (Ty.prod A B) e (Term.InS.pair a b))
+  (let2 : ∀{Γ A B C e} (a c)
+    (_ha : motive Γ (A.prod B) e a) (_hc : motive (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) C e c),
+    motive Γ C e (Term.InS.let2 a c))
+  (inl : ∀{Γ A B e} (a) (_ha : motive Γ A e a), motive Γ (Ty.coprod A B) e (Term.InS.inl a))
+  (inr : ∀{Γ A B e} (b) (_hb : motive Γ B e b), motive Γ (Ty.coprod A B) e (Term.InS.inr b))
+  (case : ∀{Γ A B C e} (a l r)
+    (_ha : motive Γ (Ty.coprod A B) e a)
+    (_hl : motive (⟨A, ⊥⟩::Γ) C e l)
+    (_hr : motive (⟨B, ⊥⟩::Γ) C e r),
+    motive Γ C e (Term.InS.case a l r))
+  (abort : ∀{Γ A e} (a) (_ha : motive Γ Ty.empty e a), motive Γ A e (Term.InS.abort a A))
+  (unit : ∀{Γ e}, motive Γ Ty.unit e (Term.InS.unit e))
+  : (h : InS φ Γ (A, e)) → motive Γ A e h
+  := Term.InS.induction var op let1 pair let2 inl inr case abort unit
 
 /-- A derivation that a term is well-formed -/
 inductive Term.WfD : Ctx α ε → Term φ → Ty α × ε → Type _
@@ -609,10 +634,6 @@ theorem Term.InS.wk2_unit {Γ : Ctx α ε} {e}
   : (unit (Γ := left::right::Γ) (φ := φ) e).wk2 (inserted := inserted) = unit e
   := rfl
 
-theorem Term.InS.wk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} (d : InS φ Δ ⟨A, e⟩) (h : ρ ≈ ρ')
-  : d.wk ρ = d.wk ρ'
-  := sorry
-
 @[simp]
 theorem Term.InS.wk_var {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {n} (h : Δ.Var n A)
   : (var (φ := φ) n h).wk ρ = var (ρ.val n) (h.wk ρ.prop)
@@ -650,31 +671,76 @@ theorem Term.InS.wk_unit {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {e}
   : (unit (φ := φ) e).wk ρ = unit e
   := rfl
 
-/-- Reverse-weaken a term derivation, given that it is inbounds -/
-def Term.WfD.wk_inv {Γ Δ : Ctx α ε} {ρ} (h : Γ.EWkn Δ ρ) {a : Term φ}
-  (d : WfD Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : WfD Δ a ⟨A, e⟩
-  := match a, d with
-  | Term.var i, var dv => var $ h.var_inv ha dv
-  | Term.op _ _, op df de => op df (de.wk_inv h ha)
-  | Term.let1 _ _, let1 da db => let1 (da.wk_inv h sorry) (db.wk_inv h.lift sorry)
-  | Term.pair _ _, pair dl dr
-    => pair (dl.wk_inv h (fvi_pair_le_left ha)) (dr.wk_inv h (fvi_pair_le_right ha))
-  | Term.let2 _ _, let2 da dc => let2 (da.wk_inv h sorry) (dc.wk_inv h.liftn₂ sorry)
-  | Term.inl _, inl dl => inl (dl.wk_inv h ha)
-  | Term.inr _, inr dr => inr (dr.wk_inv h ha)
-  | Term.case _ _ _, case da dl dr
-    => case (da.wk_inv h sorry) (dl.wk_inv h.lift sorry) (dr.wk_inv h.lift sorry)
-  | Term.abort _, abort da => abort (da.wk_inv h ha)
-  | Term.unit, unit e => unit e
+@[simp]
+theorem Term.InS.wk_let1 {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  {da : Term.InS φ Δ ⟨A, e⟩} {db : Term.InS φ (⟨A, ⊥⟩::Δ) ⟨B, e⟩}
+  : (da.let1 db).wk ρ = (da.wk ρ).let1 (db.wk ρ.slift)
+  := rfl
 
-theorem Term.Wf.wk_inv {a : Term φ}
-  (h : Γ.EWkn Δ ρ) (d : Wf Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : Wf Δ a ⟨A, e⟩
-  := have ⟨d⟩ := d.nonempty; (d.wk_inv h ha).toWf
+@[simp]
+theorem Term.InS.wk_let2 {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  {da : Term.InS φ Δ ⟨A.prod B, e⟩} {dc : Term.InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Δ) ⟨C, e⟩}
+  : (da.let2 dc).wk ρ = (da.wk ρ).let2 (dc.wk ρ.sliftn₂)
+  := rfl
+
+@[simp]
+theorem Term.InS.wk_case {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  {da : Term.InS φ Δ ⟨Ty.coprod A B, e⟩}
+  {dl : Term.InS φ (⟨A, ⊥⟩::Δ) ⟨C, e⟩}
+  {dr : Term.InS φ (⟨B, ⊥⟩::Δ) ⟨C, e⟩}
+  : (da.case dl dr).wk ρ = (da.wk ρ).case (dl.wk ρ.slift) (dr.wk ρ.slift)
+  := rfl
+
+theorem Term.InS.wk_equiv {Γ Δ : Ctx α ε} {ρ ρ' : Γ.InS Δ} (d : InS φ Δ V) (h : ρ ≈ ρ')
+  : d.wk ρ = d.wk ρ'
+  := by induction d using Term.InS.induction generalizing Γ with
+  | var v dv => simp [h _ dv.length]
+  | op df de _ I => simp [I h]
+  | pair dl dr I₁ I₂ => simp [I₁ h, I₂ h]
+  | inl dl I => simp [I h]
+  | inr dr I => simp [I h]
+  | abort da I => simp [I h]
+  | unit => rfl
+  | let1 da db I₁ I₂ => simp [I₁ h, I₂ (Ctx.InS.slift_congr h)]
+  | let2 da db I₁ I₂ => simp [I₁ h, I₂ (Ctx.InS.sliftn₂_congr h)]
+  | case da dl dr Ia Il Ir => simp [Ia h, Il (Ctx.InS.slift_congr h), Ir (Ctx.InS.slift_congr h)]
+
+-- /-- Reverse-weaken a term derivation, given that it is inbounds -/
+-- def Term.WfD.wk_inv {Γ Δ : Ctx α ε} {ρ} (h : Γ.EWkn Δ ρ) {a : Term φ}
+--   (d : WfD Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : WfD Δ a ⟨A, e⟩
+--   := match a, d with
+--   | Term.var i, var dv => var $ h.var_inv ha dv
+--   | Term.op _ _, op df de => op df (de.wk_inv h ha)
+--   | Term.let1 _ _, let1 da db => let1 (da.wk_inv h sorry) (db.wk_inv h.lift sorry)
+--   | Term.pair _ _, pair dl dr
+--     => pair (dl.wk_inv h (fvi_pair_le_left ha)) (dr.wk_inv h (fvi_pair_le_right ha))
+--   | Term.let2 _ _, let2 da dc => let2 (da.wk_inv h sorry) (dc.wk_inv h.liftn₂ sorry)
+--   | Term.inl _, inl dl => inl (dl.wk_inv h ha)
+--   | Term.inr _, inr dr => inr (dr.wk_inv h ha)
+--   | Term.case _ _ _, case da dl dr
+--     => case (da.wk_inv h sorry) (dl.wk_inv h.lift sorry) (dr.wk_inv h.lift sorry)
+--   | Term.abort _, abort da => abort (da.wk_inv h ha)
+--   | Term.unit, unit e => unit e
+
+-- theorem Term.Wf.wk_inv {a : Term φ}
+--   (h : Γ.EWkn Δ ρ) (d : Wf Γ (a.wk ρ) ⟨A, e⟩) (ha : a.fvi ≤ Δ.length) : Wf Δ a ⟨A, e⟩
+--   := have ⟨d⟩ := d.nonempty; (d.wk_inv h ha).toWf
 
 theorem Term.Wf.fvs {a : Term φ} (h : Wf Γ a V) : a.fvs ⊆ Set.Iio Γ.length
   := by induction h with
   | var dv => simp [dv.length]
-  | _ => simp [*] <;> sorry
+  | let1 _ _ Ia Ib =>
+    simp only [BinSyntax.Term.fvs, Set.union_subset_iff, true_and, Ia]
+    exact Set.liftFv_subset_Iio_of_subset_Iio Ib
+  | let2 _ _ Ia Ib =>
+    simp only [BinSyntax.Term.fvs, Set.union_subset_iff, true_and, Ia]
+    exact Set.liftnFv_subset_Iio_of_subset_Iio Ib
+  | case _ _ _ Ie Il Ir =>
+    simp only [BinSyntax.Term.fvs, Set.union_subset_iff, true_and, Ie]
+    constructor
+    exact Set.liftFv_subset_Iio_of_subset_Iio Il
+    exact Set.liftFv_subset_Iio_of_subset_Iio Ir
+  | _ => simp [*]
 
 def Term.WfD.wk1 {Γ : Ctx α ε} {L} {r : Term φ} (dr : WfD (A::Γ) r L) : WfD (A::B::Γ) r.wk1 L
   := dr.wk Ctx.Wkn.wk1
@@ -709,3 +775,35 @@ theorem Term.InS.coe_wk_id {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {a : Term.InS 
 theorem Term.InS.wk_eq_wk_id {Γ Δ : Ctx α ε} {h : Γ.Wkn Δ id} {a : Term.InS φ Δ V}
   : a.wk ⟨_root_.id, h⟩ = a.wk_id h
   := by ext; simp
+
+end Basic
+
+section OrderBot
+
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+
+-- TODO: actually, this _is_ computable! Go fix later...
+noncomputable def Term.InS.toInitial' {Γ : Ctx α ε} (a : InS φ Γ (A, e)) (hA : A.IsInitial)
+  : InS φ Γ (Ty.empty, e) := match A with
+  | Ty.prod l r => open Classical in if h : l.IsInitial then
+      a.let2 ((InS.var 1 (by simp)).toInitial' h)
+    else
+      have h : r.IsInitial := by cases hA <;> aesop
+      a.let2 ((InS.var 0 (by simp)).toInitial' h)
+  | Ty.coprod l r => a.case
+    ((InS.var 0 (by simp)).toInitial' (match hA with | Ty.IsInitial.coprod l _ => l))
+    ((InS.var 0 (by simp)).toInitial' (match hA with | Ty.IsInitial.coprod _ r => r))
+  | Ty.unit => False.elim <| by cases hA
+  | Ty.empty => a
+
+noncomputable def Term.InS.toInitial {Γ : Ctx α ε} (a : InS φ Γ V) (hA : V.1.IsInitial)
+  : InS φ Γ (Ty.empty, V.2) := match V with
+  | (_, _) => toInitial' a hA
+
+theorem Ctx.IsInitial.term {Γ : Ctx α ε} (h : IsInitial Γ) : Nonempty (Term.InS φ Γ (Ty.empty, ⊥))
+  := by
+  let ⟨⟨A, e⟩, hAe, hA, he⟩ := h
+  cases he
+  have ⟨n, hn, _⟩ := Ctx.Var.exists_of_mem hAe
+  constructor
+  apply Term.InS.toInitial' (Term.InS.var n hn) hA

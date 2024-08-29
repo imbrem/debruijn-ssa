@@ -136,6 +136,24 @@ theorem InS.lwk_congr {Γ : Ctx α ε} {L K : LCtx α} {r r' : InS φ Γ L}
   {ρ ρ' : L.InS K} (hρ : ρ ≈ ρ') (hr : r ≈ r') : r.lwk ρ ≈ r'.lwk ρ'
   := r.lwk_equiv hρ ▸ lwk_congr_right ρ' hr
 
+theorem InS.let1_beta {Γ : Ctx α ε} {L : LCtx α}
+  (a : Term.InS φ Γ ⟨A, ⊥⟩)
+  (r : InS φ (⟨A, ⊥⟩::Γ) L)
+    : let1 a r ≈ r.vsubst a.subst0
+  := Uniform.rel $ TStep.let1_beta a.prop r.prop
+
+theorem InS.initial {Γ : Ctx α ε} {L : LCtx α} (hi : Γ.IsInitial) (r r' : InS φ Γ L) : r ≈ r'
+  := Uniform.rel (TStep.initial hi r.2 r'.2)
+
+theorem InS.initial' {Γ : Ctx α ε} (i : Term.InS φ Γ ⟨Ty.empty, ⊥⟩) (a b : InS φ Γ L) : a ≈ b
+  := calc
+  a ≈ a.vwk0.vsubst i.subst0 := sorry
+  _ ≈ let1 i a.vwk0 := (let1_beta _ _).symm
+  _ ≈ let1 i b.vwk0
+    := let1_body_congr _ (initial ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty, rfl⟩ _ _)
+  _ ≈ b.vwk0.vsubst i.subst0 := let1_beta _ _
+  _ ≈ _ := sorry
+
 theorem TStep.vsubst {Γ Δ : Ctx α ε} {L} {r r' : Region φ} {σ : Term.Subst φ}
   (hσ : σ.Wf Γ Δ) : TStep Δ L r r' → Uniform TStep Γ L (r.vsubst σ) (r'.vsubst σ)
   | TStep.let1_beta de dr => sorry
@@ -409,12 +427,6 @@ theorem InS.case_inr {Γ : Ctx α ε} {L : LCtx α}
     : case e.inr r s ≈ let1 e s
   := Uniform.rel $ TStep.reduce InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_beta {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨A, ⊥⟩)
-  (r : InS φ (⟨A, ⊥⟩::Γ) L)
-    : let1 a r ≈ r.vsubst a.subst0
-  := Uniform.rel $ TStep.let1_beta a.prop r.prop
-
 theorem InS.let1_let1_case {Γ : Ctx α ε}
   {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
   {b : Term.InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X, e⟩}
@@ -447,9 +459,6 @@ theorem InS.let1_case_case {Γ : Ctx α ε}
     (case d.wk0 ll.vswap01 rl.vswap01)
     (case d.wk0 lr.vswap01 rr.vswap01))
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.initial {Γ : Ctx α ε} {L : LCtx α} (hi : Γ.IsInitial) (r r' : InS φ Γ L) : r ≈ r'
-  := Uniform.rel (TStep.initial hi r.2 r'.2)
 
 -- theorem InS.let1_cong_uniform_alt {Γ : Ctx α ε} {L : LCtx α}
 --   {a a' : Term φ} (ha : Term.Wf.Cong Term.TStep Γ V a a') (r : Region φ)

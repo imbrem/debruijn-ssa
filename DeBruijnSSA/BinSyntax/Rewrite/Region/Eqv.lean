@@ -272,7 +272,7 @@ theorem Eqv.shf_eq_cast {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
 @[simp]
 theorem Eqv.shf_br {Γ : Ctx α ε} {L : LCtx α} {ℓ : ℕ} {A : Ty α}
   (a : Term.Eqv φ Γ ⟨A, ⊥⟩) (hℓ : LCtx.Trg (R ++ (Y :: L)) ℓ A)
-  : (br ℓ a hℓ).shf = br ℓ a (LCtx.shf_eq ▸ hℓ) := by
+  : (br ℓ a hℓ).shf = br ℓ a (LCtx.shf_eq (α := α) ▸ hℓ) := by
   induction a using Quotient.inductionOn
   rfl
 

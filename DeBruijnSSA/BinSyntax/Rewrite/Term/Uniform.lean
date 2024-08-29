@@ -65,23 +65,81 @@ theorem Wf.Cong.flatten {P : Ctx α ε → Ty α × ε → Term φ → Term φ �
 theorem Wf.Cong.wk {P Q : Ctx α ε → Ty α × ε → Term φ → Term φ → Prop} {Γ Δ L r r'}
   (toWk : ∀{Γ Δ V ρ r r'}, Γ.Wkn Δ ρ → P Δ V r r' → Q Γ V (r.wk ρ) (r'.wk ρ))
   (hρ : Γ.Wkn Δ ρ) (p : Wf.Cong P Δ L r r') : Wf.Cong Q Γ L (r.wk ρ) (r'.wk ρ)
-  := by induction p with
+  := by induction p generalizing Γ ρ with
   | rel h => exact rel $ toWk hρ h
-  | _ => sorry
+  | op hf _ Ia => exact op hf (Ia hρ)
+  | let1_bound _ hb Ia => exact let1_bound (Ia hρ) (hb.wk hρ.slift)
+  | let1_body ha _ Ia => exact let1_body (ha.wk hρ) (Ia hρ.slift)
+  | pair_left _ hb Ia => exact pair_left (Ia hρ) (hb.wk hρ)
+  | pair_right ha _ Ia => exact pair_right (ha.wk hρ) (Ia hρ)
+  | let2_bound _ hb Ia => exact let2_bound (Ia hρ) (hb.wk hρ.sliftn₂)
+  | let2_body ha _ Ia => exact let2_body (ha.wk hρ) (Ia hρ.sliftn₂)
+  | inl _ Ia => exact inl (Ia hρ)
+  | inr _ Ia => exact inr (Ia hρ)
+  | case_disc _ hb hc Ia => exact case_disc (Ia hρ) (hb.wk hρ.slift) (hc.wk hρ.slift)
+  | case_left ha _ hc Ia => exact case_left (ha.wk hρ) (Ia hρ.slift) (hc.wk hρ.slift)
+  | case_right ha hb _ Ia => exact case_right (ha.wk hρ) (hb.wk hρ.slift) (Ia hρ.slift)
+  | abort _ Ia => exact abort (Ia hρ)
 
 theorem Wf.Cong.wk_res {P : Ctx α ε → Ty α × ε → Term φ → Term φ → Prop} {Γ V V' r r'}
   (toWk : ∀{Γ V V' r r'}, V ≤ V' → P Γ V r r' → P Γ V' r r')
   (hV : V ≤ V') (p : Cong P Γ V r r') : Cong P Γ V' r r'
-  := by induction p with
+  := by induction p generalizing V' with
   | rel h => exact rel $ toWk hV h
-  | _ => sorry
+  | op hf _ Ia => exact op ⟨⟨hf.1.1, hf.1.2.trans hV.1⟩, hf.2.trans hV.2⟩ (Ia ⟨le_refl _, hV.2⟩)
+  | let1_bound _ hb Ia => exact let1_bound (Ia ⟨le_refl _, hV.2⟩) (hb.wk_res hV)
+  | let1_body ha _ Ia => exact let1_body (ha.wk_eff hV.2) (Ia hV)
+  | pair_left _ hb Ia =>
+    cases V' with
+    | mk V' e' =>
+    cases hV.1 with
+    | prod hl hr =>
+    exact pair_left (Ia ⟨hl, hV.2⟩) (hb.wk_res ⟨hr, hV.2⟩)
+  | pair_right ha _ Ia =>
+    cases V' with
+    | mk V' e' =>
+    cases hV.1 with
+    | prod hl hr =>
+    exact pair_right (ha.wk_res ⟨hl, hV.2⟩) (Ia ⟨hr, hV.2⟩)
+  | let2_bound _ hb Ia => exact let2_bound (Ia ⟨le_refl _, hV.2⟩) (hb.wk_res hV)
+  | let2_body ha _ Ia => exact let2_body (ha.wk_eff hV.2) (Ia hV)
+  | inl _ Ia =>
+    cases V' with
+    | mk V' e' =>
+    cases hV.1 with
+    | coprod hl hr =>
+    exact inl (Ia ⟨hl, hV.2⟩)
+  | inr _ Ia =>
+    cases V' with
+    | mk V' e' =>
+    cases hV.1 with
+    | coprod hl hr =>
+    exact inr (Ia ⟨hr, hV.2⟩)
+  | case_disc _ hb hc Ia => exact case_disc (Ia ⟨le_refl _, hV.2⟩) (hb.wk_res hV) (hc.wk_res hV)
+  | case_left ha _ hc Ia => exact case_left (ha.wk_eff hV.2) (Ia hV) (hc.wk_res hV)
+  | case_right ha hb _ Ia => exact case_right (ha.wk_eff hV.2) (hb.wk_res hV) (Ia hV)
+  | abort _ Ia =>
+    cases V' with
+    | mk V' e' => exact abort (Ia ⟨le_refl _, hV.2⟩)
 
 theorem Wf.Cong.subst {P Q : Ctx α ε → Ty α × ε → Term φ → Term φ → Prop} {Γ Δ L r r'}
   (toSubst : ∀{Γ Δ V σ r r'}, σ.Wf Γ Δ → P Δ V r r' → Q Γ V (r.subst σ) (r'.subst σ))
   (hσ : σ.Wf Γ Δ) (p : Wf.Cong P Δ L r r') : Wf.Cong Q Γ L (r.subst σ) (r'.subst σ)
-  := by induction p with
+  := by induction p generalizing σ Γ with
   | rel h => exact rel $ toSubst hσ h
-  | _ => sorry
+  | op hf _ Ia => exact op hf (Ia hσ)
+  | let1_bound _ hb Ia => exact let1_bound (Ia hσ) (hb.subst hσ.slift)
+  | let1_body ha _ Ia => exact let1_body (ha.subst hσ) (Ia hσ.slift)
+  | pair_left _ hb Ia => exact pair_left (Ia hσ) (hb.subst hσ)
+  | pair_right ha _ Ia => exact pair_right (ha.subst hσ) (Ia hσ)
+  | let2_bound _ hb Ia => exact let2_bound (Ia hσ) (hb.subst hσ.sliftn₂)
+  | let2_body ha _ Ia => exact let2_body (ha.subst hσ) (Ia hσ.sliftn₂)
+  | inl _ Ia => exact inl (Ia hσ)
+  | inr _ Ia => exact inr (Ia hσ)
+  | case_disc _ hb hc Ia => exact case_disc (Ia hσ) (hb.subst hσ.slift) (hc.subst hσ.slift)
+  | case_left ha _ hc Ia => exact case_left (ha.subst hσ) (Ia hσ.slift) (hc.subst hσ.slift)
+  | case_right ha hb _ Ia => exact case_right (ha.subst hσ) (hb.subst hσ.slift) (Ia hσ.slift)
+  | abort _ Ia => exact abort (Ia hσ)
 
 theorem Wf.Cong.eqv_iff {P : Ctx α ε → Ty α × ε → Term φ → Term φ → Prop} {Γ V r r'}
   (toLeft : ∀{Γ V r r'}, P Γ V r r' → r.Wf Γ V)

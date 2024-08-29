@@ -19,7 +19,7 @@ inductive Ty (α : Type u) where
   | empty : Ty α
   deriving Repr, DecidableEq
 
-variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+variable [Φ: EffInstSet φ (Ty α) ε]
 
 inductive Ty.IsInitial : Ty α → Prop
   | prod_left : ∀{A}, IsInitial A → IsInitial (prod A B)
@@ -136,6 +136,8 @@ theorem Ty.IsTerminal.empty : ¬IsTerminal (Ty.empty (α := α))
 @[simp]
 theorem Ty.IsTerminal.base {x : α} : ¬IsTerminal (Ty.base x)
   := λh => by cases h
+
+variable [PartialOrder α] [PartialOrder ε] [Bot ε]
 
 inductive Ty.LE : Ty α → Ty α → Prop where
   | base {x y} : x ≤ y → LE (base x) (base y)

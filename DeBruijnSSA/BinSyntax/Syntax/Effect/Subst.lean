@@ -5,7 +5,7 @@ namespace BinSyntax
 
 section Definitions
 
-variable [Φ : EffectSet φ ε] [PartialOrder ε] [Bot ε] [Sup ε]
+variable [Φ : EffectSet φ ε] [Bot ε] [Sup ε]
 
 namespace Term
 
@@ -13,7 +13,7 @@ namespace Subst
 
 def effect (Γ : ℕ → ε) (σ : Subst φ) : ℕ → ε := Term.effect Γ ∘ σ
 
-def hasEffect (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop := ∀n, effect Γ σ n ≤ e
+def hasEffect [PartialOrder ε] (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop := ∀n, effect Γ σ n ≤ e
 
 @[simp]
 theorem effect_apply (Γ : ℕ → ε) (σ : Subst φ) (n : ℕ) : effect Γ σ n = Term.effect Γ (σ n) := rfl
@@ -46,12 +46,12 @@ namespace Subst
 
 def jump_effect (Γ : ℕ → ε) (σ : Subst φ) : ℕ → ε := Terminator.jump_effect Γ ∘ σ
 
-def hasJumpEffect (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
+def hasJumpEffect [PartialOrder ε] (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
   := ∀n, jump_effect Γ σ n ≤ e
 
 def trg_effect (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) : ℕ → ε := Terminator.trg_effect target Γ ∘ σ
 
-def hasTrgEffect (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
+def hasTrgEffect [PartialOrder ε] (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
   := ∀n, trg_effect target Γ σ n ≤ e
 
 end Subst
@@ -69,12 +69,12 @@ namespace Subst
 
 def jump_effect (Γ : ℕ → ε) (σ : Subst φ) : ℕ → ε := Region.jump_effect Γ ∘ σ
 
-def hasJumpEffect (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
+def hasJumpEffect [PartialOrder ε] (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
   := ∀n, jump_effect Γ σ n ≤ e
 
 def trg_effect (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) : ℕ → ε := Region.trg_effect target Γ ∘ σ
 
-def hasTrgEffect (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
+def hasTrgEffect [PartialOrder ε] (target : ℕ) (Γ : ℕ → ε) (σ : Subst φ) (e : ε) : Prop
   := ∀n, trg_effect target Γ σ n ≤ e
 
 end Subst

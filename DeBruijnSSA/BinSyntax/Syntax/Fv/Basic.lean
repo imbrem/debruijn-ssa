@@ -5,6 +5,7 @@ import Discretion.Wk.Set
 import Mathlib.Data.ENat.Basic
 
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
+import Discretion.Utils.Set
 
 namespace BinSyntax
 
@@ -158,29 +159,45 @@ theorem Term.le_fvi_unit_iff {n : ℕ} : n ≤ (unit : Term φ).fvi ↔ n = 0 :=
 theorem Term.fvs_fvi {t : Term φ} : t.fvs ⊆ Set.Iio t.fvi := by
   induction t with
   | let1 =>
-    simp only [fvs, fvi, Set.union_subset_iff]
-    constructor
-    · sorry
-    · sorry
-  | pair => sorry
-  | let2 => sorry
-  | case => sorry
+    simp only [fvs, fvi, Set.Iio_max]
+    apply Set.union_subset_union
+    assumption
+    apply Set.liftFv_subset_Iio_of_subset_Iio
+    assumption
+  | pair =>
+    simp only [fvs, fvi, Set.Iio_max]
+    apply Set.union_subset_union <;> assumption
+  | let2 =>
+    simp only [fvs, fvi, Set.Iio_max]
+    apply Set.union_subset_union
+    assumption
+    apply Set.liftnFv_subset_Iio_of_subset_Iio
+    assumption
+  | case =>
+    simp only [fvs, fvi, Set.Iio_max, Set.union_assoc]
+    apply Set.union_subset_union
+    assumption
+    apply Set.union_subset_union <;>
+    apply Set.liftFv_subset_Iio_of_subset_Iio <;>
+    assumption
   | _ => simp [*]
 
 theorem Term.wk_eqOn_fvi {t : Term φ} (h : (Set.Iio t.fvi).EqOn ρ ρ')
   : t.wk ρ = t.wk ρ' := t.wk_eqOn_fvs (h.mono t.fvs_fvi)
 
 theorem Term.fvs_empty_of_fvi_zero {t : Term φ} (h : t.fvi = 0) : t.fvs = ∅ := by
-  sorry
+  apply Set.eq_empty_of_subset_empty
+  convert h ▸ t.fvs_fvi
+  ext k; simp
 
-theorem Term.fvi_zero_of_fvs_empty {t : Term φ} (h : t.fvs = ∅) : t.fvi = 0 := by
-  sorry
+-- theorem Term.fvi_zero_of_fvs_empty {t : Term φ} (h : t.fvs = ∅) : t.fvi = 0 := by
+--   sorry
 
-theorem Term.fvi_zero_iff_fvs_empty (t : Term φ) : t.fvi = 0 ↔ t.fvs = ∅
-  := ⟨Term.fvs_empty_of_fvi_zero, Term.fvi_zero_of_fvs_empty⟩
+-- theorem Term.fvi_zero_iff_fvs_empty (t : Term φ) : t.fvi = 0 ↔ t.fvs = ∅
+--   := ⟨Term.fvs_empty_of_fvi_zero, Term.fvi_zero_of_fvs_empty⟩
 
-theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
-  stop induction t generalizing ρ <;> simp [*]
+-- theorem Term.fvi_zero_iff_fv_zero (t : Term φ) : t.fvi = 0 ↔ t.fv = 0 := by
+--   stop induction t generalizing ρ <;> simp [*]
 
 /-- Get the count of how often a free variable occurs in this term -/
 @[simp]
@@ -193,10 +210,10 @@ def Term.fvc (x : ℕ) : Term φ → ℕ
   | abort y => y.fvc x
   | _ => 0
 
-theorem Term.fvc_eq_fv_count (x : ℕ) (t : Term φ) : t.fvc x = t.fv.count x := by
-  induction t generalizing x with
-  | var y => simp [Multiset.count_singleton]
-  | _ => stop simp [*]
+-- theorem Term.fvc_eq_fv_count (x : ℕ) (t : Term φ) : t.fvc x = t.fv.count x := by
+--   induction t generalizing x with
+--   | var y => simp [Multiset.count_singleton]
+--   | _ => stop simp [*]
 
 /-- The free variables in this body -/
 @[simp]
@@ -223,9 +240,9 @@ def Body.fvc (x : ℕ) : Body φ → ℕ
   | let1 e t => e.fvc x + t.fvc (x + 1)
   | let2 e t => e.fvc x + t.fvc (x + 2)
 
-theorem Body.fvc_eq_fv_count (x : ℕ) (b : Body φ) : b.fvc x = b.fv.count x := by
-  induction b generalizing x <;>
-  simp [Term.fvc_eq_fv_count, Multiset.count_liftnFv, Multiset.count_liftFv, *]
+-- theorem Body.fvc_eq_fv_count (x : ℕ) (b : Body φ) : b.fvc x = b.fv.count x := by
+--   induction b generalizing x <;>
+--   simp [Term.fvc_eq_fv_count, Multiset.count_liftnFv, Multiset.count_liftFv, *]
 
 /-- The free variables of this terminator -/
 @[simp]
@@ -258,8 +275,8 @@ def Terminator.sfvc (x : ℕ) : Terminator φ → ℕ∞
   | br _ e => if e.fvc x = 0 then 0 else ⊤
   | case e s t => e.fvc x + s.fvc (x + 1) + t.fvc (x + 1)
 
-theorem Terminator.fvc_eq_fv_count (x : ℕ) (r : Terminator φ) : r.fvc x = r.fv.count x := by
-  induction r generalizing x <;> simp [Term.fvc_eq_fv_count, Multiset.count_liftFv, *]
+-- theorem Terminator.fvc_eq_fv_count (x : ℕ) (r : Terminator φ) : r.fvc x = r.fv.count x := by
+--   induction r generalizing x <;> simp [Term.fvc_eq_fv_count, Multiset.count_liftFv, *]
 
 /-- The free labels of this terminator -/
 @[simp]
@@ -442,30 +459,30 @@ theorem Region.fvs_vwk1 (r : Region φ) : r.vwk1.fvs = Nat.liftWk Nat.succ '' r.
 theorem Region.fvs_lwk (ρ : ℕ → ℕ) (r : Region φ) : (r.lwk ρ).fvs = r.fvs := by
   induction r generalizing ρ <;> simp [*]
 
-theorem Region.vwk_eqOn_fvs (r : Region φ) {ρ ρ' : ℕ → ℕ} (h : r.fvs.EqOn ρ ρ')
-  : r.vwk ρ = r.vwk ρ' := by
-  induction r generalizing ρ ρ' with
-  | br n e => simp [e.wk_eqOn_fvs h]
-  | case e s t Is It =>
-    simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
-    rw [Is, It]
-    sorry
-    sorry
-  | let1 e t It =>
-    simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
-    rw [It]
-    sorry
-  | let2 e t It =>
-    simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
-    rw [It]
-    sorry
-  | cfg β n G Iβ IG =>
-    simp only [vwk]
-    congr 1
-    exact Iβ sorry
-    funext i
-    apply IG
-    sorry
+-- theorem Region.vwk_eqOn_fvs (r : Region φ) {ρ ρ' : ℕ → ℕ} (h : r.fvs.EqOn ρ ρ')
+--   : r.vwk ρ = r.vwk ρ' := by
+--   induction r generalizing ρ ρ' with
+--   | br n e => simp [e.wk_eqOn_fvs h]
+--   | case e s t Is It =>
+--     simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
+--     rw [Is, It]
+--     sorry
+--     sorry
+--   | let1 e t It =>
+--     simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
+--     rw [It]
+--     sorry
+--   | let2 e t It =>
+--     simp only [vwk, e.wk_eqOn_fvs (λi hi => @h i (by simp [hi]))]
+--     rw [It]
+--     sorry
+--   | cfg β n G Iβ IG =>
+--     simp only [vwk]
+--     congr 1
+--     exact Iβ sorry
+--     funext i
+--     apply IG
+--     sorry
 
 /-- The highest free variable in this region, plus one -/
 @[simp]
@@ -533,13 +550,33 @@ theorem Region.fvi_cfg_le_blocks {β : Region φ} {n : ℕ} {f : Fin k → Regio
 theorem Region.fvs_fvi {r : Region φ} : r.fvs ⊆ Set.Iio r.fvi := by
   induction r with
   | br _ e => simp [Term.fvs_fvi]
-  | case e s t => sorry
-  | let1 e t => sorry
-  | let2 e t => sorry
-  | cfg β _ f => sorry
+  | case e s t =>
+    simp only [fvs, fvi, Set.Iio_max, Set.union_assoc]
+    apply Set.union_subset_union
+    apply Term.fvs_fvi
+    apply Set.union_subset_union <;>
+    apply Set.liftFv_subset_Iio_of_subset_Iio <;>
+    assumption
+  | let1 e t =>
+    simp only [fvs, fvi, Set.Iio_max]
+    apply Set.union_subset_union
+    apply Term.fvs_fvi
+    apply Set.liftFv_subset_Iio_of_subset_Iio
+    assumption
+  | let2 e t =>
+    simp only [fvs, fvi, Set.Iio_max]
+    apply Set.union_subset_union
+    apply Term.fvs_fvi
+    apply Set.liftnFv_subset_Iio_of_subset_Iio
+    assumption
+  | cfg β _ f =>
+    simp only [fvs, fvi, Set.Iio_max]
+    apply Set.union_subset_union
+    assumption
+    sorry
 
-theorem Region.vwk_eqOn_fvi {r : Region φ} (h : (Set.Iio r.fvi).EqOn ρ ρ')
-  : r.vwk ρ = r.vwk ρ' := r.vwk_eqOn_fvs (h.mono r.fvs_fvi)
+-- theorem Region.vwk_eqOn_fvi {r : Region φ} (h : (Set.Iio r.fvi).EqOn ρ ρ')
+--   : r.vwk ρ = r.vwk ρ' := r.vwk_eqOn_fvs (h.mono r.fvs_fvi)
 
 /-- Get the count of how often a free variable occurs in this region -/
 @[simp]

@@ -293,15 +293,31 @@ theorem InS.terminal {Γ : Ctx α ε} (a : InS φ Γ ⟨Ty.unit, ⊥⟩) (b : In
 theorem InS.congr_unit {Γ : Ctx α ε} (a : InS φ Γ ⟨Ty.unit, ⊥⟩) : a ≈ InS.unit ⊥
   := Uniform.rel $ TStep.terminal a.prop (by simp)
 
-theorem InS.initial {Γ : Ctx α ε} (hΓ : Γ.IsInitial) (a : InS φ Γ ⟨A, e⟩) (b : InS φ Γ ⟨A, e⟩)
+theorem InS.initial {Γ : Ctx α ε} (hΓ : Γ.IsInitial) (a b : InS φ Γ ⟨A, e⟩)
   : a ≈ b := Uniform.rel $ TStep.initial hΓ a.prop b.prop
+
+theorem InS.initial' {Γ : Ctx α ε} (i : InS φ Γ ⟨Ty.empty, ⊥⟩) (a b : InS φ Γ V) : a ≈ b
+  := calc
+  _ = a.wk0.subst i.subst0 := by simp
+  _ ≈ let1 (i.wk_eff bot_le) a.wk0 := let1_beta.symm
+  _ ≈ let1 (i.wk_eff bot_le) b.wk0
+    := Uniform.let1_body (i.prop.wk_eff bot_le)
+        (initial ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty, rfl⟩ a.wk0 b.wk0)
+  _ ≈ b.wk0.subst i.subst0 := let1_beta
+  _ = _ := by simp
 
 theorem TStep.subst {Γ Δ : Ctx α ε} {L r r'} {σ} (hσ : σ.Wf Γ Δ)
   : TStep (φ := φ) Δ L r r' → Uniform TStep Γ L (r.subst σ) (r'.subst σ)
-  | let1_beta de dr => Uniform.rel $ (let1_beta (de.subst hσ) (dr.subst hσ.slift)).cast_trg sorry
-  | rewrite d d' p => Uniform.rel $ rewrite (d.subst hσ) (d'.subst hσ) sorry
-  | reduce d d' p => Uniform.rel $ reduce (d.subst hσ) (d'.subst hσ) sorry
-  | initial di d d' => sorry -- TODO: initiality lifting lore, follows by let1_beta drop initial
+  | let1_beta de dr => Uniform.rel $ (let1_beta (de.subst hσ) (dr.subst hσ.slift)).cast_trg (by
+    simp only [Term.subst_subst]
+    congr
+    funext k
+    cases k <;> simp [Subst.comp])
+  | rewrite d d' p => Uniform.rel $ rewrite (d.subst hσ) (d'.subst hσ) (p.subst σ)
+  | reduce d d' p => Uniform.rel $ reduce (d.subst hσ) (d'.subst hσ) (p.subst σ)
+  | initial di d d' =>
+    let ⟨⟨_, ht⟩⟩ := di.term (φ := φ);
+    InS.initial' ⟨_, ht.subst hσ⟩ ⟨_, d.subst hσ⟩ ⟨_, d'.subst hσ⟩
   | terminal de de' => Uniform.rel $ terminal (de.subst hσ) (de'.subst hσ)
 
 theorem InS.subst_congr_right {Γ Δ : Ctx α ε} {V} {r r' : InS φ Δ V}
@@ -338,7 +354,7 @@ theorem Subst.InS.slift_congr {Γ Δ : Ctx α ε} {head} {σ τ : Subst.InS φ �
 
 theorem Subst.InS.sliftn₂_congr {Γ Δ : Ctx α ε} {left right} {σ τ : Subst.InS φ Γ Δ}
   (h : σ ≈ τ) : σ.liftn₂ (le_refl left) (le_refl right) ≈ τ.liftn₂ (le_refl left) (le_refl right)
-  := sorry
+  := by simp only [<-Subst.InS.lift_lift]; exact slift_congr (slift_congr h)
 
 theorem InS.subst_equiv_congr {Γ Δ : Ctx α ε} {V}
   {σ τ : Subst.InS φ Γ Δ} (hσ : σ ≈ τ) : (r : InS φ Δ V) → r.subst σ ≈ r.subst τ
@@ -364,11 +380,13 @@ theorem InS.subst_congr {Γ Δ : Ctx α ε} {V}
 theorem Subst.InS.comp_congr {Γ Δ Ξ : Ctx α ε}
   {σ σ' : Subst.InS φ Γ Δ} {ρ ρ' : Subst.InS φ Δ Ξ}
   (hσ : σ ≈ σ') (hρ : ρ ≈ ρ') : σ.comp ρ ≈ σ'.comp ρ'
-  := sorry
+  := λi => by simp only [get_comp]; exact InS.subst_congr hσ (hρ i)
 
-theorem InS.subst0_congr {Γ Δ : Ctx α ε} {V}
-{r r' : InS φ Δ V} (hr : r ≈ r') : r.subst0 ≈ r'.subst0
-  := sorry
+theorem InS.subst0_congr {Γ : Ctx α ε} {V}
+{r r' : InS φ Γ V} (hr : r ≈ r') : r.subst0 ≈ r'.subst0
+  := λi => by cases i using Fin.cases with
+  | zero => exact hr
+  | succ i => exact Setoid.refl _
 
 theorem InS.get_congr {σ τ : Subst.InS φ Γ Δ} (h : σ ≈ τ) (i : Fin Δ.length)
   : σ.get i ≈ τ.get i := h i

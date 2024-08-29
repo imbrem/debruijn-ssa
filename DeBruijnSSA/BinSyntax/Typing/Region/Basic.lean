@@ -371,11 +371,11 @@ theorem InS.arrow_induction
       cases hR
       simp only [Fin.cast_eq_self] at *
       apply cfg R ⟨_, dβ⟩ (λi => ⟨_, dG i⟩)
-      exact Iβ (LCtx.shf_eq ▸ dβ) rfl rfl
+      exact Iβ (LCtx.shf_eq (α := α) ▸ dβ) rfl rfl
         LCtx.shf_eq.symm
         LCtx.shf_eq.symm
       intro i
-      apply IG i (LCtx.shf_eq ▸ dG i) rfl rfl
+      apply IG i (LCtx.shf_eq (α := α) ▸ dG i) rfl rfl
         LCtx.shf_eq.symm
         LCtx.shf_eq.symm
 
@@ -393,19 +393,19 @@ def WfD.vwk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.W
   | let2 ha ht => let2 (ha.wk h) (ht.vwk h.sliftn₂)
   | cfg n R hR hr hG => cfg n R hR (hr.vwk h) (λi => (hG i).vwk h.slift)
 
-def WfD.vwk_inv {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.EWkn Δ ρ)
-  (d: WfD Γ (r.vwk ρ) L) (hr : r.fvi ≤ Δ.length) : WfD Δ r L := match r, d with
-  | Region.br _ _, br hL ha => br hL (ha.wk_inv h hr)
-  | Region.case _ _ _, case he hs ht
-    => case (he.wk_inv h (fvi_case_le_disc hr))
-        (hs.vwk_inv h.lift (fvi_case_le_left hr))
-        (ht.vwk_inv h.lift (fvi_case_le_right hr))
-  | Region.let1 _ _, let1 ha ht
-    => let1 (ha.wk_inv h (fvi_let1_le_bind hr)) (ht.vwk_inv h.lift (fvi_let1_le_rest hr))
-  | Region.let2 _ _, let2 ha ht
-    => let2 (ha.wk_inv h (fvi_let2_le_bind hr)) (ht.vwk_inv h.liftn₂ (fvi_let2_le_rest hr))
-  | Region.cfg _ _ _,cfg n R hR dr hG => cfg n R hR (dr.vwk_inv h (fvi_cfg_le_entry hr))
-                                          (λi => (hG i).vwk_inv h.lift (fvi_cfg_le_blocks hr i))
+-- def WfD.vwk_inv {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} {L} {r : Region φ} (h : Γ.EWkn Δ ρ)
+--   (d: WfD Γ (r.vwk ρ) L) (hr : r.fvi ≤ Δ.length) : WfD Δ r L := match r, d with
+--   | Region.br _ _, br hL ha => br hL (ha.wk_inv h hr)
+--   | Region.case _ _ _, case he hs ht
+--     => case (he.wk_inv h (fvi_case_le_disc hr))
+--         (hs.vwk_inv h.lift (fvi_case_le_left hr))
+--         (ht.vwk_inv h.lift (fvi_case_le_right hr))
+--   | Region.let1 _ _, let1 ha ht
+--     => let1 (ha.wk_inv h (fvi_let1_le_bind hr)) (ht.vwk_inv h.lift (fvi_let1_le_rest hr))
+--   | Region.let2 _ _, let2 ha ht
+--     => let2 (ha.wk_inv h (fvi_let2_le_bind hr)) (ht.vwk_inv h.liftn₂ (fvi_let2_le_rest hr))
+--   | Region.cfg _ _ _,cfg n R hR dr hG => cfg n R hR (dr.vwk_inv h (fvi_cfg_le_entry hr))
+--                                           (λi => (hG i).vwk_inv h.lift (fvi_cfg_le_blocks hr i))
 
 theorem Wf.fvs {r : Region φ} (h : Wf Γ r L) : r.fvs ⊆ Set.Iio Γ.length
   := by induction h with
@@ -569,7 +569,7 @@ theorem InS.vwk_id_vwk {Γ Δ Ξ : Ctx α ε} {h : Γ.Wkn Δ id} {ρ : Δ.InS Ξ
   : (r.vwk ρ).vwk_id h = r.vwk ⟨ρ, h.comp ρ.prop⟩ := by
   cases r; simp [vwk, vwk_id, vwk_vwk]
 
-def InS.vwk0 {Γ : Ctx α ε} {L} {r : InS φ Γ L} : InS φ (head::Γ) L
+def InS.vwk0 {Γ : Ctx α ε} {L} (r : InS φ Γ L) : InS φ (head::Γ) L
   := r.vwk ⟨Nat.succ, Ctx.Wkn.succ⟩
 
 @[simp]

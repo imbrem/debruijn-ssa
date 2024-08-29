@@ -95,11 +95,11 @@ theorem FStep.nonempty {Γ : ℕ → ε} {r r' : Region φ} : FStep Γ r r' → 
 theorem FStep.nonempty_iff {Γ : ℕ → ε} {r r' : Region φ} : FStep Γ r r' ↔ Nonempty (FStepD Γ r r')
   := ⟨FStep.nonempty, λ⟨d⟩ => d.step⟩
 
-theorem FStep.fvs_le {Γ : ℕ → ε} {r r' : Region φ} (p : FStep Γ r r')
-  : r'.fvs ⊆ r.fvs := by cases p with
-  | let1_beta e r he => apply fvs_vsubst0_le
-  | reduce p => exact p.fvs_le
-  | rw p => rw [p.fvs_eq]
+-- theorem FStep.fvs_le {Γ : ℕ → ε} {r r' : Region φ} (p : FStep Γ r r')
+--   : r'.fvs ⊆ r.fvs := by cases p with
+--   | let1_beta e r he => apply fvs_vsubst0_le
+--   | reduce p => exact p.fvs_le
+--   | rw p => rw [p.fvs_eq]
 
 def FStepD.vwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
   : FStepD (Γ ∘ ρ) r r' → FStepD Γ (r.vwk ρ) (r'.vwk ρ)
@@ -130,7 +130,10 @@ theorem FStep.wk_eff {Γ Δ : ℕ → ε} {r r' : Region φ}
 
 def FStepD.lwk {Γ : ℕ → ε} {r r' : Region φ} (ρ : ℕ → ℕ)
   : FStepD Γ r r' → FStepD Γ (r.lwk ρ) (r'.lwk ρ)
-  | let1_beta e r he => sorry
+  | let1_beta e r he => by
+    rw [lwk_vsubst]
+    apply let1_beta
+    exact he
   | reduce p => reduce $ p.lwk ρ
   | rw p => rw $ p.lwk ρ
 
@@ -308,17 +311,17 @@ def StepD.cast_src {Γ : ℕ → ε} {r₀ r₀' r₁ : Region φ} (h : r₀' = 
 def StepD.cast {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : StepD Γ r₀ r₁) : StepD Γ r₀' r₁' := h₁ ▸ h₀ ▸ p
 
-theorem StepD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : StepD Γ r r')
-  : r'.effect Γ ≤ r.effect Γ := by
-  cases p with
-  | let1_beta _ _ he =>
-    apply le_of_eq
-    simp only [effect_vsubst, Subst.effect, effect, he, ge_iff_le, bot_le, sup_of_le_right]
-    congr
-    funext k
-    cases k with
-    | zero => simp [he, Nat.liftBot]
-    | succ k => rfl
-  | reduce p => exact p.effect_le
-  | rw p => rw [p.effect]
-  | rw_op p => rw [p.effect]
+-- theorem StepD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : StepD Γ r r')
+--   : r'.effect Γ ≤ r.effect Γ := by
+--   cases p with
+--   | let1_beta _ _ he =>
+--     apply le_of_eq
+--     simp only [effect_vsubst, Subst.effect, effect, he, ge_iff_le, bot_le, sup_of_le_right]
+--     congr
+--     funext k
+--     cases k with
+--     | zero => simp [he, Nat.liftBot]
+--     | succ k => rfl
+--   | reduce p => exact p.effect_le
+--   | rw p => rw [p.effect]
+--   | rw_op p => rw [p.effect]

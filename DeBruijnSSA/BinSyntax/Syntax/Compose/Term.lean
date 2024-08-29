@@ -39,9 +39,3 @@ def coprod {φ} (r s : Term φ) : Term φ := case nil r.wk1 s.wk1
 def sum {φ} (l r : Term φ) : Term φ := coprod (l.seq inj_l) (r.seq inj_r)
 
 def join {φ} : Term φ := coprod nil nil
-
-def aassoc {φ} : Term φ := sorry
-
-def aassoc_inv {φ} : Term φ := sorry
-
-def aswap {φ} : Term φ := sorry

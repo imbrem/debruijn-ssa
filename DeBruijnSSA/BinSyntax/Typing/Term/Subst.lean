@@ -269,6 +269,12 @@ theorem Subst.InS.coe_comp {Γ Δ Ξ : Ctx α ε}
   : (σ.comp τ : Subst φ) = Subst.comp σ τ
   := rfl
 
+@[simp]
+theorem Subst.InS.get_comp {Γ Δ Ξ : Ctx α ε}
+  {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ} {i : Fin Ξ.length}
+  : (σ.comp τ).get i = (τ.get i).subst σ
+  := rfl
+
 theorem InS.subst_subst {Γ Δ Ξ : Ctx α ε} {σ : Subst.InS φ Γ Δ} {τ : Subst.InS φ Δ Ξ}
   (a : InS φ Ξ V) : (a.subst τ).subst σ = a.subst (σ.comp τ)
   := by ext; simp [Term.subst_subst]

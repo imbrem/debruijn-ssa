@@ -39,8 +39,8 @@ theorem TStep.wf {Γ L} {r r' : Term φ} (h : TStep Γ L r r') : r.Wf Γ L ∧ r
 theorem TStep.wk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   : TStep (φ := φ) Δ L r r' → TStep Γ L (r.wk ρ) (r'.wk ρ)
   | let1_beta de dr => (let1_beta (de.wk hρ) (dr.wk hρ.slift)).cast_trg (by simp [subst_subst0_wk])
-  | rewrite d d' p => rewrite (d.wk hρ) (d'.wk hρ) sorry--(p.wk ρ)
-  | reduce d d' p => reduce (d.wk hρ) (d'.wk hρ) sorry--(p.wk ρ)
+  | rewrite d d' p => rewrite (d.wk hρ) (d'.wk hρ) (p.wk ρ)
+  | reduce d d' p => reduce (d.wk hρ) (d'.wk hρ) (p.wk ρ)
   | initial di d d' => initial (di.wk hρ) (d.wk hρ) (d'.wk hρ)
   | terminal de de' => terminal (de.wk hρ) (de'.wk hρ)
 
@@ -60,6 +60,6 @@ theorem TStep.wk_res {Γ : Ctx α ε} {L L'} (h : L ≤ L') {r r'}
 
 theorem TStep.let1_beta_drop {Γ : Ctx α ε} {a b : Term φ} (ha : a.Wf Γ ⟨A, ⊥⟩) (hb : b.Wf Γ V)
   : TStep Γ V (let1 a b.wk0) b
-  := (let1_beta ha hb.wk0).cast_trg sorry
+  := (let1_beta ha hb.wk0).cast_trg (by simp)
 
 -- NOTE: subst needs InS lore for initiality, so that's in Setoid.lean

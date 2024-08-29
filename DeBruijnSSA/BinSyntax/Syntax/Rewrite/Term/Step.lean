@@ -71,12 +71,22 @@ inductive Rewrite : Term φ → Term φ → Prop
       (let1 e $ pair (case (var 0) al.wk1 ar.wk1) (case (var 0) bl.wk1 br.wk1))
   | case_wk0_wk0 (e r) : Rewrite (case e (wk0 r) (wk0 r)) (let1 e r.wk0)
 
+theorem Rewrite.wk {e e' : Term φ} (h : e.Rewrite e') (ρ) : (e.wk ρ).Rewrite (e'.wk ρ)
+  := sorry
+
+theorem Rewrite.subst {e e' : Term φ} (h : e.Rewrite e') (σ) : (e.subst σ).Rewrite (e'.subst σ)
+  := sorry
+
 -- TODO: Cong.Rewrite induces a Setoid on Term... but we should maybe add more stuff?
 
 inductive Reduce : Term φ → Term φ → Prop
   | case_inl (e r s) : Reduce (case (inl e) r s) (let1 e r)
   | case_inr (e r s) : Reduce (case (inr e) r s) (let1 e s)
 
--- TODO: Reduce
+theorem Reduce.wk {e e' : Term φ} (h : e.Reduce e') (ρ) : (e.wk ρ).Reduce (e'.wk ρ)
+  := sorry
+
+theorem Reduce.subst {e e' : Term φ} (h : e.Reduce e') (σ) : (e.subst σ).Reduce (e'.subst σ)
+  := sorry
 
 -- TODO: Step, FStep, friends...

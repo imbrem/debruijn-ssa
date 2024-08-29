@@ -1,6 +1,7 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Typing.Region.Compose
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Sum
 
 namespace BinSyntax
 
@@ -37,10 +38,16 @@ theorem Eqv.vwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (l.coprod r).vwk1 (inserted := inserted) = l.vwk1.coprod r.vwk1 := by
   simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_coprod]
 
+theorem Eqv.ret_of_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Term.Eqv φ (⟨A, ⊥⟩::Γ) (C, ⊥)} {r : Term.Eqv φ (⟨B, ⊥⟩::Γ) (C, ⊥)}
+  : ret (targets := L) (l.coprod r) = (ret l).coprod (ret r) := by
+  sorry
+
 theorem Eqv.Pure.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} (hl : l.Pure)
   {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)} (hr : r.Pure)
-  : (coprod l r).Pure := sorry
+  : (coprod l r).Pure := let ⟨l', hl'⟩ := hl; let ⟨r', hr'⟩ := hr; ⟨l'.coprod r', by
+    cases hl'; cases hr'; rw [ret_of_coprod]⟩
 
 theorem Eqv.coprod_seq {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) (s : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))

@@ -7,19 +7,37 @@ import DeBruijnSSA.BinSyntax.Typing.Ty
 
 namespace BinSyntax
 
-section Basic
-
-variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
-
 abbrev Ctx (α ε) := List (Ty α × ε)
 
+def FCtx (α ε) := Σn, Fin n → Ty α × ε
+
 namespace Ctx
+
+def reverse (Γ : Ctx α ε) : Ctx α ε := List.reverse Γ
+
+instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
+
+instance : Membership (Ty α × ε) (Ctx α ε)
+  := (inferInstance : Membership (Ty α × ε) (List (Ty α × ε)))
+
+-- TODO: HAppend of Ctx and List?
+
+theorem append_assoc : (Γ Δ Ξ : Ctx α ε) → Γ ++ Δ ++ Ξ = Γ ++ (Δ ++ Ξ)
+  := List.append_assoc
+
+theorem reverse_append : (Γ Δ : Ctx α ε) → (Γ ++ Δ).reverse = Δ.reverse ++ Γ.reverse
+  := List.reverse_append
+
+theorem length_reverse : (Γ : Ctx α ε) → Γ.reverse.length = Γ.length
+  := List.length_reverse
+
+section Basic
+
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] --[Bot ε]
 
 -- instance Ctx.instGetElemNatLtLength
 --   : GetElem (Ctx α ε) ℕ (Ty α × ε) (λΓ => (· < Γ.length))
 --   := List.instGetElemNatLtLength
-
-def reverse (Γ : Ctx α ε) : Ctx α ε := List.reverse Γ
 
 structure Var (Γ : Ctx α ε) (n : ℕ) (V : Ty α × ε) : Prop where
   length : n < Γ.length
@@ -49,75 +67,6 @@ theorem Var.tail {Γ : Ctx α ε} {n} (h : Var (V'::Γ) (n+1) V) : Var Γ n V
 @[simp]
 theorem Var.step_iff {V V' : Ty α × ε} {Γ : Ctx α ε} {n} : Var (V'::Γ) (n+1) V ↔ Var Γ n V
   := ⟨Var.tail, Var.step⟩
-
-def effect (Γ : Ctx α ε) : ℕ → ε := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
-
-theorem effect_append_bot {head : Ty α} {tail : Ctx α ε}
-  : effect (⟨head, ⊥⟩::tail) = Nat.liftBot tail.effect
-  := by funext k; cases k with
-  | zero => simp [effect, Nat.liftBot]
-  | succ k => simp [effect, Nat.liftBot]
-
-theorem effect_append_bot₂ {left right : Ty α} {tail : Ctx α ε}
-  : effect (⟨left, ⊥⟩::⟨right, ⊥⟩::tail) = Nat.liftnBot 2 tail.effect
-  := by simp only [effect_append_bot, Nat.liftnBot_two_apply]
-
-instance : Append (Ctx α ε) := (inferInstance : Append (List (Ty α × ε)))
-
-instance : Membership (Ty α × ε) (Ctx α ε)
-  := (inferInstance : Membership (Ty α × ε) (List (Ty α × ε)))
-
-def IsInitial (Γ : Ctx α ε) : Prop := ∃V ∈ Γ, Ty.IsInitial V.1 ∧ V.2 = ⊥
-
-theorem IsInitial.append_left {Γ : Ctx α ε} (h : Γ.IsInitial) (Δ) : (Γ ++ Δ).IsInitial
-  := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_left _ hV, hV0⟩
-
-theorem IsInitial.append_right (Γ) {Δ : Ctx α ε} (h : Δ.IsInitial) : (Γ ++ Δ).IsInitial
-  := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_right _ hV, hV0⟩
-
-@[simp]
-theorem IsInitial.append {Γ Δ : Ctx α ε} : (Γ ++ Δ).IsInitial ↔ Γ.IsInitial ∨ Δ.IsInitial
-  := ⟨
-    λ⟨V, hV, hV0⟩ => (List.mem_append.mp hV).elim (Or.inl ⟨V, ·, hV0⟩) (Or.inr ⟨V, ·, hV0⟩),
-    λh => h.elim (append_left · _) (append_right _)⟩
-
-theorem IsInitial.head {A} (h : Ty.IsInitial A) (Γ : Ctx α ε)
-  : IsInitial (⟨A, ⊥⟩::Γ)
-  := ⟨⟨A, ⊥⟩, List.mem_cons_self _ _, h, rfl⟩
-
-theorem IsInitial.head' {A e} (hA : Ty.IsInitial A) (he : e = ⊥) (Γ : Ctx α ε)
-  : IsInitial (⟨A, e⟩::Γ)
-  := by cases he; apply head; exact hA
-
-theorem IsInitial.cons {head} {Γ : Ctx α ε} (h : IsInitial Γ)
-  : IsInitial (head::Γ)
-  := let ⟨V', hV, hV0⟩ := h; ⟨V', List.mem_cons_of_mem _ hV, hV0⟩
-
-theorem IsInitial.head_or_tail {head} {Γ : Ctx α ε} (h : IsInitial (head::Γ))
-  : (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
-  := let ⟨V, hV, hV0⟩ := h;
-  by cases hV with
-  | head => exact Or.inl hV0
-  | tail _ hV => exact Or.inr ⟨V, hV, hV0⟩
-
-theorem IsInitial.cons_iff {head} {Γ : Ctx α ε}
-  : IsInitial (head::Γ) ↔ (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
-  := ⟨IsInitial.head_or_tail, λ| Or.inl ⟨hA, he⟩ => head' hA he Γ | Or.inr h => h.cons⟩
-
--- TODO: HAppend of Ctx and List?
-
-theorem append_assoc : (Γ Δ Ξ : Ctx α ε) → Γ ++ Δ ++ Ξ = Γ ++ (Δ ++ Ξ)
-  := List.append_assoc
-
-theorem reverse_append : (Γ Δ : Ctx α ε) → (Γ ++ Δ).reverse = Δ.reverse ++ Γ.reverse
-  := List.reverse_append
-
-theorem length_reverse : (Γ : Ctx α ε) → Γ.reverse.length = Γ.length
-  := List.length_reverse
-
-def FCtx (α ε) := Σn, Fin n → Ty α × ε
-
--- TODO: FCtx append
 
 def Wkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
   := ∀i, (h : i < Δ.length) → Γ.Var (ρ i) (Δ.get ⟨i, h⟩)
@@ -492,125 +441,6 @@ theorem Wkn.from_nil {ρ : ℕ → ℕ} (hρ : Wkn [] Γ ρ) : Γ = []
 theorem Wkn.nil_iff {ρ : ℕ → ℕ} : Wkn [] Γ ρ ↔ Γ = []
   := ⟨Wkn.from_nil, λh => h.symm ▸ Wkn.drop⟩
 
-def EWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
-  := List.NEWkn Γ Δ ρ
-
-theorem EWkn.wkn {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) : Γ.Wkn Δ ρ
-  := Wkn_iff.mpr h.toNWkn
-
-theorem EWkn.var {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) {i} (hi : i < Δ.length)
-  : Γ.Var (ρ i) (Δ.get ⟨i, hi⟩)
-  := h.wkn i hi
-
-theorem EWkn.var_inv {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ)
-  (hi : i < Δ.length) (hv : Γ.Var (ρ i) V)
-  : Δ.Var i V := ⟨hi, have ⟨_, he⟩ := h i hi; he ▸ hv.get⟩
-
-@[simp]
-theorem EWkn.id {Γ : Ctx α ε} : Γ.EWkn Γ id := List.NEWkn.id _
-
-theorem EWkn.lift {V : Ty α × ε} (h : Γ.EWkn Δ ρ)
-  : EWkn (V::Γ) (V::Δ) (Nat.liftWk ρ)
-  := List.NEWkn.lift h
-
-theorem EWkn.lift_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
-  : EWkn Γ Δ ρ := List.NEWkn.lift_tail h
-
-theorem EWkn.lift_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
-  : left = right := List.NEWkn.lift_head h
-
-@[simp]
-theorem EWkn.lift_iff {left right : Ty α × ε} {Γ Δ}
-    : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ) ↔ left = right ∧ EWkn Γ Δ ρ
-    := ⟨λh => ⟨h.lift_head, h.lift_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift⟩
-
-theorem EWkn.lift_id {V : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
-  : EWkn (V::Γ) (V::Δ) _root_.id
-  := Nat.liftWk_id ▸ h.lift
-
-theorem EWkn.lift_id_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) _root_.id)
-  : EWkn Γ Δ _root_.id := (Nat.liftWk_id ▸ h).lift_tail
-
-theorem EWkn.lift_id_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) _root_.id)
-  : left = right := (Nat.liftWk_id ▸ h).lift_head
-
-@[simp]
-theorem EWkn.lift_id_iff {left right : Ty α × ε} {Γ Δ}
-    : EWkn (left::Γ) (right::Δ) _root_.id ↔ left = right ∧ EWkn Γ Δ _root_.id
-    := ⟨λh => ⟨h.lift_id_head, h.lift_id_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift_id⟩
-
-theorem EWkn.step {head : Ty α × ε} (h : Γ.EWkn Δ ρ) : EWkn (head::Γ) Δ (Nat.stepWk ρ)
-  := List.NEWkn.step _ h
-
-theorem EWkn.step_tail {head : Ty α × ε} (h : EWkn (head::Γ) Δ (Nat.stepWk ρ))
-  : EWkn Γ Δ ρ := List.NEWkn.step_tail h
-
-@[simp]
-theorem EWkn.step_iff {head : Ty α × ε} {Γ Δ}
-  : EWkn (head::Γ) Δ (Nat.stepWk ρ) ↔ EWkn Γ Δ ρ
-  := List.NEWkn.step_iff _ _ _ _
-
-@[simp]
-theorem EWkn.succ_comp_iff {head : Ty α × ε} {Γ Δ}
-  : EWkn (head::Γ) Δ (Nat.succ ∘ ρ) ↔ EWkn Γ Δ ρ
-  := List.NEWkn.step_iff _ _ _ _
-
-@[simp]
-theorem EWkn.succ {head} {Γ : Ctx α ε}
-  : EWkn (head::Γ) Γ Nat.succ
-  := step (head := head) (id (Γ := Γ))
-
-theorem EWkn.wk1 {head inserted} {Γ : Ctx α ε}
-  : EWkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
-  := succ.lift
-
-theorem EWkn.lift₂ {left right : Ty α × ε} (h : Γ.EWkn Δ ρ)
-  : EWkn (left::right::Γ) (left::right::Δ) (Nat.liftWk (Nat.liftWk ρ))
-  := h.lift.lift
-
-theorem EWkn.lift_id₂ {left right : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
-  : EWkn (left::right::Γ) (left::right::Δ) _root_.id
-  := h.lift_id.lift_id
-
-theorem EWkn.liftn₂ {left right : Ty α × ε} (h : Γ.EWkn Δ ρ)
-  : EWkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
-  := Nat.liftnWk_two ▸ h.lift₂
-
-theorem EWkn.liftn_id₂ {left right : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
-  : EWkn (left::right::Γ) (left::right::Δ) _root_.id
-  := h.lift_id₂
-
-theorem EWkn.liftn_append (Ξ) (h : Γ.EWkn Δ ρ)
-  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
-  := List.NEWkn.liftn_append _ h
-
-theorem EWkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
-  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
-  := hn ▸ liftn_append Ξ h
-
-theorem EWkn.liftn_append_id (Ξ) (h : Γ.EWkn Δ _root_.id)
-  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) _root_.id
-  := Nat.liftnWk_id _ ▸ liftn_append Ξ h
-
-theorem EWkn.liftn_append_cons (A Ξ) (h : Γ.EWkn Δ ρ)
-  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
-  := liftn_append (A::Ξ) h
-
-theorem EWkn.liftn_append_cons' (A) {Ξ} (hn : n = Ξ.length + 1) (h : Γ.EWkn Δ ρ)
-  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk n ρ)
-  := hn ▸ liftn_append_cons A Ξ h
-
-theorem EWkn.liftn_append_cons_id (A Ξ) (h : Γ.EWkn Δ _root_.id)
-  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) _root_.id
-  := Nat.liftnWk_id _ ▸  liftn_append_cons A Ξ h
-
-theorem EWkn.stepn_append (Ξ) (h : Γ.EWkn Δ ρ)
-  : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk Ξ.length ρ)
-  := List.NEWkn.stepn_append _ h
-
-theorem EWkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
-  : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk n ρ)
-  := hn ▸ stepn_append Ξ h
 
 theorem Var.mem {Γ : Ctx α ε} {n V} (h : Var Γ n V) : ∃V', V' ∈ Γ ∧ V' ≤ V
   := by induction n generalizing Γ with
@@ -641,32 +471,8 @@ theorem mem_wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (hV : V
   have ⟨V', hV', hV⟩ := Var.mem hρn;
   ⟨V', hV', hn' ▸ hV⟩
 
-theorem Wkn.effect {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (i : ℕ) (hi : i < Δ.length)
-  : (Γ.effect (ρ i)) ≤ Δ.effect i
-  := by
-    simp only [Ctx.effect, (h i hi).length, ↓reduceDIte, List.get_eq_getElem, hi]
-    exact (h i hi).get.2
-
 -- theorem EWkn.id_len_le : Γ.EWkn Δ _root_.id → Δ.length ≤ Γ.length := by
 --   apply List.NEWkn.id_len_le
-
-def Types (Γ : Ctx α ε) : List (Ty α) := Γ.map Prod.fst
-
-theorem length_types (Γ : Ctx α ε) : Γ.Types.length = Γ.length := by
-  simp [Types]
-
-def Effects (Γ : Ctx α ε) : List ε := Γ.map Prod.snd
-
-theorem length_effects (Γ : Ctx α ε) : Γ.Effects.length = Γ.length := by
-  simp [Effects]
-
-def WknTy (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop := Γ.Types.NWkn Δ.Types ρ
-
-theorem WknTy.id_types_len_le : Γ.WknTy Δ _root_.id → Δ.Types.length ≤ Γ.Types.length
-  := List.NWkn.id_len_le
-
-theorem WknTy.id_len_le : Γ.WknTy Δ _root_.id → Δ.length ≤ Γ.length
-  := Δ.length_types ▸ Γ.length_types ▸ WknTy.id_types_len_le
 
 theorem Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
@@ -685,7 +491,209 @@ theorem Var.wk (h : Γ.Wkn Δ ρ) (hΓ : Δ.Var n V) : Γ.Var (ρ n) V where
   length := (h n hΓ.length).1
   getElem := le_trans (h n hΓ.length).2 hΓ.get
 
-def Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
+end Basic
+
+section EWkn
+
+def EWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
+  := List.NEWkn Γ Δ ρ
+
+theorem EWkn.wkn [PartialOrder α] [PartialOrder ε]
+  {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) : Γ.Wkn Δ ρ := Wkn_iff.mpr h.toNWkn
+
+theorem EWkn.var [PartialOrder α] [PartialOrder ε] {Γ Δ : Ctx α ε}
+  {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) {i} (hi : i < Δ.length) : Γ.Var (ρ i) (Δ.get ⟨i, hi⟩) := h.wkn i hi
+
+theorem EWkn.var_inv [PartialOrder α] [PartialOrder ε] {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ)
+  (hi : i < Δ.length) (hv : Γ.Var (ρ i) V) : Δ.Var i V := ⟨hi, have ⟨_, he⟩ := h i hi; he ▸ hv.get⟩
+
+@[simp]
+theorem EWkn.id {Γ : Ctx α ε} : Γ.EWkn Γ id := List.NEWkn.id _
+
+theorem EWkn.lift {Γ Δ : Ctx α ε} {V : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (V::Γ) (V::Δ) (Nat.liftWk ρ)
+  := List.NEWkn.lift h
+
+theorem EWkn.lift_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
+  : EWkn Γ Δ ρ := List.NEWkn.lift_tail h
+
+theorem EWkn.lift_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
+  : left = right := List.NEWkn.lift_head h
+
+@[simp]
+theorem EWkn.lift_iff {left right : Ty α × ε} {Γ Δ}
+    : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ) ↔ left = right ∧ EWkn Γ Δ ρ
+    := ⟨λh => ⟨h.lift_head, h.lift_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift⟩
+
+theorem EWkn.lift_id {Γ Δ : Ctx α ε} {V : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
+  : EWkn (V::Γ) (V::Δ) _root_.id
+  := Nat.liftWk_id ▸ h.lift
+
+theorem EWkn.lift_id_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) _root_.id)
+  : EWkn Γ Δ _root_.id := (Nat.liftWk_id ▸ h).lift_tail
+
+theorem EWkn.lift_id_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) _root_.id)
+  : left = right := (Nat.liftWk_id ▸ h).lift_head
+
+@[simp]
+theorem EWkn.lift_id_iff {left right : Ty α × ε} {Γ Δ}
+    : EWkn (left::Γ) (right::Δ) _root_.id ↔ left = right ∧ EWkn Γ Δ _root_.id
+    := ⟨λh => ⟨h.lift_id_head, h.lift_id_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift_id⟩
+
+theorem EWkn.step {Γ Δ : Ctx α ε} {head : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (head::Γ) Δ (Nat.stepWk ρ) := List.NEWkn.step _ h
+
+theorem EWkn.step_tail {head : Ty α × ε} (h : EWkn (head::Γ) Δ (Nat.stepWk ρ))
+  : EWkn Γ Δ ρ := List.NEWkn.step_tail h
+
+@[simp]
+theorem EWkn.step_iff {head : Ty α × ε} {Γ Δ}
+  : EWkn (head::Γ) Δ (Nat.stepWk ρ) ↔ EWkn Γ Δ ρ
+  := List.NEWkn.step_iff _ _ _ _
+
+@[simp]
+theorem EWkn.succ_comp_iff {head : Ty α × ε} {Γ Δ}
+  : EWkn (head::Γ) Δ (Nat.succ ∘ ρ) ↔ EWkn Γ Δ ρ
+  := List.NEWkn.step_iff _ _ _ _
+
+@[simp]
+theorem EWkn.succ {head} {Γ : Ctx α ε}
+  : EWkn (head::Γ) Γ Nat.succ
+  := step (head := head) (id (Γ := Γ))
+
+theorem EWkn.wk1 {head inserted} {Γ : Ctx α ε}
+  : EWkn (head::inserted::Γ) (head::Γ) (Nat.liftWk Nat.succ)
+  := succ.lift
+
+theorem EWkn.lift₂ {Γ Δ : Ctx α ε} {left right : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (left::right::Γ) (left::right::Δ) (Nat.liftWk (Nat.liftWk ρ))
+  := h.lift.lift
+
+theorem EWkn.lift_id₂ {Γ Δ : Ctx α ε} {left right : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
+  : EWkn (left::right::Γ) (left::right::Δ) _root_.id
+  := h.lift_id.lift_id
+
+theorem EWkn.liftn₂ {Γ Δ : Ctx α ε} {left right : Ty α × ε} (h : Γ.EWkn Δ ρ)
+  : EWkn (left::right::Γ) (left::right::Δ) (Nat.liftnWk 2 ρ)
+  := Nat.liftnWk_two ▸ h.lift₂
+
+theorem EWkn.liftn_id₂ {Γ Δ : Ctx α ε} {left right : Ty α × ε} (h : Γ.EWkn Δ _root_.id)
+  : EWkn (left::right::Γ) (left::right::Δ) _root_.id
+  := h.lift_id₂
+
+theorem EWkn.liftn_append (Ξ) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
+  := List.NEWkn.liftn_append _ h
+
+theorem EWkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
+  := hn ▸ liftn_append Ξ h
+
+theorem EWkn.liftn_append_id (Ξ) (h : Γ.EWkn Δ _root_.id)
+  : EWkn (Ξ ++ Γ) (Ξ ++ Δ) _root_.id
+  := Nat.liftnWk_id _ ▸ liftn_append Ξ h
+
+theorem EWkn.liftn_append_cons {Γ Δ : Ctx α ε} (A Ξ) (h : Γ.EWkn Δ ρ)
+  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk (Ξ.length + 1) ρ)
+  := liftn_append (A::Ξ) h
+
+theorem EWkn.liftn_append_cons' {Γ Δ : Ctx α ε} (A) {Ξ} (hn : n = Ξ.length + 1) (h : Γ.EWkn Δ ρ)
+  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) (Nat.liftnWk n ρ)
+  := hn ▸ liftn_append_cons A Ξ h
+
+theorem EWkn.liftn_append_cons_id {Γ Δ : Ctx α ε} (A Ξ) (h : Γ.EWkn Δ _root_.id)
+  : EWkn (A::(Ξ ++ Γ)) (A::(Ξ ++ Δ)) _root_.id
+  := Nat.liftnWk_id _ ▸  liftn_append_cons A Ξ h
+
+theorem EWkn.stepn_append (Ξ) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk Ξ.length ρ)
+  := List.NEWkn.stepn_append _ h
+
+theorem EWkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
+  : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk n ρ)
+  := hn ▸ stepn_append Ξ h
+
+end EWkn
+
+section Initial
+
+variable [Φ: EffInstSet φ (Ty α) ε] [Bot ε]
+
+def IsInitial (Γ : Ctx α ε) : Prop := ∃V ∈ Γ, Ty.IsInitial V.1 ∧ V.2 = ⊥
+
+theorem IsInitial.append_left {Γ : Ctx α ε} (h : Γ.IsInitial) (Δ) : (Γ ++ Δ).IsInitial
+  := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_left _ hV, hV0⟩
+
+theorem IsInitial.append_right (Γ) {Δ : Ctx α ε} (h : Δ.IsInitial) : (Γ ++ Δ).IsInitial
+  := let ⟨V, hV, hV0⟩ := h; ⟨V, List.mem_append_right _ hV, hV0⟩
+
+@[simp]
+theorem IsInitial.append {Γ Δ : Ctx α ε} : (Γ ++ Δ).IsInitial ↔ Γ.IsInitial ∨ Δ.IsInitial
+  := ⟨
+    λ⟨V, hV, hV0⟩ => (List.mem_append.mp hV).elim (Or.inl ⟨V, ·, hV0⟩) (Or.inr ⟨V, ·, hV0⟩),
+    λh => h.elim (append_left · _) (append_right _)⟩
+
+theorem IsInitial.head {A} (h : Ty.IsInitial A) (Γ : Ctx α ε)
+  : IsInitial (⟨A, ⊥⟩::Γ)
+  := ⟨⟨A, ⊥⟩, List.mem_cons_self _ _, h, rfl⟩
+
+theorem IsInitial.head' {A e} (hA : Ty.IsInitial A) (he : e = ⊥) (Γ : Ctx α ε)
+  : IsInitial (⟨A, e⟩::Γ)
+  := by cases he; apply head; exact hA
+
+theorem IsInitial.cons {head} {Γ : Ctx α ε} (h : IsInitial Γ)
+  : IsInitial (head::Γ)
+  := let ⟨V', hV, hV0⟩ := h; ⟨V', List.mem_cons_of_mem _ hV, hV0⟩
+
+theorem IsInitial.head_or_tail {head} {Γ : Ctx α ε} (h : IsInitial (head::Γ))
+  : (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
+  := let ⟨V, hV, hV0⟩ := h;
+  by cases hV with
+  | head => exact Or.inl hV0
+  | tail _ hV => exact Or.inr ⟨V, hV, hV0⟩
+
+theorem IsInitial.cons_iff {head} {Γ : Ctx α ε}
+  : IsInitial (head::Γ) ↔ (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
+  := ⟨IsInitial.head_or_tail, λ| Or.inl ⟨hA, he⟩ => head' hA he Γ | Or.inr h => h.cons⟩
+
+end Initial
+
+section Bot
+
+def Types (Γ : Ctx α ε) : List (Ty α) := Γ.map Prod.fst
+
+theorem length_types (Γ : Ctx α ε) : Γ.Types.length = Γ.length := by
+  simp [Types]
+
+def Effects (Γ : Ctx α ε) : List ε := Γ.map Prod.snd
+
+theorem length_effects (Γ : Ctx α ε) : Γ.Effects.length = Γ.length := by
+  simp [Effects]
+
+variable [Φ: EffInstSet φ (Ty α) ε] [Bot ε]
+
+def effect (Γ : Ctx α ε) : ℕ → ε
+  := λn => if h : n < Γ.length then (Γ.get ⟨n, h⟩).2 else ⊥
+
+theorem effect_append_bot {head : Ty α} {tail : Ctx α ε}
+  : effect (⟨head, ⊥⟩::tail) = Nat.liftBot tail.effect
+  := by funext k; cases k with
+  | zero => simp [effect, Nat.liftBot]
+  | succ k => simp [effect, Nat.liftBot]
+
+theorem effect_append_bot₂ {left right : Ty α} {tail : Ctx α ε}
+  : effect (⟨left, ⊥⟩::⟨right, ⊥⟩::tail) = Nat.liftnBot 2 tail.effect
+  := by simp only [effect_append_bot, Nat.liftnBot_two_apply]
+
+variable [PartialOrder α] [PartialOrder ε]
+
+theorem Wkn.effect {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (i : ℕ) (hi : i < Δ.length)
+  : (Γ.effect (ρ i)) ≤ Δ.effect i
+  := by
+    simp only [Ctx.effect, (h i hi).length, ↓reduceDIte, List.get_eq_getElem, hi]
+    exact (h i hi).get.2
+
+theorem Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
   : Γ.Var n ⟨V.1, Γ.effect n⟩
   := ⟨h.length, by
     constructor
@@ -693,23 +701,31 @@ def Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
     simp [effect, h.length]
   ⟩
 
-end Ctx
+-- def WknTy (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop := Γ.Types.NWkn Δ.Types ρ
 
-end Basic
+-- theorem WknTy.id_types_len_le {Γ Δ : Ctx α ε}
+--   : Γ.WknTy Δ _root_.id → Δ.Types.length ≤ Γ.Types.length := List.NWkn.id_len_le
+
+-- theorem WknTy.id_len_le {Γ Δ : Ctx α ε} : Γ.WknTy Δ _root_.id → Δ.length ≤ Γ.length
+--   := Δ.length_types ▸ Γ.length_types ▸ WknTy.id_types_len_le
+
+end Bot
 
 section OrderBot
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
 
-theorem Ctx.Var.bhead {head : Ty α} {e : ε} {Γ : Ctx α ε}
+theorem Var.bhead {head : Ty α} {e : ε} {Γ : Ctx α ε}
   : Var (⟨head, ⊥⟩::Γ) 0 ⟨head, e⟩ := Var.head (by simp) Γ
 
-def Ctx.var_bot_head {Γ : Ctx α ε} : Var (⟨A, ⊥⟩::Γ) 0 ⟨A, e⟩
+def var_bot_head {Γ : Ctx α ε} : Var (⟨A, ⊥⟩::Γ) 0 ⟨A, e⟩
   := Var.head (by simp) Γ
 
-theorem Ctx.IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) : IsInitial Δ → IsInitial Γ
+theorem IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) : IsInitial Δ → IsInitial Γ
   | ⟨_, hV, hI⟩ =>
     have ⟨V', hV', hV⟩ := mem_wk h hV;
     ⟨V', hV', hI.1.anti hV.1, le_bot_iff.mp (hI.2 ▸ hV.2)⟩
 
 end OrderBot
+
+end Ctx
