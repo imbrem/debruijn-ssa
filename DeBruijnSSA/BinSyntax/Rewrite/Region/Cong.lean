@@ -144,7 +144,7 @@ theorem Wf.Cong.vwk {P : Ctx α ε → LCtx α → Region φ → Region φ → P
 theorem Wf.Cong.eqv_iff {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L r r'}
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L)
   (toRight : ∀{Γ L r r'}, P Γ L r r' → r'.Wf Γ L)
-  (p : EqvGen (Wf.Cong P Γ L) r r') : r.Wf Γ L ↔ r'.Wf Γ L
+  (p : Relation.EqvGen (Wf.Cong P Γ L) r r') : r.Wf Γ L ↔ r'.Wf Γ L
   := by induction p with
   | rel _ _ h => exact ⟨λ_ => h.right toRight, λ_ => h.left toLeft⟩
   | refl => rfl
@@ -154,12 +154,12 @@ theorem Wf.Cong.eqv_iff {P : Ctx α ε → LCtx α → Region φ → Region φ �
 theorem Wf.Cong.case_left_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {r r' s : Region φ}
   (he : e.Wf Γ ⟨Ty.coprod A B, e'⟩)
-  (p : EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
+  (p : Relation.EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
   (hs : s.Wf (⟨B, ⊥⟩::Γ) L)
-  : EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r' s)
+  : Relation.EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r' s)
   := by induction p with
-  | rel _ _ h => exact EqvGen.rel _ _ (h.case_left he hs)
-  | refl _ => exact EqvGen.refl _
+  | rel _ _ h => exact Relation.EqvGen.rel _ _ (h.case_left he hs)
+  | refl _ => exact Relation.EqvGen.refl _
   | symm _ _ _ I => exact I.symm
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
@@ -167,45 +167,45 @@ theorem Wf.Cong.case_right_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {r s s' : Region φ}
   (he : e.Wf Γ ⟨Ty.coprod A B, e'⟩)
   (hr : r.Wf (⟨A, ⊥⟩::Γ) L)
-  (p : EqvGen (Wf.Cong P (⟨B, ⊥⟩::Γ) L) s s')
-  : EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r s')
+  (p : Relation.EqvGen (Wf.Cong P (⟨B, ⊥⟩::Γ) L) s s')
+  : Relation.EqvGen (Wf.Cong P Γ L) (Region.case e r s) (Region.case e r s')
   := by induction p with
-  | rel _ _ h => exact EqvGen.rel _ _ (h.case_right he hr)
-  | refl _ => exact EqvGen.refl _
+  | rel _ _ h => exact Relation.EqvGen.rel _ _ (h.case_right he hr)
+  | refl _ => exact Relation.EqvGen.refl _
   | symm _ _ _ I => exact I.symm
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
 theorem Wf.Cong.let1_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
   {a : Term φ} (ha : a.Wf Γ ⟨A, e⟩)
-  (p : EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
-  : EqvGen (Wf.Cong P Γ L) (Region.let1 a r) (Region.let1 a r')
+  (p : Relation.EqvGen (Wf.Cong P (⟨A, ⊥⟩::Γ) L) r r')
+  : Relation.EqvGen (Wf.Cong P Γ L) (Region.let1 a r) (Region.let1 a r')
   := by induction p with
-  | rel _ _ h => exact EqvGen.rel _ _ (h.let1 ha)
-  | refl _ => exact EqvGen.refl _
+  | rel _ _ h => exact Relation.EqvGen.rel _ _ (h.let1 ha)
+  | refl _ => exact Relation.EqvGen.refl _
   | symm _ _ _ I => exact I.symm
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
 theorem Wf.Cong.let2_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
   {a : Term φ} (ha : a.Wf Γ ⟨Ty.prod A B, e⟩)
-  (p : EqvGen (Wf.Cong P (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) r r')
-  : EqvGen (Wf.Cong P Γ L) (Region.let2 a r) (Region.let2 a r')
+  (p : Relation.EqvGen (Wf.Cong P (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L) r r')
+  : Relation.EqvGen (Wf.Cong P Γ L) (Region.let2 a r) (Region.let2 a r')
   := by induction p with
-  | rel _ _ h => exact EqvGen.rel _ _ (h.let2 ha)
-  | refl _ => exact EqvGen.refl _
+  | rel _ _ h => exact Relation.EqvGen.rel _ _ (h.let2 ha)
+  | refl _ => exact Relation.EqvGen.refl _
   | symm _ _ _ I => exact I.symm
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
 theorem Wf.Cong.cfg_entry_eqv
   {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop}
   (R : LCtx α) (hR : R.length = n)
-  (p : EqvGen (Wf.Cong P Γ (R ++ L)) β β')
+  (p : Relation.EqvGen (Wf.Cong P Γ (R ++ L)) β β')
   (dG : ∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
-  : EqvGen (Wf.Cong P Γ L) (Region.cfg β n G) (Region.cfg β' n G)
+  : Relation.EqvGen (Wf.Cong P Γ L) (Region.cfg β n G) (Region.cfg β' n G)
   := by induction p with
-  | rel _ _ h => exact EqvGen.rel _ _ (h.cfg_entry R hR dG)
-  | refl _ => exact EqvGen.refl _
+  | rel _ _ h => exact Relation.EqvGen.rel _ _ (h.cfg_entry R hR dG)
+  | refl _ => exact Relation.EqvGen.refl _
   | symm _ _ _ I => exact I.symm
   | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
@@ -216,18 +216,18 @@ theorem Wf.Cong.cfg_block_eqv
   (dβ : β.Wf Γ (R ++ L))
   (dG : ∀i : Fin n, (G i).Wf (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L))
   (i : Fin n)
-  (p : EqvGen (Wf.Cong P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) (G i) g')
+  (p : Relation.EqvGen (Wf.Cong P (⟨R.get (i.cast hR.symm), ⊥⟩::Γ) (R ++ L)) (G i) g')
   (toLeft : ∀{Γ L r r'}, P Γ L r r' → r.Wf Γ L)
   (toRight : ∀{Γ L r r'}, P Γ L r r' → r'.Wf Γ L)
-  : EqvGen (Wf.Cong P Γ L) (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
+  : Relation.EqvGen (Wf.Cong P Γ L) (Region.cfg β n G) (Region.cfg β n (Function.update G i g'))
   := by
   generalize hg : G i = g
   rw [hg] at p
   induction p generalizing G with
-  | rel _ _ h => exact EqvGen.rel _ _ $ (hg ▸ h).cfg_block _ hR dβ dG i
+  | rel _ _ h => exact Relation.EqvGen.rel _ _ $ (hg ▸ h).cfg_block _ hR dβ dG i
   | refl _ =>
     rw [<-hg, Function.update_eq_self]
-    exact EqvGen.refl _
+    exact Relation.EqvGen.refl _
   | symm x y hxy I =>
     have I := @I (Function.update G i x)
     rw [Function.update_idem, <-hg, Function.update_eq_self] at I
@@ -243,7 +243,7 @@ theorem Wf.Cong.cfg_block_eqv
       rw [Function.update_noteq h]
       exact dG k
   | trans x y z hxy _ Il Ir =>
-    apply EqvGen.trans _ _ _ (Il dG hg)
+    apply Relation.EqvGen.trans _ _ _ (Il dG hg)
     have h : Function.update G i z = Function.update (Function.update G i y) i z
       := by simp
     rw [h]

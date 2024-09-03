@@ -271,6 +271,8 @@ theorem CStep.right {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   (h : CStep Γ L r r') : r'.Wf Γ L
   := Wf.Cong.right TStep.right h
 
+open Relation
+
 theorem CStep.eqv_iff {Γ : Ctx α ε} {L : LCtx α} {r r' : Region φ}
   (h : EqvGen (CStep Γ L) r r') : r.Wf Γ L ↔ r'.Wf Γ L
   := Wf.Cong.eqv_iff TStep.left TStep.right h

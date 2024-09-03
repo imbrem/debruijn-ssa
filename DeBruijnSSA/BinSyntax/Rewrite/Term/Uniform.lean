@@ -144,7 +144,7 @@ theorem Wf.Cong.subst {P Q : Ctx α ε → Ty α × ε → Term φ → Term φ �
 theorem Wf.Cong.eqv_iff {P : Ctx α ε → Ty α × ε → Term φ → Term φ → Prop} {Γ V r r'}
   (toLeft : ∀{Γ V r r'}, P Γ V r r' → r.Wf Γ V)
   (toRight : ∀{Γ V r r'}, P Γ V r r' → r'.Wf Γ V)
-  (p : EqvGen (Wf.Cong P Γ V) r r') : r.Wf Γ V ↔ r'.Wf Γ V
+  (p : Relation.EqvGen (Wf.Cong P Γ V) r r') : r.Wf Γ V ↔ r'.Wf Γ V
   := by induction p with
   | rel _ _ h => exact ⟨λ_ => h.right toRight, λ_ => h.left toLeft⟩
   | refl => rfl

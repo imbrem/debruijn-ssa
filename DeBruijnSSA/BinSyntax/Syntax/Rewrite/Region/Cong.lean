@@ -91,62 +91,63 @@ theorem Cong.nonempty_iff
   {P : Region φ → Region φ → Sort _} {r r' : Region φ} : Cong P r r' ↔ Nonempty (CongD P r r')
   := ⟨Cong.nonempty, Cong.of_nonempty⟩
 
-theorem Cong.eqv_let1 (e) {r r' : Region φ} (p : EqvGen (Cong P) r r')
-  : EqvGen (Cong P) (r.let1 e) (r'.let1 e)
+theorem Cong.eqv_let1 (e) {r r' : Region φ} (p : Relation.EqvGen (Cong P) r r')
+  : Relation.EqvGen (Cong P) (r.let1 e) (r'.let1 e)
   := by induction p with
-    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.let1 _ p
+    | rel _ _ p => exact Relation.EqvGen.rel _ _ $ Cong.let1 _ p
     | symm _ _ _ I => exact I.symm _ _
-    | refl => apply EqvGen.refl
+    | refl => apply Relation.EqvGen.refl
     | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
-theorem Cong.eqv_let2 (e) {r r' : Region φ} (p : EqvGen (Cong P) r r')
-  : EqvGen (Cong P) (r.let2 e) (r'.let2 e)
+theorem Cong.eqv_let2 (e) {r r' : Region φ} (p : Relation.EqvGen (Cong P) r r')
+  : Relation.EqvGen (Cong P) (r.let2 e) (r'.let2 e)
   := by induction p with
-    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.let2 _ p
+    | rel _ _ p => exact Relation.EqvGen.rel _ _ $ Cong.let2 _ p
     | symm _ _ _ I => exact I.symm _ _
-    | refl => apply EqvGen.refl
+    | refl => apply Relation.EqvGen.refl
     | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
-theorem Cong.eqv_case_left (e) {r r'} (p : EqvGen (Cong P) r r') (s)
-  : EqvGen (Cong P) (case e r s) (case e r' s)
+theorem Cong.eqv_case_left (e) {r r'} (p : Relation.EqvGen (Cong P) r r') (s)
+  : Relation.EqvGen (Cong P) (case e r s) (case e r' s)
   := by induction p with
-    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.case_left _ p s
+    | rel _ _ p => exact Relation.EqvGen.rel _ _ $ Cong.case_left _ p s
     | symm _ _ _ I => exact I.symm _ _
-    | refl => apply EqvGen.refl
+    | refl => apply Relation.EqvGen.refl
     | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
-theorem Cong.eqv_case_right (e r) {s s'} (p : EqvGen (Cong P) s s')
-  : EqvGen (Cong P) (case e r s) (case e r s')
+theorem Cong.eqv_case_right (e r) {s s'} (p : Relation.EqvGen (Cong P) s s')
+  : Relation.EqvGen (Cong P) (case e r s) (case e r s')
   := by induction p with
-    | rel _ _ p => exact EqvGen.rel _ _ $ Cong.case_right _ _ p
+    | rel _ _ p => exact Relation.EqvGen.rel _ _ $ Cong.case_right _ _ p
     | symm _ _ _ I => exact I.symm _ _
-    | refl => apply EqvGen.refl
+    | refl => apply Relation.EqvGen.refl
     | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
-theorem Cong.eqv_case (e) {r r' s s'} (pr : EqvGen (Cong P) r r') (ps : EqvGen (Cong P) s s')
-  : EqvGen (Cong P) (case e r s) (case e r' s')
-  := EqvGen.trans _ _ _ (eqv_case_left e pr _) (eqv_case_right e _ ps)
+theorem Cong.eqv_case (e) {r r' s s'}
+  (pr : Relation.EqvGen (Cong P) r r') (ps : Relation.EqvGen (Cong P) s s')
+  : Relation.EqvGen (Cong P) (case e r s) (case e r' s')
+  := Relation.EqvGen.trans _ _ _ (eqv_case_left e pr _) (eqv_case_right e _ ps)
 
-theorem Cong.eqv_cfg_entry {r r'} (p : EqvGen (Cong P) r r') (n) (G)
-  : EqvGen (Cong P) (cfg r n G) (cfg r' n G)
+theorem Cong.eqv_cfg_entry {r r'} (p : Relation.EqvGen (Cong P) r r') (n) (G)
+  : Relation.EqvGen (Cong P) (cfg r n G) (cfg r' n G)
   := by induction p with
-    | rel _ _ p => apply EqvGen.rel; apply Cong.cfg_entry; assumption
+    | rel _ _ p => apply Relation.EqvGen.rel; apply Cong.cfg_entry; assumption
     | symm _ _ _ I => exact I.symm _ _
-    | refl => apply EqvGen.refl
+    | refl => apply Relation.EqvGen.refl
     | trans _ _ _ _ _ Il Ir => exact Il.trans _ _ _ Ir
 
-theorem Cong.eqv_cfg_block (β n G i) (p : EqvGen (Cong P) (G i) g')
-  : EqvGen (Cong P) (cfg β n G) (cfg β n (Function.update G i g')) := by
+theorem Cong.eqv_cfg_block (β n G i) (p : Relation.EqvGen (Cong P) (G i) g')
+  : Relation.EqvGen (Cong P) (cfg β n G) (cfg β n (Function.update G i g')) := by
   generalize hg : G i = g
   rw [hg] at p
   induction p generalizing G with
   | rel _ _ p =>
     cases hg
-    apply EqvGen.rel
+    apply Relation.EqvGen.rel
     apply Cong.cfg_block
     assumption
   | symm x y _ I =>
-    apply EqvGen.symm
+    apply Relation.EqvGen.symm
     have h : β.cfg n G = β.cfg n (Function.update (Function.update G i x) i y) := by cases hg; simp
     rw [h]
     apply I
@@ -154,9 +155,9 @@ theorem Cong.eqv_cfg_block (β n G i) (p : EqvGen (Cong P) (G i) g')
   | refl =>
     cases hg
     rw [Function.update_eq_self]
-    apply EqvGen.refl
+    apply Relation.EqvGen.refl
   | trans x y z _ _ Il Ir =>
-    apply EqvGen.trans
+    apply Relation.EqvGen.trans
     apply Il _ hg
     have h : Function.update G i z = Function.update (Function.update G i y) i z := by simp
     rw [h]
@@ -166,12 +167,12 @@ theorem Cong.eqv_cfg_block (β n G i) (p : EqvGen (Cong P) (G i) g')
 -- TODO: generalize partial update lemma in Discretion.Utils
 -- TODO: only need to require i < k...
 theorem Cong.eqv_cfg_blocks_partial (β n) (G G' : Fin n → Region φ)
-  (p : ∀i, EqvGen (Cong P) (G i) (G' i)) (k : ℕ)
-  : EqvGen (Cong P) (cfg β n G) (cfg β n (λi => if i < k then G' i else G i)) := by
+  (p : ∀i, Relation.EqvGen (Cong P) (G i) (G' i)) (k : ℕ)
+  : Relation.EqvGen (Cong P) (cfg β n G) (cfg β n (λi => if i < k then G' i else G i)) := by
   induction k with
-  | zero => simp only [Nat.not_lt_zero, ↓reduceIte]; apply EqvGen.refl
+  | zero => simp only [Nat.not_lt_zero, ↓reduceIte]; apply Relation.EqvGen.refl
   | succ k I =>
-    apply EqvGen.trans
+    apply Relation.EqvGen.trans
     apply I
     if h : k < n then
       have h' :
@@ -202,21 +203,21 @@ theorem Cong.eqv_cfg_blocks_partial (β n) (G G' : Fin n → Region φ)
       have h : ∀i : Fin n, i < k := λi => Nat.lt_of_lt_of_le i.prop (Nat.le_of_not_lt h)
       have h' : ∀i : Fin n, i < (k + 1) := λi => Nat.lt_succ_of_lt (h i)
       simp only [h, h', ↓reduceIte]
-      apply EqvGen.refl
+      apply Relation.EqvGen.refl
 
 theorem Cong.eqv_cfg_blocks (β n) (G G' : Fin n → Region φ)
-  (p : ∀i, EqvGen (Cong P) (G i) (G' i))
-  : EqvGen (Cong P) (cfg β n G) (cfg β n G') := by
+  (p : ∀i, Relation.EqvGen (Cong P) (G i) (G' i))
+  : Relation.EqvGen (Cong P) (cfg β n G) (cfg β n G') := by
   have h : cfg β n G' = cfg β n (λi => if i < n then G' i else G i) := by simp
   rw [h]
   apply eqv_cfg_blocks_partial
   apply p
 
 theorem Cong.eqv_cfg
-  (pβ : EqvGen (Cong P) β β) (n) {G G' : Fin n → Region φ}
-  (pG : ∀i : Fin n, EqvGen (Cong P) (G i) (G' i))
-  : EqvGen (Cong P) (cfg β n G) (cfg β n G') := by
-  apply EqvGen.trans
+  (pβ : Relation.EqvGen (Cong P) β β) (n) {G G' : Fin n → Region φ}
+  (pG : ∀i : Fin n, Relation.EqvGen (Cong P) (G i) (G' i))
+  : Relation.EqvGen (Cong P) (cfg β n G) (cfg β n G') := by
+  apply Relation.EqvGen.trans
   apply eqv_cfg_entry
   assumption
   apply eqv_cfg_blocks
@@ -259,13 +260,13 @@ theorem Cong.vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   := let ⟨d⟩ := p.nonempty; (d.vwk toVwk ρ).cong
 
 theorem Cong.eqv_vwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
-  (toVwk : ∀ρ r r', P r r' → P (r.vwk ρ) (r'.vwk ρ)) (ρ) (p : EqvGen (Cong P) r r')
-  : EqvGen (Cong P) (r.vwk ρ) (r'.vwk ρ)
+  (toVwk : ∀ρ r r', P r r' → P (r.vwk ρ) (r'.vwk ρ)) (ρ) (p : Relation.EqvGen (Cong P) r r')
+  : Relation.EqvGen (Cong P) (r.vwk ρ) (r'.vwk ρ)
   := by induction p with
-  | rel => apply EqvGen.rel; apply Cong.vwk <;> assumption
-  | symm => apply EqvGen.symm; assumption
-  | refl => apply EqvGen.refl
-  | trans => apply EqvGen.trans <;> assumption
+  | rel => apply Relation.EqvGen.rel; apply Cong.vwk <;> assumption
+  | symm => apply Relation.EqvGen.symm; assumption
+  | refl => apply Relation.EqvGen.refl
+  | trans => apply Relation.EqvGen.trans <;> assumption
 
 def CongD.lwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (toLwk : ∀ρ r r', P r r' → P (r.lwk ρ) (r'.lwk ρ)) (ρ)
@@ -286,13 +287,13 @@ theorem Cong.lwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   := let ⟨d⟩ := p.nonempty; (d.lwk toLwk ρ).cong
 
 theorem Cong.eqv_lwk {P : Region φ → Region φ → Sort _} {r r' : Region φ}
-  (toLwk : ∀ρ r r', P r r' → P (r.lwk ρ) (r'.lwk ρ)) (ρ) (p : EqvGen (Cong P) r r')
-  : EqvGen (Cong P) (r.lwk ρ) (r'.lwk ρ)
+  (toLwk : ∀ρ r r', P r r' → P (r.lwk ρ) (r'.lwk ρ)) (ρ) (p : Relation.EqvGen (Cong P) r r')
+  : Relation.EqvGen (Cong P) (r.lwk ρ) (r'.lwk ρ)
   := by induction p with
-  | rel => apply EqvGen.rel; apply Cong.lwk <;> assumption
-  | symm => apply EqvGen.symm; assumption
-  | refl => apply EqvGen.refl
-  | trans => apply EqvGen.trans <;> assumption
+  | rel => apply Relation.EqvGen.rel; apply Cong.lwk <;> assumption
+  | symm => apply Relation.EqvGen.symm; assumption
+  | refl => apply Relation.EqvGen.refl
+  | trans => apply Relation.EqvGen.trans <;> assumption
 
 theorem Cong.fv_le {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (fvLe : ∀r r', P r r' → r.fv ≤ r'.fv)
@@ -449,7 +450,7 @@ theorem Cong.fvi_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
 
 theorem Cong.eqv_fv_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (fvEq : ∀r r', P r r' → r.fv = r'.fv)
-  (p : EqvGen (Cong P) r r') : r.fv = r'.fv := by
+  (p : Relation.EqvGen (Cong P) r r') : r.fv = r'.fv := by
   induction p with
   | rel _ _ p => exact p.fv_eq fvEq
   | symm _ _ _ I => exact I.symm
@@ -458,7 +459,7 @@ theorem Cong.eqv_fv_eq {P : Region φ → Region φ → Sort _} {r r' : Region �
 
 theorem Cong.eqv_fvi_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (fviEq : ∀r r', P r r' → r.fvi = r'.fvi)
-  (p : EqvGen (Cong P) r r') : r.fvi = r'.fvi := by
+  (p : Relation.EqvGen (Cong P) r r') : r.fvi = r'.fvi := by
   induction p with
   | rel _ _ p => exact p.fvi_eq fviEq
   | symm _ _ _ I => exact I.symm
@@ -467,7 +468,7 @@ theorem Cong.eqv_fvi_eq {P : Region φ → Region φ → Sort _} {r r' : Region 
 
 theorem Cong.eqv_fvs_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
   (fvsEq : ∀r r', P r r' → r.fvs = r'.fvs)
-  (p : EqvGen (Cong P) r r') : r.fvs = r'.fvs := by
+  (p : Relation.EqvGen (Cong P) r r') : r.fvs = r'.fvs := by
   induction p with
   | rel _ _ p => exact p.fvs_eq fvsEq
   | symm _ _ _ I => exact I.symm
