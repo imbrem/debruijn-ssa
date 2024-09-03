@@ -33,12 +33,37 @@ theorem Region.fl_vsubst (σ : Term.Subst φ) (r : Region φ) : (r.vsubst σ).fl
 
 def Term.Subst.fvs (σ : Term.Subst φ) (i : ℕ) : Set ℕ := (σ i).fvs
 
+theorem Term.Subst.fvs_lift_def {σ : Term.Subst φ} {i}
+  : σ.lift.fvs i = σ.lift.fvs i := rfl
+
+theorem Term.Subst.fvs_liftn_def {σ : Term.Subst φ} {i n}
+  : (σ.liftn n).fvs i = (σ.liftn n i).fvs := rfl
+
+theorem Term.Subst.biUnion_fvs_lift {σ : Term.Subst φ} {s : Set ℕ}
+  : ⋃i ∈ s, (σ.lift.fvs i).liftFv = ⋃i ∈ s.liftFv, σ.fvs i := by
+  sorry
+
+theorem Term.Subst.biUnion_fvs_liftn {σ : Term.Subst φ} {s : Set ℕ}
+  : ⋃i ∈ s, ((σ.liftn n).fvs i).liftnFv n = ⋃i ∈ s.liftnFv n, σ.fvs i := by
+  induction n generalizing σ s with
+  | zero => simp
+  | succ n I =>
+    rw [Set.liftnFv_succ', <-biUnion_fvs_lift]
+    simp only [<-Set.liftFv_biUnion]
+    rw [<-I]
+    simp only [Set.liftFv_biUnion, <-Set.liftnFv_succ', Subst.liftn_succ']
+
 theorem Term.fvs_subst (σ : Term.Subst φ) (t : Term φ) : (t.subst σ).fvs = ⋃ x ∈ t.fvs, σ.fvs x
   := by induction t generalizing σ with
   | pair a b Ia Ib => simp only [fvs, Set.biUnion_union, *]
-  | let1 => sorry
-  | let2 => sorry
-  | case => sorry
+  | let1 =>
+    simp only [fvs, Set.biUnion_union, Set.liftnFv_iUnion, Subst.biUnion_fvs_lift, *]
+  | let2 =>
+    simp only [fvs, Set.biUnion_union, Set.liftnFv_iUnion, Subst.biUnion_fvs_liftn, *]
+  | case =>
+    simp only [
+      fvs, Set.biUnion_union, Set.liftnFv_iUnion, Subst.biUnion_fvs_lift, Set.union_assoc, *
+    ]
   | _ => simp [Subst.fvs, *]
 
 open Classical in
@@ -65,14 +90,21 @@ theorem Region.fvs_vsubst (σ : Term.Subst φ) (r : Region φ)
   := by induction r generalizing σ with
   | br => simp [Term.fvs_subst]
   | let1 =>
-    simp only [fvs, Term.fvs_subst, Set.biUnion_union, Set.liftnFv_iUnion, *]
-    apply congrArg
-    ext k
-    simp only [Set.mem_iUnion, exists_prop]
-    sorry
-  | let2 => sorry
-  | case => sorry
-  | cfg => sorry
+    simp only [
+      fvs, Term.fvs_subst, Set.biUnion_union, Set.liftnFv_iUnion, Term.Subst.biUnion_fvs_lift, *
+    ]
+  | let2 =>
+    simp only [
+      fvs, Term.fvs_subst, Set.biUnion_union, Set.liftnFv_iUnion, Term.Subst.biUnion_fvs_liftn, *
+    ]
+  | case =>
+    simp only [
+      fvs, Term.fvs_subst, Set.biUnion_union, Set.liftnFv_iUnion, Term.Subst.biUnion_fvs_lift, *
+    ]
+  | cfg =>
+    simp only [
+      fvs, Set.biUnion_union, Set.biUnion_iUnion, Set.liftFv_biUnion, Term.Subst.biUnion_fvs_lift, *
+    ]
 
 open Classical in
 theorem Region.fvs_vsubst0 (t : Region φ) (s : Term φ)

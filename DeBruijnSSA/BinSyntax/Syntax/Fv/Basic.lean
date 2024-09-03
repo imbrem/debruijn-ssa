@@ -569,11 +569,10 @@ theorem Region.fvs_fvi {r : Region φ} : r.fvs ⊆ Set.Iio r.fvi := by
     apply Term.fvs_fvi
     apply Set.liftnFv_subset_Iio_of_subset_Iio
     assumption
-  | cfg β _ f =>
-    simp only [fvs, fvi, Set.Iio_max]
-    apply Set.union_subset_union
-    assumption
-    sorry
+  | cfg β _ f Iβ I =>
+    simp only [fvs, fvi, Set.Iio_max, Set.Iio_finset_univ_sup]
+    apply Set.union_subset_union Iβ
+    exact Set.iUnion_mono λi => Set.liftnFv_subset_Iio_of_subset_Iio (I i)
 
 -- theorem Region.vwk_eqOn_fvi {r : Region φ} (h : (Set.Iio r.fvi).EqOn ρ ρ')
 --   : r.vwk ρ = r.vwk ρ' := r.vwk_eqOn_fvs (h.mono r.fvs_fvi)
@@ -649,10 +648,17 @@ theorem Region.lwk_eqOn_fls (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : r.fls.Eq
   | cfg β n G Iβ IG =>
     simp only [lwk]
     congr 1
-    exact Iβ _ _ sorry
+    apply Iβ _ _ _
+    rw [Nat.liftnWk_eqOn_iff]
+    apply h.mono
+    simp [fls]
     funext i
     apply IG
-    sorry
+    rw [Nat.liftnWk_eqOn_iff]
+    apply h.mono
+    apply Set.subset_union_of_subset_right
+    apply Set.subset_iUnion_of_subset
+    rfl
 
 -- theorem Region.fls_fli {r : Region φ} : r.fls ⊆ Set.Iio r.fli := by sorry
 
