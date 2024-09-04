@@ -41,7 +41,19 @@ theorem Term.Subst.fvs_liftn_def {σ : Term.Subst φ} {i n}
 
 theorem Term.Subst.biUnion_fvs_lift {σ : Term.Subst φ} {s : Set ℕ}
   : ⋃i ∈ s, (σ.lift.fvs i).liftFv = ⋃i ∈ s.liftFv, σ.fvs i := by
-  sorry
+  ext k
+  simp only [Set.mem_iUnion, Set.mem_liftFv, exists_prop', nonempty_prop]
+  constructor
+  · intro ⟨i, hi, hk⟩
+    cases i with
+    | zero => simp [Subst.fvs] at hk
+    | succ i =>
+      simp only [fvs, lift_succ, fvs_wk, Nat.succ_eq_add_one, Set.mem_image, add_left_inj,
+        exists_eq_right] at hk
+      exact ⟨_, hi, hk⟩
+  · intro ⟨i, hi, hk⟩
+    exact ⟨i + 1, hi, by simp only [fvs, lift_succ, fvs_wk, Nat.succ_eq_add_one, Set.mem_image,
+      add_left_inj, exists_eq_right]; exact hk⟩
 
 theorem Term.Subst.biUnion_fvs_liftn {σ : Term.Subst φ} {s : Set ℕ}
   : ⋃i ∈ s, ((σ.liftn n).fvs i).liftnFv n = ⋃i ∈ s.liftnFv n, σ.fvs i := by
@@ -132,14 +144,77 @@ theorem Region.fvs_vsubst0_le (t : Region φ) (s : Term φ)
   · rw [Set.union_comm]
   · simp
 
-theorem Term.subst_eqOn_fvs {t : Term φ} {σ σ' : Subst φ} (h : t.fvs.EqOn σ σ')
-  : t.subst σ = t.subst σ' := by sorry
+theorem Term.Subst.eqOn_lift_iff {σ σ' : Term.Subst φ} {s : Set ℕ}
+  : s.EqOn σ.lift σ'.lift ↔ s.liftFv.EqOn σ σ' := by
+  constructor <;> intro h n hn
+  · rw [Set.mem_liftFv] at hn
+    have h := h hn
+    simp only [lift_succ] at h
+    sorry
+  · sorry
+
+theorem Term.Subst.eqOn_liftn_iff {σ σ' : Term.Subst φ} {s : Set ℕ}
+  : s.EqOn (σ.liftn n) (σ'.liftn n) ↔ (s.liftnFv n).EqOn σ σ' := sorry
+
+theorem Term.subst_eq_iff {t : Term φ} {σ σ' : Subst φ}
+  : t.subst σ = t.subst σ' ↔ t.fvs.EqOn σ σ' := by induction t generalizing σ σ' with
+  | _ => simp [Subst.eqOn_lift_iff, Subst.eqOn_liftn_iff, and_assoc, *]
+
+theorem Term.subst_eqOn_fvs_iff {t : Term φ} {σ σ' : Subst φ}
+  : t.fvs.EqOn σ σ' ↔ t.subst σ = t.subst σ' := subst_eq_iff.symm
+
+theorem Term.subst_eqOn_fvs {t : Term φ} {σ σ' : Subst φ}
+  : t.fvs.EqOn σ σ' → t.subst σ = t.subst σ' := subst_eq_iff.mpr
 
 theorem Term.subst_eqOn_fvi {t : Term φ} {σ σ' : Subst φ} (h : (Set.Iio t.fvi).EqOn σ σ')
   : t.subst σ = t.subst σ' := t.subst_eqOn_fvs (h.mono t.fvs_fvi)
 
+theorem Region.vsubst_eq_iff {r : Region φ} {σ σ' : Term.Subst φ}
+  : r.vsubst σ = r.vsubst σ' ↔ r.fvs.EqOn σ σ' := by induction r generalizing σ σ' with
+  | _ => simp [
+    Term.subst_eq_iff, and_assoc, Term.Subst.eqOn_lift_iff, Term.Subst.eqOn_liftn_iff,
+    funext_iff, Set.eqOn_iUnion, *
+  ]
+
 theorem Region.vsubst_eqOn_fvs {r : Region φ} {σ σ' : Term.Subst φ} (h : r.fvs.EqOn σ σ')
-  : r.vsubst σ = r.vsubst σ' := by sorry
+  : r.vsubst σ = r.vsubst σ' := by induction r generalizing σ σ' with
+  | br => simp [Term.subst_eqOn_fvs h]
+  | let1 _ _ I =>
+    simp only [vsubst, let1.injEq]
+    constructor
+    exact Term.subst_eqOn_fvs (h.mono (by simp))
+    apply I
+    rw [Term.Subst.eqOn_lift_iff]
+    exact h.mono (by simp)
+  | let2 _ _ I =>
+    simp only [vsubst, let2.injEq]
+    constructor
+    exact Term.subst_eqOn_fvs (h.mono (by simp))
+    apply I
+    rw [Term.Subst.eqOn_liftn_iff]
+    exact h.mono (by simp)
+  | case _ _ _ Il Ir =>
+    simp only [vsubst, case.injEq]
+    constructor
+    exact Term.subst_eqOn_fvs (h.mono (by simp [Set.union_assoc]))
+    constructor
+    apply Il
+    rw [Term.Subst.eqOn_lift_iff]
+    exact h.mono (by apply Set.subset_union_of_subset_left; simp)
+    apply Ir
+    rw [Term.Subst.eqOn_lift_iff]
+    exact h.mono (by apply Set.subset_union_of_subset_right; simp)
+  | cfg _ _ _ Iβ IG =>
+    simp only [vsubst, cfg.injEq, heq_eq_eq, true_and]
+    constructor
+    exact Iβ (h.mono (by simp))
+    ext k
+    apply IG
+    rw [Term.Subst.eqOn_lift_iff]
+    apply h.mono
+    apply Set.subset_union_of_subset_right
+    apply Set.subset_iUnion_of_subset
+    rfl
 
 theorem Region.vsubst_eqOn_fvi {r : Region φ} {σ σ' : Term.Subst φ} (h : (Set.Iio r.fvi).EqOn σ σ')
   : r.vsubst σ = r.vsubst σ' := r.vsubst_eqOn_fvs (h.mono r.fvs_fvi)

@@ -316,6 +316,39 @@ theorem Term.comp_wk (ρ σ)
 theorem Term.wk_comp (ρ σ)
   : @wk φ (ρ ∘ σ) = wk ρ ∘ wk σ := (comp_wk ρ σ).symm
 
+theorem Term.wk_injective {ρ} (hρ : Function.Injective ρ) : Function.Injective (wk (φ := φ) ρ) := by
+  intro a a' heq
+  induction a generalizing a' ρ <;> cases a'
+  case var.var =>
+    simp only [wk, var.injEq] at heq
+    simp [hρ heq]
+  case op.op _ _ I _ _ =>
+    simp only [wk, op.injEq] at heq
+    simp [heq.1, I hρ heq.2]
+  case let1.let1 _ Ia Ib _ _ =>
+    simp only [wk, let1.injEq] at heq
+    simp [Ia hρ heq.1, Ib (Nat.liftWk_injective_of_injective hρ) heq.2]
+  case pair.pair _ Ia Ib _ _ =>
+    simp only [wk, pair.injEq] at heq
+    simp [Ia hρ heq.1, Ib hρ heq.2]
+  case let2.let2 _ Ia Ib _ _ =>
+    simp only [wk, let2.injEq] at heq
+    simp [Ia hρ heq.1, Ib (Nat.liftnWk_injective_of_injective hρ) heq.2]
+  case inl.inl _ I _ =>
+    simp only [wk, inl.injEq] at heq
+    simp [I hρ heq]
+  case inr.inr _ I _ =>
+    simp only [wk, inr.injEq] at heq
+    simp [I hρ heq]
+  case case.case _ Ie Il Ir _ _ _ =>
+    simp only [wk, case.injEq] at heq
+    have hρ' := Nat.liftWk_injective_of_injective hρ
+    simp [Ie hρ heq.1, Il hρ' heq.2.1, Ir hρ' heq.2.2]
+  case abort.abort _ I _ =>
+    simp only [wk, abort.injEq] at heq
+    simp [I hρ heq]
+  all_goals (cases heq <;> rfl)
+
 def Term.wk0 : Term φ → Term φ := wk Nat.succ
 
 def Term.wk1 : Term φ → Term φ := wk (Nat.liftWk Nat.succ)
@@ -329,6 +362,21 @@ def Term.wk4 : Term φ → Term φ := wk (Nat.liftnWk 4 Nat.succ)
 def Term.swap01 : Term φ → Term φ := wk (Nat.swap0 1)
 
 def Term.swap02 : Term φ → Term φ := wk (Nat.swap0 2)
+
+theorem Term.wk0_injective : Function.Injective (@Term.wk0 φ)
+  := Term.wk_injective Nat.succ_injective
+
+theorem Term.wk1_injective : Function.Injective (@Term.wk1 φ)
+  := Term.wk_injective (Nat.liftWk_injective_of_injective Nat.succ_injective)
+
+theorem Term.wk2_injective : Function.Injective (@Term.wk2 φ)
+  := Term.wk_injective (Nat.liftnWk_injective_of_injective Nat.succ_injective)
+
+theorem Term.wk3_injective : Function.Injective (@Term.wk3 φ)
+  := Term.wk_injective (Nat.liftnWk_injective_of_injective Nat.succ_injective)
+
+theorem Term.wk4_injective : Function.Injective (@Term.wk4 φ)
+  := Term.wk_injective (Nat.liftnWk_injective_of_injective Nat.succ_injective)
 
 theorem Term.wk0_let1 (e r : Term φ) : (let1 e r).wk0 = let1 e.wk0 r.wk1 := rfl
 
