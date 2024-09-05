@@ -1512,6 +1512,52 @@ theorem Eqv.Pure.let2_let1_of_right {Γ : Ctx α ε}
   : let2 b (let1 a' c') = let1 a (let2 b.wk0 c) := by
     rw [ha.let1_let2_of_left, ha', hc']
 
+theorem Eqv.Pure.let1_wk0 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩}
+  : a.Pure → let1 a (b.wk0) = b
+  | ⟨a, ha⟩ => by cases ha; rw [let1_beta, subst0_wk0]
+
+theorem Eqv.Pure.let1_dist_let1 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩} {c : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) (C, e)}
+  : a.Pure → let1 a (let1 b c) = let1 (let1 a b) (let1 a.wk0 c.swap01)
+  | ⟨a, ha⟩ => by
+    cases ha
+    simp only [let1_beta, subst_let1, subst0_wk0, wk0_wk_eff]
+    apply congrArg
+    induction a using Quotient.inductionOn
+    induction c using Quotient.inductionOn
+    apply Eqv.eq_of_term_eq
+    simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_wk,
+      Ctx.InS.coe_wk0, ← Term.subst_fromWk, Ctx.InS.coe_swap01, Term.subst_subst]
+    congr
+    funext k
+    cases k using Nat.cases3 with
+    | one => simp [Nat.swap0, Term.subst_fromWk, Term.Subst.comp]
+    | _ => rfl
+
+-- TODO: let1_dist_let2
+
+-- TODO: let1_dist_pair
+
+-- TODO: let2_dist_let1
+
+-- TODO: let2_dist_let2
+
+-- TODO: let2_dist_pair
+
+-- TODO: a is (pi1 a, pi2 a) by: eta; let2_dist_pair
+
+-- NOTE: let1/let2 already distribute over case in general
+
+-- TODO: step 1 : a is (pi1 a, pi2 a)
+--       step 2 : let2-pair
+--       step 3 : let1_wk0 × 2
+
+theorem Eqv.Pure.let2_wk0_wk0 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩} {b : Eqv φ Γ ⟨C, e⟩}
+  : a.Pure → let2 a b.wk0.wk0 = b
+  | ⟨a, ha⟩ => sorry
+
 theorem Eqv.Pure.let1_let2_of_right {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B.prod C, e⟩} {c : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, e⟩}
   (hb : b.Pure) : let1 a (let2 b.wk0 c) = let2 b (let1 a.wk0.wk0 c.swap02.swap02) := by
