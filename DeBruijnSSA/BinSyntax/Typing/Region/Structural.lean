@@ -173,7 +173,7 @@ theorem Subst.InS.coe_unpack {Γ : Ctx α ε} {R : LCtx α}
   rfl
 
 @[simp]
-theorem Subst.InS.vlift_unpack {Γ : Ctx α ε} {R : LCtx α} {ρ : Γ.InS Δ}
+theorem Subst.InS.vlift_unpack {Γ : Ctx α ε} {R : LCtx α}
   : (Subst.InS.unpack (φ := φ) (Γ := Γ) (R := R)).vlift (head := head) = unpack := by
   ext; simp [Subst.vlift]
 

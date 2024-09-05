@@ -3,7 +3,7 @@ import Discretion.Wk.Fin
 import Discretion.Wk.Multiset
 import Discretion.Wk.Multiset
 
-import DeBruijnSSA.BinSyntax.Syntax.Subst
+import DeBruijnSSA.BinSyntax.Syntax.Subst.Term
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 

@@ -341,16 +341,35 @@ variable [Φ : EffectSet φ ε] [Bot ε] [SemilatticeSup ε]
 
 theorem Term.effect_le {Γ Δ : ℕ → ε} (e : Term φ) (H : ∀i ∈ e.fvs, Γ i ≤ Δ i)
   : e.effect Γ ≤ e.effect Δ := by
-  induction e with
+  induction e generalizing Γ Δ with
   | var => exact H _ rfl
   | op f e I => exact sup_le_sup_left (I H) _
-  | let1 => sorry
+  | let1 a b Ia Ib =>
+    apply sup_le_sup (Ia (λi hi => H i (Or.inl hi))) (Ib _)
+    intro i hi
+    cases i with
+    | zero => rfl
+    | succ => apply H; apply Or.inr; rw [Set.mem_liftFv]; exact hi
   | pair a b Ia Ib
     => exact sup_le_sup (Ia (λi hi => H i (Or.inl hi))) (Ib (λi hi => H i (Or.inr hi)))
-  | let2 => sorry
+  | let2 a b Ia Ib =>
+    apply sup_le_sup  (Ia (λi hi => H i (Or.inl hi))) (Ib _)
+    intro i hi
+    cases i using Nat.cases2 with
+    | rest => apply H; apply Or.inr; rw [Set.mem_liftnFv]; exact hi
+    | _ => rfl
   | inl _ I => exact (I H)
   | inr _ I => exact (I H)
-  | case => sorry
+  | case e l r Ie Il Ir =>
+    apply sup_le_sup (sup_le_sup (Ie (λi hi => H i (Or.inl (Or.inl hi)))) (Il _)) (Ir _)
+    intro i hi
+    cases i with
+    | zero => rfl
+    | succ => apply H; apply Or.inl; apply Or.inr; rw [Set.mem_liftFv]; exact hi
+    intro i hi
+    cases i with
+    | zero => rfl
+    | succ => apply H; apply Or.inr; rw [Set.mem_liftFv]; exact hi
   | abort _ I => exact (I H)
   | _ => exact le_refl _
 
@@ -454,13 +473,31 @@ theorem Region.effect_le {Γ Δ : ℕ → ε} (r : Region φ) (H : ∀i ∈ r.fv
   : r.effect Γ ≤ r.effect Δ := by
   induction r generalizing Γ Δ with
   | br _ e => exact e.effect_le H
-  | let1 e r I => exact sup_le_sup (e.effect_le (λi hi => H i (Or.inl hi))) (I sorry)
-  | let2 e r I => exact sup_le_sup (e.effect_le (λi hi => H i (Or.inl hi))) (I sorry)
+  | let1 e r I =>
+    apply sup_le_sup (e.effect_le (λi hi => H i (Or.inl hi))) (I _)
+    intro i hi
+    cases i with
+    | zero => rfl
+    | succ => apply H; apply Or.inr; rw [Set.mem_liftFv]; exact hi
+  | let2 e r I =>
+    apply sup_le_sup (e.effect_le (λi hi => H i (Or.inl hi))) (I _)
+    intro i hi
+    cases i using Nat.cases2 with
+    | rest => apply H; apply Or.inr; rw [Set.mem_liftnFv]; exact hi
+    | _ => rfl
   | case e s t Is It =>
-    exact sup_le_sup
+    apply sup_le_sup
       (sup_le_sup (e.effect_le (λi hi => H i (Or.inl $ Or.inl hi)))
-      (Is sorry))
-      (It sorry)
+      (Is _))
+      (It _)
+    intro i hi
+    cases i with
+    | zero => rfl
+    | succ => apply H; apply Or.inl; apply Or.inr; rw [Set.mem_liftFv]; exact hi
+    intro i hi
+    cases i with
+    | zero => rfl
+    | succ => apply H; apply Or.inr; rw [Set.mem_liftFv]; exact hi
   | cfg β n G Iβ IG =>
     apply sup_le_sup (Iβ (λi hi => H i (Or.inl hi)))
     -- TODO: Fin.sup_le_sup not working here for some reason...
@@ -469,13 +506,25 @@ theorem Region.effect_le {Γ Δ : ℕ → ε} (r : Region φ) (H : ∀i ∈ r.fv
     | succ n I =>
       rw [Fin.sup_succ, Fin.sup_succ]
       apply sup_le_sup
-      apply IG 0 sorry
-      apply I
-      intro k Γ' Δ' H'
-      apply IG k.succ H'
-      intro i hi
-      apply H
-      sorry
+      apply IG 0 _
+      . intro i hi
+        cases i with
+        | zero => rfl
+        | succ =>
+          apply H; apply Or.inr; rw [<-Set.liftFv_iUnion, Set.mem_liftFv]
+          simp only [Set.mem_iUnion]
+          exact ⟨0, hi⟩
+      . apply I
+        intro k Γ' Δ' H'
+        apply IG k.succ H'
+        intro i hi
+        apply H
+        -- TODO: factor out...
+        simp only [fvs, Set.mem_union, Set.mem_iUnion] at hi
+        simp only [fvs, Set.mem_union, Set.mem_iUnion]
+        cases hi with
+        | inl h => exact Or.inl h
+        | inr h => let ⟨i, hi⟩ := h; exact Or.inr ⟨i + 1, by simp [hi]⟩
 
 theorem Region.effect_mono {Γ : ℕ → ε} {r : Region φ} {Δ : ℕ → ε}
   (H : Γ ≤ Δ) : r.effect Γ ≤ r.effect Δ := by

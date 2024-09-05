@@ -357,44 +357,42 @@ theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (
 
 def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
   := by cases d with
-  | let2_pair => sorry
+  | let2_pair a b r =>
+    convert (let2_pair (a.wk ρ) (b.wk ρ) (r.vwk (Nat.liftnWk 2 ρ))) using 1
+    simp [Term.wk0, Term.wk_wk, Nat.liftWk_comp_succ, Nat.liftnWk_two]
   | cfg_cfg β n G n' G' =>
     simp only [Region.vwk, wk, Fin.comp_addCases_apply]
     rw [<-Function.comp.assoc, Region.vwk_comp_lwk, Function.comp.assoc]
     constructor
-  -- | cfg_fuse β n G k σ hσ =>
-  --   simp only [Region.vwk, Region.vwk_lwk, Function.comp_apply]
-  --   constructor
-  --   assumption
-  -- | let1_case =>
-  --   simp only [Region.vwk, wk_liftWk_wk_succ]
-  --   apply cast_trg
-  --   apply let1_case
-  --   simp only [vwk_vwk]
-  --   congr <;>
-  --   funext i <;>
-  --   cases i with
-  --   | zero => rfl
-  --   | succ i => cases i <;> rfl
-  -- | let2_case =>
-  --   simp only [Region.vwk, wk_liftnWk_wk_add, wk_liftWk_wk_succ]
-  --   apply cast_trg
-  --   apply let2_case
-  --   simp only [vwk_vwk]
-  --   congr <;>
-  --   funext i <;>
-  --   cases i with
-  --   | zero => rfl
-  --   | succ i => cases i with
-  --     | zero => rfl
-  --     | succ i => cases i <;> rfl
   | let2_eta e r =>
     simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
       Nat.liftWk_comm_liftnWk_apply, vwk_liftnWk₂_vwk1, vwk_liftWk₂_vwk1]
     constructor
-  | let1_let1_case => sorry
-  | let1_let2_case => sorry
-  | let1_case_case => sorry
+  | let1_let1_case a b r s =>
+    convert (let1_let1_case
+      (a.wk ρ) (b.wk (Nat.liftWk ρ)) (r.vwk (Nat.liftnWk 3 ρ)) (s.vwk (Nat.liftnWk 3 ρ)))
+      using 1
+    simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
+    simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, wk0, wk_wk, Nat.liftWk_comp_succ, vswap01,
+      vwk_vwk, let1.injEq, true_and]
+    congr <;> funext k <;> cases k using Nat.cases3 <;> rfl
+  | let1_let2_case a b r s =>
+    convert (let1_let2_case
+      (a.wk ρ) (b.wk (Nat.liftWk ρ)) (r.vwk (Nat.liftnWk 4 ρ)) (s.vwk (Nat.liftnWk 4 ρ)))
+      using 1
+    simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
+    simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, wk0, wk_wk, Nat.liftWk_comp_succ, vswap02,
+      vwk_vwk, let1.injEq, true_and]
+    congr <;> funext k <;> cases k using Nat.cases4 <;> rfl
+  | let1_case_case a d ll lr rl rr =>
+    convert (let1_case_case
+      (a.wk ρ) (d.wk (Nat.liftWk ρ)) (ll.vwk (Nat.liftnWk 3 ρ)) (lr.vwk (Nat.liftnWk 3 ρ))
+      (rl.vwk (Nat.liftnWk 3 ρ)) (rr.vwk (Nat.liftnWk 3 ρ)))
+      using 1
+    simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
+    simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, wk0, wk_wk, Nat.liftWk_comp_succ, vswap01,
+      vwk_vwk, let1.injEq, true_and]
+    congr <;> funext k <;> cases k using Nat.cases3 <;> rfl
   | _ =>
     simp only [
       Region.vwk2, Region.vwk, wk, Nat.liftWk,
@@ -436,35 +434,15 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
           rw [Nat.add_comm n n', <-Nat.add_assoc]
           rw [Nat.add_comm]
           simp [Nat.le_of_not_lt h]
-  -- | cfg_fuse β n G k σ hσ =>
-  --   have hσk := Fintype.card_le_of_surjective _ hσ
-  --   simp only [Fintype.card_fin] at hσk
-  --   simp only [Region.lwk, Function.comp_apply]
-  --   apply cast ?left ?right
-  --   apply cfg_fuse (β.lwk (Nat.liftnWk n ρ)) _ _ _ σ
-  --   case left =>
-  --     simp only [Region.lwk, Function.comp_apply, cfg.injEq, lwk_lwk]
-  --     constructor
-  --     . congr
-  --       funext j
-  --       simp only [Function.comp_apply, Fin.toNatWk, Nat.liftnWk]
-  --       split
-  --       case isTrue h =>
-  --         have h' : j < k := Nat.lt_of_lt_of_le h hσk
-  --         simp [h']
-  --       case isFalse h =>
-  --         if h : j < k then
-  --           simp [h]
-  --           sorry
-  --         else
-  --           sorry
-  --     . sorry
-  --   case right =>
-  --     sorry
-  --   all_goals sorry
-  | let1_let1_case => sorry
-  | let1_let2_case => sorry
-  | let1_case_case => sorry
+  | let1_let1_case a b r s =>
+    convert (let1_let1_case a b (r.lwk ρ) (s.lwk ρ)) using 1
+    simp [vswap01, vwk_lwk]
+  | let1_let2_case a b r s =>
+    convert (let1_let2_case a b (r.lwk ρ) (s.lwk ρ)) using 1
+    simp [vswap02, vwk_lwk]
+  | let1_case_case a d ll lr rl rr =>
+    convert (let1_case_case a d (ll.lwk ρ) (lr.lwk ρ) (rl.lwk ρ) (rr.lwk ρ)) using 1
+    simp [vswap01, vwk_lwk]
   | _ =>
     simp only [
       Region.vwk2, Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
@@ -472,3 +450,5 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
 
 theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
+
+-- TODO: vsubst, lsubst

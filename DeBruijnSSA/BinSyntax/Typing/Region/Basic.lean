@@ -495,7 +495,24 @@ theorem Wf.lwk1 {Γ : Ctx α ε} {L} {r : Region φ} (d : Wf Γ r (head::L))
   := d.lwk LCtx.Wkn.wk1
 
 theorem Wf.fls {r : Region φ} (h : Wf Γ r L) : r.fls ⊆ Set.Iio L.length
-  := sorry
+  := by induction h with
+  | br hℓ => simp [hℓ.length]
+  | cfg _ _ hR _  _ Iβ IG =>
+    simp only [BinSyntax.Region.fls, Set.union_subset_iff, Set.iUnion_subset_iff]
+    constructor
+    · intro x
+      simp only [Set.mem_liftnFv, Set.mem_Iio]
+      intro hx
+      have hx' := Iβ hx
+      simp only [List.length_append, hR, Set.mem_Iio] at hx'
+      omega
+    · intro i x
+      simp only [Set.mem_liftnFv, Set.mem_Iio]
+      intro hx
+      have hx' := IG i hx
+      simp only [List.length_append, hR, Set.mem_Iio] at hx'
+      omega
+  | _ => simp [*]
 
 def InS.vwk {Γ Δ : Ctx α ε} (ρ : Γ.InS Δ) {L} (r : InS φ Δ L) : InS φ Γ L
   := ⟨(r : Region φ).vwk ρ, r.prop.vwk ρ.prop⟩
@@ -629,8 +646,9 @@ def InS.lwk1 {Γ : Ctx α ε} (r : InS φ Γ (head::L)) : InS φ Γ (head::inser
   := r.lwk LCtx.InS.wk1
 
 theorem InS.lwk_equiv {Γ : Ctx α ε} {ρ ρ' : L.InS K} (r : InS φ Γ L) (h : ρ ≈ ρ')
-  : r.lwk ρ = r.lwk ρ'
-  := sorry
+  : r.lwk ρ = r.lwk ρ' := by
+  ext; apply Region.lwk_eqOn_fls
+  apply Set.EqOn.mono r.prop.fls h
 
 @[simp]
 theorem InS.coe_lwk {Γ : Ctx α ε} {ρ : L.InS K} {r : InS φ Γ L}

@@ -33,7 +33,7 @@ open Term
 
 
 -- TODO: fix this to fuse...
-instance instSetoid : Setoid (Region φ) := EqvGen.Setoid (Cong Rewrite)
+instance instSetoid : Setoid (Region φ) := Relation.EqvGen.setoid (Cong Rewrite)
 
 theorem eqv_let1 (e) (p : r ≈ r') : @let1 φ e r ≈ let1 e r'
   := Cong.eqv_let1 e p
