@@ -259,6 +259,10 @@ theorem InS.coe_swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
   : (InS.swap02 (Γ := Γ) (first := first) (second := second) (third := third) : ℕ → ℕ) = Nat.swap0 2
   := rfl
 
+-- def InS.swap03 {first second third fourth : Ty α × ε} {Γ : Ctx α ε}
+--   : InS (first::second::third::fourth::Γ) (fourth::first::second::third::Γ)
+--   := ⟨Nat.swap0 3, λi hi => sorry⟩
+
 def Nat.swap20 : ℕ → ℕ
   | 0 => 2
   | 1 => 0

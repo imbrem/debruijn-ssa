@@ -47,6 +47,20 @@ theorem Eqv.pr_split {A : Ty α} {Γ : Ctx α ε}
   : split.pr = nil (φ := φ) (Γ := Γ) (A := A) (e := e)
   := by rw [pr, split, let2_pair, nil, let1_beta_var0, wk0_var, let1_beta_var1]; rfl
 
+theorem Eqv.Pure.pl_pair {A B : Ty α} {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩}
+  (hb : Pure b) : (pair a b).pl = a := by
+  rw [pl, let2_pair]
+  convert let1_eta
+  convert hb.wk0.let1_wk0
+  rfl
+
+theorem Eqv.Pure.pr_pair {A B : Ty α} {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B, e⟩}
+  (ha : Pure a) : (pair a b).pr = b := by
+  rw [pr, let2_pair]
+  convert let1_eta using 1
+  convert ha.let1_wk0
+  simp
+
 -- TODO: general pilore, define pi_* with p*?
 
 def Eqv.reassoc {A B C : Ty α} {Γ : Ctx α ε}

@@ -125,6 +125,8 @@ def subst (σ : Subst φ) : Term φ → Term φ
 @[simp]
 theorem subst_id (t : Term φ) : t.subst Subst.id = t := by induction t <;> simp [*]
 
+theorem subst_id' (t : Term φ) (h : σ = Subst.id) : t.subst σ = t := by simp [h]
+
 theorem Subst.ext_subst (σ τ : Subst φ) (h : ∀t : Term φ, t.subst σ = t.subst τ) : ∀n, σ n = τ n
   := λn => h (var n)
 

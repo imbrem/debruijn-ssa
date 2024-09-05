@@ -825,6 +825,11 @@ theorem Eqv.wk0_wk_eff {a : Eqv φ Γ ⟨A, lo⟩} {h : lo ≤ hi}
   induction a using Quotient.inductionOn;
   rfl
 
+theorem Eqv.wk_wk_eff {ρ : Ctx.InS Γ Δ} {a : Eqv φ Δ ⟨A, lo⟩} {h : lo ≤ hi}
+  : (a.wk_eff h).wk ρ = (a.wk ρ).wk_eff h := by
+  induction a using Quotient.inductionOn;
+  rfl
+
 theorem Eqv.subst_wk_eff {σ : Subst.Eqv φ Γ Δ} {a : Eqv φ Δ ⟨A, lo⟩} {he : lo ≤ hi}
   : subst σ (a.wk_eff he) = (subst σ a).wk_eff he := by
   induction a using Quotient.inductionOn;
@@ -1210,6 +1215,12 @@ theorem Eqv.case_inr {Γ : Ctx α ε} {a : Eqv φ Γ ⟨B, e⟩}
 
 def Eqv.Pure (a : Eqv φ Γ ⟨A, e⟩) : Prop := ∃p : Eqv φ Γ ⟨A, ⊥⟩, a = p.wk_eff (by simp)
 
+theorem Eqv.Pure.wk {a : Eqv φ Δ ⟨A, e⟩} (ρ : Ctx.InS Γ Δ) : Pure a → Pure (a.wk ρ)
+  | ⟨a, ha⟩ => ⟨a.wk ρ, by simp [ha, wk_wk_eff]⟩
+
+theorem Eqv.Pure.wk0 {a : Eqv φ Γ ⟨A, e⟩} (ha : Pure a) : Pure (a.wk0 (head := head))
+  := ha.wk _
+
 @[simp]
 theorem Eqv.pure_is_pure {a : Eqv φ Γ ⟨A, ⊥⟩} : a.Pure := ⟨a, by simp⟩
 
@@ -1535,28 +1546,93 @@ theorem Eqv.Pure.let1_dist_let1 {Γ : Ctx α ε}
     | one => simp [Nat.swap0, Term.subst_fromWk, Term.Subst.comp]
     | _ => rfl
 
--- TODO: let1_dist_let2
+theorem Eqv.Pure.let1_dist_let2 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B.prod C, e⟩}
+  {c : Eqv φ ((C, ⊥)::(B, ⊥)::(A, ⊥)::Γ) (D, e)}
+  : a.Pure → let1 a (let2 b c) = let2 (let1 a b) (let1 a.wk0.wk0 c.swap02.swap02)
+  | ⟨a, ha⟩ => by
+    cases ha
+    simp only [let1_beta, subst_let2, subst0_wk0, wk0_wk_eff]
+    apply congrArg
+    induction a using Quotient.inductionOn
+    induction c using Quotient.inductionOn
+    apply Eqv.eq_of_term_eq
+    simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_wk,
+      Ctx.InS.coe_wk0, Ctx.InS.coe_swap02, Term.wk_wk]
+    simp only [<-Term.subst_fromWk, Term.subst_subst]
+    congr
+    funext k
+    cases k using Nat.cases4 with
+    | two => simp only [Term.subst_fromWk]; rfl
+    | _ => rfl
 
--- TODO: let1_dist_pair
-
--- TODO: let2_dist_let1
+theorem Eqv.Pure.let1_dist_pair {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+  {c : Eqv φ ((A, ⊥)::Γ) (C, e)}
+  : a.Pure → let1 a (pair b c) = pair (let1 a b) (let1 a c)
+  | ⟨a, ha⟩ => by
+    cases ha
+    simp only [let1_beta, subst_pair, subst0_wk0, wk0_wk_eff]
 
 -- TODO: let2_dist_let2
 
--- TODO: let2_dist_pair
+theorem Eqv.Pure.let2_dist_pair {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩}
+  {b : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) ⟨C, e⟩} {c : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) ⟨D, e⟩}
+  (ha : Pure a) : let2 a (pair b c) = pair (let2 a b) (let2 a c) := by
+  simp only [let2_bind (a := a)]
+  rw [<-ha.let1_dist_pair]
+  rw [<-let2_eta (a := a)]
+  simp [let1_let2, let1_beta_let2_eta, wk1, let2_pair, let1_beta_var1]
 
--- TODO: a is (pi1 a, pi2 a) by: eta; let2_dist_pair
+theorem Eqv.Pure.pair_pi_l_pi_r' {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩} (ha : Pure a)
+  : pair (let2 a (var 1 (by simp))) (let2 a (var 0 (by simp))) = a
+  := by rw [<-ha.let2_dist_pair, let2_eta]
 
--- NOTE: let1/let2 already distribute over case in general
+theorem Eqv.let2_var0_dist_let1 {Γ : Ctx α ε}
+  {b : Eqv φ ((B, ⊥)::(A, ⊥)::(A.prod B, ⊥)::Γ) ⟨C, e⟩}
+  {c : Eqv φ ((C, ⊥)::(B, ⊥)::(A, ⊥)::(A.prod B, ⊥)::Γ) ⟨D, e⟩}
+  : let2 (var 0 (by simp)) (let1 b c)
+  = let1 (let2 (var 0 (by simp)) b) (let2 (var 1 (by simp)) c.swap02) := by
+  conv => lhs; rw [<-Pure.pair_pi_l_pi_r' (a := (var 0 (by simp))) ⟨var 0 Ctx.Var.shead, rfl⟩]
+  rw [let2_pair]
+  sorry
 
--- TODO: step 1 : a is (pi1 a, pi2 a)
---       step 2 : let2-pair
---       step 3 : let1_wk0 × 2
+theorem Eqv.Pure.let2_dist_let1 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩} {b : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) ⟨C, e⟩}
+  {c : Eqv φ ((C, ⊥)::(B, ⊥)::(A, ⊥)::Γ) ⟨D, e⟩} (ha : a.Pure)
+  : let2 a (let1 b c) = let1 (let2 a b) (let2 a.wk0 c.swap02) := by
+  rw [let2_bind (a := a)]
+  simp only [wk2, wk_let1, let2_var0_dist_let1]
+  cases ha with
+  | intro a ha =>
+    cases ha
+    simp only [let1_beta, subst_let1, subst_let2, var0_subst0, List.length_cons, Fin.zero_eta,
+      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_eff, subst_lift_var_succ,
+      Nat.reduceAdd, wk0_wk_eff]
+    induction a using Quotient.inductionOn
+    induction b using Quotient.inductionOn
+    induction c using Quotient.inductionOn
+    apply Eqv.eq_of_term_eq
+    simp only [Set.mem_setOf_eq, InS.coe_let1, InS.coe_let2, InS.coe_subst, Subst.InS.coe_liftn₂,
+      InS.coe_subst0, InS.coe_wk, Ctx.InS.coe_wk2, Subst.InS.coe_lift, Ctx.InS.coe_swap02,
+      Ctx.InS.coe_lift, Term.wk_wk, let2.injEq, let1.injEq, true_and]
+    simp only [← Term.subst_fromWk, Term.subst_subst]
+    constructor
+    · apply Term.subst_id'; funext k; cases k using Nat.cases2 <;> rfl
+    · congr; funext k; cases k using Nat.cases3 <;> rfl
 
-theorem Eqv.Pure.let2_wk0_wk0 {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨A.prod B, e⟩} {b : Eqv φ Γ ⟨C, e⟩}
-  : a.Pure → let2 a b.wk0.wk0 = b
-  | ⟨a, ha⟩ => sorry
+theorem Eqv.Pure.let2_wk0_wk0 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A.prod B, e⟩} {b : Eqv φ Γ ⟨C, e⟩}
+  (ha : a.Pure) : let2 a b.wk0.wk0 = b := by
+  rw [<-ha.pair_pi_l_pi_r', let2_pair]
+  cases ha with
+  | intro a ha =>
+    cases ha
+    rw [let1_wk0, let1_wk0]
+    exact ⟨a.let2 (var 1 (by simp)), by simp⟩
+    apply Pure.wk0
+    exact ⟨a.let2 (var 0 (by simp)), by simp⟩
 
 theorem Eqv.Pure.let1_let2_of_right {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B.prod C, e⟩} {c : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, e⟩}
@@ -1565,7 +1641,23 @@ theorem Eqv.Pure.let1_let2_of_right {Γ : Ctx α ε}
   apply Eq.symm
   rw [let2_bind]
   congr
-  sorry
+  simp only [wk2, wk_let1, wk_let2, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_swap01, Nat.swap0_0]
+  rw [let2_dist_let1]
+  · congr
+    · convert let2_wk0_wk0 _
+      induction a using Quotient.inductionOn
+      apply Eqv.eq_of_term_eq
+      simp only [Set.mem_setOf_eq, InS.coe_wk, Ctx.InS.coe_wk2, Ctx.InS.coe_wk0, Term.wk_wk]
+      rfl
+      exact ⟨var 0 Ctx.Var.shead, rfl⟩
+    · induction c using Quotient.inductionOn
+      apply Eqv.eq_of_term_eq
+      simp only [Set.mem_setOf_eq, InS.coe_wk, Ctx.InS.coe_swap02, Ctx.InS.coe_lift,
+        Ctx.InS.coe_wk2, Term.wk_wk, Ctx.InS.coe_liftn₂, Ctx.InS.coe_swap01]
+      congr
+      funext k
+      cases k using Nat.cases3 <;> rfl
+  · exact ⟨var 0 Ctx.Var.shead, rfl⟩
 
 theorem Eqv.Pure.let1_let2_of_right' {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B.prod C, e⟩} {c : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, e⟩}
