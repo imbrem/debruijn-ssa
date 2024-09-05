@@ -150,11 +150,12 @@ theorem Term.Subst.eqOn_lift_iff {σ σ' : Term.Subst φ} {s : Set ℕ}
   · rw [Set.mem_liftFv] at hn
     have h := h hn
     simp only [lift_succ] at h
-    sorry
-  · sorry
+    exact Term.wk0_injective h
+  · cases n with | zero => rfl | _ => simp [Subst.lift, h ((Set.mem_liftFv _ _).mpr hn)]
 
 theorem Term.Subst.eqOn_liftn_iff {σ σ' : Term.Subst φ} {s : Set ℕ}
-  : s.EqOn (σ.liftn n) (σ'.liftn n) ↔ (s.liftnFv n).EqOn σ σ' := sorry
+  : s.EqOn (σ.liftn n) (σ'.liftn n) ↔ (s.liftnFv n).EqOn σ σ' := by
+  induction n generalizing σ σ' s <;> simp [Subst.liftn_succ', Set.liftnFv_succ', eqOn_lift_iff, *]
 
 theorem Term.subst_eq_iff {t : Term φ} {σ σ' : Subst φ}
   : t.subst σ = t.subst σ' ↔ t.fvs.EqOn σ σ' := by induction t generalizing σ σ' with
@@ -219,8 +220,8 @@ theorem Region.vsubst_eqOn_fvs {r : Region φ} {σ σ' : Term.Subst φ} (h : r.f
 theorem Region.vsubst_eqOn_fvi {r : Region φ} {σ σ' : Term.Subst φ} (h : (Set.Iio r.fvi).EqOn σ σ')
   : r.vsubst σ = r.vsubst σ' := r.vsubst_eqOn_fvs (h.mono r.fvs_fvi)
 
-theorem Region.lsubst_eqOn_fls {r : Region φ} {σ σ' : Subst φ} (h : r.fls.EqOn σ σ')
-  : r.lsubst σ = r.lsubst σ' := by sorry
+-- theorem Region.lsubst_eqOn_fls {r : Region φ} {σ σ' : Subst φ} (h : r.fls.EqOn σ σ')
+--   : r.lsubst σ = r.lsubst σ' := by sorry
 
 -- TODO: {Terminator, Region}.Subst.{fv, fl}
 

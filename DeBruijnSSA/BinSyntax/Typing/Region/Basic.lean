@@ -12,7 +12,7 @@ namespace BinSyntax
 
 section Basic
 
-variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
+variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε]
 
 theorem Ctx.Wkn.toFinWk_id {Γ Δ : Ctx α ε} {L L' R S : LCtx α} {ρ : Fin R.length → Fin S.length}
   (hρ : (R ++ L).Wkn (S ++ L') (Fin.toNatWk ρ)) (i : Fin R.length)
@@ -20,6 +20,8 @@ theorem Ctx.Wkn.toFinWk_id {Γ Δ : Ctx α ε} {L L' R S : LCtx α} {ρ : Fin R.
   : Wkn (⟨R[i], e⟩::Γ) (⟨S[ρ i], e⟩::Δ) _root_.id := by
   simp only [Fin.getElem_fin, lift_id_iff, ge_iff_le, Prod.mk_le_mk, le_refl, and_true, h]
   exact hρ.toFinWk_append i
+
+variable [Bot ε]
 
 namespace Region
 
