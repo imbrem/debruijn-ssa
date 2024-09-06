@@ -17,7 +17,10 @@ instance Subst.InS.instSetoid {Γ : Ctx α ε} {L K : LCtx α}
 
 theorem Subst.InS.vlift_congr {Γ : Ctx α ε} {L K : LCtx α}
   {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.vlift (head := head) ≈ τ.vlift
-  := sorry
+  := λk => by
+  simp only [List.get_eq_getElem, get_vlift, InS.vwk1]
+  apply InS.vwk_congr_right
+  apply h
 
 theorem Subst.InS.vliftn₂_congr {Γ : Ctx α ε} {L K : LCtx α}
   {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.vliftn₂ (left := left) (right := right) ≈ τ.vliftn₂
@@ -29,13 +32,37 @@ theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
   simp only [List.get_eq_getElem, get, liftn_append, liftn]
   split
   · rfl
-  · stop
-    convert InS.lwk_congr_right _ (h ⟨i - J.length, sorry⟩) using 1
-    sorry
-    sorry
-    sorry
-    sorry
-    sorry
+  case isFalse h' =>
+    convert InS.lwk_congr_right (K := J ++ K) ⟨
+        λi => i + J.length,
+        λi h => ⟨by simp only [List.length_append]; omega, by
+          rw [List.getElem_append_right]; simp
+          sorry
+          sorry
+        ⟩
+      ⟩ (
+      h ⟨
+        i - J.length,
+        by have h'' := i.prop; simp only [List.length_append] at h''; omega
+      ⟩) using 1
+    congr 3
+    rw [List.getElem_append_right _ _ h']
+    rfl
+    congr 4
+    rw [List.getElem_append_right _ _ h']
+    rfl
+    congr 1
+    funext r
+    simp only [Set.mem_setOf_eq, List.get_eq_getElem]
+    congr 3
+    rw [List.getElem_append_right _ _ h']
+    apply heq_prop
+    congr 1
+    funext r
+    simp only [Set.mem_setOf_eq, List.get_eq_getElem]
+    congr 3
+    rw [List.getElem_append_right _ _ h']
+    apply heq_prop
 
 open Subst.InS
 

@@ -592,6 +592,10 @@ theorem Region.InS.vwk1_lsubst_vlift {Γ : Ctx α ε} {L K : LCtx α}
   funext k
   cases k <;> rfl
 
+theorem Region.Subst.InS.get_vlift {Γ : Ctx α ε} {L K} {σ : Subst.InS φ Γ L K} {i}
+  : σ.vlift.get i = (σ.get i).vwk1 (inserted := head)
+  := rfl
+
 theorem Region.InS.extend_comp {Γ : Ctx α ε} {L K J R : LCtx α}
   {σ : Subst.InS φ Γ L K} {τ : Subst.InS φ Γ K J}
   : (τ.comp σ).extend (R := R) = τ.extend.comp σ.extend := by
