@@ -149,6 +149,22 @@ def ReduceD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : Reduc
 theorem Reduce.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.lwk ρ) (r'.lwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.lwk ρ).reduce
 
+def ReduceD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (d : ReduceD r r')
+  : ReduceD (r.vsubst σ) (r'.vsubst σ)
+  := sorry
+
+theorem Reduce.vsubst
+  {r r' : Region φ} (σ : Term.Subst φ) (p : Reduce r r') : Reduce (r.vsubst σ) (r'.vsubst σ)
+  := let ⟨d⟩ := p.nonempty; (d.vsubst σ).reduce
+
+def ReduceD.lsubst {r r' : Region φ} (σ : Subst φ) (d : ReduceD r r')
+  : ReduceD (r.lsubst σ) (r'.lsubst σ)
+  := sorry
+
+theorem Reduce.lsubst
+  {r r' : Region φ} (σ : Subst φ) (p : Reduce r r') : Reduce (r.lsubst σ) (r'.lsubst σ)
+  := let ⟨d⟩ := p.nonempty; (d.lsubst σ).reduce
+
 theorem ReduceD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : ReduceD r r')
   : r'.effect Γ ≤ r.effect Γ := by
   cases p with

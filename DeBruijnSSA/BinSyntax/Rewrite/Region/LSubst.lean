@@ -15,8 +15,51 @@ instance Subst.InS.instSetoid {Γ : Ctx α ε} {L K : LCtx α}
     trans := (λhl hr i => Setoid.trans (hl i) (hr i))
   }
 
+theorem Subst.InS.vlift_congr {Γ : Ctx α ε} {L K : LCtx α}
+  {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.vlift (head := head) ≈ τ.vlift
+  := sorry
+
+theorem Subst.InS.vliftn₂_congr {Γ : Ctx α ε} {L K : LCtx α}
+  {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.vliftn₂ (left := left) (right := right) ≈ τ.vliftn₂
+  := by simp only [vliftn₂_eq_vlift_vlift]; exact vlift_congr <| vlift_congr h
+
+theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
+  {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.liftn_append J ≈ τ.liftn_append J := by
+  intro i
+  simp only [List.get_eq_getElem, get, liftn_append, liftn]
+  split
+  · rfl
+  · stop
+    convert InS.lwk_congr_right _ (h ⟨i - J.length, sorry⟩) using 1
+    sorry
+    sorry
+    sorry
+    sorry
+    sorry
+
+open Subst.InS
+
 theorem InS.lsubst_congr_subst {Γ : Ctx α ε} {L K : LCtx α} {σ τ : Subst.InS φ Γ L K}
-  (h : σ ≈ τ) (r : InS φ Γ L) : r.lsubst σ ≈ r.lsubst τ := sorry
+  (h : σ ≈ τ) (r : InS φ Γ L) : r.lsubst σ ≈ r.lsubst τ := by
+  induction r using InS.induction generalizing K with
+  | br ℓ a hℓ =>
+    simp only [lsubst_br, List.get_eq_getElem, vwk_id_eq_vwk]
+    apply InS.vsubst_congr_right
+    apply InS.vwk_congr_right
+    apply h
+  | case e r s Ir Is =>
+    simp only [lsubst_case]
+    exact InS.case_congr (by rfl) (Ir (vlift_congr h)) (Is (vlift_congr h))
+  | let1 a r Ir =>
+    simp only [lsubst_let1]
+    exact InS.let1_congr (by rfl) (Ir (vlift_congr h))
+  | let2 a r Ir =>
+    simp only [lsubst_let2]
+    exact InS.let2_congr (by rfl) (Ir (vliftn₂_congr h))
+  | cfg R β G Iβ IG =>
+    simp only [lsubst_cfg]
+    exact InS.cfg_congr _ (Iβ (liftn_append_congr h))
+      (λi => IG i (vlift_congr (liftn_append_congr h)))
 
 theorem InS.lsubst_congr_right {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.InS φ Γ L K)
   {r r' : InS φ Γ L} (h : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ := sorry

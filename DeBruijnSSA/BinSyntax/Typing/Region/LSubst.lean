@@ -526,7 +526,7 @@ theorem Region.InS.lsubst_br {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ
 
 @[simp]
 theorem Region.InS.lsubst_case {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
-  {e : Term.InS φ Γ (A.coprod B, ⊥)}
+  {e : Term.InS φ Γ (A.coprod B, e)}
   {s : Region.InS φ ((A, ⊥)::Γ) L} {t : Region.InS φ ((B, ⊥)::Γ) L}
   : (case e s t).lsubst σ = case e (s.lsubst σ.vlift) (t.lsubst σ.vlift)
   := rfl
@@ -599,7 +599,7 @@ theorem Region.InS.extend_comp {Γ : Ctx α ε} {L K J R : LCtx α}
   simp only [Set.mem_setOf_eq, Subst.InS.coe_extend, Subst.InS.coe_comp, Subst.comp, Subst.extend]
   split
   · simp [Subst.vlift]
-    sorry -- TODO: fv_eq lore...
+    sorry -- TODO: fl_eq lore...
   · simp [Subst.vlift]
 
 theorem Region.Wf.csubst {Γ : Ctx α ε} {L : LCtx α} {r : Region φ} {hr : Wf ((A, ⊥)::Γ) r L}

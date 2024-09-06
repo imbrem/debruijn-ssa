@@ -451,4 +451,22 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
 theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
 
--- TODO: vsubst, lsubst
+def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : Rewrite r r')
+  : RewriteD (r.vsubst σ) (r'.vsubst σ)
+  := sorry
+
+theorem Rewrite.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : Rewrite r r')
+  : Rewrite (r.vsubst σ) (r'.vsubst σ)
+  := sorry
+
+def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : Rewrite r r')
+  : RewriteD (r.lsubst σ) (r'.lsubst σ)
+  := sorry
+
+theorem Rewrite.lsubst {r r' : Region φ} (σ : Subst φ) (p : Rewrite r r')
+  : Rewrite (r.lsubst σ) (r'.lsubst σ)
+  := sorry
+
+end Region
+
+end BinSyntax

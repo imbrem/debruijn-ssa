@@ -156,11 +156,18 @@ theorem InS.initial' {Γ : Ctx α ε} (i : Term.InS φ Γ ⟨Ty.empty, ⊥⟩) (
 
 theorem TStep.vsubst {Γ Δ : Ctx α ε} {L} {r r' : Region φ} {σ : Term.Subst φ}
   (hσ : σ.Wf Γ Δ) : TStep Δ L r r' → Uniform TStep Γ L (r.vsubst σ) (r'.vsubst σ)
-  | TStep.let1_beta de dr => sorry
-  | TStep.rewrite d d' p => sorry
-  | TStep.reduce d d' p => sorry
-  | TStep.initial di d d' => sorry
-  | TStep.let1_equiv p dr => sorry
+  | let1_beta de dr => Uniform.rel <| by
+    convert let1_beta (de.subst hσ) (dr.vsubst hσ.slift) using 1
+    simp only [vsubst_vsubst]
+    congr; funext k; cases k <;> simp [Term.Subst.comp]
+  | rewrite d d' p => Uniform.rel (rewrite (d.vsubst hσ) (d'.vsubst hσ) (p.vsubst σ))
+  | reduce d d' p => Uniform.rel (reduce (d.vsubst hσ) (d'.vsubst hσ) (p.vsubst σ))
+  | initial di d d' =>
+    let ⟨di⟩ := di.term (φ := φ);
+    InS.initial' (di.subst ⟨_, hσ⟩) ⟨_, d.vsubst hσ⟩ ⟨_, d'.vsubst hσ⟩
+  | let1_equiv p dr => Uniform.rel <| let1_equiv
+    (Term.Uniform.subst_flatten Term.TStep.subst hσ p)
+    (dr.vsubst hσ.slift)
 
 theorem TStep.vsubst_to_congr {Γ Δ : Ctx α ε} {L}
   {r r' : InS φ Δ L} (σ : Term.Subst.InS φ Γ Δ) (h : TStep Δ L (r : Region φ) (↑r'))
