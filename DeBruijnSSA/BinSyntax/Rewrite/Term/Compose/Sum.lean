@@ -22,19 +22,17 @@ theorem Eqv.swap_sum_swap_sum {A B : Ty α} {Γ : Ctx α ε}
   simp [swap_sum, case_inl, case_inr, case_eta, case_case, let1_beta_var0]
 
 theorem Eqv.let1_swap_sum {A B : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨X, e⟩}
-  {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A.coprod B, e⟩}
-  : let1 a (swap_sum r) = swap_sum (let1 a r) := sorry
+  {a : Eqv φ Γ ⟨X, e⟩} {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A.coprod B, e⟩}
+  : let1 a (swap_sum r) = swap_sum (let1 a r) := by simp only [swap_sum, case_let1]; rfl
 
 theorem Eqv.swap_sum_let1 {A B : Ty α} {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨A, e⟩}
-  {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B.coprod A, e⟩}
+  {a : Eqv φ Γ ⟨A, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B.coprod A, e⟩}
   : swap_sum (let1 a r) = let1 a (swap_sum r) := let1_swap_sum.symm
 
 theorem Eqv.let2_swap_sum {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.prod Y, e⟩}
   {r : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::Γ) ⟨A.coprod B, e⟩}
-  : let2 a (swap_sum r) = swap_sum (let2 a r) := sorry
+  : let2 a (swap_sum r) = swap_sum (let2 a r) := by simp only [swap_sum, case_let2]; rfl
 
 theorem Eqv.swap_sum_let2 {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.prod Y, e⟩}
@@ -45,7 +43,8 @@ theorem Eqv.case_swap_sum {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
   {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A.coprod B, e⟩}
   {s : Eqv φ (⟨Y, ⊥⟩::Γ) ⟨A.coprod B, e⟩}
-  : case a (swap_sum r) (swap_sum s) = swap_sum (case a r s) := sorry
+  : case a (swap_sum r) (swap_sum s) = swap_sum (case a r s)
+  := by simp only [swap_sum, case_case]; rfl
 
 theorem Eqv.swap_sum_case {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
@@ -55,7 +54,7 @@ theorem Eqv.swap_sum_case {A B : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.wk_swap_sum {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ ⟨A.coprod B, e⟩}
-  : wk ρ (swap_sum r) = swap_sum (wk ρ r) := sorry
+  : wk ρ (swap_sum r) = swap_sum (wk ρ r) := by simp [swap_sum]
 
 theorem Eqv.swap_sum_wk {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ ⟨A.coprod B, e⟩}
@@ -139,7 +138,7 @@ theorem Eqv.reassoc_inv_reassoc_sum {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.let1_reassoc_sum {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X, e⟩}
   {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩}
-  : let1 a (reassoc_sum r) = reassoc_sum (let1 a r) := sorry
+  : let1 a (reassoc_sum r) = reassoc_sum (let1 a r) := by simp only [reassoc_sum, case_let1]; rfl
 
 theorem Eqv.reassoc_sum_let1 {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X, e⟩}
@@ -149,7 +148,7 @@ theorem Eqv.reassoc_sum_let1 {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.let2_reassoc_sum {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.prod Y, e⟩}
   {r : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩}
-  : let2 a (reassoc_sum r) = reassoc_sum (let2 a r) := sorry
+  : let2 a (reassoc_sum r) = reassoc_sum (let2 a r) := by simp only [reassoc_sum, case_let2]; rfl
 
 theorem Eqv.reassoc_sum_let2 {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.prod Y, e⟩}
@@ -160,7 +159,8 @@ theorem Eqv.case_reassoc_sum {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
   {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩}
   {s : Eqv φ (⟨Y, ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩}
-  : case a (reassoc_sum r) (reassoc_sum s) = reassoc_sum (case a r s) := sorry
+  : case a (reassoc_sum r) (reassoc_sum s) = reassoc_sum (case a r s)
+  := by simp only [reassoc_sum, case_case]; rfl
 
 theorem Eqv.reassoc_sum_case {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
@@ -170,7 +170,7 @@ theorem Eqv.reassoc_sum_case {A B C : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.wk_reassoc_sum {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ ⟨(A.coprod B).coprod C, e⟩}
-  : wk ρ (reassoc_sum r) = reassoc_sum (wk ρ r) := sorry
+  : wk ρ (reassoc_sum r) = reassoc_sum (wk ρ r) := by simp [reassoc_sum]
 
 theorem Eqv.reassoc_sum_wk {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ ⟨(A.coprod B).coprod C, e⟩}
@@ -210,7 +210,8 @@ theorem Eqv.reassoc_sum_seq {X Y A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.let1_reassoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X, e⟩}
   {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩}
-  : let1 a (reassoc_inv_sum r) = reassoc_inv_sum (let1 a r) := sorry
+  : let1 a (reassoc_inv_sum r) = reassoc_inv_sum (let1 a r)
+  := by simp only [reassoc_inv_sum, case_let1]; rfl
 
 theorem Eqv.reassoc_inv_sum_let1 {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X, e⟩}
@@ -220,7 +221,8 @@ theorem Eqv.reassoc_inv_sum_let1 {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.let2_reassoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.prod Y, e⟩}
   {r : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩}
-  : let2 a (reassoc_inv_sum r) = reassoc_inv_sum (let2 a r) := sorry
+  : let2 a (reassoc_inv_sum r) = reassoc_inv_sum (let2 a r)
+  := by simp only [reassoc_inv_sum, case_let2]; rfl
 
 theorem Eqv.reassoc_inv_sum_let2 {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.prod Y, e⟩}
@@ -231,7 +233,8 @@ theorem Eqv.case_reassoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
   {r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩}
   {s : Eqv φ (⟨Y, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩}
-  : case a (reassoc_inv_sum r) (reassoc_inv_sum s) = reassoc_inv_sum (case a r s) := sorry
+  : case a (reassoc_inv_sum r) (reassoc_inv_sum s) = reassoc_inv_sum (case a r s)
+  := by simp only [reassoc_inv_sum, case_case]; rfl
 
 theorem Eqv.reassoc_inv_sum_case {A B C : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨X.coprod Y, e⟩}
@@ -242,7 +245,8 @@ theorem Eqv.reassoc_inv_sum_case {A B C : Ty α} {Γ : Ctx α ε}
 
 theorem Eqv.wk_reassoc_inv_sum {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ ⟨A.coprod (B.coprod C), e⟩}
-  : wk ρ (reassoc_inv_sum r) = reassoc_inv_sum (wk ρ r) := sorry
+  : wk ρ (reassoc_inv_sum r) = reassoc_inv_sum (wk ρ r)
+  := by simp [reassoc_inv_sum]
 
 theorem Eqv.reassoc_inv_sum_wk {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ ⟨A.coprod (B.coprod C), e⟩}

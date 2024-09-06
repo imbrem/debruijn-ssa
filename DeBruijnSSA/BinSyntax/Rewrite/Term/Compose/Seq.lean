@@ -81,14 +81,23 @@ theorem Eqv.pure_seq {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.wk_lift_seq {A B C : Ty α} {Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
   (a : Eqv φ ((A, ⊥)::Δ) (B, e)) (b : Eqv φ ((B, ⊥)::Δ) (C, e))
   : (a ;;' b).wk (ρ.lift (le_refl _)) = (a.wk (ρ.lift (le_refl _))) ;;' (b.wk (ρ.lift (le_refl _)))
-  -- TODO: obviously true, need InS lemma
-  := by rw [seq, seq, wk_let1]; sorry
+  := by rw [seq, seq, wk_let1]; simp only [wk1, wk_wk]; congr 2; ext k; cases k <;> rfl
 
 theorem Eqv.subst_lift_seq {A B C : Ty α} {Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
   (a : Eqv φ ((A, ⊥)::Δ) (B, e)) (b : Eqv φ ((B, ⊥)::Δ) (C, e))
   : (a ;;' b).subst (σ.lift (le_refl _))
-  = (a.subst (σ.lift (le_refl _))) ;;' (b.subst (σ.lift (le_refl _)))
-  := sorry
+  = (a.subst (σ.lift (le_refl _))) ;;' (b.subst (σ.lift (le_refl _))) := by
+  rw [seq, seq, subst_let1]
+  congr
+  induction σ using Quotient.inductionOn
+  induction b using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_wk, Ctx.InS.coe_wk1, ←
+    Term.subst_fromWk, Term.subst_subst]
+  congr
+  funext k; cases k <;> simp only [Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
+    Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ] <;> rfl
+
 theorem Eqv.wk0_seq {A B C : Ty α} {Γ : Ctx α ε}
   (a : Eqv φ ((A, ⊥)::Γ) (B, e)) (b : Eqv φ ((B, ⊥)::Γ) (C, e))
   : (a ;;' b).wk0 (head := ⟨head, ⊥⟩) = a.wk0 ;;' b.wk1 := by rw [seq, wk0_let1]; rfl
