@@ -147,12 +147,12 @@ theorem InS.initial {Γ : Ctx α ε} {L : LCtx α} (hi : Γ.IsInitial) (r r' : I
 
 theorem InS.initial' {Γ : Ctx α ε} (i : Term.InS φ Γ ⟨Ty.empty, ⊥⟩) (a b : InS φ Γ L) : a ≈ b
   := calc
-  a ≈ a.vwk0.vsubst i.subst0 := sorry
+  a = a.vwk0.vsubst i.subst0 := by simp
   _ ≈ let1 i a.vwk0 := (let1_beta _ _).symm
   _ ≈ let1 i b.vwk0
     := let1_body_congr _ (initial ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty, rfl⟩ _ _)
   _ ≈ b.vwk0.vsubst i.subst0 := let1_beta _ _
-  _ ≈ _ := sorry
+  _ = _ := by simp
 
 theorem TStep.vsubst {Γ Δ : Ctx α ε} {L} {r r' : Region φ} {σ : Term.Subst φ}
   (hσ : σ.Wf Γ Δ) : TStep Δ L r r' → Uniform TStep Γ L (r.vsubst σ) (r'.vsubst σ)
@@ -611,11 +611,27 @@ theorem InS.codiagonal {Γ : Ctx α ε} {L : LCtx α}
   {β : InS φ Γ (A::L)} {G : InS φ (⟨A, ⊥⟩::Γ) (A::A::L)}
   : cfg [A] β (Fin.elim1 (cfg [A] nil (Fin.elim1 G.vwk1)))
   ≈ cfg [A] β (Fin.elim1 (G.lsubst nil.lsubst0)) := by
-  sorry
+  rw [eqv_def]
+  convert Uniform.codiagonal β.prop G.prop
+  · simp only [Set.mem_setOf_eq, List.length_singleton, List.get_eq_getElem, List.singleton_append,
+    Fin.isValue, Fin.val_zero, List.getElem_cons_zero, List.append_eq, List.nil_append, coe_cfg,
+    cfg.injEq, heq_eq_eq, true_and]
+    funext i; cases i using Fin.elim1
+    simp only [Fin.isValue, Fin.val_zero, List.getElem_cons_zero, Fin.elim1_zero, coe_cfg,
+      List.singleton_append, Set.mem_setOf_eq, coe_nil, List.length_singleton, List.get_eq_getElem,
+      cfg.injEq, heq_eq_eq, true_and]
+    funext i; cases i using Fin.elim1
+    rfl
+  · simp only [Set.mem_setOf_eq, List.length_singleton, List.get_eq_getElem, List.singleton_append,
+    List.append_eq, List.nil_append, Fin.isValue, Fin.val_zero, List.getElem_cons_zero, coe_cfg,
+    cfg.injEq, heq_eq_eq, true_and]
+    funext i; cases i using Fin.elim1
+    rfl
 
 theorem InS.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
   {σ : Subst.InS φ Γ R (R' ++ L)} {β : InS φ Γ (R ++ L)}
   {G : (i : Fin R'.length) → InS φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
-  = cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst_append G).vlift)
-  := sorry
+  ≈ cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst_append G).vlift) := by
+  rw [eqv_def]
+  convert Uniform.dinaturality σ.prop β.prop (λi => (G i).prop)
