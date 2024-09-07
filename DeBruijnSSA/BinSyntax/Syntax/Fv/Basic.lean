@@ -660,7 +660,31 @@ theorem Region.lwk_eqOn_fls (r : Region φ) (ρ ρ' : ℕ → ℕ) (h : r.fls.Eq
     apply Set.subset_iUnion_of_subset
     rfl
 
--- theorem Region.fls_fli {r : Region φ} : r.fls ⊆ Set.Iio r.fli := by sorry
+@[simp]
+def Region.fli : Region φ → ℕ
+  | br ℓ _ => ℓ + 1
+  | case _ s t => Nat.max s.fli t.fli
+  | let1 _ t => t.fli
+  | let2 _ t => t.fli
+  | cfg β n f => Nat.max (β.fli - n) (Finset.sup Finset.univ (λi => (f i).fli - n))
+
+theorem Region.fls_fli {r : Region φ} : r.fls ⊆ Set.Iio r.fli := by induction r with
+  | br => simp
+  | cfg β n G hβ hG =>
+    simp only [fls, fli, Set.Iio_max, Set.Iio_finset_univ_sup]
+    apply Set.union_subset_union
+    intro ℓ hℓ
+    simp [Set.mem_liftnFv] at hℓ
+    convert hβ hℓ using 0
+    simp only [Set.mem_Iio]
+    omega
+    apply Set.iUnion_mono
+    intro i ℓ hℓ
+    simp [Set.mem_liftnFv] at hℓ
+    convert hG i hℓ using 0
+    simp only [gt_iff_lt, Set.mem_Iio]
+    omega
+  | _ => simp only [fls, fli, Set.Iio_max, Set.union_subset_union, *]
 
 end Definitions
 

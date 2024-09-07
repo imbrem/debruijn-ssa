@@ -1,4 +1,5 @@
 import DeBruijnSSA.BinSyntax.Typing.Region.VSubst
+import DeBruijnSSA.BinSyntax.Syntax.Fv.Subst
 
 namespace BinSyntax
 
@@ -499,7 +500,22 @@ theorem Region.Subst.InS.coe_vsubst {Γ Δ : Ctx α ε}
   : (σ.vsubst ρ : Region.Subst φ) = Region.vsubst ρ.val.lift ∘ (σ : Region.Subst φ)
   := rfl
 
--- TODO: vsubst_id, vsubst_comp, and other lore...
+@[simp]
+theorem Region.Subst.InS.get_vsubst {Γ Δ : Ctx α ε}
+  {ρ : Term.Subst.InS φ Γ Δ} {σ : Region.Subst.InS φ Δ L K} {i : Fin L.length}
+  : (σ.vsubst ρ).get i = (σ.get i).vsubst ρ.slift
+  := rfl
+
+@[simp]
+theorem Region.Subst.InS.vsubst_id {Γ : Ctx α ε} {L K : LCtx α} {σ : Region.Subst.InS φ Γ L K}
+  : σ.vsubst Term.Subst.InS.id = σ := by ext; simp
+
+theorem Region.Subst.InS.vsubst_comp {Γ Δ Ξ : Ctx α ε}
+  {ρ : Term.Subst.InS φ Γ Δ} {ρ' : Term.Subst.InS φ Δ Ξ} {σ : Region.Subst.InS φ Ξ L K}
+  : σ.vsubst (ρ.comp ρ') = (σ.vsubst ρ').vsubst ρ
+  := by ext; simp [Region.vsubst_vsubst, Term.Subst.lift_comp]
+
+-- TODO: vsubst_comp, and other lore...
 
 theorem Region.InS.vsubst_lsubst {Γ Δ : Ctx α ε}
   {σ : Region.Subst.InS φ Δ L K} {ρ : Term.Subst.InS φ Γ Δ}
@@ -611,11 +627,19 @@ theorem Region.Subst.InS.get_vlift {Γ : Ctx α ε} {L K} {σ : Subst.InS φ Γ 
 theorem Region.InS.extend_comp {Γ : Ctx α ε} {L K J R : LCtx α}
   {σ : Subst.InS φ Γ L K} {τ : Subst.InS φ Γ K J}
   : (τ.comp σ).extend (R := R) = τ.extend.comp σ.extend := by
-  ext;
+  ext i;
   simp only [Set.mem_setOf_eq, Subst.InS.coe_extend, Subst.InS.coe_comp, Subst.comp, Subst.extend]
   split
-  · simp [Subst.vlift]
-    sorry -- TODO: fl_eq lore...
+  case isTrue h =>
+    simp [Subst.vlift]
+    apply Region.lsubst_eqOn_fls
+    intro ℓ hℓ
+    simp only [Function.comp_apply, Subst.extend]
+    split; rfl
+    case isFalse c =>
+      apply False.elim
+      have hℓ : ℓ < K.length := (σ.get ⟨i, h⟩).prop.fls hℓ
+      exact c hℓ
   · simp [Subst.vlift]
 
 theorem Region.Wf.csubst {Γ : Ctx α ε} {L : LCtx α} {r : Region φ} {hr : Wf ((A, ⊥)::Γ) r L}

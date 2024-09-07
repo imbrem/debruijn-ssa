@@ -82,7 +82,14 @@ theorem Subst.InS.extend_congr {Γ : Ctx α ε} {L K R : LCtx α}
     simp only [List.get_eq_getElem, get, Set.mem_setOf_eq, extend, Subst.extend]
     split
     case isTrue h' =>
-      sorry
+      have h := InS.lwk_congr_right (ρ := ⟨_, LCtx.Wkn.id_right_append (added := R)⟩) (h ⟨i, h'⟩)
+      convert h using 2
+      rw [List.getElem_append_left]
+      rfl
+      rw [List.getElem_append_left]
+      rfl
+      exact InS.hext (by rw [List.getElem_append_left]; rfl) rfl (by simp)
+      exact InS.hext (by rw [List.getElem_append_left]; rfl) rfl (by simp)
     case _ => rfl
 
 theorem Subst.InS.extend_in_congr {Γ : Ctx α ε} {L K R : LCtx α}
@@ -91,7 +98,13 @@ theorem Subst.InS.extend_in_congr {Γ : Ctx α ε} {L K R : LCtx α}
     simp only [List.get_eq_getElem, get, Set.mem_setOf_eq, extend_in, Subst.extend]
     split
     case isTrue h' =>
-      sorry
+      convert h ⟨i, h'⟩ using 2
+      rw [List.getElem_append_left]
+      rfl
+      rw [List.getElem_append_left]
+      rfl
+      exact InS.hext (by rw [List.getElem_append_left]; rfl) rfl (by simp)
+      exact InS.hext (by rw [List.getElem_append_left]; rfl) rfl (by simp)
     case _ => rfl
 
 open Subst.InS
@@ -381,9 +394,15 @@ theorem Eqv.lsubst_cfg {Γ : Ctx α ε} {L : LCtx α}
       Subst.Eqv.liftn_append_quot, Subst.Eqv.vlift_quot, Quotient.finChoice_eq, Eqv.cfg_inner_quot]
     rfl
 
+theorem Subst.InS.vsubst_congr {Γ Δ : Ctx α ε} {L K : LCtx α}
+  {ρ ρ' : Term.Subst.InS φ Γ Δ} {σ σ' : Subst.InS φ Δ L K}
+  (hρ : ρ ≈ ρ') (hσ : σ ≈ σ') : σ.vsubst ρ ≈ σ'.vsubst ρ'
+  := λi => Region.InS.vsubst_congr (Term.Subst.InS.slift_congr hρ) (hσ i)
+
 def Subst.Eqv.vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
   (ρ : Term.Subst.Eqv φ Γ Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K
-  := Quotient.liftOn₂ ρ σ (λρ σ => ⟦σ.vsubst ρ⟧) sorry
+  := Quotient.liftOn₂ ρ σ (λρ σ => ⟦σ.vsubst ρ⟧)
+    (λ_ _ _ _ hρ hσ => Quotient.sound <| Subst.InS.vsubst_congr hρ hσ)
 
 @[simp]
 theorem Subst.Eqv.vsubst_quot {Γ Δ : Ctx α ε} {L K : LCtx α}
@@ -400,40 +419,73 @@ theorem Eqv.vsubst_lsubst {Γ Δ : Ctx α ε}
   induction r using Quotient.inductionOn
   simp [InS.vsubst_lsubst]
 
+theorem InS.cfgSubstCongr {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G G' : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} (hG : G ≈ G')
+  : cfgSubst R G ≈ cfgSubst R G' := λi => by
+  simp only [List.get_eq_getElem, get_cfgSubst]
+  apply InS.cfg_congr
+  rfl
+  intro i
+  apply InS.vwk_congr_right
+  exact (hG i)
+
 def Eqv.cfgSubstInner {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α)
   (G : Quotient (α := ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)) inferInstance)
   : Subst.Eqv φ Γ (R ++ L) L
-  := Quotient.liftOn G (λG => ⟦InS.cfgSubst R G⟧) sorry
+  := Quotient.liftOn G (λG => ⟦InS.cfgSubst R G⟧) (λ_ _ h => Quotient.sound <| InS.cfgSubstCongr h)
 
 def Eqv.cfgSubst {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α) (G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   : Subst.Eqv φ Γ (R ++ L) L
   := cfgSubstInner R (Quotient.finChoice G)
 
+@[simp]
 theorem Eqv.cfgSubst_quot {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfgSubst R (λi => ⟦G i⟧) = ⟦InS.cfgSubst R G⟧ := sorry
+  : cfgSubst R (λi => ⟦G i⟧) = ⟦InS.cfgSubst R G⟧ := by
+  simp [cfgSubst, Quotient.finChoice_eq, cfgSubstInner]
+
+theorem InS.cfgSubstCongr' {Γ : Ctx α ε} {L : LCtx α}
+  {R : LCtx α} {G G' : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} (hG : G ≈ G')
+  : cfgSubst' R G ≈ cfgSubst' R G' := λi => by
+  simp only [List.get_eq_getElem, get_cfgSubst']
+  split
+  · apply InS.cfg_congr
+    rfl
+    intro i
+    apply InS.vwk_congr_right
+    exact (hG i)
+  · rfl
 
 def Eqv.cfgSubstInner' {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α)
   (G : Quotient (α := ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)) inferInstance)
   : Subst.Eqv φ Γ (R ++ L) L
-  := Quotient.liftOn G (λG => ⟦InS.cfgSubst' R G⟧) sorry
+  := Quotient.liftOn G (λG => ⟦InS.cfgSubst' R G⟧)
+    (λ_ _ h => Quotient.sound <| InS.cfgSubstCongr' h)
 
 def Eqv.cfgSubst' {Γ : Ctx α ε} {L : LCtx α}
   (R : LCtx α) (G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
   : Subst.Eqv φ Γ (R ++ L) L
   := cfgSubstInner' R (Quotient.finChoice G)
 
+@[simp]
 theorem Eqv.cfgSubst'_quot {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfgSubst' R (λi => ⟦G i⟧) = ⟦InS.cfgSubst' R G⟧ := sorry
+  : cfgSubst' R (λi => ⟦G i⟧) = ⟦InS.cfgSubst' R G⟧ := by
+  simp [cfgSubst', Quotient.finChoice_eq, cfgSubstInner']
 
 theorem Eqv.cfgSubst_get {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} {i : Fin (R ++ L).length}
   : (cfgSubst R G).get i = cfg R (br i (Term.Eqv.var 0 Ctx.Var.shead) (by simp)) (λi => (G i).vwk1)
-  := sorry
+  := by
+  induction G using Eqv.choiceInduction
+  rw [cfgSubst_quot]
+  simp only [List.get_eq_getElem, Subst.Eqv.get_quot, InS.get_cfgSubst, Term.Eqv.var, br_quot, vwk1,
+    vwk_quot]
+  rw [<-cfg_quot]
+  rfl
 
 theorem Eqv.cfgSubst'_get {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} {i : Fin (R ++ L).length}
@@ -449,7 +501,13 @@ theorem Eqv.cfgSubst'_get {Γ : Ctx α ε} {L : LCtx α}
           have hi : i < R.length + L.length := List.length_append _ _ ▸ i.prop;
           omega
         )
-  := sorry
+  := by
+  induction G using Eqv.choiceInduction
+  rw [cfgSubst'_quot]
+  simp only [List.get_eq_getElem, Subst.Eqv.get_quot, InS.get_cfgSubst', vwk1_quot]
+  split
+  · rw [<-cfg_quot]; rfl
+  · rfl
 
 theorem Eqv.cfgSubst'_get_ge  {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G : ∀i : Fin R.length, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} {i : Fin (R ++ L).length}
@@ -467,7 +525,11 @@ theorem Eqv.cfgSubst'_get_ge  {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.vlift_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
   (G : ∀i : Fin R.length, Eqv φ ((R.get i, ⊥)::Γ) (R ++ L))
   : (Eqv.cfgSubst R G).vlift = Eqv.cfgSubst R (λi => (G i).vwk1 (inserted := inserted)) := by
-  sorry
+  induction G using Eqv.choiceInduction
+  rw [cfgSubst_quot]
+  simp only [Subst.Eqv.vlift_quot, InS.vlift_cfgSubst]
+  rw [<-cfgSubst_quot]
+  rfl
 
 def Eqv.ucfg
   (R : LCtx α)

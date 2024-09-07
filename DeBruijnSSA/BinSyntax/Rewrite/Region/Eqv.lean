@@ -1171,10 +1171,10 @@ theorem Eqv.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
 
 -- TODO: factor out to discretion as general helper...
 
-theorem Eqv.choiceInduction {ι : Type _} {Γs : ι → Ctx α ε} {L : LCtx α}
-  (motive : ((i : ι) → Eqv φ (Γs i) L) → Prop)
-  (choice : ∀G : (i : ι) → InS φ (Γs i) L, motive (λi => ⟦G i⟧))
-  : ∀G : (i : ι) → Eqv φ (Γs i) L, motive G
+theorem Eqv.choiceInduction {ι : Type _} {Γs : ι → Ctx α ε} {Ls : ι → LCtx α}
+  (motive : ((i : ι) → Eqv φ (Γs i) (Ls i)) → Prop)
+  (choice : ∀G : (i : ι) → InS φ (Γs i) (Ls i), motive (λi => ⟦G i⟧))
+  : ∀G : (i : ι) → Eqv φ (Γs i) (Ls i), motive G
   := λG => by
   generalize hG : Quotient.choice G = G'
   induction G' using Quotient.inductionOn with

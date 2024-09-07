@@ -139,6 +139,10 @@ theorem InS.ext_iff' {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   : r = r' ↔ (r : Region φ) = r'
   := ⟨congrArg _, λh => InS.ext h⟩
 
+theorem InS.hext {Γ Γ' : Ctx α ε} {L L' : LCtx α} {r : InS φ Γ L} {r' : InS φ Γ' L'}
+  (hΓ : Γ = Γ') (hL : L = L') (h : (r : Region φ) = r') : HEq r r'
+  := by cases hΓ; cases hL; simp [ext h]
+
 @[simp]
 theorem InS.cast_inj {Γ Γ' : Ctx α ε} {L L' : LCtx α} {r r' : InS φ Γ L}
   {hΓ : Γ = Γ'} {hL : L = L'}

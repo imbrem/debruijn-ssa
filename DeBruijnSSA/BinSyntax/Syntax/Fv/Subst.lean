@@ -4,6 +4,7 @@ import Discretion.Wk.Multiset
 import Discretion.Wk.Multiset
 
 import DeBruijnSSA.BinSyntax.Syntax.Subst.Term
+import DeBruijnSSA.BinSyntax.Syntax.Subst.Region
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 
@@ -220,13 +221,41 @@ theorem Region.vsubst_eqOn_fvs {r : Region φ} {σ σ' : Term.Subst φ} (h : r.f
 theorem Region.vsubst_eqOn_fvi {r : Region φ} {σ σ' : Term.Subst φ} (h : (Set.Iio r.fvi).EqOn σ σ')
   : r.vsubst σ = r.vsubst σ' := r.vsubst_eqOn_fvs (h.mono r.fvs_fvi)
 
--- theorem Region.lsubst_eqOn_fls {r : Region φ} {σ σ' : Subst φ} (h : r.fls.EqOn σ σ')
---   : r.lsubst σ = r.lsubst σ' := by sorry
+theorem Region.lsubst_eqOn_fls {r : Region φ} {σ σ' : Subst φ} (h : r.fls.EqOn σ σ')
+  : r.lsubst σ = r.lsubst σ' := by induction r generalizing σ σ' with
+  | br ℓ a => simp [h rfl]
+  | let1 _ _ I => simp [I (σ := σ.vlift) (σ' := σ'.vlift) (λx hx => by simp [Subst.vlift, h hx])]
+  | let2 _ _ I => simp [
+    I (σ := σ.vliftn 2) (σ' := σ'.vliftn 2) (λx hx => by simp [Subst.vliftn_two, Subst.vlift, h hx])
+  ]
+  | case _ _ _ Il Ir => simp [
+    Il (σ := σ.vlift) (σ' := σ'.vlift) (λx hx => by simp [Subst.vlift, h (Or.inl hx)]),
+    Ir (σ := σ.vlift) (σ' := σ'.vlift) (λx hx => by simp [Subst.vlift, h (Or.inr hx)])
+  ]
+  | cfg _ n _ Iβ IG =>
+    simp only [lsubst, cfg.injEq, heq_eq_eq, true_and]
+    constructor
+    · rw [Iβ]
+      intro x hx
+      simp only [Subst.vlift, Function.comp_apply, Subst.liftn]
+      split; rfl
+      rw [h]
+      apply Or.inl
+      rw [Set.mem_liftnFv]
+      convert hx; omega
+    · funext i
+      rw [IG]
+      intro x hx
+      simp only [Subst.vlift, Function.comp_apply, Subst.liftn]
+      split; rfl
+      rw [h]
+      apply Or.inr
+      simp only [Set.mem_iUnion]
+      exact ⟨i, by rw [Set.mem_liftnFv]; convert hx; omega⟩
 
--- TODO: {Terminator, Region}.Subst.{fv, fl}
-
--- TODO: fv_subst, fv_vsubst
-
--- TODO: fl_lsubst
+theorem Region.lsubst_eqOn_fli {r : Region φ} {σ σ' : Subst φ} (h : (Set.Iio r.fli).EqOn σ σ')
+  : r.lsubst σ = r.lsubst σ' := r.lsubst_eqOn_fls (h.mono r.fls_fli)
 
 end Subst
+
+end BinSyntax
