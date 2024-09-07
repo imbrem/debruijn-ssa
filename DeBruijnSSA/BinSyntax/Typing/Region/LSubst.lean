@@ -519,6 +519,11 @@ theorem Region.InS.get_toSubst {Γ : Ctx α ε} {L K : LCtx α} {ρ : L.InS K} {
   := rfl
 
 @[simp]
+theorem Region.InS.get_comp {Γ : Ctx α ε}
+  {σ : Region.Subst.InS φ Γ K J} {τ : Region.Subst.InS φ Γ L K}
+  : (σ.comp τ).get i = (τ.get i).lsubst σ.vlift := rfl
+
+@[simp]
 theorem Region.InS.lsubst_br {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
   {ℓ : ℕ} {a : Term.InS φ Γ ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
   : (br ℓ a hℓ).lsubst σ = ((σ.get ⟨ℓ, hℓ.length⟩).vwk_id (by simp [hℓ.getElem])).vsubst a.subst0

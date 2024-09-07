@@ -37,8 +37,10 @@ theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
         λi => i + J.length,
         λi h => ⟨by simp only [List.length_append]; omega, by
           rw [List.getElem_append_right]; simp
-          sorry
-          sorry
+          simp only [add_lt_iff_neg_right, not_lt_zero', not_false_eq_true]
+          reduce
+          simp only [Nat.add_eq, Nat.sub_eq, add_tsub_cancel_right, Nat.succ_eq_add_one, Nat.le_eq]
+          omega
         ⟩
       ⟩ (
       h ⟨
@@ -63,6 +65,24 @@ theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
     congr 3
     rw [List.getElem_append_right _ _ h']
     apply heq_prop
+
+theorem Subst.InS.extend_congr {Γ : Ctx α ε} {L K R : LCtx α}
+  {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.extend (R := R) ≈ τ.extend
+  := λi => by
+    simp only [List.get_eq_getElem, get, Set.mem_setOf_eq, extend, Subst.extend]
+    split
+    case isTrue h' =>
+      sorry
+    case _ => rfl
+
+theorem Subst.InS.extend_in_congr {Γ : Ctx α ε} {L K R : LCtx α}
+  {σ τ : Subst.InS φ Γ L (K ++ R)} (h : σ ≈ τ) : σ.extend_in ≈ τ.extend_in
+  := λi => by
+    simp only [List.get_eq_getElem, get, Set.mem_setOf_eq, extend_in, Subst.extend]
+    split
+    case isTrue h' =>
+      sorry
+    case _ => rfl
 
 open Subst.InS
 
@@ -94,6 +114,10 @@ theorem InS.lsubst_congr_right {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.InS 
 theorem InS.lsubst_congr {Γ : Ctx α ε} {L K : LCtx α} {σ σ' : Subst.InS φ Γ L K}
   {r r' : InS φ Γ L} (hσ : σ ≈ σ') (hr : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ'
   := Setoid.trans (lsubst_congr_subst hσ r) (lsubst_congr_right σ' hr)
+
+theorem Subst.InS.comp_congr {σ σ' : Subst.InS φ Γ K J} {τ τ' : Subst.InS φ Γ L K}
+  (hσ : σ ≈ σ') (hτ : τ ≈ τ') : σ.comp τ ≈ σ'.comp τ'
+  := λi => InS.lsubst_congr (vlift_congr hσ) (hτ i)
 
 abbrev Subst.Eqv (φ) [EffInstSet φ (Ty α) ε] (Γ : Ctx α ε) (L K : LCtx α)
   := Quotient (α := Subst.InS φ Γ L K) inferInstance
@@ -127,13 +151,13 @@ def Eqv.lsubst {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K) (r : 
   : Eqv φ Γ K
   := Quotient.liftOn₂ σ r
     (λσ r => (r.lsubst σ).q)
-    sorry
+    (λ_ _ _ _ hσ hr => Quotient.sound (InS.lsubst_congr hσ hr))
 
 def Subst.Eqv.vlift {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K)
   : Subst.Eqv φ (head::Γ) L K
   := Quotient.liftOn σ
     (λσ => ⟦σ.vlift⟧)
-    sorry
+    (λ_ _ h => Quotient.sound (Subst.InS.vlift_congr h))
 
 @[simp]
 theorem Subst.Eqv.vlift_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
@@ -143,7 +167,7 @@ def Subst.Eqv.vliftn₂ {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L
   : Subst.Eqv φ (left::right::Γ) L K
   := Quotient.liftOn σ
     (λσ => ⟦σ.vliftn₂⟧)
-    sorry
+    (λ_ _ h => Quotient.sound (Subst.InS.vliftn₂_congr h))
 
 @[simp]
 theorem Subst.Eqv.vliftn₂_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
@@ -155,7 +179,7 @@ theorem Subst.Eqv.vliftn₂_eq_vlift_vlift {Γ : Ctx α ε} {L K : LCtx α} (σ 
   simp [Subst.InS.vliftn₂_eq_vlift_vlift]
 
 def Subst.Eqv.extend {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L K) : Eqv φ Γ (L ++ R) (K ++ R)
-  := Quotient.liftOn σ (λσ => ⟦σ.extend⟧) sorry
+  := Quotient.liftOn σ (λσ => ⟦σ.extend⟧) (λ_ _ h => Quotient.sound <| Subst.InS.extend_congr h)
 
 @[simp]
 theorem Subst.Eqv.extend_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L K}
@@ -163,7 +187,8 @@ theorem Subst.Eqv.extend_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS
 
 def Subst.Eqv.extend_in {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L (K ++ R))
   : Eqv φ Γ (L ++ R) (K ++ R)
-  := Quotient.liftOn σ (λσ => ⟦σ.extend_in⟧) sorry
+  := Quotient.liftOn σ (λσ => ⟦σ.extend_in⟧)
+    (λ_ _ h => Quotient.sound <| Subst.InS.extend_in_congr h)
 
 @[simp]
 theorem Subst.Eqv.extend_in_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L (K ++ R)}
