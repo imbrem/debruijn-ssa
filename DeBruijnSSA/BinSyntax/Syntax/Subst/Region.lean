@@ -398,6 +398,20 @@ theorem vwk1_lsubst (σ) (t : Region φ)
   : (t.lsubst σ).vwk1 = t.vwk1.lsubst (vwk2 ∘ σ)
   := by rw [vwk1, vwk_lsubst, vwk2, Nat.liftnWk_two]; rfl
 
+theorem vwk1_lsubst_vlift (σ : Subst φ) (t : Region φ)
+  : (t.lsubst σ.vlift).vwk1 = t.vwk1.lsubst σ.vlift.vlift
+  := by simp only [Subst.vlift, vwk1_lsubst, ←Function.comp.assoc, vwk2_comp_vwk1]
+
+theorem vwk2_lsubst_vlift₂ (σ : Subst φ) (t : Region φ)
+  : (t.lsubst σ.vlift.vlift).vwk2 = t.vwk2.lsubst σ.vlift.vlift.vlift
+  := by
+  simp only [Subst.vlift, vwk2, vwk_lsubst, vwk1, <-vwk_comp, <-Function.comp.assoc]
+  congr
+  apply congrFun
+  apply congrArg
+  apply congrArg
+  funext k; cases k using Nat.cases3 <;> rfl
+
 theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
   : (σ.comp τ).vliftn n = (σ.vliftn n).comp (τ.vliftn n)
   := by
@@ -574,6 +588,18 @@ theorem vsubst_lift_lift_comp_vwk1 {ρ : Term.Subst φ}
 
 theorem vsubst_lift₂_vwk1 {ρ : Term.Subst φ} {r : Region φ}
   : r.vwk1.vsubst ρ.lift.lift = (r.vsubst ρ.lift).vwk1 := congrFun vsubst_lift_lift_comp_vwk1 r
+
+theorem vsubst_lift₃_vwk2 {ρ : Term.Subst φ} {r : Region φ}
+  : r.vwk2.vsubst ρ.lift.lift.lift = (r.vsubst ρ.lift.lift).vwk2 := by
+  simp only [vwk2, <-vsubst_fromWk, vsubst_vsubst]
+  congr
+  funext k; cases k using Nat.cases2 with
+  | rest k =>
+    simp_arith only [
+      Term.Subst.comp, Term.Subst.lift, Term.subst, Nat.liftnWk, Term.subst_fromWk, Term.wk_wk
+    ]
+    rfl
+  | _ => rfl
 
 theorem vsubst_lift_lift_comp_vlift {ρ : Term.Subst φ} {σ : Subst φ}
   : (vsubst ρ.lift.lift ∘ σ.vlift) = Subst.vlift (vsubst ρ.lift ∘ σ) := by

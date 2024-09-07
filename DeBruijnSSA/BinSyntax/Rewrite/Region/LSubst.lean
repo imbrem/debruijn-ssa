@@ -549,36 +549,36 @@ def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
   : Subst.Eqv φ Γ (L ++ R) (K ++ R)
   := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst_append G⟧) sorry
 
-theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
-  {σ : Subst.Eqv φ Γ R (R' ++ L)} {β : Eqv φ Γ (R ++ L)}
-  {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
-  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
-  := by
-  induction σ using Quotient.inductionOn
-  induction β using Quotient.inductionOn
-  sorry
+-- theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
+--   {σ : Subst.Eqv φ Γ R (R' ++ L)} {β : Eqv φ Γ (R ++ L)}
+--   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
+--   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
+--   = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
+--   := by
+--   induction σ using Quotient.inductionOn
+--   induction β using Quotient.inductionOn
+--   sorry
 
-theorem Eqv.dinaturality_from_one {Γ : Ctx α ε} {R L : LCtx α}
-  {σ : Subst.Eqv φ Γ R (B::L)} {β : Eqv φ Γ (R ++ L)}
-  {G : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ L)}
-  : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
-  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append (L := [B]) (Fin.elim1 G)).vlift)
-  := dinaturality (Γ := Γ) (R := R) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+-- theorem Eqv.dinaturality_from_one {Γ : Ctx α ε} {R L : LCtx α}
+--   {σ : Subst.Eqv φ Γ R (B::L)} {β : Eqv φ Γ (R ++ L)}
+--   {G : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ L)}
+--   : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
+--   = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append (L := [B]) (Fin.elim1 G)).vlift)
+--   := dinaturality (Γ := Γ) (R := R) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
 
-theorem Eqv.dinaturality_to_one {Γ : Ctx α ε} {R' L : LCtx α}
-  {σ : Subst.Eqv φ Γ [A] (R' ++ L)} {β : Eqv φ Γ (A::L)}
-  {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (A::L)}
-  : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
-  = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
-  := dinaturality (Γ := Γ) (R := [A]) (R' := R') (L := L) (σ := σ) (β := β) (G := G)
+-- theorem Eqv.dinaturality_to_one {Γ : Ctx α ε} {R' L : LCtx α}
+--   {σ : Subst.Eqv φ Γ [A] (R' ++ L)} {β : Eqv φ Γ (A::L)}
+--   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (A::L)}
+--   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
+--   = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
+--   := dinaturality (Γ := Γ) (R := [A]) (R' := R') (L := L) (σ := σ) (β := β) (G := G)
 
-theorem Eqv.dinaturality_one {Γ : Ctx α ε} {L : LCtx α}
-  {σ : Subst.Eqv φ Γ [A] ([B] ++ L)} {β : Eqv φ Γ (A::L)}
-  {G : Eqv φ (⟨B, ⊥⟩::Γ) ([A] ++ L)}
-  : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
-  = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append (Fin.elim1 G)).vlift)
-  := dinaturality (Γ := Γ) (R := [A]) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+-- theorem Eqv.dinaturality_one {Γ : Ctx α ε} {L : LCtx α}
+--   {σ : Subst.Eqv φ Γ [A] ([B] ++ L)} {β : Eqv φ Γ (A::L)}
+--   {G : Eqv φ (⟨B, ⊥⟩::Γ) ([A] ++ L)}
+--   : cfg [B] (β.lsubst σ.extend_in) (Fin.elim1 $ G.lsubst σ.extend_in.vlift)
+--   = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append (Fin.elim1 G)).vlift)
+--   := dinaturality (Γ := Γ) (R := [A]) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
 
 def Subst.InS.initial {Γ : Ctx α ε} {L : LCtx α}
   : Subst.InS φ Γ [] L := ⟨Subst.id, λi => i.elim0⟩

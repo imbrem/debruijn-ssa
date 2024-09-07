@@ -179,10 +179,6 @@ theorem InS.vsubst_congr_right {Γ Δ : Ctx α ε} {L : LCtx α}
   (σ : Term.Subst.InS φ Γ Δ) {r r' : InS φ Δ L} (hr : r ≈ r') : r.vsubst σ ≈ r'.vsubst σ
   := Uniform.vsubst_flatten TStep.vsubst σ.prop hr
 
--- theorem InS.vsubst_congr {Γ Δ : Ctx α ε} {L r r' : InS φ Δ L}
---   {σ σ' : Term.Subst.InS φ Γ Δ} (hσ : σ ≈ σ') (hr : r ≈ r')
---   : r.vsubst σ ≈ r'.vsubst σ' := sorry
-
 open Term.InS
 
 theorem InS.let1_op {Γ : Ctx α ε} {L : LCtx α}
@@ -635,10 +631,10 @@ theorem InS.codiagonal {Γ : Ctx α ε} {L : LCtx α}
     funext i; cases i using Fin.elim1
     rfl
 
-theorem InS.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
-  {σ : Subst.InS φ Γ R (R' ++ L)} {β : InS φ Γ (R ++ L)}
-  {G : (i : Fin R'.length) → InS φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
-  ≈ cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst_append G).vlift) := by
-  rw [eqv_def]
-  convert Uniform.dinaturality σ.prop β.prop (λi => (G i).prop)
+-- theorem InS.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
+--   {σ : Subst.InS φ Γ R (R' ++ L)} {β : InS φ Γ (R ++ L)}
+--   {G : (i : Fin R'.length) → InS φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
+--   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
+--   ≈ cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst_append G).vlift) := by
+--   rw [eqv_def]
+--   convert Uniform.dinaturality σ.prop β.prop (λi => (G i).prop)

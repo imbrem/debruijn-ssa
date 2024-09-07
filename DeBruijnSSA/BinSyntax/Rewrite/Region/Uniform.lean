@@ -57,17 +57,17 @@ inductive Uniform (P : Ctx α ε → LCtx α → Region φ → Region φ → Pro
       → β.Wf Γ (R ++ L)
       → (∀i : Fin n, (G i).Wf ((R.get (i.cast hR.symm), ⊥)::Γ) (R ++ L)) →
       Uniform P Γ L (cfg β n G) (ucfg' n β G)
-  | dinaturality {Γ : Ctx α ε} {L R R' : LCtx α} {β : Region φ}
-    {G : Fin R'.length → Region φ} {σ : Subst φ}
-    : σ.Wf Γ R (R' ++ L)
-      → β.Wf Γ (R ++ L)
-      → (∀i : Fin R'.length, (G i).Wf ((R'.get i, ⊥)::Γ) (R ++ L))
-      → Uniform P Γ L
-        (cfg
-          (β.lsubst (σ.extend R.length R'.length)) R'.length
-          (λi => (G i).lsubst (σ.extend R.length R'.length).vlift))
-        (cfg β R.length
-          (λi => (σ i).lsubst (Subst.fromFCFG R.length G).vlift))
+  -- | dinaturality {Γ : Ctx α ε} {L R R' : LCtx α} {β : Region φ}
+  --   {G : Fin R'.length → Region φ} {σ : Subst φ}
+  --   : σ.Wf Γ R (R' ++ L)
+  --     → β.Wf Γ (R ++ L)
+  --     → (∀i : Fin R'.length, (G i).Wf ((R'.get i, ⊥)::Γ) (R ++ L))
+  --     → Uniform P Γ L
+  --       (cfg
+  --         (β.lsubst (σ.extend R.length R'.length)) R'.length
+  --         (λi => (G i).lsubst (σ.extend R.length R'.length).vlift))
+  --       (cfg β R.length
+  --         (λi => (σ i).lsubst (Subst.fromFCFG R.length G).vlift))
   | refl : r.Wf Γ L → Uniform P Γ L r r
   | rel : P Γ L x y → Uniform P Γ L x y
   | symm : Uniform P Γ L x y → Uniform P Γ L y x
@@ -153,9 +153,9 @@ theorem Uniform.wf {P : Ctx α ε → LCtx α → Region φ → Region φ → Pr
       intro i; cases i using Fin.elim1;
       apply dG.lsubst Wf.nil.lsubst0
   | ucfg hR dβ dG => exact ⟨Wf.cfg _ _ hR dβ dG, Wf.ucfg' _ _ hR dβ dG⟩
-  | dinaturality hσ dβ dG => exact ⟨
-      Wf.cfg _ _ rfl (dβ.lsubst hσ.extend_in) (λi => (dG i).lsubst hσ.extend_in.vlift),
-      Wf.cfg _ _ rfl dβ (λi => (hσ i).lsubst (Subst.Wf.fromFCFG_append dG).vlift)⟩
+  -- | dinaturality hσ dβ dG => exact ⟨
+  --     Wf.cfg _ _ rfl (dβ.lsubst hσ.extend_in) (λi => (dG i).lsubst hσ.extend_in.vlift),
+  --     Wf.cfg _ _ rfl dβ (λi => (hσ i).lsubst (Subst.Wf.fromFCFG_append dG).vlift)⟩
   | refl h => exact ⟨h, h⟩
   | rel h => exact toWf h
   | symm _ I => exact I.symm
@@ -250,13 +250,13 @@ theorem Uniform.vwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
   | ucfg hR dβ dG =>
     simp only [vwk_cfg, vwk_ucfg']
     exact ucfg hR (dβ.vwk hρ) (λi => (dG i).vwk hρ.slift)
-  | dinaturality hσ dβ dG =>
-    rename_i L R R' β G σ
-    rw [vwk_dinaturality_left, vwk_dinaturality_right]
-    exact dinaturality
-      (σ := (Region.vwk (Nat.liftWk ρ)) ∘ σ)
-      (λi => (hσ i).vwk hρ.slift) (dβ.vwk hρ)
-      (λi => (dG i).vwk hρ.slift)
+  -- | dinaturality hσ dβ dG =>
+  --   rename_i L R R' β G σ
+  --   rw [vwk_dinaturality_left, vwk_dinaturality_right]
+  --   exact dinaturality
+  --     (σ := (Region.vwk (Nat.liftWk ρ)) ∘ σ)
+  --     (λi => (hσ i).vwk hρ.slift) (dβ.vwk hρ)
+  --     (λi => (dG i).vwk hρ.slift)
 
 theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLwk : ∀{Γ L K ρ r r'}, L.Wkn K ρ → P Γ L r r' → Q Γ K (r.lwk ρ) (r'.lwk ρ))
@@ -308,8 +308,15 @@ theorem Uniform.lwk {P Q : Ctx α ε → LCtx α → Region φ → Region φ →
   | ucfg hR dβ dG =>
     simp only [lwk_cfg, lwk_ucfg']
     exact ucfg hR (dβ.lwk (hR ▸ hρ.liftn_append)) (λi => (dG i).lwk (hR ▸ hρ.liftn_append))
-  | dinaturality hσ hβ hG =>
-    sorry
+  -- | dinaturality hσ hβ hG =>
+  --   rename_i L R R' β G σ
+  --   convert dinaturality
+  --     (σ := (Region.lwk (Nat.liftnWk R'.length ρ)) ∘ σ)
+  --     (λi => sorry)
+  --     (hβ.lwk (hρ.liftn_append _))
+  --     (λi => (hG i).lwk (hρ.liftn_append _)) using 1
+  --   · sorry
+  --   · sorry
 
 theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Q Γ L (r.vsubst σ) (r'.vsubst σ))
@@ -341,13 +348,22 @@ theorem Uniform.vsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
       exact Ih
   | codiagonal hβ hG =>
     convert (codiagonal (hβ.vsubst hσ) (hG.vsubst hσ.slift)) using 1
-    · sorry
-    · sorry
+    · simp only [BinSyntax.Region.vsubst, cfg.injEq, heq_eq_eq, true_and]
+      funext i; cases i using Fin.elim1
+      simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, nil, ret, Fin.isValue,
+        Fin.elim1_zero, cfg.injEq, heq_eq_eq, true_and]
+      funext i; cases i using Fin.elim1
+      simp [vsubst_lift₂_vwk1]
+    · simp only [BinSyntax.Region.vsubst, cfg.injEq, heq_eq_eq, true_and]
+      funext i; cases i using Fin.elim1
+      simp only [Fin.isValue, Fin.elim1_zero, vsubst_lsubst]
+      congr
+      funext i; cases i <;> rfl
   | ucfg hR dβ dG =>
     simp only [vsubst_cfg, vsubst_ucfg']
     exact ucfg hR (dβ.vsubst hσ) (λi => (dG i).vsubst hσ.slift)
-  | dinaturality hσ hβ hG =>
-    sorry
+  -- | dinaturality hσ hβ hG =>
+  --   sorry
 
 theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
   (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Q Γ K (r.lsubst σ) (r'.lsubst σ))
@@ -384,14 +400,33 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
       exact Ih
   | codiagonal hβ hG =>
     convert codiagonal (hβ.lsubst hσ.slift) (hG.lsubst hσ.vlift.slift.slift) using 1
-    · sorry
-    · sorry
+    · simp only [BinSyntax.Region.lsubst, Subst.liftn_one, cfg.injEq, heq_eq_eq, true_and]
+      funext i
+      cases i using Fin.elim1
+      simp [nil, ret]
+      funext i
+      cases i using Fin.elim1
+      simp only [Subst.liftn_one, ← Subst.vlift_lift_comm, Fin.isValue, Fin.elim1_zero, vwk1_lsubst]
+      simp [Subst.vlift, <-Function.comp.assoc, vwk2_comp_vwk1]
+    · simp only [BinSyntax.Region.lsubst, Subst.liftn_one, cfg.injEq, heq_eq_eq, true_and]
+      funext i
+      cases i using Fin.elim1
+      simp only [Fin.isValue, Fin.elim1_zero, lsubst_lsubst]
+      congr
+      funext k; cases k using Nat.cases2 with
+      | rest k =>
+        simp only [Subst.comp, BinSyntax.Region.lsubst, Subst.vlift, Function.comp_apply,
+          Subst.lift, vsubst0_var0_vwk1, lwk_lwk]
+        simp only [vwk1_lwk]
+        simp only [← lsubst_fromLwk, lsubst_lsubst]
+        rfl
+      | _ => rfl
   | ucfg hR dβ dG =>
     simp only [lsubst_cfg, lsubst_ucfg']
     exact ucfg hR (dβ.lsubst (hσ.liftn_append' hR.symm))
       (λi => (dG i).lsubst (hσ.liftn_append' hR.symm).vlift)
-  | dinaturality hσ hβ hG =>
-    sorry
+  -- | dinaturality hσ hβ hG =>
+  --   sorry
 
 theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))

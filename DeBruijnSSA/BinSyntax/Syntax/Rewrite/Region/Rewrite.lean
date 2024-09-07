@@ -29,7 +29,7 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let1 (Term.let1 a b) r) (let1 a $ let1 b $ r.vwk1)
   | let1_pair (a b r) :
     RewriteD (let1 (pair a b) r)
-    (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
+    (let1 a $ let1 b.wk0 $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
   | let1_let2 (a b r) :
     RewriteD (let1 (Term.let2 a b) r) (let2 a $ let1 b $ r.vwk1.vwk1)
   | let1_inl (e r) :
@@ -397,7 +397,7 @@ def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
     simp only [
       Region.vwk2, Region.vwk, wk, Nat.liftWk,
       vwk_liftWk₂_vwk1, wk_liftWk_wk_succ, vwk_liftnWk₂_liftWk_vwk2, vwk_liftnWk₂_vwk1,
-      wk_liftnWk_wk_add, Nat.liftWk_comm_liftnWk_apply, Function.comp_apply]
+      wk_liftnWk_wk_add, Nat.liftWk_comm_liftnWk_apply, Function.comp_apply, Term.wk0]
     constructor
 
 theorem Rewrite.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.vwk ρ) (r'.vwk ρ)
@@ -451,21 +451,240 @@ def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : Rew
 theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
   := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
 
-def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : Rewrite r r')
-  : RewriteD (r.vsubst σ) (r'.vsubst σ)
-  := sorry
+def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : RewriteD r r')
+  : RewriteD (r.vsubst σ) (r'.vsubst σ) := by cases p with
+  | let1_op f a r =>
+    convert (let1_op f (a.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let1_let1 a b r =>
+    convert (let1_let1 (a.subst σ) (b.subst σ.lift) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let1_pair a b r =>
+    convert (let1_pair (a.subst σ) (b.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.wk0_subst]
+  | let1_let2 a b r =>
+    convert (let1_let2 (a.subst σ) (b.subst (σ.liftn 2)) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_two]
+  | let1_inl e r =>
+    convert (let1_inl (e.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let1_inr e r =>
+    convert (let1_inr (e.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let1_case a l r s =>
+    convert (let1_case (a.subst σ) (l.subst σ.lift) (r.subst σ.lift) (s.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let1_abort e r =>
+    convert (let1_abort (e.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let2_bind e r =>
+    convert (let2_bind (e.subst σ) (r.vsubst (σ.liftn 2))) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Region.vsubst_lift₃_vwk2, Term.Subst.liftn_two]
+  | let2_pair a b r =>
+    convert (let2_pair (a.subst σ) (b.subst σ) (r.vsubst (σ.liftn 2))) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.wk0_subst, Term.Subst.liftn_two]
+  | case_bind e r s =>
+    convert (case_bind (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | cfg_br_lt ℓ e n G h => exact (cfg_br_lt ℓ (e.subst σ) n (λi => (G i).vsubst σ.lift) h)
+  | cfg_let1 a β n G =>
+    convert (cfg_let1 (a.subst σ) (β.vsubst σ.lift) n (λi => (G i).vsubst σ.lift)) using 1
+    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, let1.injEq,
+      cfg.injEq, heq_eq_eq, true_and]
+    rfl
+  | cfg_let2 a β n G =>
+    convert (cfg_let2 (a.subst σ) (β.vsubst (σ.liftn 2)) n (λi => (G i).vsubst σ.lift)) using 1
+    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, let2.injEq,
+      cfg.injEq, heq_eq_eq, true_and, Term.Subst.liftn_two]
+    rfl
+  | cfg_case e r s n G =>
+    convert (cfg_case (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift) n (λi => (G i).vsubst σ.lift))
+      using 1
+    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, case.injEq,
+      cfg.injEq, heq_eq_eq, true_and]
+    constructor <;> rfl
+  | cfg_cfg β n G n' G' =>
+    convert (cfg_cfg (β.vsubst σ) n (λi => (G i).vsubst σ.lift) n' (λi => (G' i).vsubst σ.lift))
+      using 1
+    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, cfg.injEq,
+      heq_eq_eq, true_and]
+    funext i
+    simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
+    split
+    · rfl
+    · simp [vsubst_lwk]
+  | cfg_zero _ G => exact (cfg_zero (r'.vsubst σ) (λi => (G i).vsubst σ.lift))
+  | let1_eta e r =>
+    convert (let1_eta (e.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let2_eta e r =>
+    convert (let2_eta (e.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_two]
+  | case_eta e r =>
+    convert (case_eta (e.subst σ) (r.vsubst σ.lift)) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1]
+  | let1_let1_case a b r s =>
+    convert (let1_let1_case (a.subst σ) (b.subst σ.lift) (r.vsubst (σ.liftn 3)) (s.vsubst (σ.liftn 3)))
+      using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+    simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap01, ← vsubst_fromWk,
+      vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+    congr <;> funext k <;> cases k using Nat.cases2
+    <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
+  | let1_let2_case a b r s =>
+    convert (let1_let2_case (a.subst σ) (b.subst σ.lift) (r.vsubst (σ.liftn 4)) (s.vsubst (σ.liftn 4)))
+      using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+    simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap02, ← vsubst_fromWk,
+      vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+    congr <;> funext k <;> cases k using Nat.cases3
+    <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
+  | let1_case_case a d ll lr rl rr =>
+    convert (let1_case_case (a.subst σ) (d.subst σ.lift)
+      (ll.vsubst (σ.liftn 3)) (lr.vsubst (σ.liftn 3))
+      (rl.vsubst (σ.liftn 3)) (rr.vsubst (σ.liftn 3))) using 1
+    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+    simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap01, ← vsubst_fromWk,
+      vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+    congr <;> funext k <;> cases k using Nat.cases2
+    <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
 
 theorem Rewrite.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : Rewrite r r')
   : Rewrite (r.vsubst σ) (r'.vsubst σ)
-  := sorry
+  := let ⟨d⟩ := p.nonempty; (d.vsubst σ).rewrite
 
-def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : Rewrite r r')
-  : RewriteD (r.lsubst σ) (r'.lsubst σ)
-  := sorry
+def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : RewriteD r r')
+  : RewriteD (r.lsubst σ) (r'.lsubst σ) := by cases p with
+  | let1_op f a r =>
+    convert (let1_op f a (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_let1 a b r =>
+    convert (let1_let1 a b (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_pair a b r =>
+    convert (let1_pair a b (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_let2 a b r =>
+    convert (let1_let2 a b (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift, Subst.vliftn_two]
+  | let1_inl e r =>
+    convert (let1_inl e (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_inr e r =>
+    convert (let1_inr e (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_case a l r s =>
+    convert (let1_case a l r (s.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_abort e r =>
+    convert (let1_abort e (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let2_bind e r =>
+    convert (let2_bind e (r.lsubst (σ.vliftn 2))) using 1
+    simp [vwk2_lsubst_vlift₂, Subst.vliftn_two]
+  | let2_pair a b r =>
+    convert (let2_pair a b (r.lsubst (σ.vliftn 2))) using 1
+    simp [vwk1_lsubst_vlift, Subst.vliftn_two]
+  | case_bind e r s =>
+    convert (case_bind e (r.lsubst σ.vlift) (s.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | cfg_br_lt ℓ e n G h =>
+    convert (cfg_br_lt ℓ e n (λi => (G i).lsubst (σ.liftn n).vlift) h) using 1
+    simp [Subst.liftn, h]
+  | cfg_let1 a β n G =>
+    convert (cfg_let1 a (β.lsubst (σ.liftn n).vlift) n (λi => (G i).lsubst (σ.liftn n).vlift))
+      using 1
+    simp only [BinSyntax.Region.lsubst, <-Subst.vlift_liftn_comm, Function.comp_apply, let1.injEq,
+      cfg.injEq, heq_eq_eq, true_and]
+    funext i
+    simp [vwk1_lsubst_vlift]
+  | cfg_let2 a β n G =>
+    convert (cfg_let2 a (β.lsubst <| (σ.liftn n).vliftn 2) n (λi => (G i).lsubst (σ.liftn n).vlift))
+      using 1
+    simp only [BinSyntax.Region.lsubst, <-Subst.vlift_liftn_comm, Function.comp_apply, let2.injEq,
+      cfg.injEq, heq_eq_eq, true_and, Subst.vliftn_two]
+    funext i
+    simp [vwk1_lsubst_vlift, Subst.vliftn_two]
+  | cfg_case e r s n G =>
+    convert (cfg_case e (r.lsubst (σ.liftn n).vlift) (s.lsubst (σ.liftn n).vlift) n
+      (λi => (G i).lsubst (σ.liftn n).vlift)) using 1
+    simp only [BinSyntax.Region.lsubst, Function.comp_apply, let1.injEq, case.injEq, cfg.injEq,
+      heq_eq_eq, true_and, <-Subst.vlift_liftn_comm]
+    constructor <;>
+    funext i <;>
+    simp [vwk1_lsubst_vlift]
+  | cfg_cfg β n G n' G' =>
+    convert (cfg_cfg (β.lsubst ((σ.liftn n').liftn n)) n
+      (λi => (G i).lsubst ((σ.liftn n').liftn n).vlift) n'
+      (λi => (G' i).lsubst (σ.liftn n').vlift)) using 1
+    simp only [BinSyntax.Region.lsubst, Function.comp_apply, let1.injEq, cfg.injEq, heq_eq_eq,
+      true_and, Subst.liftn_add]
+    funext i
+    simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
+    split; rfl
+    simp only [Subst.vlift, ← lsubst_fromLwk, lsubst_lsubst]
+    congr
+    funext k
+    simp only [Subst.comp, BinSyntax.Region.lsubst, Subst.vlift, Function.comp_apply, Subst.liftn,
+      add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right, vsubst0_var0_vwk1,
+      Subst.vwk1_comp_fromLwk, lsubst_fromLwk]
+    split; rfl
+    simp [vwk1_lwk]
+  | cfg_zero β G =>
+    convert (cfg_zero (r'.lsubst σ) (λi => (G i).lsubst σ.vlift)) using 1
+    simp
+  | let1_eta e r =>
+    convert (let1_eta e (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let2_eta e r =>
+    convert (let2_eta e (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift, Subst.vliftn_two]
+  | case_eta e r =>
+    convert (case_eta e (r.lsubst σ.vlift)) using 1
+    simp [vwk1_lsubst_vlift]
+  | let1_let1_case a b r s =>
+    convert (let1_let1_case a b (r.lsubst σ.vlift.vlift.vlift) (s.lsubst (σ.vlift.vlift.vlift)))
+      using 1
+    simp only [BinSyntax.Region.lsubst, vswap01, vwk_lsubst, let1.injEq, true_and]
+    congr 3 <;> {
+      funext k
+      simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
+      congr
+      funext k
+      cases k <;> rfl
+    }
+  | let1_let2_case a b r s =>
+    convert (let1_let2_case a b
+      (r.lsubst (σ.vlift.vliftn 2).vlift)
+      (s.lsubst (σ.vlift.vliftn 2).vlift))
+      using 1
+    simp only [BinSyntax.Region.lsubst, Subst.vliftn_two, let1.injEq, let2.injEq,
+      true_and, vswap02, vwk_lsubst]
+    congr 3 <;> {
+      funext k
+      simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
+      congr
+      funext k
+      cases k <;> rfl
+    }
+  | let1_case_case a d ll lr rl rr =>
+    convert (let1_case_case a d
+      (ll.lsubst (σ.vlift.vlift.vlift))
+      (lr.lsubst (σ.vlift.vlift.vlift))
+      (rl.lsubst (σ.vlift.vlift.vlift))
+      (rr.lsubst (σ.vlift.vlift.vlift))) using 1
+    simp only [BinSyntax.Region.lsubst, vswap01, let1.injEq, true_and, vwk_lsubst]
+    congr 3 <;> {
+      funext k
+      simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
+      congr
+      funext k
+      cases k <;> rfl
+    }
 
 theorem Rewrite.lsubst {r r' : Region φ} (σ : Subst φ) (p : Rewrite r r')
   : Rewrite (r.lsubst σ) (r'.lsubst σ)
-  := sorry
+  := let ⟨d⟩ := p.nonempty; (d.lsubst σ).rewrite
 
 end Region
 

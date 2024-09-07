@@ -440,11 +440,11 @@ theorem Eqv.fixpoint_dinaturality_seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : 
 --             (Fin.elim1 (f.lwk1 ;; (inj_l.coprod g.lwk1 ;; left_exit)).vwk1) := by
 --   sorry
 
-theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
-  (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
-  : fixpoint (f ;; coprod inj_l g) = f ;; coprod nil (fixpoint (g ;; coprod inj_l f))
-  := by sorry
+-- theorem Eqv.fixpoint_dinaturality {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+--   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
+--   (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
+--   : fixpoint (f ;; coprod inj_l g) = f ;; coprod nil (fixpoint (g ;; coprod inj_l f))
+--   := by sorry
 
 end Region
 
