@@ -434,6 +434,12 @@ theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Regi
   (p : (Uniform P Δ L) r r') : Uniform P Γ L (r.vsubst σ) (r'.vsubst σ)
   := (p.vsubst (Q := Uniform P) toVsubst hσ).flatten
 
+theorem Uniform.lsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ L K r r'}
+  (toLsubst : ∀{Γ L K σ r r'}, σ.Wf Γ L K → P Γ L r r' → Uniform P Γ K (r.lsubst σ) (r'.lsubst σ))
+  (hσ : σ.Wf Γ L K)
+  (p : (Uniform P Γ L) r r') : Uniform P Γ K (r.lsubst σ) (r'.lsubst σ)
+  := (p.lsubst (Q := Uniform P) toLsubst hσ).flatten
+
 def Uniform.Setoid (P : Ctx α ε → LCtx α → Region φ → Region φ → Prop) (Γ : Ctx α ε) (L : LCtx α)
   : Setoid (InS φ Γ L) where
   r x y := Uniform P Γ L x y

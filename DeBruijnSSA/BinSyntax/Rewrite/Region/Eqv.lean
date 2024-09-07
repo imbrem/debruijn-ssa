@@ -1169,6 +1169,22 @@ theorem Eqv.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
 
 -- TODO: case_eta
 
+-- TODO: factor out to discretion as general helper...
+
+theorem Eqv.choiceInduction {ι : Type _} {Γs : ι → Ctx α ε} {L : LCtx α}
+  (motive : ((i : ι) → Eqv φ (Γs i) L) → Prop)
+  (choice : ∀G : (i : ι) → InS φ (Γs i) L, motive (λi => ⟦G i⟧))
+  : ∀G : (i : ι) → Eqv φ (Γs i) L, motive G
+  := λG => by
+  generalize hG : Quotient.choice G = G'
+  induction G' using Quotient.inductionOn with
+  | h G' =>
+    have hG := Quotient.forall_of_choice_eq hG
+    have hG' : G = λi => G i := rfl
+    rw [hG']
+    simp only [hG]
+    apply choice
+
 theorem Eqv.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   (R S : LCtx α) (β : Eqv φ Γ (R ++ L))
   (G : (i : Fin S.length) → Eqv φ ((List.get S i, ⊥)::Γ) (R ++ L))
@@ -1177,17 +1193,12 @@ theorem Eqv.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
   : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
   = cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
   := by
-  induction β using Quotient.inductionOn with
-  | h β =>
-    simp only [cfg]
-    generalize hG : Quotient.finChoice G = G'
-    induction G' using Quotient.inductionOn with
-    | h G' =>
-      have hG := Quotient.forall_of_finChoice_eq hG
-      simp only [Set.mem_setOf_eq, lwk_quot, List.get_eq_getElem, hG, Fin.getElem_fin, vwk_id_quot,
-        Quotient.finChoice_eq, Eqv.cfg_inner_quot]
-      apply Eqv.sound
-      apply InS.wk_cfg
+  induction β using Quotient.inductionOn
+  induction G using Eqv.choiceInduction
+  simp only [cfg, Set.mem_setOf_eq, lwk_quot, List.get_eq_getElem, Fin.getElem_fin, vwk_id_quot,
+    Quotient.finChoice_eq, Eqv.cfg_inner_quot]
+  apply Eqv.sound
+  apply InS.wk_cfg
 
 theorem Eqv.let1_let1_case {Γ : Ctx α ε}
   {a : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩}

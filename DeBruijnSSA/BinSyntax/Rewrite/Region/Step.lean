@@ -200,7 +200,7 @@ theorem TStep.vwk {Γ Δ : Ctx α ε} {L r r' ρ} (hρ : Γ.Wkn Δ ρ)
   | rewrite d d' p => rewrite (d.vwk hρ) (d'.vwk hρ) (p.vwk ρ)
   | reduce d d' p => reduce (d.vwk hρ) (d'.vwk hρ) (p.vwk ρ)
   | initial di d d' => initial (di.wk hρ) (d.vwk hρ) (d'.vwk hρ)
-  | let1_equiv da dr => let1_equiv (da.wk sorry hρ) (dr.vwk hρ.slift)
+  | let1_equiv da dr => let1_equiv (Term.Uniform.wk Term.TStep.wk hρ da) (dr.vwk hρ.slift)
 
 theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
   : TStep (φ := φ) Γ L r r' → TStep Γ K (r.lwk ρ) (r'.lwk ρ)
@@ -214,9 +214,15 @@ theorem TStep.lwk {Γ : Ctx α ε} {L K r r' ρ} (hρ : L.Wkn K ρ)
 
 theorem TStep.lsubst {Γ : Ctx α ε} {L K} {r r' : Region φ} {σ : Subst φ}
   (hσ : σ.Wf Γ L K) : (h : TStep Γ L r r') → TStep Γ K (r.lsubst σ) (r'.lsubst σ)
-  | let1_beta de dr => (let1_beta de (dr.lsubst hσ.vlift)).cast_trg sorry
-  | rewrite d d' p => sorry--rewrite (d.lsubst hσ) (d'.lsubst hσ) (p.lsubst σ)
-  | reduce d d' p => sorry
+  | let1_beta de dr => (let1_beta de (dr.lsubst hσ.vlift)).cast_trg (by
+    --TODO: factor out...
+    rw [vsubst_lsubst]; congr; funext k
+    simp only [Subst.vlift, vwk1, ← vsubst_fromWk, Function.comp_apply, vsubst_vsubst]
+    apply vsubst_id'
+    funext k; cases k <;> rfl
+  )
+  | rewrite d d' p => rewrite (d.lsubst hσ) (d'.lsubst hσ) (p.lsubst σ)
+  | reduce d d' p => reduce (d.lsubst hσ) (d'.lsubst hσ) (p.lsubst σ)
   | initial di d d' => initial di (d.lsubst hσ) (d'.lsubst hσ)
   | let1_equiv da dr => let1_equiv da (dr.lsubst hσ.vlift)
 

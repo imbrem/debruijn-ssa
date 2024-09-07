@@ -450,6 +450,13 @@ theorem Region.InS.coe_lsubst {Γ : Ctx α ε} (σ : Region.Subst.InS φ Γ L K)
   : (r.lsubst σ : Region φ) = (r : Region φ).lsubst σ
   := rfl
 
+@[simp]
+theorem Region.InS.lsubst_id {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L}
+  : r.lsubst Subst.InS.id = r := by ext; simp
+
+theorem Region.InS.lsubst_id' {Γ : Ctx α ε} {L : LCtx α} {r : InS φ Γ L} {σ : Subst.InS φ Γ L L}
+  (h : σ = Subst.InS.id) : r.lsubst σ = r := by cases h; simp
+
 def Region.Subst.WfD.comp {Γ : Ctx α ε} {σ : Region.Subst φ} {τ : Region.Subst φ}
   (hσ : σ.WfD Γ K J) (hτ : τ.WfD Γ L K) : (σ.comp τ).WfD Γ L J
   := λi => (hτ i).lsubst hσ.vlift

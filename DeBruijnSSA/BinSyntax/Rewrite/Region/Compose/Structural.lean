@@ -130,6 +130,17 @@ theorem Subst.Eqv.pack_comp_unpack {Γ : Ctx α ε} {R : LCtx α}
     get_id, Fin.coe_fin_one]
   rfl
 
+def Eqv.unpacked {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ [R.pack]) : Eqv φ Γ R
+  := h.lsubst Subst.Eqv.unpack
+
+def Eqv.packed {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ [R.pack]
+  := h.lsubst Subst.Eqv.pack
+
+theorem Eqv.unpacked_packed {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R)
+  : h.packed.unpacked = h := by
+  rw [Eqv.unpacked, packed, lsubst_lsubst, Subst.Eqv.unpack_comp_pack]
+  sorry
+
 end Region
 
 end BinSyntax

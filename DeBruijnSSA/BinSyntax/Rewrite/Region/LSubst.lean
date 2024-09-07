@@ -66,6 +66,16 @@ theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
     rw [List.getElem_append_right _ _ h']
     apply heq_prop
 
+theorem Subst.InS.slift_congr {Γ : Ctx α ε} {L K : LCtx α}
+  {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.slift (head := head) ≈ τ.slift
+  := λi => by cases i using Fin.cases with
+  | zero => rfl
+  | succ i =>
+    simp only [List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ,
+      get_slift_succ, InS.lwk0]
+    apply InS.lwk_congr_right
+    apply h
+
 theorem Subst.InS.extend_congr {Γ : Ctx α ε} {L K R : LCtx α}
   {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.extend (R := R) ≈ τ.extend
   := λi => by
@@ -109,7 +119,8 @@ theorem InS.lsubst_congr_subst {Γ : Ctx α ε} {L K : LCtx α} {σ τ : Subst.I
       (λi => IG i (vlift_congr (liftn_append_congr h)))
 
 theorem InS.lsubst_congr_right {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.InS φ Γ L K)
-  {r r' : InS φ Γ L} (h : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ := sorry
+  {r r' : InS φ Γ L} (h : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ
+  := Uniform.lsubst TStep.lsubst σ.prop h
 
 theorem InS.lsubst_congr {Γ : Ctx α ε} {L K : LCtx α} {σ σ' : Subst.InS φ Γ L K}
   {r r' : InS φ Γ L} (hσ : σ ≈ σ') (hr : r ≈ r') : r.lsubst σ ≈ r'.lsubst σ'
@@ -208,7 +219,8 @@ theorem Eqv.lsubst_toSubst {Γ : Ctx α ε} {L K : LCtx α} {σ : LCtx.InS L K}
   simp [InS.lsubst_toSubst]
 
 def Subst.Eqv.comp {Γ : Ctx α ε} {L K J : LCtx α} (σ : Subst.Eqv φ Γ K J) (τ : Subst.Eqv φ Γ L K)
-  : Subst.Eqv φ Γ L J := Quotient.liftOn₂ σ τ (λσ τ => ⟦σ.comp τ⟧) sorry
+  : Subst.Eqv φ Γ L J := Quotient.liftOn₂ σ τ (λσ τ => ⟦σ.comp τ⟧)
+    (λ_ _ _ _ hσ hτ => Quotient.sound (Subst.InS.comp_congr hσ hτ))
 
 @[simp]
 theorem Subst.Eqv.comp_quot {Γ : Ctx α ε} {L K : LCtx α} {J : LCtx α}
@@ -274,7 +286,7 @@ def Subst.Eqv.slift {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K)
   : Subst.Eqv φ Γ (head::L) (head::K)
   := Quotient.liftOn σ
     (λσ => ⟦σ.slift⟧)
-    sorry
+    (λ_ _ h => Quotient.sound (Subst.InS.slift_congr h))
 
 @[simp]
 theorem Subst.Eqv.slift_quot {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
@@ -317,7 +329,7 @@ def Subst.Eqv.liftn_append {Γ : Ctx α ε} {L K : LCtx α} (J) (σ : Subst.Eqv 
   : Subst.Eqv φ Γ (J ++ L) (J ++ K)
   := Quotient.liftOn σ
     (λσ => ⟦σ.liftn_append J⟧)
-    sorry
+    (λ_ _ h => Quotient.sound <| Subst.InS.liftn_append_congr h)
 
 theorem Subst.Eqv.vwk1_lsubst_vlift {Γ : Ctx α ε} {L K : LCtx α}
   {σ : Subst.Eqv φ Γ L K} {r : Region.Eqv φ (head::Γ) L}
@@ -356,8 +368,18 @@ theorem Eqv.lsubst_cfg {Γ : Ctx α ε} {L : LCtx α}
   {σ : Subst.Eqv φ Γ L K}
   : (cfg R β G).lsubst σ
   = cfg R (β.lsubst (σ.liftn_append _)) (λi => (G i).lsubst (σ.liftn_append _).vlift) := by
+  induction σ using Quotient.inductionOn
   induction β using Quotient.inductionOn
-  sorry
+  generalize hG : Quotient.finChoice G = G'
+  induction G' using Quotient.inductionOn with
+  | h G' =>
+    have hG := Quotient.forall_of_finChoice_eq hG
+    have hG' : G = (λi => G i) := rfl
+    simp only [cfg]
+    rw [hG']
+    simp only [Set.mem_setOf_eq, lsubst_quot, List.get_eq_getElem, hG, Fin.getElem_fin, vwk_id_quot,
+      Subst.Eqv.liftn_append_quot, Subst.Eqv.vlift_quot, Quotient.finChoice_eq, Eqv.cfg_inner_quot]
+    rfl
 
 def Subst.Eqv.vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
   (ρ : Term.Subst.Eqv φ Γ Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K
@@ -631,3 +653,12 @@ theorem Subst.Eqv.comp_id {Γ : Ctx α ε} {L : LCtx α} {σ : Subst.Eqv φ Γ L
 theorem Subst.Eqv.get_id {Γ : Ctx α ε} {L : LCtx α} {i : Fin L.length}
   : (id : Subst.Eqv φ Γ L L).get i = Eqv.br i (Term.Eqv.var 0 Ctx.Var.shead) (by simp) := by
   rfl
+
+@[simp]
+theorem Eqv.lsubst_id {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ Γ L}
+  : r.lsubst Subst.Eqv.id = r := by
+  induction r using Quotient.inductionOn
+  simp [Subst.Eqv.id]
+
+theorem Eqv.lsubst_id' {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ Γ L} {σ : Subst.Eqv φ Γ L L}
+  (h : σ = Subst.Eqv.id) : r.lsubst σ = r := by cases h; simp
