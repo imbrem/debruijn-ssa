@@ -650,6 +650,22 @@ def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
         · rfl
         )
 
+def _root_.BinSyntax.LCtx.InS.toSubstE {Γ : Ctx α ε} {L K : LCtx α}
+  (σ : L.InS K) : Subst.Eqv φ Γ L K := ⟦σ.toSubst⟧
+
+theorem Eqv.lsubst_toSubstE {Γ : Ctx α ε} {L K : LCtx α}
+  {r : Eqv φ Γ L} {σ : L.InS K}
+  : r.lsubst σ.toSubstE = r.lwk σ := by
+  induction r using Quotient.inductionOn
+  simp only [lwk_quot, ← InS.lsubst_toSubst]
+  rfl
+
+@[simp]
+theorem Subst.Eqv.get_toSubstE {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : L.InS K} {i : Fin L.length}
+  : (σ.toSubstE).get i
+  = Eqv.br (φ := φ) (Γ := _::Γ) (σ.val i) (Term.Eqv.var 0 Ctx.Var.shead) (σ.prop i i.prop) := rfl
+
 -- theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
 --   {σ : Subst.Eqv φ Γ R (R' ++ L)} {β : Eqv φ Γ (R ++ L)}
 --   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}

@@ -111,6 +111,10 @@ theorem Eqv.vlift_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv �
   rw [alpha0_quot, Subst.Eqv.vlift_quot, InS.vlift_alpha0]
   rfl
 
+theorem Eqv.get_alpha0 {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) {i}
+  : (Eqv.alpha0 r).get i = Fin.cases r (λi => Eqv.br (i + 1) Term.Eqv.nil ⟨by simp, by simp⟩) i
+    := by induction r using Quotient.inductionOn; cases i using Fin.cases <;> rfl
+
 def Eqv.seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)
   := left.lsubst right.vwk1.alpha0
@@ -340,8 +344,7 @@ def Eqv.wseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 @[simp]
 theorem Eqv.wseq_quot {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ (⟨A, ⊥⟩::Γ) (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))
-  : wseq ⟦left⟧ ⟦right⟧ = ⟦left.wseq right⟧
-  := sorry
+  : wseq ⟦left⟧ ⟦right⟧ = ⟦left.wseq right⟧ := cfg1_quot
 
 def Eqv.wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : Eqv φ Γ (B::L)) (right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) : Eqv φ Γ (C::L)
@@ -350,8 +353,7 @@ def Eqv.wrseq {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 @[simp]
 theorem Eqv.wrseq_quot {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ) (C::L))
-  : wrseq ⟦left⟧ ⟦right⟧ = ⟦left.wrseq right⟧
-  := sorry
+  : wrseq ⟦left⟧ ⟦right⟧ = ⟦left.wrseq right⟧ := cfg1_quot
 
 theorem Eqv.wseq_eq_wrseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
@@ -367,8 +369,7 @@ def Eqv.wthen {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 @[simp]
 theorem Eqv.wthen_quot {B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (left : InS φ Γ (B::L)) (right : InS φ (⟨B, ⊥⟩::Γ)  L)
-  : wthen ⟦left⟧ ⟦right⟧ = ⟦left.wthen right⟧
-  := sorry
+  : wthen ⟦left⟧ ⟦right⟧ = ⟦left.wthen right⟧ := cfg1_quot
 
 theorem Eqv.wseq_eq_wthen {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
@@ -468,7 +469,41 @@ theorem Eqv.lwk_wthen {B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
 theorem Eqv.wseq_eq_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
   : left.wseq right = left ;; right := by
-  sorry
+  rw [wseq, cfg_eq_ucfg', ucfg', seq, lwk1, <-lsubst_toSubstE, lsubst_lsubst]
+  congr
+  ext k
+  cases k using Fin.cases with
+  | zero =>
+    simp only [List.get_eq_getElem, List.length_cons, Fin.val_zero, List.getElem_cons_zero,
+      List.singleton_append, List.length_singleton, Subst.Eqv.get_comp, Subst.Eqv.get_toSubstE,
+      Set.mem_setOf_eq, LCtx.InS.coe_wk1, Nat.liftWk_zero, lsubst_br, id_eq, Fin.zero_eta,
+      Subst.Eqv.get_vlift, cfgSubst'_get, zero_lt_one, ↓reduceDIte, vwk1_cfg, vwk1_br,
+      Term.Eqv.wk1_var0, vwk_id_eq, vsubst_cfg, vsubst_br, Term.Eqv.var0_subst0,
+      Term.Eqv.wk_res_self, List.length_nil, Nat.zero_add, get_alpha0, Fin.cases_zero]
+    rw [cfg_br_lt (hℓ' := by simp), let1_beta, cfg_eq_ucfg', ucfg']
+    simp only [List.singleton_append, Nat.reduceAdd, List.length_singleton, Nat.zero_eq,
+      Fin.zero_eta, Fin.isValue, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero,
+      Fin.elim1_zero, vwk_id_eq, vwk1_vwk2]
+    simp only [vwk1_lwk0, vsubst_lwk0]
+    simp only [lwk0, <-lsubst_toSubstE, lsubst_lsubst]
+    rw [lsubst_id']
+    induction right using Quotient.inductionOn
+    apply Eqv.eq_of_reg_eq
+    simp only [Set.mem_setOf_eq, InS.coe_vsubst, Term.InS.coe_subst0, Term.InS.coe_var,
+      Term.Subst.InS.coe_lift, InS.coe_vwk, Ctx.InS.coe_wk1, Region.vwk_vwk]
+    simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+    congr
+    funext k
+    cases k <;> rfl
+    ext i
+    simp only [List.get_eq_getElem, List.length_cons, Subst.Eqv.get_comp, Subst.Eqv.get_toSubstE,
+      Set.mem_setOf_eq, LCtx.InS.coe_wk0, Nat.succ_eq_add_one, lsubst_br, id_eq,
+      List.getElem_cons_succ, Subst.Eqv.get_vlift, cfgSubst'_get, List.length_singleton,
+      add_lt_iff_neg_right, not_lt_zero', ↓reduceDIte, List.singleton_append, add_tsub_cancel_right,
+      vwk1_br, Term.Eqv.wk1_var0, Fin.zero_eta, Fin.val_zero, List.getElem_cons_zero, vwk_id_eq,
+      vsubst_br, Term.Eqv.var0_subst0, Term.Eqv.wk_res_self]
+    rfl
+  | succ k => simp [Subst.Eqv.get_comp, cfgSubst'_get, get_alpha0, Term.Eqv.nil]
 
 theorem Eqv.lwk_lift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
   {ρ : LCtx.InS L K}
@@ -496,22 +531,58 @@ theorem Eqv.lsubst_vlift_slift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx 
   {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
   {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
   : (left ;; right).lsubst σ.slift.vlift
-  = left.lsubst σ.slift.vlift ;; right.lsubst σ.slift.vlift
-  := sorry
+  = left.lsubst σ.slift.vlift ;; right.lsubst σ.slift.vlift := by
+  induction left using Quotient.inductionOn
+  induction right using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  simp only [
+    Subst.Eqv.slift_quot, Subst.Eqv.vlift_quot, seq_quot, lsubst_quot,
+    InS.append_def
+  ]
+  congr 1
+  ext
+  simp only [Set.mem_setOf_eq, InS.coe_lsubst, Subst.InS.coe_vlift, Subst.InS.coe_slift,
+    InS.coe_alpha0, InS.coe_vwk1, Region.lsubst_lsubst]
+  congr
+  funext k
+  cases k with
+  | zero =>
+    simp only [Subst.comp, Subst.vlift, alpha, Function.update_same, Region.lsubst, Term.wk,
+      Nat.liftWk_zero, vwk1_lsubst, Function.comp_apply, Region.vsubst_lsubst,
+      Region.vsubst0_var0_vwk1]
+    congr
+    funext k
+    cases k with
+    | zero => rfl
+    | succ k =>
+      simp only [Function.comp_apply, Subst.lift, vwk2_vwk1]
+      simp only [Region.vwk1_lwk, vsubst_lwk]
+      congr
+      simp only [Region.vwk1, Region.vwk_vwk]
+      simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+      congr
+      funext k; cases k <;> rfl
+  | succ k =>
+    simp only [
+      Region.Subst.comp, Region.lsubst, Region.Subst.vlift, Function.comp_apply, Region.Subst.lift,
+      Region.vwk1_lwk, Region.vsubst_lwk, Region.vsubst0_var0_vwk1, Region.alpha, Region.vwk1_lsubst
+    ]
+    simp only [<-Region.lsubst_fromLwk, Region.lsubst_lsubst]
+    rfl
 
-theorem Eqv.lsubst_slift_vlift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
-  {σ : Subst.Eqv φ Γ L K}
-  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
-  {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
-  : (left ;; right).lsubst σ.vlift.slift
-  = left.lsubst σ.vlift.slift ;; right.lsubst σ.vlift.slift
-  := sorry
+-- theorem Eqv.lsubst_slift_vlift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+--   {σ : Subst.Eqv φ Γ L K}
+--   {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)}
+--   {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+--   : (left ;; right).lsubst σ.vlift.slift
+--   = left.lsubst σ.vlift.slift ;; right.lsubst σ.vlift.slift
+--   := sorry
 
-theorem Eqv.wrseq_assoc {B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (left : Eqv φ Γ (B::L)) (middle : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) (right : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))
-  : (left.wrseq middle).wrseq right = left.wrseq (middle ;; right) := by
-  simp only [<-wseq_eq_seq, wrseq, wseq]
-  sorry
+-- theorem Eqv.wrseq_assoc {B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+--   (left : Eqv φ Γ (B::L)) (middle : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)) (right : Eqv φ (⟨C, ⊥⟩::Γ) (D::L))
+--   : (left.wrseq middle).wrseq right = left.wrseq (middle ;; right) := by
+--   simp only [<-wseq_eq_seq, wrseq, wseq]
+--   sorry
 
 def Eqv.Pure {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) : Prop
   := ∃a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩, r = ret a
