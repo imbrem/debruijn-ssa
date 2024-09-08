@@ -355,102 +355,6 @@ theorem Rewrite.cast_trg {r₀ r₁ r₁' : Region φ} (p : Rewrite r₀ r₁) (
 --   | let1_case_case => sorry
 --   | _ => simp [vwk2, fvs_vwk, fvs_vwk1, Term.fvs_wk, Set.liftnFv_iUnion, Set.union_assoc]
 
-def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
-  := by cases d with
-  | let2_pair a b r =>
-    convert (let2_pair (a.wk ρ) (b.wk ρ) (r.vwk (Nat.liftnWk 2 ρ))) using 1
-    simp [Term.wk0, Term.wk_wk, Nat.liftWk_comp_succ, Nat.liftnWk_two]
-  | cfg_cfg β n G n' G' =>
-    simp only [Region.vwk, wk, Fin.comp_addCases_apply]
-    rw [<-Function.comp.assoc, Region.vwk_comp_lwk, Function.comp.assoc]
-    constructor
-  | let2_eta e r =>
-    simp only [Region.vwk, wk, Nat.liftnWk, Nat.lt_succ_self, ↓reduceIte, Nat.zero_lt_succ,
-      Nat.liftWk_comm_liftnWk_apply, vwk_liftnWk₂_vwk1, vwk_liftWk₂_vwk1]
-    constructor
-  | let1_let1_case a b r s =>
-    convert (let1_let1_case
-      (a.wk ρ) (b.wk (Nat.liftWk ρ)) (r.vwk (Nat.liftnWk 3 ρ)) (s.vwk (Nat.liftnWk 3 ρ)))
-      using 1
-    simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
-    simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, wk0, wk_wk, Nat.liftWk_comp_succ, vswap01,
-      vwk_vwk, let1.injEq, true_and]
-    congr <;> funext k <;> cases k using Nat.cases3 <;> rfl
-  | let1_let2_case a b r s =>
-    convert (let1_let2_case
-      (a.wk ρ) (b.wk (Nat.liftWk ρ)) (r.vwk (Nat.liftnWk 4 ρ)) (s.vwk (Nat.liftnWk 4 ρ)))
-      using 1
-    simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
-    simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, wk0, wk_wk, Nat.liftWk_comp_succ, vswap02,
-      vwk_vwk, let1.injEq, true_and]
-    congr <;> funext k <;> cases k using Nat.cases4 <;> rfl
-  | let1_case_case a d ll lr rl rr =>
-    convert (let1_case_case
-      (a.wk ρ) (d.wk (Nat.liftWk ρ)) (ll.vwk (Nat.liftnWk 3 ρ)) (lr.vwk (Nat.liftnWk 3 ρ))
-      (rl.vwk (Nat.liftnWk 3 ρ)) (rr.vwk (Nat.liftnWk 3 ρ)))
-      using 1
-    simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
-    simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, wk0, wk_wk, Nat.liftWk_comp_succ, vswap01,
-      vwk_vwk, let1.injEq, true_and]
-    congr <;> funext k <;> cases k using Nat.cases3 <;> rfl
-  | _ =>
-    simp only [
-      Region.vwk2, Region.vwk, wk, Nat.liftWk,
-      vwk_liftWk₂_vwk1, wk_liftWk_wk_succ, vwk_liftnWk₂_liftWk_vwk2, vwk_liftnWk₂_vwk1,
-      wk_liftnWk_wk_add, Nat.liftWk_comm_liftnWk_apply, Function.comp_apply, Term.wk0]
-    constructor
-
-theorem Rewrite.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.vwk ρ) (r'.vwk ρ)
-  := let ⟨d⟩ := p.nonempty; (d.vwk ρ).rewrite
-
-def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.lwk ρ) (r'.lwk ρ)
-  := by cases d with
-  | cfg_br_lt ℓ e n G hℓ =>
-    simp only [Region.lwk, Nat.liftnWk, hℓ, ↓reduceIte]
-    apply cfg_br_lt
-  | cfg_cfg β n G n' G' =>
-    simp only [Region.lwk]
-    apply cast_trg
-    apply cfg_cfg
-    congr
-    · rw [Nat.liftnWk_add]; rfl
-    · funext i
-      simp only [Fin.comp_addCases_apply]
-      simp only [Fin.addCases]
-      split
-      · simp [Nat.liftnWk_add, *]
-      · simp only [Function.comp_apply, eq_rec_constant, Region.lwk_lwk]
-        congr
-        funext k
-        simp only [Function.comp_apply, Nat.liftnWk]
-        split
-        case isTrue h =>
-          rw [ite_cond_eq_true]
-          simp_arith [Nat.succ_le_of_lt h]
-        case isFalse h =>
-          rw [ite_cond_eq_false]
-          rw [Nat.sub_add_eq]
-          simp only [add_tsub_cancel_right]
-          rw [Nat.add_comm n n', <-Nat.add_assoc]
-          rw [Nat.add_comm]
-          simp [Nat.le_of_not_lt h]
-  | let1_let1_case a b r s =>
-    convert (let1_let1_case a b (r.lwk ρ) (s.lwk ρ)) using 1
-    simp [vswap01, vwk_lwk]
-  | let1_let2_case a b r s =>
-    convert (let1_let2_case a b (r.lwk ρ) (s.lwk ρ)) using 1
-    simp [vswap02, vwk_lwk]
-  | let1_case_case a d ll lr rl rr =>
-    convert (let1_case_case a d (ll.lwk ρ) (lr.lwk ρ) (rl.lwk ρ) (rr.lwk ρ)) using 1
-    simp [vswap01, vwk_lwk]
-  | _ =>
-    simp only [
-      Region.vwk2, Region.lwk, wk, Function.comp_apply, lwk_vwk, lwk_vwk1, Function.comp_apply]
-    constructor
-
-theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
-  := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
-
 def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : RewriteD r r')
   : RewriteD (r.vsubst σ) (r'.vsubst σ) := by cases p with
   | let1_op f a r =>
@@ -685,6 +589,22 @@ def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : RewriteD r r')
 theorem Rewrite.lsubst {r r' : Region φ} (σ : Subst φ) (p : Rewrite r r')
   : Rewrite (r.lsubst σ) (r'.lsubst σ)
   := let ⟨d⟩ := p.nonempty; (d.lsubst σ).rewrite
+
+def RewriteD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.vwk ρ) (r'.vwk ρ)
+  := by
+  simp only [<-Region.vsubst_fromWk]
+  exact RewriteD.vsubst _ d
+
+theorem Rewrite.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.vwk ρ) (r'.vwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.vwk ρ).rewrite
+
+def RewriteD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : RewriteD r r') : RewriteD (r.lwk ρ) (r'.lwk ρ)
+  := by
+  simp only [<-Region.lsubst_fromLwk]
+  exact RewriteD.lsubst _ d
+
+theorem Rewrite.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Rewrite r r') : Rewrite (r.lwk ρ) (r'.lwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.lwk ρ).rewrite
 
 end Region
 

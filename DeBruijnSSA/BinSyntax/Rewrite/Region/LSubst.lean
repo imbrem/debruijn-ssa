@@ -551,7 +551,16 @@ theorem Eqv.ucfg'_quot
 
 theorem Eqv.cfg_eq_ucfg'
   {R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G : ∀i, Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : cfg R β G = ucfg' R β G := sorry
+  : cfg R β G = ucfg' R β G := by
+  induction β using Quotient.inductionOn
+  induction G using Eqv.choiceInduction
+  rw [cfg_quot, ucfg'_quot]
+  apply Quotient.sound
+  apply Uniform.rel
+  apply TStep.reduce
+  apply InS.coe_wf
+  apply InS.coe_wf
+  apply Reduce.ucfg'
 
 theorem Eqv.cfg_br_ge {Γ : Ctx α ε} {L : LCtx α}
   {ℓ} {a : Term.Eqv φ Γ ⟨A, ⊥⟩}
@@ -626,12 +635,20 @@ theorem Eqv.cfgSubst_get_ge  {Γ : Ctx α ε} {L : LCtx α}
 def Subst.Eqv.fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
   (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) K)
   : Subst.Eqv φ Γ L K
-  := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst G⟧) sorry
+  := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst G⟧)
+      (λ_ _ h => Quotient.sound <| λi => by simp [h i])
 
 def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
   (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) (K ++ R))
   : Subst.Eqv φ Γ (L ++ R) (K ++ R)
-  := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst_append G⟧) sorry
+  := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst_append G⟧)
+      (λ_ _ h => Quotient.sound <| λi => by
+        simp only [CFG.get_toSubst_append]
+        split
+        · apply InS.cast_congr
+          apply h
+        · rfl
+        )
 
 -- theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
 --   {σ : Subst.Eqv φ Γ R (R' ++ L)} {β : Eqv φ Γ (R ++ L)}
@@ -679,7 +696,8 @@ theorem Subst.Eqv.initial_eq {Γ : Ctx α ε} {L : LCtx α} {σ σ' : Subst.Eqv 
   exact i.elim0
 
 def Eqv.csubst {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ ((A, ⊥)::Γ) L) : Subst.Eqv φ Γ [A] L
-  := Quotient.liftOn r (λr => ⟦r.csubst⟧) sorry
+  := Quotient.liftOn r (λr => ⟦r.csubst⟧)
+    (λ_ _ h => Quotient.sound <| λi => by cases i using Fin.elim1; exact h)
 
 @[simp]
 theorem Eqv.csubst_quot {Γ : Ctx α ε} {L : LCtx α} {r : InS φ ((A, ⊥)::Γ) L}

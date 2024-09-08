@@ -110,57 +110,6 @@ def ReduceD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀' = r₀) (p : Reduc
 def ReduceD.cast {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h₁ : r₁ = r₁')
   (p : ReduceD r₀ r₁) : ReduceD r₀' r₁' := h₁ ▸ h₀ ▸ p
 
-def ReduceD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.vwk ρ) (r'.vwk ρ)
-  := by cases d with
-  | dead_cfg_left β n G m G' =>
-    simp only [Region.vwk, wk, Function.comp_apply, vwk_lwk, Fin.comp_addCases_apply]
-    rw [<-Function.comp.assoc, vwk_comp_lwk, Function.comp.assoc]
-    apply dead_cfg_left
-  | ucfg' β n G =>
-    convert ucfg' (β.vwk ρ) n (λi => (G i).vwk (Nat.liftWk ρ))
-    simp only [Region.ucfg', vwk_lsubst]
-    congr
-    funext i
-    simp only [Function.comp_apply, cfgSubst']
-    split
-    · simp only [BinSyntax.Region.vwk, wk, Nat.liftWk_zero, cfg.injEq, heq_eq_eq, true_and]
-      funext i
-      simp only [vwk1, vwk_vwk]
-      congr
-      funext i
-      cases i <;> rfl
-    · rfl
-  | _ =>
-    simp only [Region.vwk, wk, Function.comp_apply, vwk_lwk]
-    constructor
-
-theorem Reduce.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.vwk ρ) (r'.vwk ρ)
-  := let ⟨d⟩ := p.nonempty; (d.vwk ρ).reduce
-
-def ReduceD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.lwk ρ) (r'.lwk ρ)
-  := by cases d with
-  | dead_cfg_left β n G m G' =>
-    apply cast_src _
-    apply dead_cfg_left
-      (β := β.lwk (Nat.liftnWk m ρ))
-      (n := n) (G := (Region.lwk (Nat.liftnWk (n + m) ρ)) ∘ G)
-      (m := m) (G' := (Region.lwk (Nat.liftnWk m ρ)) ∘ G')
-    simp only [
-      Region.lwk, lwk_lwk, Region.lwk_addCases, <-Function.comp.assoc, Region.comp_lwk,
-      Nat.liftnWk_comp_add_right
-    ]
-  | wk_cfg β n G k σ =>
-    simp only [Region.lwk, Region.lwk_lwk, Function.comp_apply, Fin.liftnWk_comp_toNatWk]
-    simp only [<-Region.lwk_lwk]
-    apply wk_cfg
-  | ucfg' β n G => sorry
-  | _ =>
-    simp only [Region.lwk, wk, Function.comp_apply, lwk_vwk]
-    constructor
-
-theorem Reduce.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.lwk ρ) (r'.lwk ρ)
-  := let ⟨d⟩ := p.nonempty; (d.lwk ρ).reduce
-
 def ReduceD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (d : ReduceD r r')
   : ReduceD (r.vsubst σ) (r'.vsubst σ) := by cases d with
   | case_inl e r s => exact case_inl (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift)
@@ -276,8 +225,15 @@ def ReduceD.lsubst {r r' : Region φ} (σ : Subst φ) (d : ReduceD r r')
         split
         rfl
         simp only [vsubst_fromWk, lwk_vwk, vwk_vwk]
-        sorry
-      · sorry
+        apply congrFun
+        simp only [<-vsubst_fromWk]
+        apply congrArg
+        funext k
+        cases k <;> rfl
+      · simp only [<-vsubst_fromWk, vsubst_vsubst]
+        congr
+        funext k
+        cases k <;> rfl
     · simp only [BinSyntax.Region.lsubst, Subst.vlift, Function.comp_apply, vsubst0_var0_vwk1, ←
       lsubst_fromLwk, lsubst_lsubst]
       apply Eq.symm
@@ -288,6 +244,22 @@ def ReduceD.lsubst {r r' : Region φ} (σ : Subst φ) (d : ReduceD r r')
 theorem Reduce.lsubst
   {r r' : Region φ} (σ : Subst φ) (p : Reduce r r') : Reduce (r.lsubst σ) (r'.lsubst σ)
   := let ⟨d⟩ := p.nonempty; (d.lsubst σ).reduce
+
+def ReduceD.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.vwk ρ) (r'.vwk ρ)
+  := by
+  simp only [<-Region.vsubst_fromWk]
+  exact ReduceD.vsubst _ d
+
+theorem Reduce.vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.vwk ρ) (r'.vwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.vwk ρ).reduce
+
+def ReduceD.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (d : ReduceD r r') : ReduceD (r.lwk ρ) (r'.lwk ρ)
+  := by
+  simp only [<-Region.lsubst_fromLwk]
+  exact ReduceD.lsubst _ d
+
+theorem Reduce.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Reduce (r.lwk ρ) (r'.lwk ρ)
+  := let ⟨d⟩ := p.nonempty; (d.lwk ρ).reduce
 
 -- theorem ReduceD.effect_le {Γ : ℕ → ε} {r r' : Region φ} (p : ReduceD r r')
 --   : r'.effect Γ ≤ r.effect Γ := by

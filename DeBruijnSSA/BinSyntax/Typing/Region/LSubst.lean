@@ -94,6 +94,17 @@ def Region.CFG.toSubst {Γ : Ctx α ε} {L K : LCtx α} (cfg : Region.CFG φ Γ 
     Region.Subst.fromFCFG K.length (cfg : Fin L.length → Region φ),
     λi => by simp⟩
 
+@[simp]
+theorem Region.CFG.coe_toSubst {Γ : Ctx α ε} {L K : LCtx α} {cfg : Region.CFG φ Γ L K}
+  : (cfg.toSubst : Region.Subst φ) = Region.Subst.fromFCFG K.length (cfg : Fin L.length → Region φ)
+  := rfl
+
+@[simp]
+theorem Region.CFG.get_toSubst {Γ : Ctx α ε} {L K : LCtx α}
+  (cfg : Region.CFG φ Γ L K) (i : Fin L.length)
+  : cfg.toSubst.get i = cfg i
+  := by ext; simp
+
 theorem Region.Subst.Wf.fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
   {G : Fin L.length → Region φ} (hG : ∀i : Fin L.length, (G i).Wf (⟨L.get i, ⊥⟩::Γ) K)
   : Wf Γ L K (Region.Subst.fromFCFG K.length G)
@@ -184,6 +195,28 @@ def Region.CFG.toSubst_append {Γ : Ctx α ε} {L K : LCtx α} (cfg : Region.CFG
     Region.Subst.fromFCFG K.length (cfg : Fin L.length → Region φ),
     Region.Subst.Wf.fromFCFG_append (λi => (cfg i).prop)⟩
 
+@[simp]
+theorem Region.CFG.coe_toSubst_append {Γ : Ctx α ε} {L K : LCtx α} {cfg : Region.CFG φ Γ L (K ++ R)}
+  : (cfg.toSubst_append : Region.Subst φ)
+  = Region.Subst.fromFCFG K.length (cfg : Fin L.length → Region φ)
+  := rfl
+
+@[simp]
+theorem Region.CFG.get_toSubst_append {Γ : Ctx α ε} {L K : LCtx α}
+  (cfg : Region.CFG φ Γ L (K ++ R)) (i : Fin (L ++ R).length)
+  : cfg.toSubst_append.get i =
+  if h : i < L.length then (cfg ⟨i, h⟩).cast
+    (by simp only [List.get_eq_getElem]; rw [List.getElem_append_left]) rfl
+  else Region.InS.br ((i - L.length) + K.length) (Term.InS.var 0 Ctx.Var.shead) ⟨
+    by have h := i.prop; simp only [List.length_append] at *; omega,
+    by
+      have h := i.prop;
+      simp only [List.length_append] at h
+      rw [List.get_eq_getElem, List.getElem_append_right, List.getElem_append_right]
+      simp
+      all_goals omega⟩
+  := by ext; simp only [Subst.InS.coe_get, coe_toSubst_append, Subst.fromFCFG]; split <;> rfl
+
 theorem Region.Subst.Wf.extend_out (hσ : σ.Wf Γ L K) : σ.Wf Γ L (K ++ R) := λi => (hσ i).extend
 
 theorem Region.Subst.Wf.extend (hσ : σ.Wf Γ L K)
@@ -225,12 +258,6 @@ theorem Region.CFG.ext (G G' : Region.CFG φ Γ L K)
 
 theorem Region.Subst.InS.extend_in_extend_out {R} (σ : Region.Subst.InS φ Γ L K)
   : σ.extend_out.extend_in = σ.extend (R := R) := by ext; rfl
-
-@[simp]
-theorem Region.CFG.coe_toSubst {Γ : Ctx α ε} {L K : LCtx α}
-  {cfg : Region.CFG φ Γ L K}
-  : (cfg.toSubst : Region.Subst φ) = Region.Subst.fromFCFG K.length (cfg : Fin L.length → Region φ)
-  := rfl
 
 theorem Region.Subst.toSubst_cfg {Γ : Ctx α ε} {L K : LCtx α} {σ : Region.Subst.InS φ Γ L K}
   : σ.cfg.toSubst = σ.clip

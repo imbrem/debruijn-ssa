@@ -17,6 +17,11 @@ theorem InS.eqv_def {Γ : Ctx α ε} {L : LCtx α} {r r' : InS φ Γ L}
   : r ≈ r' ↔ Uniform (φ := φ) TStep Γ L r r'
   := by rfl
 
+theorem InS.cast_congr {Γ Γ' : Ctx α ε} {L L' : LCtx α}
+  {r r' : InS φ Γ L} {hΓ : Γ = Γ'} {hL : L = L'}
+  (h : r ≈ r') : r.cast hΓ hL ≈ r'.cast hΓ hL
+  := by cases hΓ; cases hL; exact h
+
 theorem InS.let1_body_congr {Γ : Ctx α ε} {L : LCtx α}
   {r r' : InS φ _ L} (a : Term.InS φ Γ ⟨A, e⟩)
     : r ≈ r' → InS.let1 a r ≈ InS.let1 a r' := Uniform.let1 a.prop
