@@ -1680,6 +1680,27 @@ theorem Eqv.Pure.let2_let1_of_left {Γ : Ctx α ε}
   : let2 b (let1 a' c') = let1 a (let2 b.wk0 c) := by
     rw [ha.let1_let2_of_right, ha', hc']
 
+theorem Eqv.inl_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩}
+  : a.inl (B := B) = let1 a (inl (var 0 (by simp))) := calc
+  _ = let1 a.inl (var 0 Ctx.Var.bhead) := by rw [let1_eta]
+  _ = let1 a (let1 (inl (var 0 Ctx.Var.bhead)) (var 0 Ctx.Var.bhead)) := by rw [let1_inl, wk1_var0]
+  _ = let1 a (let1 (wk_eff bot_le (inl (var 0 Ctx.Var.shead))) (var 0 Ctx.Var.bhead)) := by rfl
+  _ = _ := by rw [let1_beta]; rfl
+
+theorem Eqv.inr_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩}
+  : a.inr (A := B) = let1 a (inr (var 0 (by simp))) := calc
+  _ = let1 a.inr (var 0 Ctx.Var.bhead) := by rw [let1_eta]
+  _ = let1 a (let1 (inr (var 0 Ctx.Var.bhead)) (var 0 Ctx.Var.bhead)) := by rw [let1_inr, wk1_var0]
+  _ = let1 a (let1 (wk_eff bot_le (inr (var 0 Ctx.Var.shead))) (var 0 Ctx.Var.bhead)) := by rfl
+  _ = _ := by rw [let1_beta]; rfl
+
+-- theorem Eqv.inl_let1 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+--   : (let1 a b).inl = let1 a (b.inl (B := C)) := calc
+--   _ = (let1 (let1 a b) (var 0 (by simp))).inl := by rw [let1_eta]
+--   _ = (let1 a (let1 b (var 0 (by simp)))).inl := by rw [let1_let1, wk1_var0]
+--   _ = (let1 a (let1 b (var 0 (by simp))).inl) := by sorry
+--   _ = _ := sorry
+
 end Basic
 
 end Term

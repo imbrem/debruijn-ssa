@@ -291,6 +291,12 @@ def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩)
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩ := case nil l.wk1 r.wk1
 
+theorem Eqv.coprod_seq {A B C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {f : Eqv φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}
+  : coprod l r ;;' f = coprod (l ;;' f) (r ;;' f)
+  := by rw [coprod, seq, let1_case, coprod, wk1_seq, wk1_seq]; rfl
+
 def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inl nil
 
@@ -303,6 +309,11 @@ theorem Eqv.wk1_inj_l {A B : Ty α} {Γ : Ctx α ε}
 theorem Eqv.wk2_inj_l {A B : Ty α} {Γ : Ctx α ε}
   : (inj_l (φ := φ) (e := e) (A := A) (B := B) (Γ := head::Γ)).wk2 (inserted := inserted) = inj_l
   := by simp [inj_l]
+
+theorem Eqv.seq_inj_l {A B C : Ty α} {Γ : Ctx α ε} {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : f ;;' inj_l (B := C) = f.inl := by
+  rw [seq, wk1_inj_l, inj_l]
+  exact inl_bind.symm
 
 def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨B, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inr nil
@@ -317,13 +328,73 @@ theorem Eqv.wk2_inj_r {A B : Ty α} {Γ : Ctx α ε}
   : (inj_r (φ := φ) (e := e) (A := A) (B := B) (Γ := head::Γ)).wk2 (inserted := inserted) = inj_r
   := by simp [inj_r]
 
+theorem Eqv.seq_inj_r {Γ : Ctx α ε} {f : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  : f ;;' inj_r (A := A) = f.inr := by
+  rw [seq, wk1_inj_r, inj_r]
+  exact inr_bind.symm
+
 theorem Eqv.coprod_inl_inr {A B : Ty α} {Γ : Ctx α ε}
   : coprod (Γ := Γ) (e := e) (inj_l (B := B) (φ := φ)) (inj_r (A := A) (φ := φ)) = nil
   := by simp [coprod, inj_l, inj_r, nil, case_eta]
 
+theorem Eqv.inj_l_coprod {B B' C : Ty α} {Γ : Ctx α ε}
+  {g : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {h : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : inj_l ;;' coprod g h = g := by
+  rw [inj_l, seq, <-wk_eff_nil (h := bot_le), <-wk_eff_inl, let1_beta, coprod]
+  simp only [wk1_case, wk1_nil, subst_case, nil_subst0, wk_eff_inl, wk_eff_nil]
+  rw [case_inl]
+  convert nil_seq _
+  rw [seq]
+  congr
+  induction g using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_inl,
+    InS.coe_var, InS.coe_wk, Ctx.InS.coe_wk2, Ctx.InS.coe_wk1, Term.wk_wk]
+  simp only [← Term.subst_fromWk, Term.subst_subst]
+  congr
+  funext k; cases k <;> rfl
+
+theorem Eqv.inl_coprod {A B B' C : Ty α} {Γ : Ctx α ε}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  {g : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {h : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : f.inl ;;' coprod g h = f ;;' g := by rw [<-seq_inj_l, <-seq_assoc, inj_l_coprod]
+
+theorem Eqv.inj_r_coprod {B B' C : Ty α} {Γ : Ctx α ε}
+  {g : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {h : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : inj_r ;;' coprod g h = h := by
+  rw [inj_r, seq, <-wk_eff_nil (h := bot_le), <-wk_eff_inr, let1_beta, coprod]
+  simp only [wk1_case, wk1_nil, subst_case, nil_subst0, wk_eff_inr, wk_eff_nil]
+  rw [case_inr]
+  convert nil_seq _
+  rw [seq]
+  congr
+  induction h using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_subst, Subst.InS.coe_lift, InS.coe_subst0, InS.coe_inl,
+    InS.coe_var, InS.coe_wk, Ctx.InS.coe_wk2, Ctx.InS.coe_wk1, Term.wk_wk]
+  simp only [← Term.subst_fromWk, Term.subst_subst]
+  congr
+  funext k; cases k <;> rfl
+
+theorem Eqv.inr_coprod {A B B' C : Ty α} {Γ : Ctx α ε}
+  {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {g : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {h : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : f.inr ;;' coprod g h = f ;;' h := by rw [<-seq_inj_r, <-seq_assoc, inj_r_coprod]
+
 def Eqv.zero {Γ : Ctx α ε} {A : Ty α}
   : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A, e)
   := (abort (var 0 (by simp)) A)
+
+theorem Eqv.zero_eq {A : Ty α} {Γ : Ctx α ε}
+  (r s : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A, e)) : r = s
+  := by apply Eqv.initial; exact ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty, rfl⟩
+
+theorem Eqv.zero_seq {A B : Ty α} {Γ : Ctx α ε} {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  : zero ;;' f = zero := zero_eq _ _
 
 def Eqv.lzero {Γ : Ctx α ε} {A : Ty α}
   : Eqv φ (⟨Ty.empty.coprod A, ⊥⟩::Γ) (A, e)
@@ -348,18 +419,30 @@ theorem Eqv.braid_braid_sum
   : braid_sum (φ := φ) (A := A) (B := A) (Γ := Γ) (e := e) ;;' braid_sum = nil := by
   rw [braid_sum, seq_swap_sum, seq_nil, swap_sum_swap_sum]
 
+theorem Eqv.braid_sum_def' {A B : Ty α} {Γ : Ctx α ε}
+  : braid_sum (φ := φ) (A := A) (B := B) (Γ := Γ) (e := e) = coprod inj_r inj_l := rfl
+
 def Eqv.assoc_sum {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨(A.coprod B).coprod C, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩
   := nil.reassoc_sum
 
--- theorem Eqv.assoc_sum_def' {A B C : Ty α} {Γ : Ctx α ε}
---   : assoc_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e)
---   = coprod (coprod inj_l (inj_l ;;' inj_r)) (inj_r ;;' inj_r)
---   := by simp [coprod, assoc_sum, reassoc_sum, wk1_seq, wk2_seq]; sorry
+theorem Eqv.assoc_sum_def' {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e)
+  = coprod (coprod inj_l (inj_l ;;' inj_r)) (inj_r ;;' inj_r) := by
+  simp only [assoc_sum, reassoc_sum, coprod, wk1_inj_l, wk1_seq, wk1_inj_r, wk1_case, wk1_nil,
+    wk2_inj_l, wk2_seq, wk2_inj_r, seq_inj_r, seq_inj_l]
+  rfl
 
 def Eqv.assoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨A.coprod (B.coprod C), ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩
   := nil.reassoc_inv_sum
+
+theorem Eqv.assoc_inv_sum_def' {A B C : Ty α} {Γ : Ctx α ε}
+  : assoc_inv_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e)
+  = coprod (inj_l ;;' inj_l) (coprod (inj_r ;;' inj_l) inj_r) := by
+  simp only [assoc_inv_sum, reassoc_inv_sum, coprod, wk1_inj_l, wk1_seq, wk1_inj_r, wk1_case,
+    wk1_nil, wk2_inj_l, wk2_seq, wk2_inj_r, seq_inj_r, seq_inj_l]
+  rfl
 
 theorem Eqv.assoc_assoc_inv_sum
   : assoc_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e) ;;' assoc_inv_sum = nil := by
@@ -368,6 +451,32 @@ theorem Eqv.assoc_assoc_inv_sum
 theorem Eqv.assoc_inv_assoc_sum
   : assoc_inv_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e) ;;' assoc_sum = nil := by
   rw [assoc_sum, assoc_inv_sum, seq_reassoc_sum, seq_nil, reassoc_reassoc_inv_sum]
+
+theorem Eqv.assoc_sum_nat {A B C A' B' C' : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) (A', e)) (m : Eqv φ (⟨B, ⊥⟩::Γ) (B', e)) (r : Eqv φ (⟨C, ⊥⟩::Γ) (C', e))
+  : sum (sum l m) r ;;' assoc_sum = assoc_sum ;;' sum l (sum m r)
+  := by simp only [
+    sum, coprod_seq, <-seq_assoc, inj_l_coprod, inj_r_coprod, assoc_sum_def'
+  ]
+
+theorem Eqv.triangle_sum {X Y : Ty α} {Γ : Ctx α ε}
+  : assoc_sum (φ := φ) (Γ := Γ) (e := e) (A := X) (B := Ty.empty) (C := Y) ;;' nil.sum lzero
+  = rzero.sum nil := by simp only [
+    assoc_sum_def', coprod_seq, <-seq_assoc, lzero, rzero, inj_l_coprod, inj_r_coprod, zero_seq, sum
+  ]
+
+theorem Eqv.pentagon_sum {W X Y Z : Ty α} {Γ : Ctx α ε}
+  : assoc_sum (φ := φ) (Γ := Γ) (e := e) (A := W.coprod X) (B := Y) (C := Z) ;;' assoc_sum
+  = assoc_sum.sum nil ;;' assoc_sum ;;' nil.sum assoc_sum := by simp only [
+    assoc_sum_def', coprod_seq, inj_l_coprod, <-seq_assoc, inj_r_coprod, nil_seq, sum
+  ]
+
+theorem Eqv.hexagon_sum {X Y Z : Ty α} {Γ : Ctx α ε}
+  : assoc_sum (φ := φ) (Γ := Γ) (e := e) (A := X) (B := Y) (C := Z) ;;' braid_sum ;;' assoc_sum
+  = braid_sum.sum nil ;;' assoc_sum ;;' nil.sum braid_sum := by simp only [
+    braid_sum_def', assoc_sum_def', nil_seq, coprod_seq, <-seq_assoc, inj_r_coprod, inj_l_coprod,
+    sum
+  ]
 
 -- TODO: assoc is natural
 

@@ -315,28 +315,35 @@ theorem Eqv.Pure.assoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.assoc_assoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; assoc_inv_sum = nil
-  := sorry
+  := by rw [<-ret_assoc_sum, <-ret_assoc_inv_sum, <-ret_of_seq, Term.Eqv.assoc_assoc_inv_sum]; rfl
 
 theorem Eqv.assoc_inv_assoc_sum {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_inv_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) ;; assoc_sum = nil
-  := sorry
+  := by rw [<-ret_assoc_sum, <-ret_assoc_inv_sum, <-ret_of_seq, Term.Eqv.assoc_inv_assoc_sum]; rfl
 
 theorem Eqv.assoc_sum_nat {A B C A' B' C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L)) (m : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L)) (r : Eqv φ (⟨C, ⊥⟩::Γ) (C'::L))
   : sum (sum l m) r ;; assoc_sum = assoc_sum ;; sum l (sum m r)
-  := sorry
+  := by
+  simp only [assoc_sum, sum_seq_coprod, coprod_seq]
+  congr 1
+  · simp only [seq_assoc, inj_l_seq_sum, inj_r_seq_sum]
+    simp only [<-seq_assoc, inj_l_seq_sum]
+  · simp only [seq_assoc, inj_r_seq_sum]; simp only [<-seq_assoc, inj_r_seq_sum]
 
 theorem Eqv.triangle_sum {X Y : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_sum (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Ty.empty) (C := Y) ;; nil.sum lzero
-  = rzero.sum nil
-  := sorry
+  = rzero.sum nil := by simp only [
+    assoc_sum, coprod_seq, seq_assoc, lzero, rzero, inj_l_coprod, inj_r_coprod, zero_seq, sum]
 
 theorem Eqv.pentagon_sum {W X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_sum (φ := φ) (Γ := Γ) (L := L) (A := W.coprod X) (B := Y) (C := Z) ;; assoc_sum
-  = assoc_sum.sum nil ;; assoc_sum ;; nil.sum assoc_sum
-  := sorry
+  = assoc_sum.sum nil ;; assoc_sum ;; nil.sum assoc_sum := by simp only [
+    assoc_sum, sum_seq_coprod, coprod_seq, inj_l_coprod, inj_l_seq_sum, seq_assoc,
+    inj_r_coprod, inj_r_seq_sum, nil_seq
+  ]
 
 theorem Eqv.hexagon_sum {X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_sum (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Y) (C := Z) ;; braid_sum ;; assoc_sum
-  = braid_sum.sum nil ;; assoc_sum ;; nil.sum braid_sum
-  := sorry
+  = braid_sum.sum nil ;; assoc_sum ;; nil.sum braid_sum := by simp only [
+    braid_sum, assoc_sum, nil_seq, coprod_seq, seq_assoc, inj_r_coprod, inj_l_coprod, sum]

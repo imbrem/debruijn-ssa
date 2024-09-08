@@ -9,6 +9,7 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 
 namespace Term
 
+--TODO: seq here is the opposite of seq for region; think about fixing this...
 
 def Eqv.nil {A : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A, e⟩
   := var 0 (by simp)
