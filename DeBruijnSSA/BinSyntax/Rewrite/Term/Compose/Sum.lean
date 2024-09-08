@@ -294,8 +294,44 @@ def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε}
 def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inl nil
 
+@[simp]
+theorem Eqv.wk1_inj_l {A B : Ty α} {Γ : Ctx α ε}
+  : (inj_l (φ := φ) (e := e) (A := A) (B := B) (Γ := Γ)).wk1 (inserted := inserted) = inj_l
+  := by simp [inj_l]
+
+@[simp]
+theorem Eqv.wk2_inj_l {A B : Ty α} {Γ : Ctx α ε}
+  : (inj_l (φ := φ) (e := e) (A := A) (B := B) (Γ := head::Γ)).wk2 (inserted := inserted) = inj_l
+  := by simp [inj_l]
+
 def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨B, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inr nil
+
+@[simp]
+theorem Eqv.wk1_inj_r {A B : Ty α} {Γ : Ctx α ε}
+  : (inj_r (φ := φ) (e := e) (A := A) (B := B) (Γ := Γ)).wk1 (inserted := inserted) = inj_r
+  := by simp [inj_r]
+
+@[simp]
+theorem Eqv.wk2_inj_r {A B : Ty α} {Γ : Ctx α ε}
+  : (inj_r (φ := φ) (e := e) (A := A) (B := B) (Γ := head::Γ)).wk2 (inserted := inserted) = inj_r
+  := by simp [inj_r]
+
+theorem Eqv.coprod_inl_inr {A B : Ty α} {Γ : Ctx α ε}
+  : coprod (Γ := Γ) (e := e) (inj_l (B := B) (φ := φ)) (inj_r (A := A) (φ := φ)) = nil
+  := by simp [coprod, inj_l, inj_r, nil, case_eta]
+
+def Eqv.zero {Γ : Ctx α ε} {A : Ty α}
+  : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A, e)
+  := (abort (var 0 (by simp)) A)
+
+def Eqv.lzero {Γ : Ctx α ε} {A : Ty α}
+  : Eqv φ (⟨Ty.empty.coprod A, ⊥⟩::Γ) (A, e)
+  := coprod zero nil
+
+def Eqv.rzero {Γ : Ctx α ε} {A : Ty α}
+  : Eqv φ (⟨A.coprod Ty.empty, ⊥⟩::Γ) (A, e)
+  := coprod nil zero
 
 -- TODO: lzero, rzero; appropriate isomorphisms
 
@@ -315,6 +351,11 @@ theorem Eqv.braid_braid_sum
 def Eqv.assoc_sum {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨(A.coprod B).coprod C, ⊥⟩::Γ) ⟨A.coprod (B.coprod C), e⟩
   := nil.reassoc_sum
+
+-- theorem Eqv.assoc_sum_def' {A B C : Ty α} {Γ : Ctx α ε}
+--   : assoc_sum (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e)
+--   = coprod (coprod inj_l (inj_l ;;' inj_r)) (inj_r ;;' inj_r)
+--   := by simp [coprod, assoc_sum, reassoc_sum, wk1_seq, wk2_seq]; sorry
 
 def Eqv.assoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨A.coprod (B.coprod C), ⊥⟩::Γ) ⟨(A.coprod B).coprod C, e⟩
