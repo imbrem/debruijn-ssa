@@ -894,7 +894,7 @@ theorem Eqv.Pure.pair_ltimes_right {A B B' C : Ty α} {Γ : Ctx α ε}
   : pair l r ;;' l' ⋉' _ = pair (l ;;' l') r
   := Eqv.pair_ltimes_of_comm (hr.right_central _)
 
-theorem Eqv.Pure.pair_ltimes_pure {A B B' C : Ty α} {Γ : Ctx α ε}
+theorem Eqv.pair_ltimes_pure {A B B' C : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', ⊥⟩}
   {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩}
   : pair l r ;;' l' ⋉' _ = pair (l ;;' l') r
