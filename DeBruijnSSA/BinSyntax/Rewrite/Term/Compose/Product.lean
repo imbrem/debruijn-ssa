@@ -798,6 +798,12 @@ theorem Eqv.Pure.tensor_seq_right {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : 
   (hr : r.Pure) : tensor l r ;;' tensor l' r' = tensor (l ;;' l') (r ;;' r')
   := tensor_seq_of_comm (hr.right_central _)
 
+theorem Eqv.tensor_seq_pure {A B B' C C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', ⊥⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', ⊥⟩}
+  : tensor l r ;;' tensor l' r' = tensor (l ;;' l') (r ;;' r')
+  := Eqv.Pure.tensor_seq_left (by simp)
+
 theorem Eqv.Pure.dup {A B : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩) : l.Pure → l ;;' split = split ;;' l.tensor l
   | ⟨l, hl⟩ => by
@@ -833,6 +839,68 @@ theorem Eqv.split_tensor {A B C : Ty α} {Γ : Ctx α ε}
     apply Eqv.eq_of_term_eq
     cases k using Fin.cases <;> rfl
   }
+
+theorem Eqv.pair_tensor_of_comm {A B B' C C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', e⟩}
+  (h : ltimes l' _ ;;' rtimes _ r = rtimes _ r ;;' ltimes l' _)
+  : pair l r ;;' tensor l' r' = pair (l ;;' l') (r ;;' r')
+  := by rw [<-split_tensor, <-seq_assoc, tensor_seq_of_comm h, split_tensor]
+
+theorem Eqv.Pure.pair_tensor_left {A B B' C C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', e⟩}
+  (hl : l'.Pure)
+  : pair l r ;;' tensor l' r' = pair (l ;;' l') (r ;;' r')
+  := Eqv.pair_tensor_of_comm (hl.left_central _)
+
+theorem Eqv.Pure.pair_tensor_right {A B B' C C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', e⟩}
+  (hr : r.Pure)
+  : pair l r ;;' tensor l' r' = pair (l ;;' l') (r ;;' r')
+  := Eqv.pair_tensor_of_comm (hr.right_central _)
+
+theorem Eqv.pair_tensor_pure {A B B' C C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', ⊥⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', ⊥⟩}
+  : pair l r ;;' tensor l' r' = pair (l ;;' l') (r ;;' r')
+  := Eqv.Pure.pair_tensor_left (by simp)
+
+theorem Eqv.pair_rtimes {A B B' C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', e⟩}
+  : pair l r ;;' _ ⋊' r' = pair l (r ;;' r')
+  := by rw [rtimes, Pure.pair_tensor_left, seq_nil]; simp
+
+theorem Eqv.pair_ltimes_of_comm {A B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  (h : ltimes l' _ ;;' rtimes _ r = rtimes _ r ;;' ltimes l' _)
+  : pair l r ;;' l' ⋉' _ = pair (l ;;' l') r
+  := by rw [ltimes, pair_tensor_of_comm h, seq_nil]
+
+theorem Eqv.Pure.pair_ltimes_left {A B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  (hl : l'.Pure)
+  : pair l r ;;' l' ⋉' _ = pair (l ;;' l') r
+  := Eqv.pair_ltimes_of_comm (hl.left_central _)
+
+theorem Eqv.Pure.pair_ltimes_right {A B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  (hr : r.Pure)
+  : pair l r ;;' l' ⋉' _ = pair (l ;;' l') r
+  := Eqv.pair_ltimes_of_comm (hr.right_central _)
+
+theorem Eqv.Pure.pair_ltimes_pure {A B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', ⊥⟩}
+  {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩}
+  : pair l r ;;' l' ⋉' _ = pair (l ;;' l') r
+  := Eqv.Pure.pair_ltimes_left (by simp)
+
+-- TODO: {tensor {l r}times} pi_{l r}
 
 theorem Eqv.split_reassoc {A : Ty α} {Γ : Ctx α ε}
   : (split (φ := φ) (A := A) (Γ := Γ) (e := e) ;;' split ⋉' _).reassoc
@@ -898,7 +966,6 @@ theorem Eqv.assoc_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.assoc_inv_assoc {A B C : Ty α} {Γ : Ctx α ε}
   : assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) ;;' assoc = nil := by
   rw [seq_prod_assoc, assoc_inv, reassoc_reassoc_inv]
-
 
 theorem Eqv.reassoc_tensor {A B C A' B' C' : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (A', e)} {m : Eqv φ (⟨B, ⊥⟩::Γ) (B', e)} {r : Eqv φ (⟨C, ⊥⟩::Γ) (C', e)}

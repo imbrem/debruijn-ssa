@@ -113,6 +113,13 @@ theorem Eqv.rtimes_rtimes {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     funext k
     cases k <;> rfl
 
+def Eqv.ret_seq_rtimes {tyLeft tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (e : Term.Eqv φ ((tyIn', _)::Γ) ((tyLeft.prod tyIn), ⊥)) (r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L))
+  : ret e ;; tyLeft ⋊ r = (Eqv.let2 e $
+    r.vwk1.vwk1 ;;
+    ret (pair (var 1 (by simp)) (var 0 (by simp))))
+  := sorry
+
 -- TODO: proper ltimes?
 def Eqv.ltimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)) (tyRight : Ty α)
@@ -306,21 +313,24 @@ theorem Eqv.Pure.central_left {A A' B B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (hl : l.Pure)
   (r : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L))
   : (l ⋉ B) ;; (A' ⋊ r) = (A ⋊ r) ;; (l ⋉ B') := by
-  let ⟨p, hp⟩ := hl;
-  simp only [hp, ltimes_eq_ret, Eqv.rtimes, Eqv.vwk1, ret_seq, vwk_let2, wk_var, Set.mem_setOf_eq,
-    Ctx.InS.coe_wk1, Nat.liftWk_zero, vsubst_let2, var0_subst0, List.length_cons, id_eq,
-    Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self]
-  rw [let2_bind, Term.Eqv.ltimes, Term.Eqv.tensor, let1_let2, let2_seq]
-  apply congrArg
-  simp [
-    let1_beta, Eqv.vwk1, let2_pair, <-ltimes_eq_ret, Eqv.ltimes, Eqv.rtimes, vwk_vwk,
-    ret_seq, vwk_ret, seq_assoc,
-  ]
-  simp [let2_seq, br_zero_eq_ret, ret_pair_braid]
-  simp [
-    Eqv.braid, let2_seq, let2_pair, let1_beta, Eqv.vwk1, vwk_ret, ret_seq, wk_wk,
-    br_zero_eq_ret
-  ]
+  let ⟨l, hp⟩ := hl;
+  cases hp
+  simp only [ltimes_eq_ret, ret_seq_rtimes]
+  simp only [Eqv.rtimes, let2_seq, seq_assoc, vwk1_ret, <-ret_of_seq, wk1_ltimes]
+  -- simp only [hp, ltimes_eq_ret, Eqv.rtimes, Eqv.vwk1, ret_seq, vwk_let2, wk_var, Set.mem_setOf_eq,
+  --   Ctx.InS.coe_wk1, Nat.liftWk_zero, vsubst_let2, var0_subst0, List.length_cons, id_eq,
+  --   Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self]
+  -- rw [let2_bind, Term.Eqv.ltimes, Term.Eqv.tensor, let1_let2, let2_seq]
+  -- apply congrArg
+  -- simp [
+  --   let1_beta, Eqv.vwk1, let2_pair, <-ltimes_eq_ret, Eqv.ltimes, Eqv.rtimes, vwk_vwk,
+  --   ret_seq, vwk_ret, seq_assoc,
+  -- ]
+  -- simp [let2_seq, br_zero_eq_ret, ret_pair_braid]
+  -- simp [
+  --   Eqv.braid, let2_seq, let2_pair, let1_beta, Eqv.vwk1, vwk_ret, ret_seq, wk_wk,
+  --   br_zero_eq_ret
+  -- ]
   sorry
 
 theorem Eqv.Pure.central_right {A A' B B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
