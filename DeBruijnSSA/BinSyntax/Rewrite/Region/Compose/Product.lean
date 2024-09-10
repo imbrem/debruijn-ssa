@@ -579,7 +579,30 @@ theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨C, ⊥⟩::Γ) (C'::L))
-  : (A.prod B) ⋊ r ;; assoc = assoc ;; A ⋊ (B ⋊ r) := sorry
+  : (A.prod B) ⋊ r ;; assoc = assoc ;; A ⋊ (B ⋊ r) := by
+  rw [rtimes, let2_seq]
+  simp only [vwk1_assoc]
+  rw [seq_assoc, assoc_eq_ret, <-ret_of_seq, seq_prod_assoc, Term.Eqv.reassoc]
+  simp only [Term.Eqv.let2_pair, wk0_var, zero_add, let1_beta_pure, subst_let2, var_succ_subst0,
+    subst_pair, subst_liftn₂_var_one, ge_iff_le, le_refl, subst_liftn₂_var_zero,
+    subst_liftn₂_var_add_2, var0_subst0, List.length_cons, Nat.reduceAdd, Fin.zero_eta,
+    List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self]
+  rw [assoc, let2_seq]
+  simp only [vwk1_rtimes, let2_seq, ret_seq_rtimes, let2_pair, let1_beta]
+  simp only [wk0_pair, wk0_var, zero_add, Nat.reduceAdd]
+  rw [rtimes, let2_seq, seq_assoc, vwk1_ret, vwk1_ret, <-ret_of_seq]
+  simp only [Term.Eqv.seq, wk1_pair, wk1_var_succ, zero_add, wk1_var0, List.length_cons,
+    Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, Nat.reduceAdd,
+    let1_beta_pure, subst_pair, var_succ_subst0, var0_subst0, wk_res_self, vsubst_let2,
+    vsubst_liftn₂_seq, vsubst_br, subst_liftn₂_var_add_2, wk0_var, subst_liftn₂_var_one, ge_iff_le,
+    le_refl, subst_liftn₂_var_zero, let2_pair, let1_beta]
+  rw [br_zero_eq_ret, wk_res_self]
+  apply congrArg
+  rw [<-let2_ret]
+  sorry
+  -- calc
+  --   _ = let1 (var 1 Ctx.Var.shead.step) (r.vwk0.vwk1 ;; sorry) := sorry
+  --   _ = _ := sorry
 
 theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Ty.unit) (C := Y) ;; X ⋊ pi_r = pi_l ⋉ Y

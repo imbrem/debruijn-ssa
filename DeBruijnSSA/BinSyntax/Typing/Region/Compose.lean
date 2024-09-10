@@ -371,6 +371,13 @@ def InS.cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
       (Wf.br ⟨ℓ.prop, by simp⟩ (Term.Wf.var Ctx.Var.shead))
       (λi => (G i).prop.vwk1)⟩
 
+theorem InS.lwk_lift_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {r : InS φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
+  {ρ : L.InS K}
+  : r.fixpoint.lwk ρ.slift = (r.lwk ρ.slift).fixpoint := by
+  ext
+  simp only [coe_lwk, coe_fixpoint, LCtx.InS.coe_slift, Region.lwk_lift_fixpoint]
+
 @[simp]
 theorem InS.coe_cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
   (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))

@@ -136,17 +136,18 @@ theorem Eqv.vwk1_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : r.fixpoint.vwk1 (inserted := inserted) = (r.vwk1).fixpoint := by
   simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_lift_fixpoint]
 
-theorem Eqv.lwk_lift_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
-  {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}
+theorem Eqv.lwk_lift_fixpoint {A B : Ty α} {L K : LCtx α}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
   {ρ : L.InS K}
   : r.fixpoint.lwk ρ.slift = (r.lwk ρ.slift).fixpoint := by
   induction r using Quotient.inductionOn
-  --simp [InS.lwk_lift_fixpoint]
-  sorry
+  simp only [fixpoint_quot, lwk_quot]
+  rw [InS.lwk_lift_fixpoint]
 
 theorem Eqv.lwk1_fixpoint {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod A)::L)}
-  : r.fixpoint.lwk1 (inserted := inserted) = (r.lwk1).fixpoint := sorry
+  : r.fixpoint.lwk1 (inserted := inserted) = (r.lwk1).fixpoint := by
+  rw [lwk1, <-LCtx.InS.slift_wk0, lwk_lift_fixpoint]; rfl
 
 theorem Eqv.vsubst_lift_fixpoint {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨A, ⊥⟩::Δ) ((B.coprod A)::L)}

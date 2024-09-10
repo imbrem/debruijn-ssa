@@ -528,10 +528,20 @@ theorem vsubst_lift_fixpoint (r : Region φ) {ρ : Term.Subst φ}
   simp only [fixpoint, vsubst]
   congr
   funext i
-  cases i using Fin.elim1 with
-  | zero =>
-    rw [Fin.elim1_zero, vsubst_lift_append, vsubst_lwk1, vsubst_lift₂_vwk1]
-    rfl
+  cases i using Fin.elim1
+  rw [Fin.elim1_zero, vsubst_lift_append, vsubst_lwk1, vsubst_lift₂_vwk1]
+  rfl
+
+theorem lwk_lift_fixpoint (r : Region φ)
+  : r.fixpoint.lwk (Nat.liftWk ρ) = (r.lwk $ Nat.liftWk ρ).fixpoint := by
+  simp only [fixpoint, lwk]
+  congr
+  funext i; cases i using Fin.elim1
+  simp only [Nat.liftnWk_one, Fin.elim1_zero, lwk_lift_append]
+  congr 1
+  simp only [lwk1, lwk_lwk, vwk1_lwk]
+  congr
+  funext k; cases k <;> rfl
 
 def ite (b : Term φ) (r r' : Region φ) : Region φ := case b (r.vwk Nat.succ) (r'.vwk Nat.succ)
 

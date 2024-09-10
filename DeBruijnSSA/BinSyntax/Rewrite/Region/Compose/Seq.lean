@@ -197,6 +197,14 @@ theorem Eqv.let2_seq {Γ : Ctx α ε} {L : LCtx α}
   : (Eqv.let2 a r) ;; s = Eqv.let2 a (r ;; s.vwk1.vwk1) := by
   simp only [seq_def, lsubst_let2, Subst.Eqv.vliftn₂_eq_vlift_vlift, vlift_alpha0]
 
+-- theorem Eqv.seq_let2_wk0_vwk2 {Γ : Ctx α ε} {L : LCtx α}
+--   (r : Eqv φ (⟨X, ⊥⟩::Γ) (Y::L))
+--   (a : Term.Eqv φ Γ ⟨A.prod B, ⊥⟩)
+--   (s : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (D::L))
+--   : (r ;; let2 a.wk0 s.vwk2) = let2 a.wk0
+--     (let1 (Term.Eqv.var 2 Ctx.Var.shead.step.step) (r.vwk1.vwk1.vwk1 ;; s.vwk2.vwk0)) := by
+--   sorry
+
 theorem Eqv.case_seq {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.coprod Y, e⟩)
   (r : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)) (s : Eqv φ (⟨Y, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L))
