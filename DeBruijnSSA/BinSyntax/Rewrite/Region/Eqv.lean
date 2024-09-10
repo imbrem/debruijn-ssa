@@ -974,7 +974,7 @@ theorem Eqv.let1_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
 theorem Eqv.let2_bind {Γ : Ctx α ε} {L : LCtx α}
   {e : Term.Eqv φ Γ ⟨A.prod B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   : let2 e r
-  = let1 e (let2 (var 0 Ctx.Var.shead) (r.vwk (Ctx.InS.wk0.liftn₂ (le_refl _) (le_refl _)))) := by
+  = let1 e (let2 (var 0 Ctx.Var.shead) r.vwk2) := by
   induction e using Quotient.inductionOn
   induction r using Quotient.inductionOn
   apply Eqv.sound; apply InS.let2_bind
@@ -1302,13 +1302,13 @@ theorem Eqv.let2_op {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.let2 (a.op f hf) r = (
     let1 a $
     let2 ((var 0 (by simp)).op f hf) $
-    r.vwk (ρ := ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩))
+    r.vwk2)
   := by
   rw [let2_bind, let1_op]
   congr
   apply Eq.symm
   rw [let2_bind]
-  simp only [vwk1, vwk_vwk, vwk_let2]
+  simp only [vwk1, vwk2, vwk_vwk, vwk_let2]
   congr 3
   ext k; cases k with | zero => rfl | succ k => cases k <;> rfl
 
@@ -1316,9 +1316,7 @@ theorem Eqv.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
   (a : Term.Eqv φ Γ ⟨A, e⟩)
   (b : Term.Eqv φ Γ ⟨B, e⟩)
-  : Eqv.let2 (a.pair b) r = (
-    let1 a $
-    let1 (b.wk ⟨Nat.succ, (by simp)⟩) r) := by
+  : Eqv.let2 (a.pair b) r = (let1 a $ let1 b.wk0 r) := by
   induction a using Quotient.inductionOn
   induction b using Quotient.inductionOn
   induction r using Quotient.inductionOn
@@ -1326,20 +1324,47 @@ theorem Eqv.let2_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
 
 theorem Eqv.let2_abort {Γ : Ctx α ε} {L : LCtx α} {A : Ty α} (e' := ⊥)
   {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
-  (a : Term.Eqv φ Γ ⟨Ty.empty, e⟩)
+  {a : Term.Eqv φ Γ ⟨Ty.empty, e⟩}
   : Eqv.let2 (a.abort _) r = (
     let1 a $
     let2 ((var 0 (by simp)).abort (e := e') (A.prod B)) $
-    r.vwk ⟨Nat.liftnWk 2 Nat.succ, by apply Ctx.Wkn.sliftn₂; simp⟩) := by
+    r.vwk2) := by
   rw [let2_bind, let1_abort]
   congr
   apply Eq.symm
   rw [let2_bind]
-  simp only [Set.mem_setOf_eq, vwk_vwk, vwk1, vwk_let2, wk_var, Ctx.InS.coe_wk1, Nat.liftWk_zero]
+  simp only [
+    Set.mem_setOf_eq, vwk_vwk, vwk1, vwk2, vwk_let2, wk_var, Ctx.InS.coe_wk1, Nat.liftWk_zero
+  ]
   apply congrArg
   apply congrArg
   congr 1
   ext k; cases k with | zero => rfl | succ k => cases k <;> rfl
+
+theorem Eqv.let2_let1 {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L} {a : Term.Eqv φ Γ ⟨X, e⟩}
+  {b : Term.Eqv φ ((X, ⊥)::Γ) ⟨A.prod B, e⟩}
+  : let2 (a.let1 b) r = let1 a (let2 b r.vwk2) := by
+  rw [let2_bind, let1_let1]
+  apply congrArg
+  convert let2_bind.symm
+  simp only [vwk1, vwk2, vwk_let2, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk1, Nat.liftWk_zero,
+    vwk_vwk]
+  congr 2
+  ext k; cases k using Nat.cases2 <;> rfl
+
+theorem Eqv.let2_let2 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
+  {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) L}
+  {a : Term.Eqv φ Γ ⟨X.prod Y, e⟩}
+  {b : Term.Eqv φ ((Y, ⊥)::(X, ⊥)::Γ) ⟨A.prod B, e⟩}
+  : let2 (a.let2 b) r = let2 a (let2 b r.vwk2.vwk2) := by
+  rw [let2_bind, let1_let2]
+  apply congrArg
+  convert let2_bind.symm
+  simp only [vwk1, vwk2, vwk_let2, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk1, Nat.liftWk_zero,
+    vwk_vwk]
+  congr 2
+  ext k; cases k using Nat.cases2 <;> rfl
 
 theorem Eqv.case_op {Γ : Ctx α ε} {L : LCtx α}
   (f : φ) (hf : Φ.EFn f A (B.coprod C) e)

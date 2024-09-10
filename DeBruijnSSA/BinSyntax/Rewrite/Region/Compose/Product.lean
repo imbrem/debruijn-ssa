@@ -142,6 +142,11 @@ def Eqv.ltimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 infixl:70 " ⋉ "  => Eqv.ltimes
 
+theorem Eqv.vwk1_ltimes {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)} {tyRight : Ty α}
+  : (r ⋉ tyRight).vwk1 (inserted := inserted) = r.vwk1 ⋉ tyRight := by
+  simp only [ltimes, vwk1_seq, vwk1_braid, vwk1_rtimes]
+
 theorem Eqv.ltimes_eq_ret {tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {tyRight : Ty α} {r : Term.Eqv φ (⟨tyIn, ⊥⟩::Γ) ⟨tyOut, ⊥⟩}
   : ret (targets := L) r ⋉ tyRight = ret (r.ltimes tyRight) := by
@@ -294,6 +299,23 @@ theorem Eqv.ret_pair_braid {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   congr
   exact subst0_wk0
 
+theorem Eqv.ltimes_def' {tyIn tyOut tyRight : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)}
+  : r ⋉ tyRight = (Eqv.let2 Term.Eqv.braid (e := ⊥) $
+    r.vwk1.vwk1 ;;
+    ret (pair (var 0 (by simp)) (var 1 (by simp)))) := by
+  rw [ltimes, braid_eq_ret, ret_seq_rtimes, let2_seq, seq_assoc]
+  simp only [vwk1_braid, ret_pair_braid]
+
+theorem Eqv.ret_seq_ltimes {tyIn tyOut tyRight : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (e : Term.Eqv φ ((tyIn', _)::Γ) ((tyIn.prod tyRight), ⊥)) (r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L))
+  : ret e ;; r ⋉ tyRight = (Eqv.let2 (e ;;' Term.Eqv.braid (e := ⊥)) $
+    r.vwk1.vwk1 ;;
+    ret (pair (var 0 (by simp)) (var 1 (by simp))))
+  := by
+  rw [ltimes, braid_eq_ret, <-seq_assoc, <-seq_assoc, <-ret_of_seq, ret_seq_rtimes]
+  simp only [let2_seq, seq_assoc, vwk1_braid, ret_pair_braid]
+
 theorem Eqv.lunit_braid {Γ : Ctx α ε} {L : LCtx α}
   : (lunit (φ := φ) (ty := ty) (Γ := Γ) (L := L)) ;; braid = runit
   := by simp only [lunit, ret_pair_braid]; rfl
@@ -333,7 +355,7 @@ theorem Eqv.let2_tensor_vwk2 {Γ : Ctx α ε} {L : LCtx α}
     _ = let2 (a.wk1.wk0.pair b.wk1.wk1) r.vwk2.vwk2.vwk2 := Eq.symm <| by
       rw [let2_bind]; simp only [vwk2, vwk_vwk, vwk1, vwk_let2, wk_var, Set.mem_setOf_eq,
         Ctx.InS.coe_wk1, Nat.liftWk_zero]; congr 3; ext k; cases k using Nat.cases2 <;> rfl
-    _ = _ := by rw [let2_pair]; rfl
+    _ = _ := by rw [let2_pair]
 
 theorem Eqv.let2_tensor_vwk2' {Γ : Ctx α ε} {L : LCtx α}
   {a : Term.Eqv φ ((A, ⊥)::Γ) (A', ⊥)} {b : Term.Eqv φ ((B, ⊥)::Γ) (B', ⊥)}
@@ -421,16 +443,29 @@ def Eqv.assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   let2 (var 1 ⟨by simp, le_refl _⟩) $
   ret $ pair (var 1 (by simp)) (pair (var 0 (by simp)) (var 2 (by simp)))
 
+theorem Eqv.vwk1_assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
+  = assoc := rfl
+
 def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.prod (B.prod C), ⊥⟩::Γ) ((A.prod B).prod C::L) :=
   let2 (var 0 ⟨by simp, le_refl _⟩) $
   let2 (var 0 ⟨by simp, le_refl _⟩) $
   ret $ pair (pair (var 3 (by simp)) (var 1 (by simp))) (var 0 (by simp))
 
+theorem Eqv.vwk1_assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (assoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
+  = assoc_inv := rfl
+
 theorem Eqv.assoc_eq_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) = Eqv.ret Term.Eqv.assoc := by
   simp only [Eqv.assoc, let2_ret]
   rfl
+
+theorem Eqv.ret_assoc_reassoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {e : Term.Eqv φ ((X, ⊥)::Γ) ((A.prod B).prod C, ⊥)}
+  : ret e ;; assoc (φ := φ) (L := L) = ret (e.reassoc)
+  := by rw [assoc_eq_ret, <-ret_of_seq, Term.Eqv.seq_prod_assoc]
 
 theorem Eqv.Pure.assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure := ⟨_, assoc_eq_ret⟩
@@ -438,6 +473,11 @@ theorem Eqv.Pure.assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.assoc_inv_eq_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.assoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) = Eqv.ret Term.Eqv.assoc_inv
   := by simp only [Eqv.assoc_inv, let2_ret]; rfl
+
+theorem Eqv.ret_assoc_inv_reassoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {e : Term.Eqv φ ((X, ⊥)::Γ) (A.prod (B.prod C), ⊥)}
+  : ret e ;; assoc_inv (φ := φ) (L := L) = ret (e.reassoc_inv)
+  := by rw [assoc_inv_eq_ret, <-ret_of_seq, Term.Eqv.seq_assoc_inv]
 
 theorem Eqv.Pure.assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (assoc_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure := ⟨_, assoc_inv_eq_ret⟩
@@ -452,7 +492,36 @@ theorem Eqv.assoc_inv_assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.assoc_left_nat {A B C A' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L))
-  : (l ⋉ B) ⋉ C ;; assoc = assoc ;; l ⋉ (B.prod C) := sorry
+  : (l ⋉ B) ⋉ C ;; assoc = assoc ;; l ⋉ (B.prod C) := by
+  rw [ltimes_def', let2_seq]
+  simp only [vwk1_assoc, vwk1_ltimes]
+  rw [ltimes_def', let2_seq, seq_assoc]
+  simp only [vwk1_br, wk1_pair, wk1_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem,
+    Fin.val_zero, List.getElem_cons_zero, wk1_var_succ, zero_add, Nat.reduceAdd, ← ret_of_seq]
+  rw [let2_seq, seq_assoc]
+  simp only [vwk1_assoc]
+  rw [assoc_eq_ret, <-ret_of_seq]
+  conv => lhs; rhs; rhs; rhs; rhs; lhs; simp [Term.Eqv.seq, Term.Eqv.let1_beta_pure]
+  rw [assoc_pair]
+  simp only [Term.Eqv.braid, let2_let2, vwk2, let2_pair, wk0_var, Nat.reduceAdd, let1_beta,
+    vwk_let2, vsubst_let2]
+  rw [assoc]
+  simp only [let2_seq, vwk1_ltimes, ret_seq_ltimes, pair_seq_braid_pure, let2_pair, wk0_var,
+    Nat.reduceAdd, let1_beta]
+  congr 2
+  induction l using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_pair, Term.InS.wk_var, Ctx.InS.coe_wk1,
+    Nat.liftWk_zero, Nat.liftWk_succ, Nat.succ_eq_add_one, zero_add, Nat.reduceAdd, InS.coe_vsubst,
+    Term.Subst.InS.coe_liftn₂, Term.InS.coe_subst0, Term.InS.coe_var, InS.coe_vwk,
+    Ctx.InS.coe_liftn₂, Ctx.InS.coe_wk2, InS.coe_lsubst, InS.coe_alpha0, InS.coe_br,
+    Term.InS.coe_pair, vwk_lsubst, Region.vsubst_lsubst]
+  congr 1
+  · funext k; cases k <;> rfl
+  · simp only [Region.vwk_vwk]
+    simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+    congr
+    funext k; cases k <;> rfl
 
 theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (m : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L))

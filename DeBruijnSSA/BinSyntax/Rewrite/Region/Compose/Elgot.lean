@@ -381,7 +381,7 @@ theorem Eqv.ret_eta_fixpoint_uniform_inner {X A B : Ty α} {Γ : Ctx α ε} {L :
   ]
   rw [
     <-ret, seq_assoc, let2_eta_seq_distl_inv, <-ret_seq_inj_l, <-ret_seq_inj_r, <-sum,
-    let2_pair, let1_beta, let1_beta, wk_var
+    let2_pair, wk0, let1_beta, let1_beta, wk_var
   ]
   simp only [Nat.succ_eq_add_one, zero_add, vsubst_vsubst, seq, vsubst_lsubst]
   congr

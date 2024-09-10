@@ -488,6 +488,10 @@ theorem Eqv.braid_seq_inj {A B C : Ty α} {Γ : Ctx α ε}
     λh => h ▸ rfl
   ⟩
 
+theorem Eqv.pair_seq_braid_pure {C A B : Ty α} {Γ : Ctx α ε}
+  (a : Eqv φ (⟨C, ⊥⟩::Γ) ⟨A, ⊥⟩) (b : Eqv φ (⟨C, ⊥⟩::Γ) ⟨B, ⊥⟩)
+  : a.pair b ;;' braid = b.pair a := by simp [seq_braid, let2_pair, let1_beta_pure]
+
 def Eqv.tensor {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A'.prod B', e⟩ := let2 nil (pair l.wk1.wk0 r.wk1.wk1)
@@ -1049,6 +1053,16 @@ theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε}
   : (A.prod B) ⋊' r ;;' assoc = assoc ;;' A ⋊' (B ⋊' r) := by
   rw [rtimes, <-tensor_nil_nil, seq_prod_assoc, reassoc_tensor]
   rfl
+
+theorem Eqv.assoc_nat {A B C A' B' C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (A', e)} {m : Eqv φ (⟨B, ⊥⟩::Γ) (B', e)} {r : Eqv φ (⟨C, ⊥⟩::Γ) (C', e)}
+  : (tensor (tensor l m) r) ;;' assoc = assoc ;;' tensor l (tensor m r) := by
+  rw [seq_prod_assoc, reassoc_tensor]
+
+theorem Eqv.assoc_pair {A B C : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ ((X, ⊥)::Γ) ⟨A, e⟩} {b : Eqv φ ((X, ⊥)::Γ) ⟨B, e⟩} {c : Eqv φ ((X, ⊥)::Γ) ⟨C, e⟩}
+  : (pair (pair a b) c) ;;' assoc = pair a (pair b c) := by
+  rw [seq_prod_assoc, reassoc_beta]
 
 theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε}
   : assoc (φ := φ) (Γ := Γ) (A := X) (B := Ty.unit) (C := Y) (e := e) ;;' X ⋊' pi_r
