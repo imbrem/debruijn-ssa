@@ -625,6 +625,14 @@ theorem InS.vwk1_let1 {Γ : Ctx α ε} {L : LCtx α} {A e}
   : (t.let1 a).vwk1 (inserted := inserted) = let1 a.wk1 t.vwk2
   := by ext; simp [Region.vwk1, Nat.liftnWk_two, Region.vwk2, Term.wk1]
 
+def InS.vwk3 {Γ : Ctx α ε} {L} (r : InS φ (left::middle::right::Γ) L)
+  : InS φ (left::middle::right::inserted::Γ) L
+  := r.vwk Ctx.InS.wk3
+
+@[simp]
+theorem InS.coe_vwk3 {Γ : Ctx α ε} {L} {r : InS φ (left::middle::right::Γ) L}
+  : (r.vwk3 (inserted := inserted) : Region φ) = (r : Region φ).vwk3 := rfl
+
 def InS.vswap01 {Γ : Ctx α ε} {L} (r : InS φ (left::right::Γ) L) : InS φ (right::left::Γ) L
   := r.vwk Ctx.InS.swap01
 
@@ -639,6 +647,14 @@ def InS.vswap02 {Γ : Ctx α ε} {L} (r : InS φ (left::mid::right::Γ) L)
 @[simp]
 theorem InS.coe_vswap02 {Γ : Ctx α ε} {L} {r : InS φ (left::mid::right::Γ) L}
   : (r.vswap02 : Region φ) = r.vswap02 := rfl
+
+def InS.vswap03 {Γ : Ctx α ε} {L} (r : InS φ (first::second::third::fourth::Γ) L)
+  : InS φ (second::third::fourth::first::Γ) L
+  := r.vwk Ctx.InS.swap03
+
+@[simp]
+theorem InS.coe_vswap03 {Γ : Ctx α ε} {L} {r : InS φ (first::second::third::fourth::Γ) L}
+  : (r.vswap03 : Region φ) = r.vswap03 := rfl
 
 def InS.lwk {Γ : Ctx α ε} (ρ : L.InS K) (r : InS φ Γ L) : InS φ Γ K
   := ⟨(r : Region φ).lwk ρ, r.2.lwk ρ.prop⟩

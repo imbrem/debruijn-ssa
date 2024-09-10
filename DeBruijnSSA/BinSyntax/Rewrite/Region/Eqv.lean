@@ -722,6 +722,18 @@ theorem Eqv.vwk1_shf {Γ : Ctx α ε} {L : LCtx α} {R : LCtx α} {Y : Ty α}
   induction d using Quotient.inductionOn; rfl
 
 @[simp]
+theorem Eqv.vwk_br {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Γ.InS Δ}
+  {ℓ} {a : Term.Eqv φ Δ ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
+  : Eqv.vwk ρ (Eqv.br ℓ a hℓ) = Eqv.br ℓ (a.wk ρ) hℓ := by
+  induction a using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.vwk0_br {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.Eqv φ Γ ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
+  : Eqv.vwk0 (Eqv.br ℓ a hℓ) = Eqv.br ℓ (a.wk0 (head := head)) hℓ := by
+  induction a using Quotient.inductionOn; rfl
+
+@[simp]
 theorem Eqv.vwk1_br {Γ : Ctx α ε} {L : LCtx α}
   {ℓ} {a : Term.Eqv φ (head::Γ) ⟨A, ⊥⟩} {hℓ : L.Trg ℓ A}
   : Eqv.vwk1 (Eqv.br ℓ a hℓ) = Eqv.br ℓ (a.wk1 (inserted := inserted)) hℓ := by
@@ -775,6 +787,21 @@ theorem Eqv.vwk1_vwk2 {Γ : Ctx α ε} {L : LCtx α}
   congr 1
   ext k; cases k <;> rfl
 
+def Eqv.vwk3 {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (left::middle::right::Γ) L)
+  : Eqv φ (left::middle::right::inserted::Γ) L := Eqv.vwk Ctx.InS.wk3 r
+
+@[simp]
+theorem Eqv.vwk3_quot {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (left::middle::right::Γ) L}
+  : Eqv.vwk3 (inserted := inserted) ⟦r⟧ = ⟦r.vwk3⟧ := rfl
+
+theorem Eqv.vwk1_let2 {L : LCtx α}
+  {a : Term.Eqv φ (⟨X, ⊥⟩::Γ) ⟨Ty.prod A B, e⟩} {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::⟨X, ⊥⟩::Γ) L}
+  : vwk1 (inserted := inserted) (let2 a r)
+  = let2 a.wk1 r.vwk3 := by
+  induction a using Quotient.inductionOn; induction r using Quotient.inductionOn;
+  apply Eqv.eq_of_reg_eq
+  simp [Nat.liftnWk_succ]
+
 def Eqv.vswap01
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (left::right::Γ) L)
   : Eqv φ (right::left::Γ) L := Eqv.vwk Ctx.InS.swap01 r
@@ -792,6 +819,15 @@ def Eqv.vswap02
 theorem Eqv.vswap02_quot
   {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (left::mid::right::Γ) L}
   : Eqv.vswap02 ⟦r⟧ = ⟦r.vswap02⟧ := rfl
+
+def Eqv.vswap03
+  {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (first::second::third::fourth::Γ) L)
+  : Eqv φ (second::third::fourth::first::Γ) L := Eqv.vwk Ctx.InS.swap03 r
+
+@[simp]
+theorem Eqv.vswap03_quot
+  {Γ : Ctx α ε} {L : LCtx α} {r : InS φ (first::second::third::fourth::Γ) L}
+  : Eqv.vswap03 ⟦r⟧ = ⟦r.vswap03⟧ := rfl
 
 def Eqv.lwk0
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ Γ L)

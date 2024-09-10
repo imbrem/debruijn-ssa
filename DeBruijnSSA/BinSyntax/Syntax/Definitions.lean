@@ -851,6 +851,8 @@ def Region.vswap01 : Region φ → Region φ := vwk (Nat.swap0 1)
 
 def Region.vswap02 : Region φ → Region φ := vwk (Nat.swap0 2)
 
+def Region.vswap03 : Region φ → Region φ := vwk (Nat.swap0 3)
+
 theorem Region.vwk_vwk1 (r : Region φ) : r.vwk1.vwk ρ = r.vwk (ρ ∘ Nat.liftWk Nat.succ)
   := by simp only [vwk1, vwk_vwk, <-Nat.liftWk_comp]
 

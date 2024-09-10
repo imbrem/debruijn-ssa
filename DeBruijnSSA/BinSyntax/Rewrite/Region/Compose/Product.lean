@@ -598,11 +598,23 @@ theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     le_refl, subst_liftn₂_var_zero, let2_pair, let1_beta]
   rw [br_zero_eq_ret, wk_res_self]
   apply congrArg
-  rw [<-let2_ret]
-  sorry
-  -- calc
-  --   _ = let1 (var 1 Ctx.Var.shead.step) (r.vwk0.vwk1 ;; sorry) := sorry
-  --   _ = _ := sorry
+  rw [<-let2_ret, seq_let2_wk0_pure' (a' := var 0 Ctx.Var.shead) (ha := by rfl)]
+  apply congrArg
+  induction r using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_pair, Term.InS.wk_var, Ctx.InS.coe_swap02,
+    Nat.ofNat_pos, Nat.swap0_lt, Nat.swap0_0, Nat.one_lt_ofNat, Ctx.InS.coe_wk1, Nat.liftWk_succ,
+    Nat.succ_eq_add_one, Nat.reduceAdd, zero_add, Nat.liftWk_zero, InS.coe_vwk, InS.coe_lsubst,
+    InS.coe_alpha0, InS.coe_br, Term.InS.coe_pair, Term.InS.coe_var, vwk_lsubst, InS.coe_vsubst,
+    Term.InS.coe_subst0, Term.Subst.InS.coe_liftn₂, Region.vsubst_lsubst]
+  congr
+  · funext k; cases k with
+    | zero => simp
+    | succ => rfl
+  · simp only [Region.vwk_vwk]
+    simp only [Region.vsubst_vsubst, <-Region.vsubst_fromWk]
+    congr
+    funext k; cases k <;> rfl
 
 theorem Eqv.triangle {X Y : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Ty.unit) (C := Y) ;; X ⋊ pi_r = pi_l ⋉ Y

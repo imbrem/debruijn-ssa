@@ -18,6 +18,10 @@ theorem Eqv.wk0_nil {A : Ty α} {Γ : Ctx α ε}
   : (nil : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A, e⟩).wk0 (head := ⟨head, ⊥⟩) = (var 1 (by simp)) := rfl
 
 @[simp]
+theorem Eqv.wk_id_nil {A : Ty α} {Γ Δ : Ctx α ε} {hΓ : Ctx.Wkn (⟨A, ⊥⟩::Γ) ((A, ⊥)::Δ) id}
+  : (nil : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A, e⟩).wk_id hΓ = nil := rfl
+
+@[simp]
 theorem Eqv.wk1_nil {A : Ty α} {Γ : Ctx α ε}
   : (nil (φ := φ) (A := A) (Γ := Γ) (e := e)).wk1 (inserted := inserted) = nil
   := rfl

@@ -259,9 +259,17 @@ theorem InS.coe_swap02 {first second third : Ty α × ε} {Γ : Ctx α ε}
   : (InS.swap02 (Γ := Γ) (first := first) (second := second) (third := third) : ℕ → ℕ) = Nat.swap0 2
   := rfl
 
--- def InS.swap03 {first second third fourth : Ty α × ε} {Γ : Ctx α ε}
---   : InS (first::second::third::fourth::Γ) (fourth::first::second::third::Γ)
---   := ⟨Nat.swap0 3, λi hi => sorry⟩
+theorem Wkn.swap03 {first second third fourth : Ty α × ε} {Γ : Ctx α ε}
+  : Wkn (first::second::third::fourth::Γ) (fourth::first::second::third::Γ) (Nat.swap0 3)
+  | 0, _ => by simp
+  | 1, _ => by simp
+  | 2, _ => by simp
+  | 3, _ => by simp
+  | n + 4, hn => ⟨hn, by simp⟩
+
+def InS.swap03 {first second third fourth : Ty α × ε} {Γ : Ctx α ε}
+  : InS (first::second::third::fourth::Γ) (fourth::first::second::third::Γ)
+  := ⟨Nat.swap0 3, Wkn.swap03⟩
 
 def Nat.swap20 : ℕ → ℕ
   | 0 => 2
@@ -337,6 +345,27 @@ def InS.wk2 {left right inserted} {Γ : Ctx α ε}
 theorem InS.coe_wk2 {left right inserted} {Γ : Ctx α ε}
   : (InS.wk2 (Γ := Γ) (left := left) (right := right) (inserted := inserted) : ℕ → ℕ)
   = Nat.liftnWk 2 Nat.succ
+  := rfl
+
+theorem Wkn.wk3 {left middle right inserted} {Γ : Ctx α ε}
+  : Wkn (left::middle::right::inserted::Γ) (left::middle::right::Γ) (Nat.liftnWk 3 Nat.succ)
+  := by intro i hi; cases i using Nat.cases3 with
+  | rest =>
+      simp only [Nat.liftnWk, add_lt_iff_neg_right, not_lt_zero', ↓reduceIte,
+        add_tsub_cancel_right, Nat.succ_eq_add_one, List.length_cons, List.get_eq_getElem,
+        List.getElem_cons_succ, Var.step_iff];
+      simp only [List.length_cons, add_lt_add_iff_right] at hi
+      exact ⟨hi, by simp⟩
+  | _ => simp [Nat.liftnWk]
+
+def InS.wk3 {left middle right inserted} {Γ : Ctx α ε}
+  : InS (left::middle::right::inserted::Γ) (left::middle::right::Γ)
+  := ⟨Nat.liftnWk 3 Nat.succ, Wkn.wk3⟩
+
+@[simp]
+theorem InS.coe_wk3 {left middle right inserted} {Γ : Ctx α ε}
+  : (InS.wk3 (Γ := Γ) (left := left) (middle := middle) (right := right) (inserted := inserted) : ℕ → ℕ)
+  = Nat.liftnWk 3 Nat.succ
   := rfl
 
 @[simp]

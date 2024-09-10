@@ -1643,6 +1643,9 @@ theorem Eqv.Pure.let2_wk0_wk0 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A.prod B, e⟩}
     apply Pure.wk0
     exact ⟨a.let2 (var 0 (by simp)), by simp⟩
 
+theorem Eqv.let2_wk0_wk0_pure {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A.prod B, ⊥⟩} {b : Eqv φ Γ ⟨C, ⊥⟩}
+  : let2 a b.wk0.wk0 = b := Eqv.Pure.let2_wk0_wk0 (by simp)
+
 theorem Eqv.Pure.let1_let2_of_right {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ ⟨B.prod C, e⟩} {c : Eqv φ (⟨C, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨D, e⟩}
   (hb : b.Pure) : let1 a (let2 b.wk0 c) = let2 b (let1 a.wk0.wk0 c.swap02.swap02) := by
