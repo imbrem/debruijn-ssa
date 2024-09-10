@@ -447,6 +447,10 @@ theorem Eqv.vwk1_assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
   = assoc := rfl
 
+theorem Eqv.vwk2_assoc {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (assoc (φ := φ) (A := A) (B := B) (C := C) (Γ := head::Γ) (L := L)).vwk2 (inserted := inserted)
+  = assoc := rfl
+
 def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.prod (B.prod C), ⊥⟩::Γ) ((A.prod B).prod C::L) :=
   let2 (var 0 ⟨by simp, le_refl _⟩) $
@@ -525,7 +529,53 @@ theorem Eqv.assoc_left_nat {A B C A' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (m : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L))
-  : (A ⋊ m) ⋉ C ;; assoc = assoc ;; A ⋊ (m ⋉ C) := sorry
+  : (A ⋊ m) ⋉ C ;; assoc = assoc ;; A ⋊ (m ⋉ C) := by
+  rw [ltimes_def', let2_seq]
+  simp only [Term.Eqv.braid, vwk1_assoc, let2_let2, vwk2_seq, vwk1_vwk2, vwk2_br, wk2_pair,
+    wk2_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, wk2_var1, Nat.reduceAdd, Fin.mk_one, Fin.val_one,
+    List.getElem_cons_succ, vwk2_assoc, let2_pair, wk0_var, let1_beta]
+  simp only [vwk1_rtimes]
+  rw [br_zero_eq_ret, rtimes, let2_seq, seq_assoc]
+  simp only [vwk1_ret, <-ret_of_seq]
+  simp only [Term.Eqv.seq, wk_res_self, wk1_pair, wk1_var0, List.length_cons, Fin.zero_eta,
+    List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk1_var_succ, zero_add,
+    Nat.reduceAdd, let1_beta_pure, subst_pair, var0_subst0, var_succ_subst0]
+  rw [let2_seq, seq_assoc]
+  simp only [vwk1_assoc]
+  rw [assoc_eq_ret, <-ret_of_seq, Term.Eqv.assoc_pair]
+  simp only [assoc, let2_seq, vwk1_seq, vwk1_ltimes, vwk1_rtimes, ret_seq_rtimes]
+  simp only [vsubst_let2, var0_subst0, List.length_cons, Fin.zero_eta, List.get_eq_getElem,
+    Fin.val_zero, List.getElem_cons_zero, wk_res_self, var_succ_subst0, let2_pair, wk0_pair,
+    wk0_var, zero_add, Nat.reduceAdd, let1_beta]
+  simp only [vsubst_liftn₂_seq]
+  simp only [vsubst_br, subst_pair, subst_liftn₂_var_one, ge_iff_le, le_refl, subst_liftn₂_var_zero,
+    subst_liftn₂_var_add_2, var_succ_subst0, wk0_var, zero_add, Nat.reduceAdd, var0_subst0,
+    List.length_cons, Nat.liftWk_succ, Nat.succ_eq_add_one, Fin.mk_one, List.get_eq_getElem,
+    Fin.val_one, List.getElem_cons_succ, List.getElem_cons_zero, Fin.zero_eta, Fin.val_zero,
+    wk_res_self]
+  rw [br_zero_eq_ret, wk_res_self, ltimes_def', let2_seq, seq_assoc]
+  simp only [
+    vwk1_ret, <-ret_of_seq, Term.Eqv.seq, let1_beta_pure, Term.Eqv.braid, let2_let2, let2_pair
+  ]
+  simp only [wk0_var, Nat.reduceAdd, wk1_pair, wk1_var_succ, zero_add, wk1_var0, List.length_cons,
+    Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, subst_pair,
+    var_succ_subst0, var0_subst0, wk_res_self, let1_beta, vsubst_let2, nil_subst0, wk_eff_self,
+    let2_pair]
+  congr 2
+  induction m using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_pair, Term.InS.wk_var, Ctx.InS.coe_wk1,
+    Nat.liftWk_zero, Nat.liftWk_succ, Nat.succ_eq_add_one, zero_add, Nat.reduceAdd, InS.coe_vsubst,
+    Term.Subst.InS.coe_liftn₂, Term.InS.coe_subst0, Term.InS.coe_var, InS.coe_vwk,
+    Ctx.InS.coe_liftn₂, Ctx.InS.coe_wk2, InS.coe_lsubst, InS.coe_alpha0, InS.coe_br,
+    InS.coe_let2, Term.InS.coe_pair, vwk_lsubst, Region.vsubst_lsubst]
+  congr 1
+  · funext k; cases k <;> rfl
+  · simp only [Region.vwk_vwk]
+    simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
+    congr
+    funext k; cases k <;> rfl
 
 theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨C, ⊥⟩::Γ) (C'::L))
