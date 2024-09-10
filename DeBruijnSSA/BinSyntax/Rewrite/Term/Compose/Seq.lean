@@ -64,6 +64,16 @@ theorem Eqv.nil_subst0 {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A, ⊥⟩)
   := by induction a using Quotient.inductionOn; rfl
 
 @[simp]
+theorem Eqv.nil_subst_lift {Γ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  : (nil : Eqv φ (⟨A, ⊥⟩::Δ) ⟨A, e⟩).subst (σ.lift (le_refl _)) = nil := by
+  induction σ using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.nil_subst_liftn₂ {Γ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  : (nil : Eqv φ (⟨A, ⊥⟩::⟨B, ⊥⟩::Δ) ⟨A, e⟩).subst (σ.liftn₂ (le_refl _) (le_refl _)) = nil := by
+  induction σ using Quotient.inductionOn; rfl
+
+@[simp]
 theorem Eqv.Pure.nil {A : Ty α} {Γ : Ctx α ε} : (nil (φ := φ) (A := A) (Γ := Γ) (e := e)).Pure
   := ⟨Eqv.nil, rfl⟩
 

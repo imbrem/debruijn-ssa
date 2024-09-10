@@ -385,6 +385,12 @@ theorem Eqv.inr_coprod {A B B' C : Ty α} {Γ : Ctx α ε}
   {h : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
   : f.inr ;;' coprod g h = f ;;' h := by rw [<-seq_inj_r, <-seq_assoc, inj_r_coprod]
 
+theorem Eqv.wk1_coprod {B B' C : Ty α} {Γ : Ctx α ε}
+  {g : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
+  {h : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : (coprod g h).wk1 (inserted := inserted) = coprod g.wk1 h.wk1 := by
+  simp [coprod, wk1_wk2]
+
 def Eqv.zero {Γ : Ctx α ε} {A : Ty α}
   : Eqv φ (⟨Ty.empty, ⊥⟩::Γ) (A, e)
   := (abort (var 0 (by simp)) A)

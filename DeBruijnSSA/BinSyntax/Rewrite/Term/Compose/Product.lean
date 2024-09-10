@@ -30,8 +30,37 @@ theorem Eqv.wk1_pl {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ (head::Γ) ⟨A.prod B, e⟩}
   : (a.pl).wk1 (inserted := inserted) = a.wk1.pl := by rw [wk1, wk_pl]; rfl
 
+theorem Eqv.wk2_pl {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ (left::right::Γ) ⟨A.prod B, e⟩}
+  : (a.pl).wk2 (inserted := inserted) = a.wk2.pl := by rw [wk2, wk_pl]; rfl
+
+theorem Eqv.wk3_pl {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ (left::mid::right::Γ) ⟨A.prod B, e⟩}
+  : (a.pl).wk3 (inserted := inserted) = a.wk3.pl := by rw [wk3, wk_pl]; rfl
+
 def Eqv.pr {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨B, e⟩
   := let2 a (var 0 (by simp))
+
+theorem Eqv.wk_pr {A B : Ty α} {Γ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  {a : Eqv φ Δ ⟨A.prod B, e⟩}
+  : (a.pr).wk ρ = (a.wk ρ).pr := by
+  induction a using Quotient.inductionOn; rfl
+
+theorem Eqv.wk0_pr {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩}
+  : (a.pr).wk0 (head := head) = a.wk0.pr := by rw [wk0, wk_pr]; rfl
+
+theorem Eqv.wk1_pr {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ (head::Γ) ⟨A.prod B, e⟩}
+  : (a.pr).wk1 (inserted := inserted) = a.wk1.pr := by rw [wk1, wk_pr]; rfl
+
+theorem Eqv.wk2_pr {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ (left::right::Γ) ⟨A.prod B, e⟩}
+  : (a.pr).wk2 (inserted := inserted) = a.wk2.pr := by rw [wk2, wk_pr]; rfl
+
+theorem Eqv.wk3_pr {A B : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ (left::mid::right::Γ) ⟨A.prod B, e⟩}
+  : (a.pr).wk3 (inserted := inserted) = a.wk3.pr := by rw [wk3, wk_pr]; rfl
 
 theorem Eqv.let2_nil {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩)
   : let2 a nil = a.pr := rfl
@@ -564,6 +593,12 @@ theorem Eqv.subst_lift_tensor {A A' B B' : Ty α} {Δ : Ctx α ε} {σ : Subst.E
       Nat.reduceSubDiff, Subst.lift_succ, ↓reduceIte, Term.wk_wk, Function.comp_apply,
       Term.subst_fromWk]
     rfl
+
+theorem Eqv.subst_liftn₂_tensor {A A' B B' : Ty α} {Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::V::Δ) ⟨A', e⟩} {r : Eqv φ (⟨B, ⊥⟩::V::Δ) ⟨B', e⟩}
+  : (tensor l r).subst (σ.liftn₂ (le_refl _) (le_refl _))
+  = tensor (l.subst (σ.liftn₂ (le_refl _) (le_refl _))) (r.subst (σ.liftn₂ (le_refl _) (le_refl _)))
+  := by simp only [←Subst.Eqv.lift_lift, subst_lift_tensor]
 
 def Eqv.ltimes {A A' : Ty α} {Γ : Ctx α ε} (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (B)
   : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A'.prod B, e⟩ := tensor l nil
@@ -1166,3 +1201,15 @@ theorem Eqv.hexagon {X Y Z : Ty α} {Γ : Ctx α ε}
     Ctx.InS.coe_wk1, id_eq, subst_lift_braid, Nat.one_lt_ofNat, ↓dreduceIte]
   rw [let1_beta' (a' := (var 1 (by simp)).pair (var 2 (by simp))) (by rfl)]
   simp [braid, let2_pair, let1_beta_var1, let1_beta_var2]
+
+theorem Eqv.pair_pi_l_pi_r {A B : Ty α} {Γ : Ctx α ε}
+  : pair pi_l pi_r = nil (φ := φ) (Γ := Γ) (A := A.prod B) (e := e)
+  := Eqv.pair_pi_l_pi_r'_wk_eff (a := nil)
+
+theorem Eqv.Pure.pair_eta {A B : Ty α} {Γ : Ctx α ε} {p : Eqv φ Γ ⟨A.prod B, e⟩}
+  : p.Pure → pair p.pl p.pr = p
+  := Eqv.Pure.pair_pi_l_pi_r'
+
+theorem Eqv.pair_eta_pure {A B : Ty α} {Γ : Ctx α ε} {p : Eqv φ Γ ⟨A.prod B, ⊥⟩}
+  : pair p.pl p.pr = p
+  := Eqv.Pure.pair_eta (by simp)

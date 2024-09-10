@@ -503,6 +503,15 @@ theorem Term.InS.coe_wk2 {Γ : Ctx α ε} {L} {d : InS φ (left::right::Γ) L}
   : (d.wk2 (inserted := inserted) : Term φ) = (d : Term φ).wk2
   := rfl
 
+def Term.InS.wk3 {Γ : Ctx α ε} {L} (d : InS φ (left::mid::right::Γ) L)
+  : InS φ (left::mid::right::inserted::Γ) L
+  := d.wk Ctx.InS.wk3
+
+@[simp]
+theorem Term.InS.coe_wk3 {Γ : Ctx α ε} {L} {d : InS φ (left::mid::right::Γ) L}
+  : (d.wk3 (inserted := inserted) : Term φ) = (d : Term φ).wk3
+  := rfl
+
 def Term.InS.swap01 {Γ : Ctx α ε} {L} (d : InS φ (left::right::Γ) L)
   : InS φ (right::left::Γ) L
   := d.wk Ctx.InS.swap01

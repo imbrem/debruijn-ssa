@@ -225,67 +225,6 @@ theorem Eqv.seq_let1_wk0_pure {Γ : Ctx α ε} {L : LCtx α}
   · rw [Region.vwk_vwk, <-Region.vsubst_fromWk, Region.vsubst_vsubst, Region.vsubst_id']
     funext k; cases k <;> rfl
 
--- theorem Eqv.lsubst_let2_alpha0 {Γ : Ctx α ε} {L : LCtx α}
---   (p : Term.Eqv φ Γ ⟨X.prod Y, ⊥⟩)
---   (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (s : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (C::L))
---   : lsubst (let2 p.wk0.wk0 s).alpha0 r
---   = let2 p.wk0 (lsubst (alpha0 s.vswap02.vswap02) r.vwk0.vwk0)
---   := by induction r using Eqv.arrow_induction with
---   | br ℓ a hℓ =>
---     cases ℓ with
---     | zero =>
---       induction p using Quotient.inductionOn
---       induction s using Quotient.inductionOn
---       induction a using Quotient.inductionOn
---       apply Eqv.eq_of_reg_eq
---       simp only [Set.mem_setOf_eq, InS.lsubst_br, List.length_cons, List.get_eq_getElem,
---         InS.coe_vsubst, Term.InS.coe_subst0, InS.coe_vwk_id, Subst.InS.coe_get, InS.coe_alpha0,
---         InS.coe_let2, Term.InS.coe_wk, Ctx.InS.coe_wk0, InS.vwk_br, InS.coe_vwk, Ctx.InS.coe_swap02]
---       simp only [Region.vsubst, Term.wk_succ_subst_subst0, alpha, ← vsubst_fromWk,
---         Region.vsubst_vsubst, Function.update_same, let2.injEq, true_and]
---       congr
---       funext k; cases k using Nat.cases3 with
---       | two => simp only [Term.Subst.liftn, lt_self_iff_false, ↓reduceIte, le_refl,
---         tsub_eq_zero_of_le, Term.subst0_zero, Term.Subst.comp, Term.subst, Term.wk_wk,
---         Nat.one_lt_ofNat, Nat.swap0_lt, Nat.ofNat_pos]; rfl
---       | _ => rfl
---     | succ ℓ => simp [get_alpha0, let2_br, Term.Eqv.nil, Term.Eqv.let2_wk0_wk0_pure]
---   | let1 a r => sorry
---   | let2 a r => sorry
---   | case a l r => sorry
---   | cfg R β G => sorry
-
-theorem Eqv.seq_let2_wk0_pure {Γ : Ctx α ε} {L : LCtx α}
-  {a : Term.Eqv φ Γ ⟨X.prod Y, ⊥⟩}
-  {r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {s : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨B, ⊥⟩::Γ) (C::L)}
-  : r ;; (let2 a.wk0 s) = let2 a.wk0 (r.vwk1.vwk1 ;; s.vswap02.vswap02).vswap02 := by
-  sorry
-  -- rw [seq, vwk1_let2, Term.Eqv.wk0_wk1, lsubst_let2_alpha0]
-  -- congr
-  -- rw [seq]
-  -- induction r using Quotient.inductionOn
-  -- induction s using Quotient.inductionOn
-  -- induction a using Quotient.inductionOn
-  -- apply Eqv.eq_of_reg_eq
-  -- simp only [Set.mem_setOf_eq, InS.coe_lsubst, InS.coe_alpha0, InS.coe_vwk, Ctx.InS.coe_swap02,
-  --   Ctx.InS.coe_wk3, Ctx.InS.coe_wk0, Ctx.InS.coe_wk1, vwk_lsubst]
-  -- congr 1
-  -- · funext k; cases k with
-  --   | zero =>
-  --     simp only [alpha, Region.vwk_vwk, Function.update_same, Function.comp_apply]
-  --     congr
-  --     funext k; cases k using Nat.cases3 <;> rfl
-  --   | succ => rfl
-  -- · simp only [Region.vwk_vwk]; congr; funext k; cases k <;> rfl
-
-theorem Eqv.seq_let2_wk0_pure' {Γ : Ctx α ε} {L : LCtx α}
-  {a : Term.Eqv φ (_::Γ) ⟨X.prod Y, ⊥⟩} {a' : Term.Eqv φ Γ ⟨X.prod Y, ⊥⟩}
-  {r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {s : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨B, ⊥⟩::Γ) (C::L)}
-  (ha : a = a'.wk0)
-  : r ;; (let2 a s) = let2 a'.wk0 (r.vwk1.vwk1 ;; s.vswap02.vswap02).vswap02 := by
-  cases ha; rw [seq_let2_wk0_pure]
-
-
 theorem Eqv.case_seq {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨X.coprod Y, e⟩)
   (r : Eqv φ (⟨X, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L)) (s : Eqv φ (⟨Y, ⊥⟩::⟨A, ⊥⟩::Γ) (B::L))

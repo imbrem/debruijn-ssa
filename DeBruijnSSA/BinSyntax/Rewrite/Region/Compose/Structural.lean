@@ -106,29 +106,29 @@ theorem Subst.Eqv.unpack_comp_pack {Γ : Ctx α ε} {R : LCtx α}
   : Subst.Eqv.unpack.comp Subst.Eqv.pack = Subst.Eqv.id (φ := φ) (Γ := Γ) (L := R)
   := by ext ℓ; simp [get_comp, pack_get, get_id, unpack, Eqv.csubst_get, Eqv.vsubst0_pack_unpack]
 
-theorem Eqv.lsubst_pack_unpack {Γ : Ctx α ε} {R : LCtx α}
-  : (unpack (φ := φ) (Γ := Γ) (R := R)).lsubst Subst.Eqv.pack
-  = nil := by
-  induction R with
-  | nil =>
-    apply Eqv.initial
-    sorry -- TODO: context containing empty is trivially initial, add simp lemmas...
-  | cons A R I =>
-    simp only [LCtx.pack.eq_2, unpack, coprod, vwk1_quot, InS.nil_vwk1, vwk1_lwk0, vwk1_unpack,
-      lsubst_case, Subst.Eqv.vlift_pack]
-    apply Eq.trans _ Eqv.sum_nil
-    simp only [sum, coprod]
-    congr
-    -- TODO: lsubst pack lwk0 is lsubst pack ;; inj_r; then follows by induction
-    sorry
+-- theorem Eqv.lsubst_pack_unpack {Γ : Ctx α ε} {R : LCtx α}
+--   : (unpack (φ := φ) (Γ := Γ) (R := R)).lsubst Subst.Eqv.pack
+--   = nil := by
+--   induction R with
+--   | nil =>
+--     apply Eqv.initial
+--     sorry -- TODO: context containing empty is trivially initial, add simp lemmas...
+--   | cons A R I =>
+--     simp only [LCtx.pack.eq_2, unpack, coprod, vwk1_quot, InS.nil_vwk1, vwk1_lwk0, vwk1_unpack,
+--       lsubst_case, Subst.Eqv.vlift_pack]
+--     apply Eq.trans _ Eqv.sum_nil
+--     simp only [sum, coprod]
+--     congr
+--     -- TODO: lsubst pack lwk0 is lsubst pack ;; inj_r; then follows by induction
+--     sorry
 
-theorem Subst.Eqv.pack_comp_unpack {Γ : Ctx α ε} {R : LCtx α}
-  : Subst.Eqv.pack.comp Subst.Eqv.unpack = Subst.Eqv.id (φ := φ) (Γ := Γ) (L := [R.pack]) := by
-  ext ℓ
-  induction ℓ using Fin.elim1
-  simp only [unpack, get_comp, vlift_pack, Eqv.csubst_get, Eqv.cast_rfl, Eqv.lsubst_pack_unpack,
-    get_id, Fin.coe_fin_one]
-  rfl
+-- theorem Subst.Eqv.pack_comp_unpack {Γ : Ctx α ε} {R : LCtx α}
+--   : Subst.Eqv.pack.comp Subst.Eqv.unpack = Subst.Eqv.id (φ := φ) (Γ := Γ) (L := [R.pack]) := by
+--   ext ℓ
+--   induction ℓ using Fin.elim1
+--   simp only [unpack, get_comp, vlift_pack, Eqv.csubst_get, Eqv.cast_rfl, Eqv.lsubst_pack_unpack,
+--     get_id, Fin.coe_fin_one]
+--   rfl
 
 def Eqv.unpacked {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ [R.pack]) : Eqv φ Γ R
   := h.lsubst Subst.Eqv.unpack
@@ -136,10 +136,10 @@ def Eqv.unpacked {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ [R.pack]) : Eqv �
 def Eqv.packed {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ [R.pack]
   := h.lsubst Subst.Eqv.pack
 
-theorem Eqv.unpacked_packed {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R)
-  : h.packed.unpacked = h := by
-  rw [Eqv.unpacked, packed, lsubst_lsubst, Subst.Eqv.unpack_comp_pack]
-  sorry
+-- theorem Eqv.unpacked_packed {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R)
+--   : h.packed.unpacked = h := by
+--   rw [Eqv.unpacked, packed, lsubst_lsubst, Subst.Eqv.unpack_comp_pack]
+--   sorry
 
 end Region
 

@@ -577,6 +577,45 @@ theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     congr
     funext k; cases k <;> rfl
 
+theorem Eqv.seq_let2_wk0_pure {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ Γ ⟨X.prod Y, ⊥⟩}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {s : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨B, ⊥⟩::Γ) (C::L)}
+  : r ;; (let2 a.wk0 s) = let2 a.wk0 (r.vwk1.vwk1 ;; s.vswap02.vswap02).vswap02 := by
+  rw [
+    <-Term.Eqv.pair_eta_pure (p := a.wk0), let2_pair, <-Term.Eqv.wk0_pl,
+    seq_let1_wk0_pure, <-Term.Eqv.wk0_pr, <-Term.Eqv.pair_eta_pure (p := a.wk0),
+    let2_pair, wk0_pl
+  ]
+  apply congrArg
+  conv => lhs; rhs; rhs; rw [vswap01, vwk_let1, <-Term.Eqv.swap01_def, Term.Eqv.swap01_wk0_wk0]
+  rw [seq_let1_wk0_pure]
+  simp only [vswap01, vwk_let1, vswap02]
+  rw [<-Term.Eqv.swap01_def, Term.Eqv.swap01_wk0_wk0, <-Term.Eqv.wk0_pr]
+  apply congrArg
+  induction r using Quotient.inductionOn
+  induction s using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.coe_vwk, Ctx.InS.coe_lift, Ctx.InS.coe_swap01, InS.coe_lsubst,
+    InS.coe_alpha0, Ctx.InS.coe_wk1, vwk_lsubst, Ctx.InS.coe_swap02]
+  congr 1
+  · funext k
+    cases k with
+    | zero =>
+      simp only [alpha, Region.vwk_vwk, Function.comp_apply, Function.update_same]
+      congr
+      funext k; cases k using Nat.cases3 <;> rfl
+    | succ => rfl
+  · simp only [Region.vwk_vwk]
+    congr
+    funext k; cases k <;> rfl
+
+theorem Eqv.seq_let2_wk0_pure' {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (_::Γ) ⟨X.prod Y, ⊥⟩} {a' : Term.Eqv φ Γ ⟨X.prod Y, ⊥⟩}
+  {r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {s : Eqv φ (⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨B, ⊥⟩::Γ) (C::L)}
+  (ha : a = a'.wk0)
+  : r ;; (let2 a s) = let2 a'.wk0 (r.vwk1.vwk1 ;; s.vswap02.vswap02).vswap02 := by
+  cases ha; rw [seq_let2_wk0_pure]
+
 theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨C, ⊥⟩::Γ) (C'::L))
   : (A.prod B) ⋊ r ;; assoc = assoc ;; A ⋊ (B ⋊ r) := by

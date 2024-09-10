@@ -1,8 +1,7 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Product
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
-import DeBruijnSSA.BinSyntax.Typing.Region.Compose
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Distrib
 
 namespace BinSyntax
 
@@ -56,15 +55,34 @@ theorem Eqv.let2_eta_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α
   ]
   rfl
 
+theorem Eqv.distl_eq_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : distl (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)
+  = ret Term.Eqv.distl := by
+  simp only [Term.Eqv.distl, ret_of_coprod, <-rtimes_eq_ret]
+  rfl
+
+theorem Eqv.distl_inv_eq_ret {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)
+  = ret Term.Eqv.distl_inv := by
+  simp only [Term.Eqv.distl_inv, <-let2_ret, ret_of_coprod]; rfl
+
 theorem Eqv.Pure.distl {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : (distl (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure := sorry
+  : (distl (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure
+  := ⟨Term.Eqv.distl, distl_eq_ret⟩
 
 theorem Eqv.Pure.distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  : (distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure := sorry
+  : (distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)).Pure
+  := ⟨Term.Eqv.distl_inv, distl_inv_eq_ret⟩
 
--- TODO: dist isomorphism
+theorem Eqv.distl_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : distl (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)
+  ;; distl_inv = nil := by
+  rw [distl_eq_ret, distl_inv_eq_ret, <-ret_of_seq, Term.Eqv.distl_distl_inv_pure]; rfl
 
--- TODO: "naturality"
+theorem Eqv.distl_inv_distl {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)
+  ;; distl = nil := by
+  rw [distl_eq_ret, distl_inv_eq_ret, <-ret_of_seq, Term.Eqv.distl_inv_distl_pure]; rfl
 
 def Eqv.left_exit {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (B::A::L) :=
