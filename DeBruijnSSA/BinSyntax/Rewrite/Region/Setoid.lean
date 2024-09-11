@@ -399,14 +399,14 @@ theorem InS.let2_eta {Γ : Ctx α ε} {L : LCtx α}
 
 -- TODO: case_eta
 
-theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
-  (R S : LCtx α) (β : InS φ Γ (R ++ L))
-  (G : (i : Fin S.length) → InS φ ((List.get S i, ⊥)::Γ) (R ++ L))
-  (ρ : Fin R.length → Fin S.length)
-  (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
-  : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
-  ≈ cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
-  := Uniform.rel $ TStep.reduce InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
+--   (R S : LCtx α) (β : InS φ Γ (R ++ L))
+--   (G : (i : Fin S.length) → InS φ ((List.get S i, ⊥)::Γ) (R ++ L))
+--   (ρ : Fin R.length → Fin S.length)
+--   (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
+--   : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
+--   ≈ cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
+--   := Uniform.rel $ TStep.reduce InS.coe_wf InS.coe_wf (by constructor)
 
 -- theorem InS.dead_cfg_left {Γ : Ctx α ε} {L : LCtx α}
 --   (R S : LCtx α) (β : InS φ Γ (S ++ L))

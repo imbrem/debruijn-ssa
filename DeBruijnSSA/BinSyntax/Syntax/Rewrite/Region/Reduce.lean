@@ -38,14 +38,14 @@ open Term
 inductive ReduceD : Region φ → Region φ → Type _
   | case_inl (e r s) : ReduceD (case (inl e) r s) (let1 e r)
   | case_inr (e r s) : ReduceD (case (inr e) r s) (let1 e s)
-  | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
-    ReduceD
-      (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
-      (cfg β k (G ∘ ρ))
-  | dead_cfg_left (β n G m G') :
-    ReduceD
-      (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
-      (cfg β m G')
+  -- | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
+  --   ReduceD
+  --     (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+  --     (cfg β k (G ∘ ρ))
+  -- | dead_cfg_left (β n G m G') :
+  --   ReduceD
+  --     (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
+  --     (cfg β m G')
   | ucfg' (β n G) : ReduceD (cfg β n G) (ucfg' n β G)
   -- | codiagonal (β G : Region φ) :
   --   ReduceD
@@ -55,14 +55,14 @@ inductive ReduceD : Region φ → Region φ → Type _
 inductive Reduce : Region φ → Region φ → Prop
   | case_inl (e r s) : Reduce (case (inl e) r s) (let1 e r)
   | case_inr (e r s) : Reduce (case (inr e) r s) (let1 e s)
-  | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
-    Reduce
-      (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
-      (cfg β k (G ∘ ρ))
-  | dead_cfg_left (β n G m G') :
-    Reduce
-      (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
-      (cfg β m G')
+  -- | wk_cfg (β n G k) (ρ : Fin k → Fin n) :
+  --   Reduce
+  --     (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+  --     (cfg β k (G ∘ ρ))
+  -- | dead_cfg_left (β n G m G') :
+  --   Reduce
+  --     (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
+  --     (cfg β m G')
   | ucfg' (β n G) : Reduce (cfg β n G) (ucfg' n β G)
   -- | codiagonal (β G : Region φ) :
   --   Reduce
@@ -114,18 +114,19 @@ def ReduceD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (d : ReduceD r r')
   : ReduceD (r.vsubst σ) (r'.vsubst σ) := by cases d with
   | case_inl e r s => exact case_inl (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift)
   | case_inr e r s => exact case_inr (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift)
-  | wk_cfg β n G k ρ =>
-    convert wk_cfg (β.vsubst σ) n (λi => (G i).vsubst σ.lift) k ρ
-    simp only [BinSyntax.Region.vsubst, vsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq,
-      true_and]
-    rfl
-  | dead_cfg_left β n G m G' =>
-    convert dead_cfg_left (β.vsubst σ) n (λi => (G i).vsubst σ.lift) m (λi => (G' i).vsubst σ.lift)
-    simp only [BinSyntax.Region.vsubst, vsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq,
-      true_and]
-    funext i
-    simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
-    split <;> simp [vsubst_lwk]
+  -- | wk_cfg β n G k ρ =>
+  --   convert wk_cfg (β.vsubst σ) n (λi => (G i).vsubst σ.lift) k ρ
+  --   simp only [BinSyntax.Region.vsubst, vsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq,
+  --     true_and]
+  --   rfl
+  -- | dead_cfg_left β n G m G' =>
+  --   convert dead_cfg_left (β.vsubst σ) n (λi => (G i).vsubst σ.lift) m
+  --                                        (λi => (G' i).vsubst σ.lift)
+  --   simp only [BinSyntax.Region.vsubst, vsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq,
+  --     true_and]
+  --   funext i
+  --   simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
+  --   split <;> simp [vsubst_lwk]
   | ucfg' β n G =>
     convert ucfg' (β.vsubst σ) n (λi => (G i).vsubst σ.lift)
     simp only [Region.ucfg', vsubst_lsubst]
@@ -152,61 +153,62 @@ def ReduceD.lsubst {r r' : Region φ} (σ : Subst φ) (d : ReduceD r r')
   : ReduceD (r.lsubst σ) (r'.lsubst σ) := by cases d with
   | case_inl e r s => exact case_inl e (r.lsubst σ.vlift) (s.lsubst σ.vlift)
   | case_inr e r s => exact case_inr e (r.lsubst σ.vlift) (s.lsubst σ.vlift)
-  | wk_cfg β n G k ρ =>
-    convert wk_cfg (β.lsubst (σ.liftn k)) n (λi => (G i).lsubst (σ.liftn k).vlift) k ρ
-    simp only [
-      BinSyntax.Region.lsubst, lsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq, true_and]
-    constructor
-    · rw [<-lsubst_fromLwk, lsubst_lsubst]; congr
-      funext i
-      simp only [Function.comp_apply, Subst.liftn, Fin.toNatWk, Subst.comp, Subst.fromLwk_vlift]
-      split
-      · simp [Fin.toNatWk, *]
-      · simp only [add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right,
-        lsubst_fromLwk, lwk_lwk]
-        congr; funext i
-        simp [Fin.toNatWk]
-    · funext i
-      simp only [← lsubst_fromLwk, Function.comp_apply, lsubst_lsubst]; congr
-      funext i
-      simp only [Function.comp_apply, Subst.liftn, Fin.toNatWk, Subst.comp, Subst.fromLwk_vlift]
-      split
-      · simp [Subst.vlift, Subst.liftn, vwk1, Fin.toNatWk, *]
-      · simp only [Subst.vlift, Function.comp_apply, Subst.liftn, add_lt_iff_neg_right,
-        not_lt_zero', ↓reduceIte, add_tsub_cancel_right, vwk1_lwk, *]
-        simp only [← lsubst_fromLwk, lsubst_lsubst]
-        congr
-        funext i; simp [Subst.comp, Fin.toNatWk]
-  | dead_cfg_left β n G m G' =>
-    convert dead_cfg_left (β.lsubst (σ.liftn m)) n (λi => (G i).lsubst (σ.liftn (n + m)).vlift) m
-      (λi => (G' i).lsubst (σ.liftn m).vlift)
-    simp only [
-      BinSyntax.Region.lsubst, lsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq, true_and]
-    constructor
-    · simp only [←lsubst_fromLwk, lsubst_lsubst]
-      congr
-      funext i; simp_arith only [Function.comp_apply, Subst.liftn, Subst.comp, Subst.fromLwk_vlift]
-      split; rfl
-      simp only [lsubst_fromLwk, lwk_lwk, comp_add_right]
-      congr 2
-      funext i; omega
-      rw [Nat.add_comm n m, Nat.add_sub_add_right]
-    · funext i
-      simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
-      split; rfl
-      simp only [<-lsubst_fromLwk, lsubst_lsubst]
-      congr
-      funext i
-      simp_arith only [
-        Subst.comp, BinSyntax.Region.lsubst, Subst.vlift, Function.comp_apply, Subst.liftn,
-        Subst.vwk1_comp_fromLwk
-      ]
-      split
-      · rfl
-      · simp only [vsubst0_var0_vwk1, lsubst_fromLwk, ← vwk1_lwk, lwk_lwk, comp_add_right]
-        congr 3
-        funext i; omega
-        rw [Nat.add_comm n m, Nat.add_sub_add_right]
+  -- | wk_cfg β n G k ρ =>
+  --   convert wk_cfg (β.lsubst (σ.liftn k)) n (λi => (G i).lsubst (σ.liftn k).vlift) k ρ
+  --   simp only [
+  --     BinSyntax.Region.lsubst, lsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq, true_and]
+  --   constructor
+  --   · rw [<-lsubst_fromLwk, lsubst_lsubst]; congr
+  --     funext i
+  --     simp only [Function.comp_apply, Subst.liftn, Fin.toNatWk, Subst.comp, Subst.fromLwk_vlift]
+  --     split
+  --     · simp [Fin.toNatWk, *]
+  --     · simp only [add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right,
+  --       lsubst_fromLwk, lwk_lwk]
+  --       congr; funext i
+  --       simp [Fin.toNatWk]
+  --   · funext i
+  --     simp only [← lsubst_fromLwk, Function.comp_apply, lsubst_lsubst]; congr
+  --     funext i
+  --     simp only [Function.comp_apply, Subst.liftn, Fin.toNatWk, Subst.comp, Subst.fromLwk_vlift]
+  --     split
+  --     · simp [Subst.vlift, Subst.liftn, vwk1, Fin.toNatWk, *]
+  --     · simp only [Subst.vlift, Function.comp_apply, Subst.liftn, add_lt_iff_neg_right,
+  --       not_lt_zero', ↓reduceIte, add_tsub_cancel_right, vwk1_lwk, *]
+  --       simp only [← lsubst_fromLwk, lsubst_lsubst]
+  --       congr
+  --       funext i; simp [Subst.comp, Fin.toNatWk]
+  -- | dead_cfg_left β n G m G' =>
+  --   convert dead_cfg_left (β.lsubst (σ.liftn m)) n (λi => (G i).lsubst (σ.liftn (n + m)).vlift) m
+  --     (λi => (G' i).lsubst (σ.liftn m).vlift)
+  --   simp only [
+  --     BinSyntax.Region.lsubst, lsubst_lwk, Function.comp_apply, cfg.injEq, heq_eq_eq, true_and]
+  --   constructor
+  --   · simp only [←lsubst_fromLwk, lsubst_lsubst]
+  --     congr
+  --     funext i; simp_arith only [Function.comp_apply, Subst.liftn, Subst.comp,
+  --                                Subst.fromLwk_vlift]
+  --     split; rfl
+  --     simp only [lsubst_fromLwk, lwk_lwk, comp_add_right]
+  --     congr 2
+  --     funext i; omega
+  --     rw [Nat.add_comm n m, Nat.add_sub_add_right]
+  --   · funext i
+  --     simp only [Fin.addCases, Function.comp_apply, eq_rec_constant]
+  --     split; rfl
+  --     simp only [<-lsubst_fromLwk, lsubst_lsubst]
+  --     congr
+  --     funext i
+  --     simp_arith only [
+  --       Subst.comp, BinSyntax.Region.lsubst, Subst.vlift, Function.comp_apply, Subst.liftn,
+  --       Subst.vwk1_comp_fromLwk
+  --     ]
+  --     split
+  --     · rfl
+  --     · simp only [vsubst0_var0_vwk1, lsubst_fromLwk, ← vwk1_lwk, lwk_lwk, comp_add_right]
+  --       congr 3
+  --       funext i; omega
+  --       rw [Nat.add_comm n m, Nat.add_sub_add_right]
   | ucfg' β n G =>
     convert ucfg' (β.lsubst (σ.liftn n)) n (λi => (G i).lsubst (σ.liftn n).vlift)
     simp only [Region.ucfg', lsubst_lsubst]

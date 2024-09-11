@@ -1221,20 +1221,20 @@ theorem Eqv.choiceInduction {ι : Type _} {Γs : ι → Ctx α ε} {Ls : ι → 
     simp only [hG]
     apply choice
 
-theorem Eqv.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
-  (R S : LCtx α) (β : Eqv φ Γ (R ++ L))
-  (G : (i : Fin S.length) → Eqv φ ((List.get S i, ⊥)::Γ) (R ++ L))
-  (ρ : Fin R.length → Fin S.length)
-  (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
-  : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
-  = cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
-  := by
-  induction β using Quotient.inductionOn
-  induction G using Eqv.choiceInduction
-  simp only [cfg, Set.mem_setOf_eq, lwk_quot, List.get_eq_getElem, Fin.getElem_fin, vwk_id_quot,
-    Quotient.finChoice_eq, Eqv.cfg_inner_quot]
-  apply Eqv.sound
-  apply InS.wk_cfg
+-- theorem Eqv.wk_cfg {Γ : Ctx α ε} {L : LCtx α}
+--   (R S : LCtx α) (β : Eqv φ Γ (R ++ L))
+--   (G : (i : Fin S.length) → Eqv φ ((List.get S i, ⊥)::Γ) (R ++ L))
+--   (ρ : Fin R.length → Fin S.length)
+--   (hρ : LCtx.Wkn (R ++ L) (S ++ L) (Fin.toNatWk ρ))
+--   : cfg S (β.lwk ⟨Fin.toNatWk ρ, hρ⟩) (λi => (G i).lwk ⟨Fin.toNatWk ρ, hρ⟩)
+--   = cfg R β (λi => (G (ρ i)).vwk_id (Ctx.Wkn.id.toFinWk_id hρ i))
+--   := by
+--   induction β using Quotient.inductionOn
+--   induction G using Eqv.choiceInduction
+--   simp only [cfg, Set.mem_setOf_eq, lwk_quot, List.get_eq_getElem, Fin.getElem_fin, vwk_id_quot,
+--     Quotient.finChoice_eq, Eqv.cfg_inner_quot]
+--   apply Eqv.sound
+--   apply InS.wk_cfg
 
 theorem Eqv.let1_let1_case {Γ : Ctx α ε}
   {a : Term.Eqv φ Γ ⟨Ty.coprod A B, e⟩}

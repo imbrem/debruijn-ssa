@@ -150,17 +150,17 @@ def StepD.case_inr {Γ : ℕ → ε} (e : Term φ) (r s)
   : StepD Γ (case (inr e) r s) (let1 e s)
   := StepD.reduce (ReduceD.case_inr e r s)
 
-@[match_pattern]
-def StepD.wk_cfg {Γ : ℕ → ε} (β : Region φ) (n G k) (ρ : Fin k → Fin n)
-  : StepD Γ (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
-    (cfg β k (G ∘ ρ))
-  := StepD.reduce (ReduceD.wk_cfg β n G k ρ)
+-- @[match_pattern]
+-- def StepD.wk_cfg {Γ : ℕ → ε} (β : Region φ) (n G k) (ρ : Fin k → Fin n)
+--   : StepD Γ (cfg (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G))
+--     (cfg β k (G ∘ ρ))
+--   := StepD.reduce (ReduceD.wk_cfg β n G k ρ)
 
-@[match_pattern]
-def StepD.dead_cfg_left {Γ : ℕ → ε} (β : Region φ) (n G m G')
-  : StepD Γ (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
-    (cfg β m G')
-  := StepD.reduce (ReduceD.dead_cfg_left β n G m G')
+-- @[match_pattern]
+-- def StepD.dead_cfg_left {Γ : ℕ → ε} (β : Region φ) (n G m G')
+--   : StepD Γ (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
+--     (cfg β m G')
+--   := StepD.reduce (ReduceD.dead_cfg_left β n G m G')
 
 @[match_pattern]
 def StepD.let1_op {Γ : ℕ → ε} (f e) (r : Region φ)

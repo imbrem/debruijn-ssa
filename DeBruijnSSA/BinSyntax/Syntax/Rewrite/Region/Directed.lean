@@ -164,11 +164,11 @@ def RWD.wk_cfg {Γ : ℕ → ε} (β : Region φ) (n G k) (ρ : Fin k → Fin n)
     (cfg β k (G ∘ ρ))
   := single $ BCongD.rel $ StepD.wk_cfg β n G k ρ
 
-def RWD.dead_cfg_left {Γ : ℕ → ε} (β : Region φ) (n G m G')
-  : RWD StepD Γ
-    (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
-    (cfg β m G')
-  := single $ BCongD.rel $ StepD.dead_cfg_left β n G m G'
+-- def RWD.dead_cfg_left {Γ : ℕ → ε} (β : Region φ) (n G m G')
+--   : RWD StepD Γ
+--     (cfg (β.lwk (· + n)) (n + m) (Fin.addCases G (lwk (· + n) ∘ G')))
+--     (cfg β m G')
+--   := single $ BCongD.rel $ StepD.dead_cfg_left β n G m G'
 
 def RWD.swap_cfg' {Γ : ℕ → ε} (β : Region φ) (n G m G')
   : RWD StepD Γ
@@ -341,25 +341,25 @@ def RWD.cfg_blocks {P} {Γ : ℕ → ε} (β n) (G G' : Fin n → Region φ)
   : RWD P Γ (Region.cfg β n G) (Region.cfg β n G')
   := cast_trg (cfg_blocks_partial β n G G' h n) (by simp)
 
-def RWD.dead_cfg_right {Γ : ℕ → ε} (β : Region φ) (n G m G')
-  : RWD StepD Γ
-    (cfg (β.lwk (n.liftnWk (· + m))) (n + m) (Fin.addCases (lwk (n.liftnWk (· + m)) ∘ G) G'))
-    (cfg β n G) :=
-    (cast_trg (swap_cfg (β.lwk (n.liftnWk (· + m))) n (lwk (n.liftnWk (· + m)) ∘ G) m G')
-      (by rw [
-        Fin.comp_addCases, lwk_lwk, <-Function.comp.assoc, comp_lwk,
-        Fin.toNatWk_swapAdd_comp_liftnWk_add]
-      )).comp
-    (dead_cfg_left β m _ n G)
+-- def RWD.dead_cfg_right {Γ : ℕ → ε} (β : Region φ) (n G m G')
+--   : RWD StepD Γ
+--     (cfg (β.lwk (n.liftnWk (· + m))) (n + m) (Fin.addCases (lwk (n.liftnWk (· + m)) ∘ G) G'))
+--     (cfg β n G) :=
+--     (cast_trg (swap_cfg (β.lwk (n.liftnWk (· + m))) n (lwk (n.liftnWk (· + m)) ∘ G) m G')
+--       (by rw [
+--         Fin.comp_addCases, lwk_lwk, <-Function.comp.assoc, comp_lwk,
+--         Fin.toNatWk_swapAdd_comp_liftnWk_add]
+--       )).comp
+--     (dead_cfg_left β m _ n G)
 
-def RWD.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
-  : RWD StepD Γ (cfg (β.lwk (· + n)) n G) β
-  :=
-  let s : RWD StepD Γ
-    (cfg (β.lwk (· + n)) n G)
-    (cfg (β.lwk (· + n)) (n + 0) (Fin.addCases G (lwk (· + n) ∘ Fin.elim0)))
-    := RWD.of_eq (by simp [Fin.addCases_zero])
-  (s.comp (dead_cfg_left β n G 0 Fin.elim0)).comp (RWD.cfg_zero _ _)
+-- def RWD.cfg_elim {Γ : ℕ → ε} (β : Region φ) (n G)
+--   : RWD StepD Γ (cfg (β.lwk (· + n)) n G) β
+--   :=
+--   let s : RWD StepD Γ
+--     (cfg (β.lwk (· + n)) n G)
+--     (cfg (β.lwk (· + n)) (n + 0) (Fin.addCases G (lwk (· + n) ∘ Fin.elim0)))
+--     := RWD.of_eq (by simp [Fin.addCases_zero])
+--   (s.comp (dead_cfg_left β n G 0 Fin.elim0)).comp (RWD.cfg_zero _ _)
   -- := match β with
   -- | Region.br ℓ e => (cfg_br_ge (ℓ + n) e n G (by simp)).cast_trg (by simp)
   -- | Region.let1 a β => (cfg_let1 a (β.lwk (· + n)) n G).comp (let1 a (cfg_elim β n _))
