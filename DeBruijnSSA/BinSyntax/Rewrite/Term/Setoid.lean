@@ -189,14 +189,14 @@ theorem InS.case_eta {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
   : case a (var 0 (by simp)).inl (var 0 (by simp)).inr ≈ a
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_let1_case {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {b : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X, e⟩}
-  {l : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  {r : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  : (let1 a $ let1 b $ case (var 1 Ctx.Var.bhead.step) l r)
-  ≈ (let1 a $ case (var 0 Ctx.Var.bhead) (let1 b.wk0 $ l.swap01) (let1 b.wk0 $ r.swap01))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let1_let1_case {Γ : Ctx α ε}
+--   {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
+--   {b : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X, e⟩}
+--   {l : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   {r : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   : (let1 a $ let1 b $ case (var 1 Ctx.Var.bhead.step) l r)
+--   ≈ (let1 a $ case (var 0 Ctx.Var.bhead) (let1 b.wk0 $ l.swap01) (let1 b.wk0 $ r.swap01))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 -- theorem InS.let1_let2_case {Γ : Ctx α ε}
 --   {a : InS φ Γ ⟨Ty.coprod A B, e⟩}

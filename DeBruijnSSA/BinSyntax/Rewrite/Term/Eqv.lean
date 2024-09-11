@@ -1096,7 +1096,8 @@ theorem Eqv.let1_beta {a : Eqv φ Γ ⟨A, ⊥⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ
   induction b using Quotient.inductionOn
   apply sound $ InS.let1_beta
 
-theorem Eqv.let1_beta' {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {a' : Eqv φ Γ ⟨A, ⊥⟩}
+theorem Eqv.let1_beta' {A B : Ty α}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {a' : Eqv φ Γ ⟨A, ⊥⟩}
   (h : a = a'.wk_eff (by simp))
   : let1 a b = b.subst a'.subst0 := by cases h; rw [let1_beta]
 

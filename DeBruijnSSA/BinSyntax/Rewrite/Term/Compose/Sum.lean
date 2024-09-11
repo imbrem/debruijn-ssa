@@ -109,15 +109,6 @@ def Eqv.reassoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
     (var 0 Ctx.Var.bhead).inl.inl
     (case (var 0 Ctx.Var.bhead) (var 0 Ctx.Var.bhead).inr.inl (var 0 Ctx.Var.bhead).inr)
 
-theorem Eqv.let1_beta_inl_var0 {Γ : Ctx α ε} {b : Eqv φ (⟨A.coprod B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}
-  : let1 (var 0 (by simp)).inl b = b.subst (var 0 (by simp)).inl.subst0
-  := by rw [<-wk_eff_var, <-wk_eff_inl, let1_beta]
-
-theorem Eqv.let1_beta_inr_var0 {A : Ty α} {Γ : Ctx α ε}
-  {b : Eqv φ (⟨A.coprod B, ⊥⟩::⟨B, ⊥⟩::Γ) ⟨C, e⟩}
-  : let1 (var 0 (by simp)).inr b = b.subst (var 0 (by simp)).inr.subst0
-  := by rw [<-wk_eff_var, <-wk_eff_inr, let1_beta]
-
 theorem Eqv.reassoc_reassoc_inv_sum {A B C : Ty α} {Γ : Ctx α ε}
   {r : Eqv φ Γ ⟨A.coprod (B.coprod C), e⟩}
   : reassoc_sum (reassoc_inv_sum r) = r := by
