@@ -1,5 +1,6 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Eqv
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Seq
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Case
 import DeBruijnSSA.BinSyntax.Typing.Term.Compose
 
 import Discretion.Utils.Quotient
@@ -484,17 +485,7 @@ theorem Eqv.hexagon_sum {X Y Z : Ty α} {Γ : Ctx α ε}
     sum
   ]
 
--- TODO: assoc is natural
-
--- TODO: lzero, rzero are natural
-
--- TODO: triangle
-
--- TODO: pentagon
-
--- TODO: hexagon
-
--- TODO: zero, join
+-- TODO: join
 
 -- TODO: comonoid structure on _everything_
 

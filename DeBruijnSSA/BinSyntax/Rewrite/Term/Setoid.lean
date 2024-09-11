@@ -198,76 +198,35 @@ theorem InS.let1_let1_case {Γ : Ctx α ε}
   ≈ (let1 a $ case (var 0 Ctx.Var.bhead) (let1 b.wk0 $ l.swap01) (let1 b.wk0 $ r.swap01))
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_let2_case {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {b : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X.prod Y, e⟩}
-  {l : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  {r : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  : (let1 a $ let2 b $ case (var 2 Ctx.Var.bhead.step.step) l r)
-  ≈ (let1 a $ case (var 0 Ctx.Var.bhead) (let2 b.wk0 $ l.swap02) (let2 b.wk0 $ r.swap02))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let1_let2_case {Γ : Ctx α ε}
+--   {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
+--   {b : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X.prod Y, e⟩}
+--   {l : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   {r : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   : (let1 a $ let2 b $ case (var 2 Ctx.Var.bhead.step.step) l r)
+--   ≈ (let1 a $ case (var 0 Ctx.Var.bhead) (let2 b.wk0 $ l.swap02) (let2 b.wk0 $ r.swap02))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_case_case {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {d : InS φ (⟨A.coprod B, ⊥⟩::Γ) ⟨Ty.coprod X Y, e⟩}
-  {ll : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  {lr : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  {rl : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  {rr : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
-  : (let1 a $ case d
-      (case (var 1 Ctx.Var.bhead.step) ll lr)
-      (case (var 1 Ctx.Var.bhead.step) rl rr))
-  ≈ (let1 a $ case (var 0 Ctx.Var.bhead)
-    (case d.wk0 ll.swap01 rl.swap01)
-    (case d.wk0 lr.swap01 rr.swap01))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let1_case_case {Γ : Ctx α ε}
+--   {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
+--   {d : InS φ (⟨A.coprod B, ⊥⟩::Γ) ⟨Ty.coprod X Y, e⟩}
+--   {ll : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   {lr : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   {rl : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   {rr : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) ⟨C, e⟩}
+--   : (let1 a $ case d
+--       (case (var 1 Ctx.Var.bhead.step) ll lr)
+--       (case (var 1 Ctx.Var.bhead.step) rl rr))
+--   ≈ (let1 a $ case (var 0 Ctx.Var.bhead)
+--     (case d.wk0 ll.swap01 rl.swap01)
+--     (case d.wk0 lr.swap01 rr.swap01))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.case_op_op {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {f} {hf : Φ.EFn f C D e}
-  {r : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩}
-  {s : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
-  : case a (op f hf r) (op f hf s) ≈ op f hf (case a r s)
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.case_inl_inl {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨A.coprod B, e⟩}
-  {r : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩}
-  {s : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
-  : case a (inl (right := D) r) (inl s) ≈ inl (case a r s)
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.case_inr_inr {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨A.coprod B, e⟩}
-  {r : InS φ (⟨A, ⊥⟩::Γ) ⟨D, e⟩}
-  {s : InS φ (⟨B, ⊥⟩::Γ) ⟨D, e⟩}
-  : case a (inr (left := C) r) (inr s) ≈ inr (case a r s)
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.case_abort_abort {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨A.coprod B, e⟩}
-  {r : InS φ (⟨A, ⊥⟩::Γ) ⟨Ty.empty, e⟩}
-  {s : InS φ (⟨B, ⊥⟩::Γ) ⟨Ty.empty, e⟩}
-  : case a (abort r A) (abort s A) ≈ abort (case a r s) A
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.case_pair_pair {Γ : Ctx α ε}
-  {d : InS φ Γ ⟨A.coprod B, e⟩}
-  {al : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩}
-  {bl : InS φ (⟨A, ⊥⟩::Γ) ⟨D, e⟩}
-  {ar : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
-  {br : InS φ (⟨B, ⊥⟩::Γ) ⟨D, e⟩}
-  : case d (pair al bl) (pair ar br)
-  ≈ (let1 d $ pair
-      (case (var 0 Ctx.Var.bhead) al.wk1 ar.wk1)
-      (case (var 0 Ctx.Var.bhead) bl.wk1 br.wk1))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.case_wk0_wk0 {A B : Ty α} {Γ : Ctx α ε}
-  {a : InS φ Γ ⟨A.coprod B, e⟩}
-  {r : InS φ Γ ⟨C, e⟩}
-  : case a r.wk0 r.wk0 ≈ let1 a r.wk0
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.case_wk0_wk0 {A B : Ty α} {Γ : Ctx α ε}
+--   {a : InS φ Γ ⟨A.coprod B, e⟩}
+--   {r : InS φ Γ ⟨C, e⟩}
+--   : case a r.wk0 r.wk0 ≈ let1 a r.wk0
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 theorem InS.case_inl {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩} {l : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩}
   {r : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}

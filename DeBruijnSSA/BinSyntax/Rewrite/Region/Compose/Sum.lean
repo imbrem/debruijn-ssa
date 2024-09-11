@@ -347,3 +347,5 @@ theorem Eqv.hexagon_sum {X Y Z : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : assoc_sum (φ := φ) (Γ := Γ) (L := L) (A := X) (B := Y) (C := Z) ;; braid_sum ;; assoc_sum
   = braid_sum.sum nil ;; assoc_sum ;; nil.sum braid_sum := by simp only [
     braid_sum, assoc_sum, nil_seq, coprod_seq, seq_assoc, inj_r_coprod, inj_l_coprod, sum]
+
+-- TODO: zero, join comonoid

@@ -46,25 +46,17 @@ inductive Rewrite : Term φ → Term φ → Prop
     Rewrite
       (let1 a $ let1 b $ case (var 1) r s)
       (let1 a $ case (var 0) (let1 b.wk0 r.swap01) (let1 b.wk0 s.swap01))
-  | let1_let2_case (a b r s) :
-    Rewrite
-      (let1 a $ let2 b $ case (var 2) r s)
-      (let1 a $ case (var 0) (let2 b.wk0 r.swap02) (let2 b.wk0 s.swap02))
-  | let1_case_case (a d ll lr rl rr) :
-    Rewrite
-      (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
-      (let1 a $ case (var 0)
-        (case d.wk0 ll.swap01 rl.swap01)
-        (case d.wk0 lr.swap01 rr.swap01))
-  | case_op_op (e f r s) : Rewrite (case e (op f r) (op f s)) (op f (case e r s))
-  | case_inl_inl (e r s) : Rewrite (case e (inl r) (inl s)) (inl (case e r s))
-  | case_inr_inr (e r s) : Rewrite (case e (inr r) (inr s)) (inr (case e r s))
-  | case_abort_abort (e r s) : Rewrite (case e (abort r) (abort s)) (abort (case e r s))
-  | case_pair_pair (e al bl ar br) :
-    Rewrite
-      (case e (pair al bl) (pair ar br))
-      (let1 e $ pair (case (var 0) al.wk1 ar.wk1) (case (var 0) bl.wk1 br.wk1))
-  | case_wk0_wk0 (e r) : Rewrite (case e (wk0 r) (wk0 r)) (let1 e r.wk0)
+  -- | let1_let2_case (a b r s) :
+  --   Rewrite
+  --     (let1 a $ let2 b $ case (var 2) r s)
+  --     (let1 a $ case (var 0) (let2 b.wk0 r.swap02) (let2 b.wk0 s.swap02))
+  -- | let1_case_case (a d ll lr rl rr) :
+  --   Rewrite
+  --     (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
+  --     (let1 a $ case (var 0)
+  --       (case d.wk0 ll.swap01 rl.swap01)
+  --       (case d.wk0 lr.swap01 rr.swap01))
+  -- | case_wk0_wk0 (e r) : Rewrite (case e (wk0 r) (wk0 r)) (let1 e r.wk0)
 
 theorem Rewrite.subst {e e' : Term φ} (h : e.Rewrite e') (σ) : (e.subst σ).Rewrite (e'.subst σ)
   := by induction h with
@@ -109,39 +101,22 @@ theorem Rewrite.subst {e e' : Term φ} (h : e.Rewrite e') (σ) : (e.subst σ).Re
     simp only [Term.subst, <-wk1_subst_lift, <-wk0_subst, <-swap01_subst_lift_lift]
     exact let1_let1_case (a.subst σ) (b.subst σ.lift)
       (r.subst σ.lift.lift.lift) (s.subst σ.lift.lift.lift)
-  | let1_let2_case a b r s =>
-    simp only [
-      Term.subst, <-wk1_subst_lift, <-wk0_subst, <-swap02_subst_lift_lift_lift, Subst.liftn_two]
-    exact let1_let2_case (a.subst σ) (b.subst σ.lift)
-      (r.subst σ.lift.lift.lift.lift) (s.subst σ.lift.lift.lift.lift)
-  | let1_case_case a d ll lr rl rr =>
-    simp only [
-      Term.subst, <-wk1_subst_lift, <-swap01_subst_lift_lift, <-swap01_subst_lift_lift,
-      <-wk0_subst
-    ]
-    exact let1_case_case (a.subst σ) (d.subst σ.lift)
-      (ll.subst σ.lift.lift.lift) (lr.subst σ.lift.lift.lift)
-      (rl.subst σ.lift.lift.lift) (rr.subst σ.lift.lift.lift)
-  | case_op_op e f r s =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact case_op_op (e.subst σ) f (r.subst σ.lift) (s.subst σ.lift)
-  | case_inl_inl e r s =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact case_inl_inl (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
-  | case_inr_inr e r s =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact case_inr_inr (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
-  | case_abort_abort e r s =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact case_abort_abort (e.subst σ) (r.subst σ.lift) (s.subst σ.lift)
-  | case_pair_pair e al bl ar br =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact case_pair_pair (e.subst σ)
-      (al.subst σ.lift) (bl.subst σ.lift)
-      (ar.subst σ.lift) (br.subst σ.lift)
-  | case_wk0_wk0 e r =>
-    simp only [Term.subst, <-wk1_subst_lift, <-wk0_subst]
-    exact case_wk0_wk0 (e.subst σ) (r.subst σ)
+  -- | let1_let2_case a b r s =>
+  --   simp only [
+  --     Term.subst, <-wk1_subst_lift, <-wk0_subst, <-swap02_subst_lift_lift_lift, Subst.liftn_two]
+  --   exact let1_let2_case (a.subst σ) (b.subst σ.lift)
+  --     (r.subst σ.lift.lift.lift.lift) (s.subst σ.lift.lift.lift.lift)
+  -- | let1_case_case a d ll lr rl rr =>
+  --   simp only [
+  --     Term.subst, <-wk1_subst_lift, <-swap01_subst_lift_lift, <-swap01_subst_lift_lift,
+  --     <-wk0_subst
+  --   ]
+  --   exact let1_case_case (a.subst σ) (d.subst σ.lift)
+  --     (ll.subst σ.lift.lift.lift) (lr.subst σ.lift.lift.lift)
+  --     (rl.subst σ.lift.lift.lift) (rr.subst σ.lift.lift.lift)
+  -- | case_wk0_wk0 e r =>
+  --   simp only [Term.subst, <-wk1_subst_lift, <-wk0_subst]
+  --   exact case_wk0_wk0 (e.subst σ) (r.subst σ)
 
 theorem Rewrite.wk {e e' : Term φ} (h : e.Rewrite e') (ρ) : (e.wk ρ).Rewrite (e'.wk ρ)
   := by simp only [<-Term.subst_fromWk]; exact h.subst _
