@@ -228,40 +228,40 @@ def StepD.cfg_br_lt_op {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   : StepD Γ (cfg ((G ⟨ℓ, h⟩).let1 e) n G) (cfg (br ℓ e) n G)
   := StepD.rw_op $ RewriteD.cfg_br_lt ℓ e n G h
 
-@[match_pattern]
-def StepD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : StepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
-  := StepD.rw $ RewriteD.cfg_let1 a β n G
+-- @[match_pattern]
+-- def StepD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : StepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
+--   := StepD.rw $ RewriteD.cfg_let1 a β n G
 
-@[match_pattern]
-def StepD.cfg_let1_op {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : StepD Γ (let1 a $ cfg β n (vwk1 ∘ G))
-    (cfg (let1 a β) n G)
-  := StepD.rw_op $ RewriteD.cfg_let1 a β n G
+-- @[match_pattern]
+-- def StepD.cfg_let1_op {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : StepD Γ (let1 a $ cfg β n (vwk1 ∘ G))
+--     (cfg (let1 a β) n G)
+--   := StepD.rw_op $ RewriteD.cfg_let1 a β n G
 
-@[match_pattern]
-def StepD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : StepD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-  := StepD.rw $ RewriteD.cfg_let2 a β n G
+-- @[match_pattern]
+-- def StepD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : StepD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+--   := StepD.rw $ RewriteD.cfg_let2 a β n G
 
-@[match_pattern]
-def StepD.cfg_let2_op {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : StepD Γ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-    (cfg (let2 a β) n G)
-  := StepD.rw_op $ RewriteD.cfg_let2 a β n G
+-- @[match_pattern]
+-- def StepD.cfg_let2_op {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : StepD Γ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+--     (cfg (let2 a β) n G)
+--   := StepD.rw_op $ RewriteD.cfg_let2 a β n G
 
-@[match_pattern]
-def StepD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
-  : StepD Γ (cfg (case e r s) n G)
-    (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
-  )
-  := StepD.rw $ RewriteD.cfg_case e r s n G
+-- @[match_pattern]
+-- def StepD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
+--   : StepD Γ (cfg (case e r s) n G)
+--     (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
+--   )
+--   := StepD.rw $ RewriteD.cfg_case e r s n G
 
-@[match_pattern]
-def StepD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
-  : StepD Γ (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
-    (cfg (case e r s) n G)
-  := StepD.rw_op $ RewriteD.cfg_case e r s n G
+-- @[match_pattern]
+-- def StepD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
+--   : StepD Γ (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
+--     (cfg (case e r s) n G)
+--   := StepD.rw_op $ RewriteD.cfg_case e r s n G
 
 -- @[match_pattern]
 -- def StepD.cfg_cfg {Γ : ℕ → ε} (β : Region φ) (n G n' G')

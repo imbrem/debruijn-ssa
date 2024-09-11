@@ -114,23 +114,23 @@ def RWD.cfg_br_lt_op {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
   : RWD StepD Γ (cfg ((G ⟨ℓ, h⟩).let1 e) n G) (cfg (br ℓ e) n G)
   := single $ BCongD.rel $ StepD.cfg_br_lt_op ℓ e n G h
 
-def RWD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : RWD StepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
-  := single $ BCongD.rel $ StepD.cfg_let1 a β n G
+-- def RWD.cfg_let1 {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : RWD StepD Γ (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
+--   := single $ BCongD.rel $ StepD.cfg_let1 a β n G
 
-def RWD.cfg_let1_op {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : RWD StepD Γ (let1 a $ cfg β n (vwk1 ∘ G))
-    (cfg (let1 a β) n G)
-  := single $ BCongD.rel $ StepD.cfg_let1_op a β n G
+-- def RWD.cfg_let1_op {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : RWD StepD Γ (let1 a $ cfg β n (vwk1 ∘ G))
+--     (cfg (let1 a β) n G)
+--   := single $ BCongD.rel $ StepD.cfg_let1_op a β n G
 
-def RWD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : RWD StepD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-  := single $ BCongD.rel $ StepD.cfg_let2 a β n G
+-- def RWD.cfg_let2 {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : RWD StepD Γ (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+--   := single $ BCongD.rel $ StepD.cfg_let2 a β n G
 
-def RWD.cfg_let2_op {Γ : ℕ → ε} (a : Term φ) (β n G)
-  : RWD StepD Γ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-    (cfg (let2 a β) n G)
-  := single $ BCongD.rel $ StepD.cfg_let2_op a β n G
+-- def RWD.cfg_let2_op {Γ : ℕ → ε} (a : Term φ) (β n G)
+--   : RWD StepD Γ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+--     (cfg (let2 a β) n G)
+--   := single $ BCongD.rel $ StepD.cfg_let2_op a β n G
 
 def RWD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
   : RWD StepD Γ (cfg (case e r s) n G)

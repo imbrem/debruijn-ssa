@@ -319,29 +319,29 @@ theorem InS.cfg_br_lt {Γ : Ctx α ε} {L : LCtx α}
 
 -- TODO: fix this statement ^
 
-theorem InS.cfg_let1 {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨A, ea⟩)
-  (R : LCtx α) (β : InS φ (⟨A, ⊥⟩::Γ) (R ++ L))
-  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
-    : (let1 a β).cfg R G ≈ (let1 a $ β.cfg R (λi => (G i).vwk1))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.cfg_let1 {Γ : Ctx α ε} {L : LCtx α}
+--   (a : Term.InS φ Γ ⟨A, ea⟩)
+--   (R : LCtx α) (β : InS φ (⟨A, ⊥⟩::Γ) (R ++ L))
+--   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+--     : (let1 a β).cfg R G ≈ (let1 a $ β.cfg R (λi => (G i).vwk1))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.cfg_let2 {Γ : Ctx α ε} {L : LCtx α}
-  (a : Term.InS φ Γ ⟨Ty.prod A B, ea⟩)
-  (R : LCtx α) (β : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (R ++ L))
-  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
-    : (let2 a β).cfg R G ≈ (let2 a $ β.cfg R (λi => (G i).vwk1.vwk1))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.cfg_let2 {Γ : Ctx α ε} {L : LCtx α}
+--   (a : Term.InS φ Γ ⟨Ty.prod A B, ea⟩)
+--   (R : LCtx α) (β : InS φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (R ++ L))
+--   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+--     : (let2 a β).cfg R G ≈ (let2 a $ β.cfg R (λi => (G i).vwk1.vwk1))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.cfg_case {Γ : Ctx α ε} {L : LCtx α}
-  (e : Term.InS φ Γ ⟨Ty.coprod A B, ea⟩)
-  (R : LCtx α)
-  (r : InS φ (⟨A, ⊥⟩::Γ) (R ++ L))
-  (s : InS φ (⟨B, ⊥⟩::Γ) (R ++ L))
-  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
-    : (InS.case e r s).cfg R G
-    ≈ InS.case e (r.cfg R (λi => (G i).vwk1)) (s.cfg R (λi => (G i).vwk1))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.cfg_case {Γ : Ctx α ε} {L : LCtx α}
+--   (e : Term.InS φ Γ ⟨Ty.coprod A B, ea⟩)
+--   (R : LCtx α)
+--   (r : InS φ (⟨A, ⊥⟩::Γ) (R ++ L))
+--   (s : InS φ (⟨B, ⊥⟩::Γ) (R ++ L))
+--   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+--     : (InS.case e r s).cfg R G
+--     ≈ InS.case e (r.cfg R (λi => (G i).vwk1)) (s.cfg R (λi => (G i).vwk1))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 -- theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
 --   (R S : LCtx α) (β : InS φ Γ (R ++ (S ++ L)))

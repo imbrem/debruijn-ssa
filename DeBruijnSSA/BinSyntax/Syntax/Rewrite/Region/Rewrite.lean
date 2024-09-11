@@ -48,13 +48,13 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (case e r s) (let1 e $ case (Term.var 0) (r.vwk1) (s.vwk1))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
     RewriteD (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
-  | cfg_let1 (a β n G) :
-    RewriteD (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
-  | cfg_let2 (a β n G) :
-    RewriteD (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-  | cfg_case (e r s n G) :
-    RewriteD (cfg (case e r s) n G)
-      (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
+  -- | cfg_let1 (a β n G) :
+  --   RewriteD (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
+  -- | cfg_let2 (a β n G) :
+  --   RewriteD (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+  -- | cfg_case (e r s n G) :
+  --   RewriteD (cfg (case e r s) n G)
+  --     (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
   -- | cfg_cfg (β n G n' G') :
   --   RewriteD (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   -- | cfg_zero (β G) : RewriteD (cfg β 0 G) β
@@ -225,13 +225,13 @@ inductive Rewrite : Region φ → Region φ → Prop
   --     (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2))))
   | cfg_br_lt (ℓ e n G) (h : ℓ < n) :
     Rewrite (cfg (br ℓ e) n G) (cfg ((G ⟨ℓ, h⟩).let1 e) n G)
-  | cfg_let1 (a β n G) :
-    Rewrite (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
-  | cfg_let2 (a β n G) :
-    Rewrite (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-  | cfg_case (e r s n G) :
-    Rewrite (cfg (case e r s) n G)
-      (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
+  -- | cfg_let1 (a β n G) :
+  --   Rewrite (cfg (let1 a β) n G) (let1 a $ cfg β n (vwk1 ∘ G))
+  -- | cfg_let2 (a β n G) :
+  --   Rewrite (cfg (let2 a β) n G) (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+  -- | cfg_case (e r s n G) :
+  --   Rewrite (cfg (case e r s) n G)
+  --     (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
   -- | cfg_cfg (β n G n' G') :
   --   Rewrite (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
   -- | cfg_zero (β G) : Rewrite (cfg β 0 G) β
@@ -391,22 +391,22 @@ def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : RewriteD r r')
     convert (case_bind (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift)) using 1
     simp [Term.subst, Region.vsubst_lift₂_vwk1]
   | cfg_br_lt ℓ e n G h => exact (cfg_br_lt ℓ (e.subst σ) n (λi => (G i).vsubst σ.lift) h)
-  | cfg_let1 a β n G =>
-    convert (cfg_let1 (a.subst σ) (β.vsubst σ.lift) n (λi => (G i).vsubst σ.lift)) using 1
-    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, let1.injEq,
-      cfg.injEq, heq_eq_eq, true_and]
-    rfl
-  | cfg_let2 a β n G =>
-    convert (cfg_let2 (a.subst σ) (β.vsubst (σ.liftn 2)) n (λi => (G i).vsubst σ.lift)) using 1
-    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, let2.injEq,
-      cfg.injEq, heq_eq_eq, true_and, Term.Subst.liftn_two]
-    rfl
-  | cfg_case e r s n G =>
-    convert (cfg_case (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift) n (λi => (G i).vsubst σ.lift))
-      using 1
-    simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, case.injEq,
-      cfg.injEq, heq_eq_eq, true_and]
-    constructor <;> rfl
+  -- | cfg_let1 a β n G =>
+  --   convert (cfg_let1 (a.subst σ) (β.vsubst σ.lift) n (λi => (G i).vsubst σ.lift)) using 1
+  --   simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, let1.injEq,
+  --     cfg.injEq, heq_eq_eq, true_and]
+  --   rfl
+  -- | cfg_let2 a β n G =>
+  --   convert (cfg_let2 (a.subst σ) (β.vsubst (σ.liftn 2)) n (λi => (G i).vsubst σ.lift)) using 1
+  --   simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, let2.injEq,
+  --     cfg.injEq, heq_eq_eq, true_and, Term.Subst.liftn_two]
+  --   rfl
+  -- | cfg_case e r s n G =>
+  --   convert (cfg_case (e.subst σ) (r.vsubst σ.lift) (s.vsubst σ.lift) n (λi => (G i).vsubst σ.lift))
+  --     using 1
+  --   simp only [BinSyntax.Region.vsubst, Function.comp_apply, vsubst_lift₂_vwk1, case.injEq,
+  --     cfg.injEq, heq_eq_eq, true_and]
+  --   constructor <;> rfl
   -- | cfg_cfg β n G n' G' =>
   --   convert (cfg_cfg (β.vsubst σ) n (λi => (G i).vsubst σ.lift) n' (λi => (G' i).vsubst σ.lift))
   --     using 1
@@ -496,28 +496,28 @@ def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : RewriteD r r')
   | cfg_br_lt ℓ e n G h =>
     convert (cfg_br_lt ℓ e n (λi => (G i).lsubst (σ.liftn n).vlift) h) using 1
     simp [Subst.liftn, h]
-  | cfg_let1 a β n G =>
-    convert (cfg_let1 a (β.lsubst (σ.liftn n).vlift) n (λi => (G i).lsubst (σ.liftn n).vlift))
-      using 1
-    simp only [BinSyntax.Region.lsubst, <-Subst.vlift_liftn_comm, Function.comp_apply, let1.injEq,
-      cfg.injEq, heq_eq_eq, true_and]
-    funext i
-    simp [vwk1_lsubst_vlift]
-  | cfg_let2 a β n G =>
-    convert (cfg_let2 a (β.lsubst <| (σ.liftn n).vliftn 2) n (λi => (G i).lsubst (σ.liftn n).vlift))
-      using 1
-    simp only [BinSyntax.Region.lsubst, <-Subst.vlift_liftn_comm, Function.comp_apply, let2.injEq,
-      cfg.injEq, heq_eq_eq, true_and, Subst.vliftn_two]
-    funext i
-    simp [vwk1_lsubst_vlift, Subst.vliftn_two]
-  | cfg_case e r s n G =>
-    convert (cfg_case e (r.lsubst (σ.liftn n).vlift) (s.lsubst (σ.liftn n).vlift) n
-      (λi => (G i).lsubst (σ.liftn n).vlift)) using 1
-    simp only [BinSyntax.Region.lsubst, Function.comp_apply, let1.injEq, case.injEq, cfg.injEq,
-      heq_eq_eq, true_and, <-Subst.vlift_liftn_comm]
-    constructor <;>
-    funext i <;>
-    simp [vwk1_lsubst_vlift]
+  -- | cfg_let1 a β n G =>
+  --   convert (cfg_let1 a (β.lsubst (σ.liftn n).vlift) n (λi => (G i).lsubst (σ.liftn n).vlift))
+  --     using 1
+  --   simp only [BinSyntax.Region.lsubst, <-Subst.vlift_liftn_comm, Function.comp_apply, let1.injEq,
+  --     cfg.injEq, heq_eq_eq, true_and]
+  --   funext i
+  --   simp [vwk1_lsubst_vlift]
+  -- | cfg_let2 a β n G =>
+  --   convert (cfg_let2 a (β.lsubst <| (σ.liftn n).vliftn 2) n (λi => (G i).lsubst (σ.liftn n).vlift))
+  --     using 1
+  --   simp only [BinSyntax.Region.lsubst, <-Subst.vlift_liftn_comm, Function.comp_apply, let2.injEq,
+  --     cfg.injEq, heq_eq_eq, true_and, Subst.vliftn_two]
+  --   funext i
+  --   simp [vwk1_lsubst_vlift, Subst.vliftn_two]
+  -- | cfg_case e r s n G =>
+  --   convert (cfg_case e (r.lsubst (σ.liftn n).vlift) (s.lsubst (σ.liftn n).vlift) n
+  --     (λi => (G i).lsubst (σ.liftn n).vlift)) using 1
+  --   simp only [BinSyntax.Region.lsubst, Function.comp_apply, let1.injEq, case.injEq, cfg.injEq,
+  --     heq_eq_eq, true_and, <-Subst.vlift_liftn_comm]
+  --   constructor <;>
+  --   funext i <;>
+  --   simp [vwk1_lsubst_vlift]
   -- | cfg_cfg β n G n' G' =>
   --   convert (cfg_cfg (β.lsubst ((σ.liftn n').liftn n)) n
   --     (λi => (G i).lsubst ((σ.liftn n').liftn n).vlift) n'

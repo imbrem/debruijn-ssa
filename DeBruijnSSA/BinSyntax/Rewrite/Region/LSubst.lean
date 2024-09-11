@@ -758,3 +758,76 @@ theorem Eqv.lsubst_id {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ Γ L}
 
 theorem Eqv.lsubst_id' {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ Γ L} {σ : Subst.Eqv φ Γ L L}
   (h : σ = Subst.Eqv.id) : r.lsubst σ = r := by cases h; simp
+
+-- theorem Eqv.cfg_let1 {Γ : Ctx α ε} {L : LCtx α}
+--   (a : Term.Eqv φ Γ ⟨A, ea⟩)
+--   (R : LCtx α) (β : Eqv φ (⟨A, ⊥⟩::Γ) (R ++ L))
+--   (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+--     : (let1 a β).cfg R G = (let1 a $ β.cfg R (λi => (G i).vwk1))
+--   := by
+--   induction a using Quotient.inductionOn
+--   simp only [cfg]
+--   generalize hG : Quotient.finChoice G = G'
+--   induction β using Quotient.inductionOn with
+--   | h β =>
+--     induction G' using Quotient.inductionOn with
+--     | h G' =>
+--       have hβ : ⟦β⟧ = β.q := rfl
+--       simp only [hβ, InS.let1_q, InS.cfg_inner_q]
+--       apply Eq.trans
+--       apply Eqv.sound
+--       apply InS.cfg_let1
+--       rw [<-InS.let1_q, <-InS.cfg_q]
+--       congr
+--       funext i
+--       rw [<-InS.vwk1_q]
+--       rw [InS.q]
+--       congr
+--       apply Eq.symm
+--       apply Quotient.forall_of_finChoice_eq hG
+
+-- theorem Eqv.cfg_let2 {Γ : Ctx α ε} {L : LCtx α}
+--   (a : Term.Eqv φ Γ ⟨Ty.prod A B, ea⟩)
+--   (R : LCtx α) (β : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) (R ++ L))
+--   (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+--     : (let2 a β).cfg R G = (let2 a $ β.cfg R (λi => (G i).vwk1.vwk1))
+--   := by
+--   induction a using Quotient.inductionOn
+--   simp only [cfg]
+--   generalize hG : Quotient.finChoice G = G'
+--   induction β using Quotient.inductionOn with
+--   | h β =>
+--     induction G' using Quotient.inductionOn with
+--     | h G' =>
+--       have hβ : ⟦β⟧ = β.q := rfl
+--       simp only [hβ, InS.let2_q, InS.cfg_inner_q]
+--       apply Eq.trans
+--       apply Eqv.sound
+--       apply InS.cfg_let2
+--       rw [<-InS.let2_q, <-InS.cfg_q]
+--       congr
+--       funext i
+--       simp only [<-InS.vwk1_q]
+--       rw [InS.q]
+--       congr
+--       apply Eq.symm
+--       apply Quotient.forall_of_finChoice_eq hG
+
+theorem Eqv.cfg_case {Γ : Ctx α ε} {L : LCtx α}
+  (e : Term.Eqv φ Γ ⟨Ty.coprod A B, ea⟩)
+  (R : LCtx α)
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (R ++ L))
+  (s : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ L))
+  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L))
+    : (Eqv.case e r s).cfg R G
+    = Eqv.case e (r.cfg R (λi => (G i).vwk1)) (s.cfg R (λi => (G i).vwk1))
+  := by
+  simp only [cfg_eq_ucfg, ucfg, lsubst_case]
+  congr <;> {
+    induction G using Eqv.choiceInduction
+    simp only [cfgSubst_quot, vwk1_quot, Subst.Eqv.vlift_quot]
+    congr
+    ext k
+    simp [Region.cfgSubst, Region.Subst.vlift, Region.vwk1, Region.vwk_vwk, <-Nat.liftWk_comp]
+    rfl
+  }

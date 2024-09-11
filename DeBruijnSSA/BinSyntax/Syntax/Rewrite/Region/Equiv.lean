@@ -130,18 +130,18 @@ theorem eqv_cfg_br_lt {ℓ e n G} (h : ℓ < n)
   : @cfg φ (br ℓ e) n G ≈ cfg ((G ⟨ℓ, h⟩).let1 e) n G
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_br_lt ℓ e n G h
 
-theorem eqv_cfg_let1 {a β n G}
-  : @cfg φ (let1 a β) n G ≈ (let1 a $ cfg β n (vwk1 ∘ G))
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let1 a β n G
+-- theorem eqv_cfg_let1 {a β n G}
+--   : @cfg φ (let1 a β) n G ≈ (let1 a $ cfg β n (vwk1 ∘ G))
+--   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let1 a β n G
 
-theorem eqv_cfg_let2 {a β n G}
-  : @cfg φ (let2 a β) n G ≈ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let2 a β n G
+-- theorem eqv_cfg_let2 {a β n G}
+--   : @cfg φ (let2 a β) n G ≈ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
+--   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let2 a β n G
 
-theorem eqv_cfg_case {e r s n G}
-  : @cfg φ (case e r s) n G
-    ≈ case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_case e r s n G
+-- theorem eqv_cfg_case {e r s n G}
+--   : @cfg φ (case e r s) n G
+--     ≈ case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
+--   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_case e r s n G
 
 -- theorem eqv_cfg_cfg {β n G n' G'}
 --   : @cfg φ (cfg β n G) n' G' ≈ cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G'))
