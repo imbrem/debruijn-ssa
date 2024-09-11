@@ -1,33 +1,12 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Completeness
 import DeBruijnSSA.BinSyntax.Typing.Region.Structural
 
 namespace BinSyntax
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [OrderBot ε]
-
-namespace Term
-
-def Eqv.pack {Γ : Ctx α ε} (R : LCtx α) (i : Fin R.length) : Eqv φ ((R.get i, ⊥)::Γ) (R.pack, ⊥) :=
-  match R with
-  | [] => i.elim0
-  | _::R => i.cases (inl nil) (λi => inr (pack R i))
-
-theorem Eqv.pack_def {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
-  : Eqv.pack (φ := φ) (Γ := Γ) R i = ⟦Term.InS.pack0 R i⟧ := by
-  induction R generalizing Γ with
-  | nil => exact i.elim0
-  | cons _ _ I =>
-    cases i using Fin.cases with
-    | zero => rfl
-    | succ i =>
-      simp only [pack, I, inr_quot, Fin.cases_succ]
-      apply congrArg
-      ext
-      simp [Term.pack0, Term.Wf.pack0, -Function.iterate_succ, Function.iterate_succ']
-
-end Term
 
 namespace Region
 
@@ -77,7 +56,7 @@ def Subst.Eqv.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.Eqv φ Γ R [R.pack] :
 @[simp]
 theorem Subst.Eqv.pack_get {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
   : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R)).get i
-  = Eqv.br 0 (Term.Eqv.pack R i) LCtx.Trg.shead := by rw [pack, Term.Eqv.pack_def]; rfl
+  = Eqv.br 0 (Term.Eqv.pack_sum R i) LCtx.Trg.shead := by rw [pack, Term.Eqv.pack_sum_def]; rfl
 
 @[simp]
 theorem Subst.Eqv.vlift_pack {Γ : Ctx α ε} {R : LCtx α}
@@ -85,19 +64,20 @@ theorem Subst.Eqv.vlift_pack {Γ : Ctx α ε} {R : LCtx α}
   := by simp only [pack, vlift_quot, Subst.InS.vlift_pack]
 
 theorem Eqv.vsubst0_pack_unpack {Γ : Ctx α ε} {R : LCtx α} {ℓ : Fin R.length}
-  : (unpack (φ := φ) (Γ := _::Γ) (R := R)).vsubst (Term.Eqv.pack R ℓ).subst0
+  : (unpack (φ := φ) (Γ := _::Γ) (R := R)).vsubst (Term.Eqv.pack_sum R ℓ).subst0
   = br ℓ (Term.Eqv.var 0 Ctx.Var.shead) (by simp) := by
   induction R with
   | nil => exact ℓ.elim0
   | cons _ _ I =>
     cases ℓ using Fin.cases with
     | zero =>
-      simp only [Term.Eqv.pack, Fin.val_succ, Fin.cases_zero, unpack, coprod, vsubst_case,
+      simp only [Term.Eqv.pack_sum, Fin.val_succ, Fin.cases_zero, unpack, coprod, vsubst_case,
         Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, case_inl, let1_beta]
       rfl
     | succ ℓ =>
-      simp only [List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ,
-        LCtx.pack.eq_2, Term.Eqv.pack, Fin.val_zero, List.getElem_cons_zero, Fin.cases_succ, unpack,
+      simp only [
+        List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ, unpack,
+        LCtx.pack.eq_2, Term.Eqv.pack_sum, Fin.val_zero, List.getElem_cons_zero, Fin.cases_succ,
         coprod, vwk1_quot, InS.nil_vwk1, vwk1_lwk0, vwk1_unpack, vsubst_case, Term.Eqv.var0_subst0,
         Fin.zero_eta, Term.Eqv.wk_res_self, vsubst_lwk0, vsubst_lift_unpack, case_inr, let1_beta, I]
       rfl

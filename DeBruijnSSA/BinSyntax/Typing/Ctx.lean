@@ -718,6 +718,58 @@ theorem effect_append_bot₂ {left right : Ty α} {tail : Ctx α ε}
   : effect (⟨left, ⊥⟩::⟨right, ⊥⟩::tail) = Nat.liftnBot 2 tail.effect
   := by simp only [effect_append_bot, Nat.liftnBot_two_apply]
 
+theorem effect_tail {Γ : Ctx α ε} (i : ℕ)
+  : effect (Γ.tail) i = Γ.effect (i + 1) := by cases Γ <;> simp [effect]
+
+theorem effect_cons_match {head} {Γ : Ctx α ε} (i : ℕ)
+  : effect (head::Γ) i = match i with | 0 => head.2 | i + 1 => Γ.effect i := by
+  cases i <;> simp [effect]
+
+@[simp]
+theorem effect_cons_zero {head} {Γ : Ctx α ε}
+  : effect (head::Γ) 0 = head.2 := by simp [effect_cons_match]
+
+@[simp]
+theorem effect_cons_succ {head} {Γ : Ctx α ε} (i : ℕ)
+  : effect (head::Γ) (i + 1) = Γ.effect i := by simp [effect_cons_match]
+
+@[simp]
+theorem effect_empty : effect (α := α) (ε := ε) [] = ⊥ := by funext i; simp [effect]
+
+def pack : Ctx α ε → Ty α
+  | [] => Ty.unit
+  | V::Γ => V.1.prod (pack Γ)
+
+def Pure (Γ : Ctx α ε) : Prop := Γ.effect = ⊥
+
+theorem pure_def {Γ : Ctx α ε} : Pure Γ ↔ Γ.effect = ⊥ := Iff.rfl
+
+theorem Pure.effect {Γ : Ctx α ε} (h : Pure Γ) (i : ℕ) : Γ.effect i = ⊥
+  := by rw [h]; rfl
+
+theorem Pure.of_effect' {Γ : Ctx α ε} (h : Γ.effect = ⊥) : Pure Γ := h
+
+theorem Pure.of_effect {Γ : Ctx α ε} (h : ∀i, Γ.effect i = ⊥) : Pure Γ := funext h
+
+theorem Pure.effect' {Γ : Ctx α ε} (h : Pure Γ) : Γ.effect = ⊥ := h
+
+theorem Pure.nil : Pure (α := α) (ε := ε) [] := by simp [Pure]
+
+theorem Pure.cons {head} {Γ : Ctx α ε} (h : Pure Γ) : Pure ((head, ⊥)::Γ) := by
+  funext k; cases k <;> simp [Pure, effect_append_bot, h.effect', Nat.liftBot]
+
+theorem Pure.cons' {head} {Γ : Ctx α ε} (h : head.2 = ⊥) (h' : Pure Γ) : Pure (head::Γ) := by
+  cases head; cases h; exact h'.cons
+
+theorem Pure.head {head} {Γ : Ctx α ε} (h : Pure (head::Γ)): head.2 = ⊥ := by
+  convert h.effect 0; simp [Ctx.effect]
+
+theorem Pure.tail {Γ : Ctx α ε} (h : Pure Γ) : Pure Γ.tail
+  := of_effect (λi => by simp [effect_tail, h.effect (i + 1)])
+
+theorem Pure.cons_iff {head} {Γ : Ctx α ε} : Pure (head::Γ) ↔ head.2 = ⊥ ∧ Pure Γ
+  := ⟨λh => ⟨h.head, h.tail⟩, λ⟨h, h'⟩ => h'.cons' h⟩
+
 variable [PartialOrder α] [PartialOrder ε]
 
 theorem Wkn.effect {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (i : ℕ) (hi : i < Δ.length)
@@ -733,7 +785,6 @@ theorem Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
     exact h.get.1
     simp [effect, h.length]
   ⟩
-
 -- def WknTy (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop := Γ.Types.NWkn Δ.Types ρ
 
 -- theorem WknTy.id_types_len_le {Γ Δ : Ctx α ε}
@@ -760,5 +811,29 @@ theorem IsInitial.wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) :
     ⟨V', hV', hI.1.anti hV.1, le_bot_iff.mp (hI.2 ▸ hV.2)⟩
 
 end OrderBot
+
+section SemilatticeSup
+
+variable [Φ: EffInstSet φ (Ty α) ε] [SemilatticeSup ε] [OrderBot ε]
+
+@[simp]
+def sup_effect : Ctx α ε → ε
+  | [] => ⊥
+  | V::Γ => V.2 ⊔ sup_effect Γ
+
+theorem effect_le_sup_effect {Γ : Ctx α ε} (i : ℕ) : Γ.effect i ≤ sup_effect Γ
+  := by induction Γ generalizing i with
+    | nil => simp [effect, sup_effect]
+    | cons V Γ ih =>
+      cases i with | zero => simp | succ i => exact le_sup_of_le_right (by simp [ih i])
+
+theorem Pure.sup_effect_iff {Γ : Ctx α ε} : Pure Γ ↔ Γ.sup_effect = ⊥
+  := by induction Γ <;> simp [nil, cons_iff, *]
+
+theorem Pure.sup_effect {Γ : Ctx α ε} : Pure Γ → Γ.sup_effect = ⊥ := Pure.sup_effect_iff.mp
+
+theorem Pure.of_sup_effect {Γ : Ctx α ε} : Γ.sup_effect = ⊥ → Pure Γ := Pure.sup_effect_iff.mpr
+
+end SemilatticeSup
 
 end Ctx
