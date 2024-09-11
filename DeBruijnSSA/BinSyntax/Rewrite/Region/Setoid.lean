@@ -343,51 +343,51 @@ theorem InS.cfg_case {Γ : Ctx α ε} {L : LCtx α}
     ≈ InS.case e (r.cfg R (λi => (G i).vwk1)) (s.cfg R (λi => (G i).vwk1))
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
-  (R S : LCtx α) (β : InS φ Γ (R ++ (S ++ L)))
-  (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ (S ++ L)))
-  (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
-    : (β.cfg R G).cfg S G'
-    ≈ (β.cast rfl (by rw [List.append_assoc])).cfg'
-      (R.length + S.length) (R ++ S) (by rw [List.length_append])
-      (Fin.addCases
-        (λi => (G i).cast (by
-          simp only [List.get_eq_getElem, Fin.cast, Fin.coe_castAdd]
-          rw [List.getElem_append]
-          -- TODO: put in discretion
-          ) (by rw [List.append_assoc]))
-        (λi => ((G' i).lwk (LCtx.InS.add_left_append (S ++ L) R)).cast (by
-          simp only [List.get_eq_getElem, Fin.cast, Fin.coe_natAdd]
-          rw [List.getElem_append_right]
-          simp
-          omega
-          omega
-          -- TODO: put in discretion
-        )
-          (by rw [List.append_assoc])))
-  := Uniform.rel $
-  TStep.rewrite InS.coe_wf InS.coe_wf (by
-    simp only [Set.mem_setOf_eq, coe_cfg, id_eq, coe_cfg', coe_cast]
-    apply Rewrite.cast_trg
-    apply Rewrite.cfg_cfg
-    congr
-    funext i
-    if h : i < R.length then
-      have hi : i = Fin.castAdd S.length ⟨i, h⟩ := rfl
-      rw [hi]
-      simp only [Fin.addCases_left]
-      rfl
-    else
-      let hi := Fin.natAdd_subNat_cast (le_of_not_lt h)
-      rw [<-hi]
-      simp only [Fin.addCases_right]
-      rfl
-    )
+-- theorem InS.cfg_cfg_eqv_cfg' {Γ : Ctx α ε} {L : LCtx α}
+--   (R S : LCtx α) (β : InS φ Γ (R ++ (S ++ L)))
+--   (G : (i : Fin R.length) → InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ (S ++ L)))
+--   (G' : (i : Fin S.length) → InS φ (⟨S.get i, ⊥⟩::Γ) (S ++ L))
+--     : (β.cfg R G).cfg S G'
+--     ≈ (β.cast rfl (by rw [List.append_assoc])).cfg'
+--       (R.length + S.length) (R ++ S) (by rw [List.length_append])
+--       (Fin.addCases
+--         (λi => (G i).cast (by
+--           simp only [List.get_eq_getElem, Fin.cast, Fin.coe_castAdd]
+--           rw [List.getElem_append]
+--           -- TODO: put in discretion
+--           ) (by rw [List.append_assoc]))
+--         (λi => ((G' i).lwk (LCtx.InS.add_left_append (S ++ L) R)).cast (by
+--           simp only [List.get_eq_getElem, Fin.cast, Fin.coe_natAdd]
+--           rw [List.getElem_append_right]
+--           simp
+--           omega
+--           omega
+--           -- TODO: put in discretion
+--         )
+--           (by rw [List.append_assoc])))
+--   := Uniform.rel $
+--   TStep.rewrite InS.coe_wf InS.coe_wf (by
+--     simp only [Set.mem_setOf_eq, coe_cfg, id_eq, coe_cfg', coe_cast]
+--     apply Rewrite.cast_trg
+--     apply Rewrite.cfg_cfg
+--     congr
+--     funext i
+--     if h : i < R.length then
+--       have hi : i = Fin.castAdd S.length ⟨i, h⟩ := rfl
+--       rw [hi]
+--       simp only [Fin.addCases_left]
+--       rfl
+--     else
+--       let hi := Fin.natAdd_subNat_cast (le_of_not_lt h)
+--       rw [<-hi]
+--       simp only [Fin.addCases_right]
+--       rfl
+--     )
 
-theorem InS.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
-  (β : InS φ Γ L)
-  : β.cfg [] (λi => i.elim0) ≈ β
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
+--   (β : InS φ Γ L)
+--   : β.cfg [] (λi => i.elim0) ≈ β
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 theorem InS.let2_eta {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.InS φ Γ ⟨Ty.prod A B, ea⟩)

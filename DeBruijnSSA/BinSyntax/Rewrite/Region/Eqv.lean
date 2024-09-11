@@ -1198,10 +1198,10 @@ theorem Eqv.cfg_case {Γ : Ctx α ε} {L : LCtx α}
 --           (by rw [List.append_assoc])))
 --   := sorry
 
-theorem Eqv.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
-  (β : Eqv φ Γ L)
-  : β.cfg [] (λi => i.elim0) = β
-  := by induction β using Quotient.inductionOn with | h β => exact Eqv.sound $ β.cfg_zero
+-- theorem Eqv.cfg_zero {Γ : Ctx α ε} {L : LCtx α}
+--   (β : Eqv φ Γ L)
+--   : β.cfg [] (λi => i.elim0) = β
+--   := by induction β using Quotient.inductionOn with | h β => exact Eqv.sound $ β.cfg_zero
 
 -- TODO: case_eta
 

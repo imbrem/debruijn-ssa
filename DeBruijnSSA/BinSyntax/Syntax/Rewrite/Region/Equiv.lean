@@ -143,9 +143,9 @@ theorem eqv_cfg_case {e r s n G}
     ≈ case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_case e r s n G
 
-theorem eqv_cfg_cfg {β n G n' G'}
-  : @cfg φ (cfg β n G) n' G' ≈ cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G'))
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_cfg β n G n' G'
+-- theorem eqv_cfg_cfg {β n G n' G'}
+--   : @cfg φ (cfg β n G) n' G' ≈ cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G'))
+--   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_cfg β n G n' G'
 
 -- theorem eqv_cfg_fuse {β n G k} (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ)
 --   : @cfg φ (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G)
