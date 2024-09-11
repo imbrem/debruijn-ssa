@@ -1,7 +1,7 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Completeness
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Structural
 import DeBruijnSSA.BinSyntax.Typing.Region.Structural
 
 namespace BinSyntax

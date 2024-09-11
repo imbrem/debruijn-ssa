@@ -70,20 +70,20 @@ inductive RewriteD : Region φ → Region φ → Type _
   | case_eta (e r) :
     RewriteD (case e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1))
       (let1 e r)
-  | let1_let1_case (a b r s) :
-    RewriteD
-      (let1 a $ let1 b $ case (var 1) r s)
-      (let1 a $ case (var 0) (let1 b.wk0 r.vswap01) (let1 b.wk0 s.vswap01))
-  | let1_let2_case (a b r s) :
-    RewriteD
-      (let1 a $ let2 b $ case (var 2) r s)
-      (let1 a $ case (var 0) (let2 b.wk0 r.vswap02) (let2 b.wk0 s.vswap02))
-  | let1_case_case (a d ll lr rl rr) :
-    RewriteD
-      (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
-      (let1 a $ case (var 0)
-        (case d.wk0 ll.vswap01 rl.vswap01)
-        (case d.wk0 lr.vswap01 rr.vswap01))
+  -- | let1_let1_case (a b r s) :
+  --   RewriteD
+  --     (let1 a $ let1 b $ case (var 1) r s)
+  --     (let1 a $ case (var 0) (let1 b.wk0 r.vswap01) (let1 b.wk0 s.vswap01))
+  -- | let1_let2_case (a b r s) :
+  --   RewriteD
+  --     (let1 a $ let2 b $ case (var 2) r s)
+  --     (let1 a $ case (var 0) (let2 b.wk0 r.vswap02) (let2 b.wk0 s.vswap02))
+  -- | let1_case_case (a d ll lr rl rr) :
+  --   RewriteD
+  --     (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
+  --     (let1 a $ case (var 0)
+  --       (case d.wk0 ll.vswap01 rl.vswap01)
+  --       (case d.wk0 lr.vswap01 rr.vswap01))
 
 def RewriteD.cast_src {r₀ r₀' r₁ : Region φ} (h : r₀ = r₀') (p : RewriteD r₀ r₁)
   : RewriteD r₀' r₁ := h ▸ p
@@ -247,20 +247,20 @@ inductive Rewrite : Region φ → Region φ → Prop
   | case_eta (e r) :
     Rewrite (case e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1))
       (let1 e r)
-  | let1_let1_case (a b r s) :
-    Rewrite
-      (let1 a $ let1 b $ case (var 1) r s)
-      (let1 a $ case (var 0) (let1 b.wk0 r.vswap01) (let1 b.wk0 s.vswap01))
-  | let1_let2_case (a b r s) :
-    Rewrite
-      (let1 a $ let2 b $ case (var 2) r s)
-      (let1 a $ case (var 0) (let2 b.wk0 r.vswap02) (let2 b.wk0 s.vswap02))
-  | let1_case_case (a d ll lr rl rr) :
-    Rewrite
-      (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
-      (let1 a $ case (var 0)
-        (case d.wk0 ll.vswap01 rl.vswap01)
-        (case d.wk0 lr.vswap01 rr.vswap01))
+  -- | let1_let1_case (a b r s) :
+  --   Rewrite
+  --     (let1 a $ let1 b $ case (var 1) r s)
+  --     (let1 a $ case (var 0) (let1 b.wk0 r.vswap01) (let1 b.wk0 s.vswap01))
+  -- | let1_let2_case (a b r s) :
+  --   Rewrite
+  --     (let1 a $ let2 b $ case (var 2) r s)
+  --     (let1 a $ case (var 0) (let2 b.wk0 r.vswap02) (let2 b.wk0 s.vswap02))
+  -- | let1_case_case (a d ll lr rl rr) :
+  --   Rewrite
+  --     (let1 a $ case d (case (var 1) ll lr) (case (var 1) rl rr))
+  --     (let1 a $ case (var 0)
+  --       (case d.wk0 ll.vswap01 rl.vswap01)
+  --       (case d.wk0 lr.vswap01 rr.vswap01))
 
 theorem RewriteD.rewrite {r r' : Region φ} (p : RewriteD r r') : Rewrite r r'
   := by cases p <;> constructor--; assumption
@@ -427,31 +427,32 @@ def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : RewriteD r r')
   | case_eta e r =>
     convert (case_eta (e.subst σ) (r.vsubst σ.lift)) using 1
     simp [Term.subst, Region.vsubst_lift₂_vwk1]
-  | let1_let1_case a b r s =>
-    convert (let1_let1_case (a.subst σ) (b.subst σ.lift) (r.vsubst (σ.liftn 3)) (s.vsubst (σ.liftn 3)))
-      using 1
-    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
-    simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap01, ← vsubst_fromWk,
-      vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
-    congr <;> funext k <;> cases k using Nat.cases2
-    <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
-  | let1_let2_case a b r s =>
-    convert (let1_let2_case (a.subst σ) (b.subst σ.lift) (r.vsubst (σ.liftn 4)) (s.vsubst (σ.liftn 4)))
-      using 1
-    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
-    simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap02, ← vsubst_fromWk,
-      vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
-    congr <;> funext k <;> cases k using Nat.cases3
-    <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
-  | let1_case_case a d ll lr rl rr =>
-    convert (let1_case_case (a.subst σ) (d.subst σ.lift)
-      (ll.vsubst (σ.liftn 3)) (lr.vsubst (σ.liftn 3))
-      (rl.vsubst (σ.liftn 3)) (rr.vsubst (σ.liftn 3))) using 1
-    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
-    simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap01, ← vsubst_fromWk,
-      vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
-    congr <;> funext k <;> cases k using Nat.cases2
-    <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
+  -- | let1_let1_case a b r s =>
+  --   convert (let1_let1_case (a.subst σ) (b.subst σ.lift)
+  --            (r.vsubst (σ.liftn 3)) (s.vsubst (σ.liftn 3)))
+  --     using 1
+  --   simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+  --   simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap01, ← vsubst_fromWk,
+  --     vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+  --   congr <;> funext k <;> cases k using Nat.cases2
+  --   <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
+  -- | let1_let2_case a b r s =>
+  --   convert (let1_let2_case (a.subst σ) (b.subst σ.lift) (r.vsubst (σ.liftn 4)) (s.vsubst (σ.liftn 4)))
+  --     using 1
+  --   simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+  --   simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap02, ← vsubst_fromWk,
+  --     vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+  --   congr <;> funext k <;> cases k using Nat.cases3
+  --   <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
+  -- | let1_case_case a d ll lr rl rr =>
+  --   convert (let1_case_case (a.subst σ) (d.subst σ.lift)
+  --     (ll.vsubst (σ.liftn 3)) (lr.vsubst (σ.liftn 3))
+  --     (rl.vsubst (σ.liftn 3)) (rr.vsubst (σ.liftn 3))) using 1
+  --   simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+  --   simp only [BinSyntax.Region.vsubst, subst, Subst.lift_zero, vswap01, ← vsubst_fromWk,
+  --     vsubst_vsubst, wk0_subst, Term.Subst.liftn_succ, Term.Subst.liftn_zero]
+  --   congr <;> funext k <;> cases k using Nat.cases2
+  --   <;> simp [Term.subst_fromWk, Term.Subst.comp, wk_wk] <;> rfl
 
 theorem Rewrite.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : Rewrite r r')
   : Rewrite (r.vsubst σ) (r'.vsubst σ)
@@ -546,45 +547,45 @@ def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : RewriteD r r')
   | case_eta e r =>
     convert (case_eta e (r.lsubst σ.vlift)) using 1
     simp [vwk1_lsubst_vlift]
-  | let1_let1_case a b r s =>
-    convert (let1_let1_case a b (r.lsubst σ.vlift.vlift.vlift) (s.lsubst (σ.vlift.vlift.vlift)))
-      using 1
-    simp only [BinSyntax.Region.lsubst, vswap01, vwk_lsubst, let1.injEq, true_and]
-    congr 3 <;> {
-      funext k
-      simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
-      congr
-      funext k
-      cases k <;> rfl
-    }
-  | let1_let2_case a b r s =>
-    convert (let1_let2_case a b
-      (r.lsubst (σ.vlift.vliftn 2).vlift)
-      (s.lsubst (σ.vlift.vliftn 2).vlift))
-      using 1
-    simp only [BinSyntax.Region.lsubst, Subst.vliftn_two, let1.injEq, let2.injEq,
-      true_and, vswap02, vwk_lsubst]
-    congr 3 <;> {
-      funext k
-      simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
-      congr
-      funext k
-      cases k <;> rfl
-    }
-  | let1_case_case a d ll lr rl rr =>
-    convert (let1_case_case a d
-      (ll.lsubst (σ.vlift.vlift.vlift))
-      (lr.lsubst (σ.vlift.vlift.vlift))
-      (rl.lsubst (σ.vlift.vlift.vlift))
-      (rr.lsubst (σ.vlift.vlift.vlift))) using 1
-    simp only [BinSyntax.Region.lsubst, vswap01, let1.injEq, true_and, vwk_lsubst]
-    congr 3 <;> {
-      funext k
-      simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
-      congr
-      funext k
-      cases k <;> rfl
-    }
+  -- | let1_let1_case a b r s =>
+  --   convert (let1_let1_case a b (r.lsubst σ.vlift.vlift.vlift) (s.lsubst (σ.vlift.vlift.vlift)))
+  --     using 1
+  --   simp only [BinSyntax.Region.lsubst, vswap01, vwk_lsubst, let1.injEq, true_and]
+  --   congr 3 <;> {
+  --     funext k
+  --     simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
+  --     congr
+  --     funext k
+  --     cases k <;> rfl
+  --   }
+  -- | let1_let2_case a b r s =>
+  --   convert (let1_let2_case a b
+  --     (r.lsubst (σ.vlift.vliftn 2).vlift)
+  --     (s.lsubst (σ.vlift.vliftn 2).vlift))
+  --     using 1
+  --   simp only [BinSyntax.Region.lsubst, Subst.vliftn_two, let1.injEq, let2.injEq,
+  --     true_and, vswap02, vwk_lsubst]
+  --   congr 3 <;> {
+  --     funext k
+  --     simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
+  --     congr
+  --     funext k
+  --     cases k <;> rfl
+  --   }
+  -- | let1_case_case a d ll lr rl rr =>
+  --   convert (let1_case_case a d
+  --     (ll.lsubst (σ.vlift.vlift.vlift))
+  --     (lr.lsubst (σ.vlift.vlift.vlift))
+  --     (rl.lsubst (σ.vlift.vlift.vlift))
+  --     (rr.lsubst (σ.vlift.vlift.vlift))) using 1
+  --   simp only [BinSyntax.Region.lsubst, vswap01, let1.injEq, true_and, vwk_lsubst]
+  --   congr 3 <;> {
+  --     funext k
+  --     simp only [Subst.vlift, vwk1, Function.comp_apply, vwk_vwk]
+  --     congr
+  --     funext k
+  --     cases k <;> rfl
+  --   }
 
 theorem Rewrite.lsubst {r r' : Region φ} (σ : Subst φ) (p : Rewrite r r')
   : Rewrite (r.lsubst σ) (r'.lsubst σ)

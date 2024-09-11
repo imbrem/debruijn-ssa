@@ -435,38 +435,38 @@ theorem InS.case_inr {Γ : Ctx α ε} {L : LCtx α}
     : case e.inr r s ≈ let1 e s
   := Uniform.rel $ TStep.reduce InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_let1_case {Γ : Ctx α ε}
-  {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {b : Term.InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X, e⟩}
-  {l : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  {r : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  : (let1 a $ let1 b $ case (var 1 Ctx.Var.shead.step) l r)
-  ≈ (let1 a $ case (var 0 Ctx.Var.shead) (let1 b.wk0 $ l.vswap01) (let1 b.wk0 $ r.vswap01))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let1_let1_case {Γ : Ctx α ε}
+--   {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
+--   {b : Term.InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X, e⟩}
+--   {l : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   {r : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   : (let1 a $ let1 b $ case (var 1 Ctx.Var.shead.step) l r)
+--   ≈ (let1 a $ case (var 0 Ctx.Var.shead) (let1 b.wk0 $ l.vswap01) (let1 b.wk0 $ r.vswap01))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_let2_case {Γ : Ctx α ε}
-  {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {b : Term.InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X.prod Y, e⟩}
-  {l : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  {r : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  : (let1 a $ let2 b $ case (var 2 Ctx.Var.shead.step.step) l r)
-  ≈ (let1 a $ case (var 0 Ctx.Var.shead) (let2 b.wk0 $ l.vswap02) (let2 b.wk0 $ r.vswap02))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let1_let2_case {Γ : Ctx α ε}
+--   {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
+--   {b : Term.InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨X.prod Y, e⟩}
+--   {l : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   {r : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   : (let1 a $ let2 b $ case (var 2 Ctx.Var.shead.step.step) l r)
+--   ≈ (let1 a $ case (var 0 Ctx.Var.shead) (let2 b.wk0 $ l.vswap02) (let2 b.wk0 $ r.vswap02))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_case_case {Γ : Ctx α ε}
-  {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
-  {d : Term.InS φ (⟨A.coprod B, ⊥⟩::Γ) ⟨Ty.coprod X Y, e⟩}
-  {ll : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  {lr : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  {rl : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  {rr : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
-  : (let1 a $ case d
-      (case (var 1 Ctx.Var.shead.step) ll lr)
-      (case (var 1 Ctx.Var.shead.step) rl rr))
-  ≈ (let1 a $ case (var 0 Ctx.Var.shead)
-    (case d.wk0 ll.vswap01 rl.vswap01)
-    (case d.wk0 lr.vswap01 rr.vswap01))
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
+-- theorem InS.let1_case_case {Γ : Ctx α ε}
+--   {a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩}
+--   {d : Term.InS φ (⟨A.coprod B, ⊥⟩::Γ) ⟨Ty.coprod X Y, e⟩}
+--   {ll : InS φ (⟨A, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   {lr : InS φ (⟨B, ⊥⟩::⟨X, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   {rl : InS φ (⟨A, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   {rr : InS φ (⟨B, ⊥⟩::⟨Y, ⊥⟩::⟨A.coprod B, ⊥⟩::Γ) L}
+--   : (let1 a $ case d
+--       (case (var 1 Ctx.Var.shead.step) ll lr)
+--       (case (var 1 Ctx.Var.shead.step) rl rr))
+--   ≈ (let1 a $ case (var 0 Ctx.Var.shead)
+--     (case d.wk0 ll.vswap01 rl.vswap01)
+--     (case d.wk0 lr.vswap01 rr.vswap01))
+--   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
 -- theorem InS.let1_cong_uniform_alt {Γ : Ctx α ε} {L : LCtx α}
 --   {a a' : Term φ} (ha : Term.Wf.Cong Term.TStep Γ V a a') (r : Region φ)
