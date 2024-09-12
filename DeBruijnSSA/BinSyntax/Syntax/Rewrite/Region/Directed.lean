@@ -132,16 +132,16 @@ def RWD.cfg_br_lt_op {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : ℓ < n)
 --     (cfg (let2 a β) n G)
 --   := single $ BCongD.rel $ StepD.cfg_let2_op a β n G
 
-def RWD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
-  : RWD StepD Γ (cfg (case e r s) n G)
-    (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
-  )
-  := single $ BCongD.rel $ StepD.cfg_case e r s n G
+-- def RWD.cfg_case {Γ : ℕ → ε} (e : Term φ) (r s n G)
+--   : RWD StepD Γ (cfg (case e r s) n G)
+--     (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
+--   )
+--   := single $ BCongD.rel $ StepD.cfg_case e r s n G
 
-def RWD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
-  : RWD StepD Γ (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
-    (cfg (case e r s) n G)
-  := single $ BCongD.rel $ StepD.cfg_case_op e r s n G
+-- def RWD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
+--   : RWD StepD Γ (case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G)))
+--     (cfg (case e r s) n G)
+--   := single $ BCongD.rel $ StepD.cfg_case_op e r s n G
 
 -- def RWD.cfg_cfg {Γ : ℕ → ε} (β : Region φ) (n G n' G')
 --   : RWD StepD Γ (cfg (cfg β n G) n' G') (cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G')))
@@ -170,18 +170,18 @@ def RWD.cfg_case_op {Γ : ℕ → ε} (e : Term φ) (r s n G)
 --     (cfg β m G')
 --   := single $ BCongD.rel $ StepD.dead_cfg_left β n G m G'
 
-def RWD.swap_cfg' {Γ : ℕ → ε} (β : Region φ) (n G m G')
-  : RWD StepD Γ
-    (cfg
-      (lwk (Fin.toNatWk (Fin.swapAdd n m)) β)
-      (m + n) (lwk (Fin.toNatWk (Fin.swapAdd n m)) ∘ Fin.addCases G' G))
-    (cfg β (n + m) (Fin.addCases G G'))
-  :=
-  have h : Fin.addCases G G' = Fin.addCases G' G ∘ Fin.swapAdd n m := by
-    rw [Fin.addCases_comp_swapAdd]
-  by
-    rw [h]
-    apply wk_cfg
+-- def RWD.swap_cfg' {Γ : ℕ → ε} (β : Region φ) (n G m G')
+--   : RWD StepD Γ
+--     (cfg
+--       (lwk (Fin.toNatWk (Fin.swapAdd n m)) β)
+--       (m + n) (lwk (Fin.toNatWk (Fin.swapAdd n m)) ∘ Fin.addCases G' G))
+--     (cfg β (n + m) (Fin.addCases G G'))
+--   :=
+--   have h : Fin.addCases G G' = Fin.addCases G' G ∘ Fin.swapAdd n m := by
+--     rw [Fin.addCases_comp_swapAdd]
+--   by
+--     rw [h]
+--     apply wk_cfg
 
 def RWD.cast_trg {P} {Γ : ℕ → ε} {r₀ r₁ r₁' : Region φ} (h : RWD P Γ r₀ r₁) (hr₁ : r₁ = r₁')
   : RWD P Γ r₀ r₁'
@@ -195,29 +195,29 @@ def RWD.cast {P} {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (hr₀ : 
   (h : RWD P Γ r₀ r₁) : RWD P Γ r₀' r₁'
   := Corr.Path.cast hr₀ hr₁ h
 
-def RWD.swap_cfg {Γ : ℕ → ε} (β : Region φ) (n G m G')
-  : RWD StepD Γ
-    (cfg β (n + m) (Fin.addCases G G'))
-    (cfg
-      (lwk (Fin.toNatWk (Fin.swapAdd n m)) β)
-      (m + n) (lwk (Fin.toNatWk (Fin.swapAdd n m)) ∘ Fin.addCases G' G))
-  := cast_trg (cast_src
-    (by
-      rw [
-        <-Fin.comp_addCases,
-        <-Function.comp.assoc,
-        lwk_lwk, comp_lwk,
-        Fin.swapAdd
-      ]
-      simp [<-Fin.toNatWk_comp, Fin.addCases_natAdd_castAdd_nil]
-    )
-    (swap_cfg'
-      (β.lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))))
-      m
-      (lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))) ∘ G')
-      n
-      (lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))) ∘ G)))
-    (by simp [Fin.comp_addCases, Fin.swapAdd])
+-- def RWD.swap_cfg {Γ : ℕ → ε} (β : Region φ) (n G m G')
+--   : RWD StepD Γ
+--     (cfg β (n + m) (Fin.addCases G G'))
+--     (cfg
+--       (lwk (Fin.toNatWk (Fin.swapAdd n m)) β)
+--       (m + n) (lwk (Fin.toNatWk (Fin.swapAdd n m)) ∘ Fin.addCases G' G))
+--   := cast_trg (cast_src
+--     (by
+--       rw [
+--         <-Fin.comp_addCases,
+--         <-Function.comp.assoc,
+--         lwk_lwk, comp_lwk,
+--         Fin.swapAdd
+--       ]
+--       simp [<-Fin.toNatWk_comp, Fin.addCases_natAdd_castAdd_nil]
+--     )
+--     (swap_cfg'
+--       (β.lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))))
+--       m
+--       (lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))) ∘ G')
+--       n
+--       (lwk (Fin.toNatWk (Fin.addCases (Fin.natAdd m) (Fin.castAdd n))) ∘ G)))
+--     (by simp [Fin.comp_addCases, Fin.swapAdd])
 
 def RWD.let1V0_id {Γ : ℕ → ε} (r : Region φ) (hΓ : Γ 0 = ⊥)
   : RWD StepD Γ r.let1V0 r
@@ -318,7 +318,7 @@ def RWD.cfg_blocks_partial {P} {Γ : ℕ → ε} (β n) (G : Fin n → Region φ
               case _ he =>
                 have h : i < k := Nat.lt_of_le_of_ne
                   (Nat.le_of_lt_succ h)
-                  (Fin.vne_of_ne he)
+                  (Fin.val_ne_of_ne he)
                 simp [h]
             case _ h =>
               have h := Nat.le_of_not_lt h
@@ -369,8 +369,8 @@ def RWD.cfg_blocks {P} {Γ : ℕ → ε} (β n) (G G' : Fin n → Region φ)
   --     (case e (cfg_elim r n _) (cfg_elim s n _))
   -- | Region.cfg β n' G' => (cfg_cfg _ _ _ _ _).comp (dead_cfg_right _ _ _ _ _)
 
-def RWD.cfg_br_ge {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : n ≤ ℓ)
-  : RWD StepD Γ (cfg (br ℓ e) n G) (br (ℓ - n) e)
-  := cast_src (by simp [h]) (cfg_elim (br (ℓ - n) e) n G)
+-- def RWD.cfg_br_ge {Γ : ℕ → ε} (ℓ) (e : Term φ) (n G) (h : n ≤ ℓ)
+--   : RWD StepD Γ (cfg (br ℓ e) n G) (br (ℓ - n) e)
+--   := cast_src (by simp [h]) (cfg_elim (br (ℓ - n) e) n G)
 
 -- TODO: vwk, lwk lore...

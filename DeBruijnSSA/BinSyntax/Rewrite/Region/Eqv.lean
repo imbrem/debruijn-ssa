@@ -1077,9 +1077,9 @@ theorem Eqv.let2_eta {Γ : Ctx α ε} {L : LCtx α}
     : (let2 a $
         let1 ((var 1 ⟨by simp, le_refl _⟩).pair (var 0 (by simp))) r.vwk1.vwk1)
     = let1 a r := by
-  induction a using Quotient.inductionOn
-  induction r using Quotient.inductionOn
-  exact Eqv.sound $ InS.let2_eta _ _
+  apply Eq.symm
+  rw [<-Term.Eqv.let2_eta (a := a), let1_let2, Term.Eqv.let2_eta]
+  rfl
 
 -- theorem Eqv.cfg_cfg_eq_cfg' {Γ : Ctx α ε} {L : LCtx α}
 --   (R S : LCtx α) (β : Eqv φ Γ (R ++ (S ++ L)))
@@ -1109,8 +1109,6 @@ theorem Eqv.let2_eta {Γ : Ctx α ε} {L : LCtx α}
 --   (β : Eqv φ Γ L)
 --   : β.cfg [] (λi => i.elim0) = β
 --   := by induction β using Quotient.inductionOn with | h β => exact Eqv.sound $ β.cfg_zero
-
--- TODO: case_eta
 
 -- TODO: factor out to discretion as general helper...
 

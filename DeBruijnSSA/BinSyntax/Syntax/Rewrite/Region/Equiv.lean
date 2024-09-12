@@ -94,77 +94,9 @@ theorem eqv_case_bind {e r s}
   : @case φ e r s ≈ (let1 e $ case (var 0) (r.vwk1) (s.vwk1))
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_bind e r s
 
--- TODO: go prove
-
--- theorem eqv_let2_op {f e r}
---   : @let2 φ (op f e) r ≈ (let1 e $ let2 (op f (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
---   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_op f e r
-
--- theorem eqv_let2_pair {a b r}
---   : @let2 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ r)
---   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_pair a b r
-
--- theorem eqv_let2_abort {e r}
---   : @let2 φ (abort e) r ≈ (let1 e $ let2 (abort (var 0)) $ r.vwk (Nat.liftnWk 2 Nat.succ))
---   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_abort e r
-
--- theorem eqv_case_op {f e r s}
---   : @case φ (op f e) r s ≈ (let1 e $ case (op f (var 0)) (r.vwk1) (s.vwk1))
---   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_op f e r s
-
--- theorem eqv_case_abort {e r s}
---   : @case φ (abort e) r s ≈ (let1 e $ case (abort (var 0)) (r.vwk1) (s.vwk1))
---   := sorry--EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_abort e r s
-
--- theorem eqv_let1_case {a b r s}
---   : (@let1 φ a $ case (b.wk Nat.succ) r s)
---   ≈ case b (let1 (a.wk Nat.succ) (r.vwk (Nat.swap0 1))) (let1 (a.wk Nat.succ) (s.vwk (Nat.swap0 1)))
---   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_case a b r s
-
--- theorem eqv_let2_case {a b r s}
---   : (@let2 φ a $ case (b.wk (· + 2)) r s)
---   ≈ case b (let2 (a.wk Nat.succ) (r.vwk (Nat.swap0 2))) (let2 (a.wk Nat.succ) (s.vwk (Nat.swap0 2)))
---   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_case a b r s
-
 theorem eqv_cfg_br_lt {ℓ e n G} (h : ℓ < n)
   : @cfg φ (br ℓ e) n G ≈ cfg ((G ⟨ℓ, h⟩).let1 e) n G
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_br_lt ℓ e n G h
-
--- theorem eqv_cfg_let1 {a β n G}
---   : @cfg φ (let1 a β) n G ≈ (let1 a $ cfg β n (vwk1 ∘ G))
---   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let1 a β n G
-
--- theorem eqv_cfg_let2 {a β n G}
---   : @cfg φ (let2 a β) n G ≈ (let2 a $ cfg β n (vwk1 ∘ vwk1 ∘ G))
---   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_let2 a β n G
-
--- theorem eqv_cfg_case {e r s n G}
---   : @cfg φ (case e r s) n G
---     ≈ case e (cfg r n (vwk1 ∘ G)) (cfg s n (vwk1 ∘ G))
---   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_case e r s n G
-
--- theorem eqv_cfg_cfg {β n G n' G'}
---   : @cfg φ (cfg β n G) n' G' ≈ cfg β (n + n') (Fin.addCases G (lwk (· + n) ∘ G'))
---   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_cfg β n G n' G'
-
--- theorem eqv_cfg_fuse {β n G k} (ρ : Fin k → Fin n) (hρ : Function.Surjective ρ)
---   : @cfg φ (lwk (Fin.toNatWk ρ) β) n (lwk (Fin.toNatWk ρ) ∘ G)
---     ≈ cfg β k (G ∘ ρ)
---   := EqvGen.rel _ _ $ Cong.rel $ Rewrite.cfg_fuse β n G k ρ hρ
-
-theorem eqv_let1_eta {e} {r : Region φ}
-  : @let1 φ e (let1 (Term.var 0) r.vwk1) ≈ let1 e r
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_eta e r
-
-theorem eqv_let2_eta {e} {r : Region φ}
-  : @let2 φ e (let1 ((Term.var 1).pair (Term.var 0)) r.vwk1.vwk1)
-    ≈ let1 e r
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_eta e r
-
-theorem eqv_case_eta {e r}
-  : @case φ e (let1 (Term.var 0).inl r.vwk1) (let1 (Term.var 0).inr r.vwk1)
-    ≈ let1 e r
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.case_eta e r
 
 theorem eqv_vwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : r ≈ r') : r.vwk ρ ≈ r'.vwk ρ
   := Cong.eqv_vwk (λρ _ _ p => p.vwk ρ) ρ p
