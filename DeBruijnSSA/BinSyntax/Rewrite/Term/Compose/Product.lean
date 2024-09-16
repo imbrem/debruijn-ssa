@@ -17,6 +17,10 @@ def Eqv.swap {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : 
 def Eqv.pl {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨A, e⟩
   := let2 a (var 1 (by simp))
 
+@[simp]
+theorem Eqv.pl_quot {A B : Ty α} {Γ : Ctx α ε} {a : InS φ Γ ⟨A.prod B, e⟩}
+  : pl ⟦a⟧ = ⟦a.pl⟧ := rfl
+
 theorem Eqv.wk_pl {A B : Ty α} {Γ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
   {a : Eqv φ Δ ⟨A.prod B, e⟩}
   : (a.pl).wk ρ = (a.wk ρ).pl := by
@@ -40,6 +44,10 @@ theorem Eqv.wk3_pl {A B : Ty α} {Γ : Ctx α ε}
 
 def Eqv.pr {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eqv φ Γ ⟨B, e⟩
   := let2 a (var 0 (by simp))
+
+@[simp]
+theorem Eqv.pr_quot {A B : Ty α} {Γ : Ctx α ε} {a : InS φ Γ ⟨A.prod B, e⟩}
+  : pr ⟦a⟧ = ⟦a.pr⟧ := rfl
 
 theorem Eqv.wk_pr {A B : Ty α} {Γ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
   {a : Eqv φ Δ ⟨A.prod B, e⟩}

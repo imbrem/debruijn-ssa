@@ -691,6 +691,25 @@ theorem IsInitial.cons_iff {head} {Γ : Ctx α ε}
 
 end Initial
 
+section Pack
+
+def pack : Ctx α ε → Ty α
+  | [] => Ty.unit
+  | V::Γ => V.1.prod (pack Γ)
+
+theorem pack_drop {Γ : Ctx α ε} {i : ℕ} (hi : i < Γ.length)
+  : pack (Γ.drop i) = (Γ[i]).1.prod (Ctx.pack (Γ.drop (i + 1)))
+  := by induction i generalizing Γ with
+  | zero => cases Γ with | nil => cases hi | cons V Γ => rfl
+  | succ i I => cases Γ with | nil => cases hi | cons V Γ =>
+    simp [pack, I (Nat.lt_of_succ_lt_succ hi)]
+
+theorem pack_drop_fin {Γ : Ctx α ε} {i : Fin Γ.length}
+  : pack (Γ.drop i) = (Γ.get i).1.prod (Ctx.pack (Γ.drop (i + 1)))
+  := pack_drop i.prop
+
+end Pack
+
 section Bot
 
 def Types (Γ : Ctx α ε) : List (Ty α) := Γ.map Prod.fst
@@ -735,10 +754,6 @@ theorem effect_cons_succ {head} {Γ : Ctx α ε} (i : ℕ)
 
 @[simp]
 theorem effect_empty : effect (α := α) (ε := ε) [] = ⊥ := by funext i; simp [effect]
-
-def pack : Ctx α ε → Ty α
-  | [] => Ty.unit
-  | V::Γ => V.1.prod (pack Γ)
 
 def Pure (Γ : Ctx α ε) : Prop := Γ.effect = ⊥
 

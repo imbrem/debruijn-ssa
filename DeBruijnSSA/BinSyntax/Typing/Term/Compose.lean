@@ -156,3 +156,33 @@ theorem Wf.sum {A A' B B' : Ty α} {Γ : Ctx α ε} {l r : Term φ}
 def InS.sum {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : InS φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : InS φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : InS φ (⟨A.coprod B, ⊥⟩::Γ) ⟨A'.coprod B', e⟩ := coprod (l.seq inj_l) (r.seq inj_r)
+
+def pl (t : Term φ) := let2 t (var 1)
+
+theorem Wf.pl {A B : Ty α} {Γ : Ctx α ε} {t : Term φ} (ht : t.Wf Γ ⟨A.prod B, e⟩)
+  : (pl t).Wf Γ ⟨A, e⟩ := by
+  apply let2 ht
+  apply var (by simp)
+
+def pr (t : Term φ) := let2 t (var 0)
+
+theorem Wf.pr {A B : Ty α} {Γ : Ctx α ε} {t : Term φ} (ht : t.Wf Γ ⟨A.prod B, e⟩)
+  : (pr t).Wf Γ ⟨B, e⟩ := by
+  apply let2 ht
+  apply var (by simp)
+
+def InS.pl {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩) : InS φ Γ ⟨A, e⟩
+  := let2 t (var 1 (by simp))
+
+@[simp]
+theorem InS.coe_pl {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩)
+  : (InS.pl t).val = Term.let2 t.val (Term.var 1) := by
+  rfl
+
+def InS.pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩) : InS φ Γ ⟨B, e⟩
+  := let2 t (var 0 (by simp))
+
+@[simp]
+theorem InS.coe_pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩)
+  : (InS.pr t).val = Term.let2 t.val (Term.var 0) := by
+  rfl

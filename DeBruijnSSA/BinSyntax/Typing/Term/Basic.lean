@@ -353,6 +353,10 @@ theorem Term.Wf.wk_eff {Γ : Ctx α ε} {a : Term φ} {A e} (he : e ≤ e') (h :
 def Term.InS.wk_eff {Γ : Ctx α ε} (a : Term.InS φ Γ ⟨A, e⟩) (h : e ≤ e') : Term.InS φ Γ ⟨A, e'⟩
   := ⟨a, a.2.wk_eff h⟩
 
+@[simp]
+theorem Term.InS.coe_wk_eff {Γ : Ctx α ε} {A e e'} {a : Term.InS φ Γ ⟨A, e⟩} (h : e ≤ e')
+  : (a.wk_eff h : Term φ) = (a : Term φ) := rfl
+
 /-- Weaken the type of a term derivation -/
 def Term.WfD.wk_ty {Γ : Ctx α ε} {a : Term φ} {A e} (h : A ≤ A')
   (da : WfD Γ a ⟨A, e⟩) : WfD Γ a ⟨A', e⟩
