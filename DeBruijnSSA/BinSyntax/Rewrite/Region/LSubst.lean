@@ -58,13 +58,13 @@ theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
     simp only [Set.mem_setOf_eq, List.get_eq_getElem]
     congr 3
     rw [List.getElem_append_right _ _ h']
-    apply heq_prop
+    apply proof_irrel_heq
     congr 1
     funext r
     simp only [Set.mem_setOf_eq, List.get_eq_getElem]
     congr 3
     rw [List.getElem_append_right _ _ h']
-    apply heq_prop
+    apply proof_irrel_heq
 
 theorem Subst.InS.slift_congr {Γ : Ctx α ε} {L K : LCtx α}
   {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.slift (head := head) ≈ τ.slift
