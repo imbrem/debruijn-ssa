@@ -27,8 +27,8 @@ def Subst.InS.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.InS φ Γ R [R.pack] :
   ⟨Subst.pack, Subst.Wf.pack⟩
 
 @[simp]
-theorem Subst.InS.coe_pack {Γ : Ctx α ε} {R : LCtx α} (ℓ : ℕ)
-  : (Subst.InS.pack (φ := φ) (Γ := Γ) (R := R) : Region.Subst φ) ℓ = br 0 (Term.inj_n ℓ) := rfl
+theorem Subst.InS.coe_pack {Γ : Ctx α ε} {R : LCtx α}
+  : (Subst.InS.pack (φ := φ) (Γ := Γ) (R := R) : Region.Subst φ) = Subst.pack := rfl
 
 @[simp]
 theorem Subst.vlift_pack
@@ -110,6 +110,29 @@ theorem Subst.InS.vlift_unpack {Γ : Ctx α ε} {R : LCtx α}
   : (Subst.InS.unpack (φ := φ) (Γ := Γ) (R := R)).vlift (head := head) = unpack := by
   ext; simp [Subst.vlift]
 
-open Term
+@[simp]
+theorem Subst.InS.vliftn₂_unpack {Γ : Ctx α ε} {R : LCtx α}
+  : (Subst.InS.unpack (φ := φ) (Γ := Γ) (R := R)).vliftn₂ (left := left) (right := right)
+  = unpack := by simp [Subst.InS.vliftn₂_eq_vlift_vlift]
+
+def InS.unpacked_out {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ [R.pack]) : InS φ Γ R
+  := r.lsubst Subst.InS.unpack
+
+@[simp]
+theorem InS.coe_unpacked_out {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ [R.pack])
+  : (r.unpacked_out : Region φ) = (r : Region φ).lsubst (Region.csubst (Region.unpack R.length))
+  := rfl
+
+def InS.packed_out {Γ : Ctx α ε} {R : LCtx α} (h : InS φ Γ R) : InS φ Γ [R.pack]
+  := h.lsubst Subst.InS.pack
+
+@[simp]
+theorem InS.coe_packed_out {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ R)
+  : (r.packed_out : Region φ) = (r : Region φ).lsubst Subst.pack
+  := rfl
+
+-- theorem InS.unpacked_in_unpacked_out {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ [R.pack])
+--   : r.unpacked_out.unpacked_in = r.unpacked_in.unpacked_out := by
+--   ext; simp
 
 end Region

@@ -51,6 +51,16 @@ theorem Subst.Eqv.unpack_def {Γ : Ctx α ε} {R : LCtx α}
   : Subst.Eqv.unpack (φ := φ) (Γ := Γ) (R := R) = ⟦InS.unpack (Γ := Γ) (R := R)⟧
   := by rw [unpack, Region.Eqv.unpack_def]; rfl
 
+@[simp]
+theorem Subst.Eqv.vlift_unpack {Γ : Ctx α ε} {R : LCtx α}
+  : (Subst.Eqv.unpack (φ := φ) (Γ := Γ) (R := R)).vlift (head := head) = unpack := by
+  simp [unpack_def]
+
+@[simp]
+theorem Subst.Eqv.vliftn₂_unpack {Γ : Ctx α ε} {R : LCtx α}
+  : (Subst.Eqv.unpack (φ := φ) (Γ := Γ) (R := R)).vliftn₂ (left := left) (right := right)
+  = unpack := by simp [Subst.Eqv.vliftn₂_eq_vlift_vlift]
+
 def Subst.Eqv.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.Eqv φ Γ R [R.pack] := ⟦Subst.InS.pack⟧
 
 @[simp]
@@ -62,6 +72,11 @@ theorem Subst.Eqv.pack_get {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
 theorem Subst.Eqv.vlift_pack {Γ : Ctx α ε} {R : LCtx α}
   : (pack (φ := φ) (Γ := Γ) (R := R)).vlift (head := head) = pack
   := by simp only [pack, vlift_quot, Subst.InS.vlift_pack]
+
+@[simp]
+theorem Subst.Eqv.vliftn₂_pack {Γ : Ctx α ε} {R : LCtx α}
+  : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R)).vliftn₂ (left := left) (right := right)
+  = pack := by simp [Subst.Eqv.vliftn₂_eq_vlift_vlift]
 
 theorem Eqv.vsubst0_pack_unpack {Γ : Ctx α ε} {R : LCtx α} {ℓ : Fin R.length}
   : (unpack (φ := φ) (Γ := _::Γ) (R := R)).vsubst (Term.Eqv.inj_n R ℓ).subst0
@@ -110,11 +125,54 @@ theorem Subst.Eqv.unpack_comp_pack {Γ : Ctx α ε} {R : LCtx α}
 --     get_id, Fin.coe_fin_one]
 --   rfl
 
-def Eqv.unpacked_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ [R.pack]) : Eqv φ Γ R
-  := h.lsubst Subst.Eqv.unpack
+def Eqv.unpacked_out {Γ : Ctx α ε} {R : LCtx α} (r : Eqv φ Γ [R.pack]) : Eqv φ Γ R
+  := r.lsubst Subst.Eqv.unpack
+
+-- TODO: br here?
+
+@[simp]
+theorem Eqv.unpacked_out_quot {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ [R.pack])
+  : unpacked_out ⟦r⟧ = ⟦r.unpacked_out⟧ := by simp only [unpacked_out, Subst.Eqv.unpack,
+    unpack_def, InS.unpack, Set.mem_setOf_eq, csubst_quot, lsubst_quot]; rfl
+
+theorem Eqv.unpacked_out_let1 {Γ : Ctx α ε} {R : LCtx α}
+  (a : Term.Eqv φ Γ (A, e)) (r : Eqv φ ((A, ⊥)::Γ) [R.pack])
+  :  (let1 a r).unpacked_out = let1 a r.unpacked_out := by simp [unpacked_out]
+
+theorem Eqv.unpacked_out_let2 {Γ : Ctx α ε} {R : LCtx α}
+  (a : Term.Eqv φ Γ (A.prod B, e)) (r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) [R.pack])
+  : (let2 a r).unpacked_out = let2 a r.unpacked_out := by simp [unpacked_out]
+
+theorem Eqv.unpacked_out_case {Γ : Ctx α ε} {R : LCtx α}
+  (a : Term.Eqv φ Γ (A.coprod B, e))
+  (l : Eqv φ ((A, ⊥)::Γ) [R.pack]) (r : Eqv φ ((B, ⊥)::Γ) [R.pack])
+  : (case a l r).unpacked_out = case a l.unpacked_out r.unpacked_out := by simp [unpacked_out]
+
+-- TODO: unpacking a cfg is a quarter of Böhm–Jacopini
 
 def Eqv.packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ [R.pack]
   := h.lsubst Subst.Eqv.pack
+
+@[simp]
+theorem Eqv.packed_out_quot {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ R)
+  : packed_out ⟦r⟧ = ⟦r.packed_out⟧ := rfl
+
+-- TODO: br becomes an injection
+
+theorem Eqv.packed_out_let1 {Γ : Ctx α ε} {R : LCtx α}
+  (a : Term.Eqv φ Γ (A, e)) (r : Eqv φ ((A, ⊥)::Γ) R)
+  : (let1 a r).packed_out = let1 a r.packed_out := by simp [packed_out]
+
+theorem Eqv.packed_out_let2 {Γ : Ctx α ε} {R : LCtx α}
+  (a : Term.Eqv φ Γ (A.prod B, e)) (r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) R)
+  : (let2 a r).packed_out = let2 a r.packed_out := by simp [packed_out]
+
+theorem Eqv.packed_out_case {Γ : Ctx α ε} {R : LCtx α}
+  (a : Term.Eqv φ Γ (A.coprod B, e))
+  (l : Eqv φ ((A, ⊥)::Γ) R) (r : Eqv φ ((B, ⊥)::Γ) R)
+  : (case a l r).packed_out = case a l.packed_out r.packed_out := by simp [packed_out]
+
+-- TODO: packing a cfg is half of Böhm–Jacopini, and I believe the best we can do sans dinaturality
 
 -- theorem Eqv.unpacked_out_packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R)
 --   : h.packed_out.unpacked_out = h := by
@@ -122,8 +180,6 @@ def Eqv.packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ 
 --   sorry
 
 -- TODO: packed_out_unpacked_out
-
--- TODO: {br, let1, let2, case, cfg}
 
 end Region
 
