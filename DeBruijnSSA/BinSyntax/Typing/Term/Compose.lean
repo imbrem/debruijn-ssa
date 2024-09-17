@@ -159,12 +159,32 @@ def InS.sum {A A' B B' : Ty α} {Γ : Ctx α ε}
 
 def pl (t : Term φ) := let2 t (var 1)
 
+@[simp]
+theorem wk_pl {t : Term φ} : t.pl.wk ρ = (t.wk ρ).pl := rfl
+
+@[simp]
+theorem subst_pl {t : Term φ} : t.pl.subst σ = (t.subst σ).pl := rfl
+
+theorem wk0_pl {t : Term φ} : t.pl.wk0 = (t.wk0).pl := rfl
+
+theorem wk1_pl {t : Term φ} : t.pl.wk1 = (t.wk1).pl := rfl
+
 theorem Wf.pl {A B : Ty α} {Γ : Ctx α ε} {t : Term φ} (ht : t.Wf Γ ⟨A.prod B, e⟩)
   : (pl t).Wf Γ ⟨A, e⟩ := by
   apply let2 ht
   apply var (by simp)
 
 def pr (t : Term φ) := let2 t (var 0)
+
+@[simp]
+theorem wk_pr {t : Term φ} : t.pr.wk ρ = (t.wk ρ).pr := rfl
+
+@[simp]
+theorem subst_pr {t : Term φ} : t.pr.subst σ = (t.subst σ).pr := rfl
+
+theorem wk0_pr {t : Term φ} : t.pr.wk0 = (t.wk0).pr := rfl
+
+theorem wk1_pr {t : Term φ} : t.pr.wk1 = (t.wk1).pr := rfl
 
 theorem Wf.pr {A B : Ty α} {Γ : Ctx α ε} {t : Term φ} (ht : t.Wf Γ ⟨A.prod B, e⟩)
   : (pr t).Wf Γ ⟨B, e⟩ := by
@@ -179,6 +199,20 @@ theorem InS.coe_pl {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e�
   : (InS.pl t).val = Term.let2 t.val (Term.var 1) := by
   rfl
 
+@[simp]
+theorem InS.wk_pl {A B : Ty α} {Γ : Ctx α ε} {ρ : Γ.InS Δ} (t : InS φ Δ ⟨A.prod B, e⟩)
+  : (t.pl).wk ρ = (t.wk ρ).pl := rfl
+
+@[simp]
+theorem InS.subst_pl {A B : Ty α} {Γ : Ctx α ε} {σ : Subst.InS φ Γ Δ} (t : InS φ Δ ⟨A.prod B, e⟩)
+  : (t.pl).subst σ = (t.subst σ).pl := rfl
+
+theorem InS.wk0_pl {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩)
+  : (t.pl).wk0 (head := head) = (t.wk0).pl := rfl
+
+theorem InS.wk1_pl {A B : Ty α} {Γ : Ctx α ε} (t : InS φ (head::Γ) ⟨A.prod B, e⟩)
+  : (t.pl).wk1 (inserted := inserted) = (t.wk1).pl := rfl
+
 def InS.pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩) : InS φ Γ ⟨B, e⟩
   := let2 t (var 0 (by simp))
 
@@ -186,3 +220,17 @@ def InS.pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩) : In
 theorem InS.coe_pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩)
   : (InS.pr t).val = Term.let2 t.val (Term.var 0) := by
   rfl
+
+@[simp]
+theorem InS.wk_pr {A B : Ty α} {Γ : Ctx α ε} {ρ : Γ.InS Δ} (t : InS φ Δ ⟨A.prod B, e⟩)
+  : (t.pr).wk ρ = (t.wk ρ).pr := rfl
+
+@[simp]
+theorem InS.subst_pr {A B : Ty α} {Γ : Ctx α ε} {σ : Subst.InS φ Γ Δ} (t : InS φ Δ ⟨A.prod B, e⟩)
+  : (t.pr).subst σ = (t.subst σ).pr := rfl
+
+theorem InS.wk0_pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ Γ ⟨A.prod B, e⟩)
+  : (t.pr).wk0 (head := head) = (t.wk0).pr := rfl
+
+theorem InS.wk1_pr {A B : Ty α} {Γ : Ctx α ε} (t : InS φ (head::Γ) ⟨A.prod B, e⟩)
+  : (t.pr).wk1 (inserted := inserted) = (t.wk1).pr := rfl

@@ -801,6 +801,7 @@ theorem Var.toEffect {Γ : Ctx α ε} {n : ℕ} {V} (h : Γ.Var n V)
     exact h.get.1
     simp [effect, h.length]
   ⟩
+
 -- def WknTy (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop := Γ.Types.NWkn Δ.Types ρ
 
 -- theorem WknTy.id_types_len_le {Γ Δ : Ctx α ε}
@@ -814,6 +815,14 @@ end Bot
 section OrderBot
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [OrderBot ε]
+
+theorem Pure.any_effect {Γ : Ctx α ε} (h : Γ.Pure) {n : ℕ} {V} (h' : Γ.Var n V)
+  : Γ.Var n ⟨V.1, e⟩
+  := h'.toEffect.wk_eff (by simp [h.effect])
+
+theorem Pure.any_effect_refl {Γ : Ctx α ε} (h : Γ.Pure) {n} (h' : n < Γ.length)
+  : Γ.Var n ⟨Γ[n].1, e⟩
+  := (Ctx.Var.refl h').toEffect.wk_eff (by simp [h.effect])
 
 theorem Var.bhead {head : Ty α} {e : ε} {Γ : Ctx α ε}
   : Var (⟨head, ⊥⟩::Γ) 0 ⟨head, e⟩ := Var.head (by simp) Γ

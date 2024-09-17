@@ -58,6 +58,34 @@ theorem InS.wk_eff_pack {Γ : Ctx α ε} {h : ∀i, Γ.effect i ≤ lo} {h' : lo
 
 def unpack0 (x : ℕ) : Term φ := pl (pr^[x] (var 0))
 
+@[simp]
+theorem wk_lift_unpack0 {x : ℕ} : (unpack0 (φ := φ) x).wk (Nat.liftWk ρ) = unpack0 x := by
+  simp only [unpack0, wk_pl]
+  apply congrArg
+  induction x with
+  | zero => rfl
+  | succ x ih => simp only [wk_pr, Function.iterate_succ_apply', ih]
+
+@[simp]
+theorem subst_lift_unpack0 {x : ℕ} {σ : Subst φ} : (unpack0 x).subst σ.lift = unpack0 x := by
+  simp only [unpack0, subst_pl]
+  apply congrArg
+  induction x with
+  | zero => rfl
+  | succ x ih => simp only [subst_pr, Function.iterate_succ_apply', ih]
+
+@[simp]
+theorem wk1_unpack0 {x : ℕ} : (unpack0 (φ := φ) x).wk1 = unpack0 x := wk_lift_unpack0
+
+@[simp]
+theorem subst0_nil_pr_unpack0 {x : ℕ} : (unpack0 x).subst nil.pr.subst0 = unpack0 (φ := φ) (x + 1)
+  := by
+  simp only [unpack0, subst_pl]
+  apply congrArg
+  induction x with
+  | zero => rfl
+  | succ x ih => simp only [subst_pr, Function.iterate_succ_apply', ih]
+
 theorem Wf.pack_drop' {Γ Δ : Ctx α ε} {i : ℕ} (hi : i < Γ.length)
   : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (Term.pr^[i] (Term.var 0))
       ((Γ.get ⟨i, hi⟩).1.prod (Ctx.pack (Γ.drop (i + 1))), e)
@@ -139,6 +167,20 @@ theorem InS.pl_pack_drop' {Γ Δ : Ctx α ε} {i : Fin Γ.length}
 theorem InS.coe_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
   : (InS.unpack0 (φ := φ) (Δ := Δ) (e := e) i : Term φ) = Term.unpack0 i := rfl
 
+-- TODO: wk_lift unpack0
+
+-- TODO: subst_lift unpack0
+
+@[simp]
+theorem InS.wk1_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : (InS.unpack0 (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk1 (inserted := inserted) = unpack0 i := by
+  ext; rw [coe_unpack0, coe_wk1, coe_unpack0, Term.wk1_unpack0]
+
+@[simp]
+theorem InS.subst0_nil_pr_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : (InS.unpack0 (φ := φ) (Γ := Γ) (e := e) i).subst (nil.pr.subst0)
+  = unpack0 (φ := φ) (Γ := V::Γ) (Δ := Δ) i.succ := by ext; exact Term.subst0_nil_pr_unpack0
+
 def unpack0' (n : ℕ) (i : ℕ) : Term φ := match n with
 | 0 => unit
 | n + 1 => let2 (var 0) (match i with | 0 => var 1 | i + 1 => unpack0' n i)
@@ -191,6 +233,15 @@ theorem Subst.Wf.unpack0 {Γ Δ : Ctx α ε}
   : Subst.Wf (φ := φ) ((Γ.pack, ⊥)::Δ) Γ Subst.unpack0 := λ_ => Term.Wf.unpack0
 
 def Subst.InS.unpack {Γ Δ : Ctx α ε} : Subst.InS φ ((Γ.pack, ⊥)::Δ) Γ := ⟨Subst.unpack0, Wf.unpack0⟩
+
+def Subst.pack (n : ℕ) : Subst φ := λ_ => Term.pack n
+
+theorem Subst.Wf.pack {Γ : Ctx α ε} (h : Γ.Pure)
+  : Subst.Wf (φ := φ) Γ [(Γ.pack, ⊥)] (Subst.pack Γ.length)
+  := λi => by cases i using Fin.elim1; convert (h.pack (φ := φ)).prop; simp [Subst.pack]
+
+def _root_.BinSyntax.Ctx.Pure.packS {Γ} (h : Γ.Pure) : Subst.InS φ Γ [(Γ.pack, ⊥)]
+  := ⟨Subst.pack Γ.length, Subst.Wf.pack h⟩
 
 def InS.packed {Γ Δ : Ctx α ε} (a : InS φ Γ V) : InS φ ((Γ.pack, ⊥)::Δ) V
   := a.subst Subst.InS.unpack
