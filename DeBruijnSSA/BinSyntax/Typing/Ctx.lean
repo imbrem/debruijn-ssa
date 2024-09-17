@@ -49,6 +49,7 @@ theorem Var.head (h : V ≤ V') (Γ : Ctx α ε) : Var (V::Γ) 0 V' where
   length := by simp
   getElem := h
 
+@[simp]
 theorem Var.refl {Γ : Ctx α ε} {n} (h : n < Γ.length) : Var Γ n Γ[n] := ⟨h, le_refl _⟩
 
 @[simp]
@@ -848,6 +849,8 @@ theorem Pure.sup_effect_iff {Γ : Ctx α ε} : Pure Γ ↔ Γ.sup_effect = ⊥
 theorem Pure.sup_effect {Γ : Ctx α ε} : Pure Γ → Γ.sup_effect = ⊥ := Pure.sup_effect_iff.mp
 
 theorem Pure.of_sup_effect {Γ : Ctx α ε} : Γ.sup_effect = ⊥ → Pure Γ := Pure.sup_effect_iff.mpr
+
+theorem Pure.sup_le {Γ : Ctx α ε} (h : Pure Γ) : Γ.sup_effect ≤ e := by simp [h.sup_effect]
 
 end SemilatticeSup
 

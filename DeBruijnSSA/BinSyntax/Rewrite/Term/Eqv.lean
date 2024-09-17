@@ -714,6 +714,14 @@ theorem Subst.Eqv.get_comp {σ : Subst.Eqv φ Γ Δ} {τ : Subst.Eqv φ Δ Ξ} {
   rfl
 
 @[simp]
+theorem Subst.Eqv.get_id {i : Fin Δ.length}
+  : (Subst.Eqv.id : Subst.Eqv φ Δ Δ).get i = Eqv.var i (by simp) := rfl
+
+@[simp]
+theorem Subst.Eqv.get_fromWk {ρ : Γ.InS Δ} {i : Fin Δ.length}
+  : (Subst.Eqv.fromWk ρ).get i = Eqv.var (φ := φ) (ρ.val i) (ρ.prop i i.prop) := rfl
+
+@[simp]
 theorem Eqv.subst_op {σ : Subst.Eqv φ Γ Δ} {a : Eqv φ Δ ⟨A, e⟩} {f : φ} {hf : Φ.EFn f A B e}
   : subst σ (op f hf a) = op f hf (subst σ a) := by
   induction a using Quotient.inductionOn;
@@ -793,6 +801,12 @@ def Eqv.subst0 (a : Eqv φ Δ V) : Subst.Eqv φ Δ (V::Δ)
 
 @[simp]
 theorem Eqv.subst0_quot {a : InS φ Δ V} : subst0 ⟦a⟧ = ⟦a.subst0⟧ := rfl
+
+@[simp]
+theorem Eqv.subst0_get_zero {a : Eqv φ Δ V}
+  : (subst0 a).get (0 : Fin (Δ.length + 1)) = (a : Eqv φ Δ V) := by
+  induction a using Quotient.inductionOn
+  rfl
 
 @[simp]
 theorem Eqv.subst0_wk0 {a : Eqv φ Γ V} {b : Eqv φ Γ V'} : a.wk0.subst b.subst0 = a := by
