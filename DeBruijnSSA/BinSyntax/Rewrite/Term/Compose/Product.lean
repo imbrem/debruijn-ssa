@@ -382,6 +382,28 @@ theorem Eqv.subst0_pi_l {A B : Ty α} {Γ : Ctx α ε}
   (a : Eqv φ Γ ⟨A.prod B, ⊥⟩) : pi_l.subst a.subst0 = a.pl := by
   simp [pi_l, pl]
 
+theorem Eqv.pl_seq {A B C : Ty α} {Γ : Ctx α ε}
+  {p : Eqv φ ((X, ⊥)::Γ) (A.prod B, e)}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} : p.pl ;;' l = let2 p l.wk1.wk0 := by
+  rw [pl, seq, let1_let2, let1_beta_var1]
+  induction p using Quotient.inductionOn
+  induction l using Quotient.inductionOn
+  apply eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_let2, InS.coe_subst, InS.coe_subst0, InS.coe_var, InS.coe_wk,
+    Ctx.InS.coe_wk1, Ctx.InS.coe_wk0, let2.injEq, true_and, <-Term.subst_fromWk, Term.subst_subst]
+  congr; funext k; cases k <;> rfl
+
+theorem Eqv.pr_seq {A B C : Ty α} {Γ : Ctx α ε}
+  {p : Eqv φ ((X, ⊥)::Γ) (A.prod B, e)}
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩} : p.pr ;;' r = let2 p r.wk1.wk1 := by
+  rw [pr, seq, let1_let2, let1_beta_var0, subst0_var0_wk1]
+
+theorem Eqv.pi_l_seq {A B C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} : pi_l (B := B) ;;' l = let2 nil l.wk1.wk0 := pl_seq
+
+theorem Eqv.pi_r_seq {A B C : Ty α} {Γ : Ctx α ε}
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩} : pi_r (A := A) ;;' r = let2 nil r.wk1.wk1 := pr_seq
+
 def Eqv.runit {A : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A.prod Ty.unit, e⟩
   := pair (var 0 (by simp)) (unit e)
 

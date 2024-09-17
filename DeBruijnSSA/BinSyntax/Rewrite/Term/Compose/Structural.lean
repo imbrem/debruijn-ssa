@@ -123,6 +123,10 @@ theorem Eqv.pl_pack_drop'  {Γ Δ : Ctx α ε} {i : Fin Γ.length}
 theorem Eqv.unpack0_def {Γ Δ : Ctx α ε} (i : Fin Γ.length) :
   Eqv.unpack0 (φ := φ) (Δ := Δ) (e := e) i = ⟦Term.InS.unpack0 i⟧ := rfl
 
+theorem Eqv.unpack0_succ {Γ Δ : Ctx α ε} (i : Fin Γ.length)
+  : unpack0 (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) i.succ = pi_r ;;' unpack0 i := by
+  rw [seq, <-wk_eff_pi_r, let1_beta, wk1_unpack0, subst0_pi_r_unpack0]
+
 def Eqv.unpack0' {Γ Δ : Ctx α ε} (i : Fin Γ.length) : Eqv φ ((Γ.pack, ⊥)::Δ) ((Γ.get i).1, e)
   := match Γ with
   | [] => i.elim0
@@ -207,6 +211,19 @@ theorem Subst.Eqv.unpack_comp_packSE {Γ : Ctx α ε} (h : Γ.Pure)
     List.getElem_cons_zero, get_comp, get_packSE_zero, get_id, Fin.coe_fin_one]
   exact Eqv.packed_packE
 
+theorem Eqv.unpack0_eq_unpack0' {Γ Δ : Ctx α ε} (i : Fin Γ.length) :
+  Eqv.unpack0 (φ := φ) (Δ := Δ) (e := e) i = Eqv.unpack0' i := by
+  induction Γ generalizing Δ with
+  | nil => exact i.elim0
+  | cons V Γ I =>
+  simp only [List.length_cons] at i
+  cases i using Fin.cases with
+  | zero => rfl
+  | succ =>
+    simp only [List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ,
+      unpack0', Fin.val_zero, List.getElem_cons_zero, Fin.cases_succ, <-I]
+    rw [<-wk1_unpack0, <-wk1_unpack0, <-nil, <-pi_r_seq, unpack0_succ]
+
 -- theorem Eqv.unpacked_unpack0 {Γ : Ctx α ε} {h : Γ.Pure} {i}
 --   : (Eqv.unpack0 (φ := φ) (e := e) i).unpacked h = var i (h.any_effect_refl i.prop)
 --   := sorry
@@ -222,16 +239,5 @@ theorem Eqv.packed_unpacked {Γ : Ctx α ε} {a : Eqv φ [(Γ.pack, ⊥)] (A, e)
 
 -- theorem Eqv.unpacked_packed {Γ : Ctx α ε} {a : Eqv φ Γ (A, e)} {h : Γ.Pure}
 --   : a.packed.unpacked h = a := by simp [unpacked_def', packed, subst_subst]
-
--- theorem Eqv.unpack0_eq_unpack0' {Γ Δ : Ctx α ε} (i : Fin Γ.length) :
---   Eqv.unpack0 (φ := φ) (Δ := Δ) (e := e) i = Eqv.unpack0' i := by
---   cases Γ with
---   | nil => exact i.elim0
---   | cons V Γ =>
---   induction i using Fin.induction generalizing Δ with
---   | zero => rfl
---   | succ =>
---     simp [unpack0', <-pl_pack_drop', <-cast_pack_drop, pack_drop_succ]
---     sorry
 
 end Term
