@@ -16,11 +16,11 @@ variable
 
 open Term
 
-def Subst.pack : Region.Subst φ := λℓ => br 0 (Term.pack0 ℓ)
+def Subst.pack : Region.Subst φ := λℓ => br 0 (Term.inj_n ℓ)
 
 @[simp]
 theorem Subst.Wf.pack {Γ : Ctx α ε} {R : LCtx α}
-  : Subst.Wf Γ R [R.pack] (Subst.pack (φ := φ)) := λ_ => Wf.br LCtx.Trg.shead Term.Wf.pack0
+  : Subst.Wf Γ R [R.pack] (Subst.pack (φ := φ)) := λ_ => Wf.br LCtx.Trg.shead Term.Wf.inj_n
 
 @[simp]
 def Subst.InS.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.InS φ Γ R [R.pack] :=
@@ -28,7 +28,7 @@ def Subst.InS.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.InS φ Γ R [R.pack] :
 
 @[simp]
 theorem Subst.InS.coe_pack {Γ : Ctx α ε} {R : LCtx α} (ℓ : ℕ)
-  : (Subst.InS.pack (φ := φ) (Γ := Γ) (R := R) : Region.Subst φ) ℓ = br 0 (Term.pack0 ℓ) := rfl
+  : (Subst.InS.pack (φ := φ) (Γ := Γ) (R := R) : Region.Subst φ) ℓ = br 0 (Term.inj_n ℓ) := rfl
 
 @[simp]
 theorem Subst.vlift_pack

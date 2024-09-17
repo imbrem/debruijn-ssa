@@ -429,7 +429,9 @@ theorem InS.vwk_id_q {Γ Δ : Ctx α ε} {L : LCtx α} {r : InS φ Δ L}
 theorem Eqv.vwk_id_quot {Γ Δ : Ctx α ε} {L : LCtx α} {r : InS φ Δ L}
   (hρ : Γ.Wkn Δ id) : Eqv.vwk_id hρ ⟦r⟧ = ⟦r.vwk_id hρ⟧ := rfl
 
-
+theorem Eqv.vwk_id_eq_vwk {Γ Δ : Ctx α ε} {L : LCtx α} {r : Eqv φ Δ L}
+  (hρ : Γ.Wkn Δ id) : Eqv.vwk_id hρ r = r.vwk ⟨id, hρ⟩ := by
+  induction r using Quotient.inductionOn; simp [InS.vwk_id_eq_vwk]
 
 @[simp]
 theorem Eqv.vwk_id_eq
@@ -581,6 +583,14 @@ theorem InS.vsubst_q {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.InS φ �
 theorem Eqv.vsubst_quot {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.InS φ Γ Δ} {r : InS φ Δ L}
    : Eqv.vsubst ⟦σ⟧ ⟦r⟧ = ⟦r.vsubst σ⟧ := rfl
 
+@[simp]
+theorem Eqv.vsubst_id {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ Γ L}
+  : Eqv.vsubst Term.Subst.Eqv.id r = r := by
+  induction r using Quotient.inductionOn; simp [Term.Subst.Eqv.id]
+
+theorem Eqv.vsubst_id' {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ Γ L} {σ : Term.Subst.Eqv φ Γ Γ}
+  (h : σ = Term.Subst.Eqv.id) : Eqv.vsubst σ r = r := by simp [h]
+
 theorem Eqv.vsubst_vsubst {Γ Δ Ξ : Ctx α ε} {L : LCtx α} {r : Eqv φ Ξ L}
   {σ : Term.Subst.Eqv φ Γ Δ} {τ : Term.Subst.Eqv φ Δ Ξ}
   : (r.vsubst τ).vsubst σ = r.vsubst (σ.comp τ) := by
@@ -592,6 +602,9 @@ theorem Eqv.vsubst_vsubst {Γ Δ Ξ : Ctx α ε} {L : LCtx α} {r : Eqv φ Ξ L}
 theorem Eqv.vsubst_toSubst {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {L} {r : Eqv φ Δ L}
   : r.vsubst ⟦ρ.toSubst⟧ = r.vwk ρ
   := by induction r using Quotient.inductionOn; simp [InS.vsubst_toSubst]
+
+theorem Eqv.vsubst_fromWk {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ} {r : Eqv φ Δ L}
+  : r.vsubst (Term.Subst.Eqv.fromWk ρ) = r.vwk ρ := vsubst_toSubst
 
 @[simp]
 theorem Eqv.vsubst_br {Γ : Ctx α ε} {L : LCtx α}

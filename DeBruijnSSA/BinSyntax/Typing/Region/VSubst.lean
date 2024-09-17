@@ -30,6 +30,10 @@ theorem Region.InS.coe_vsubst {Γ Δ : Ctx α ε} {σ : Term.Subst.InS φ Γ Δ}
   := rfl
 
 @[simp]
+theorem Region.InS.vsubst_id {Γ : Ctx α ε} {L : LCtx α} (r : InS φ Γ L)
+  : InS.vsubst Term.Subst.InS.id r = r := by ext; simp
+
+@[simp]
 theorem Region.InS.vsubst_br {Γ Δ : Ctx α ε} {L : LCtx α}
   {σ : Term.Subst.InS φ Γ Δ} {ℓ} {a : Term.InS φ Δ (A, ⊥)} {hℓ : L.Trg ℓ A}
   : (br ℓ a hℓ).vsubst σ = br ℓ (a.subst σ) hℓ
