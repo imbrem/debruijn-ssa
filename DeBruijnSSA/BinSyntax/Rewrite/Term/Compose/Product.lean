@@ -21,10 +21,17 @@ def Eqv.pl {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eq
 theorem Eqv.pl_quot {A B : Ty α} {Γ : Ctx α ε} {a : InS φ Γ ⟨A.prod B, e⟩}
   : pl ⟦a⟧ = ⟦a.pl⟧ := rfl
 
+@[simp]
 theorem Eqv.wk_pl {A B : Ty α} {Γ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
   {a : Eqv φ Δ ⟨A.prod B, e⟩}
   : (a.pl).wk ρ = (a.wk ρ).pl := by
   induction a using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.subst_pl {A B : Ty α} {Γ Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {a : Eqv φ Δ ⟨A.prod B, e⟩}
+  : (a.pl).subst σ = (a.subst σ).pl := by
+  induction a using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
 
 theorem Eqv.wk0_pl {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A.prod B, e⟩}
@@ -49,10 +56,17 @@ def Eqv.pr {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, e⟩) : Eq
 theorem Eqv.pr_quot {A B : Ty α} {Γ : Ctx α ε} {a : InS φ Γ ⟨A.prod B, e⟩}
   : pr ⟦a⟧ = ⟦a.pr⟧ := rfl
 
+@[simp]
 theorem Eqv.wk_pr {A B : Ty α} {Γ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
   {a : Eqv φ Δ ⟨A.prod B, e⟩}
   : (a.pr).wk ρ = (a.wk ρ).pr := by
   induction a using Quotient.inductionOn; rfl
+
+@[simp]
+theorem Eqv.subst_pr {A B : Ty α} {Γ Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {a : Eqv φ Δ ⟨A.prod B, e⟩}
+  : (a.pr).subst σ = (a.subst σ).pr := by
+  induction a using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
 
 theorem Eqv.wk0_pr {A B : Ty α} {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A.prod B, e⟩}

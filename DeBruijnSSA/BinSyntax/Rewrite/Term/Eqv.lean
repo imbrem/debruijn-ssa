@@ -668,6 +668,51 @@ def Subst.Eqv.get (σ : Subst.Eqv φ Γ Δ) (i : Fin Δ.length) : Term.Eqv φ Γ
 theorem Subst.Eqv.get_quot {σ : Subst.InS φ Γ Δ} {i : Fin Δ.length}
   : get ⟦σ⟧ i = ⟦σ.get i⟧ := rfl
 
+@[simp]
+theorem Subst.Eqv.get_lift_zero {h : lo ≤ hi} {σ : Eqv φ Γ Δ}
+  : (σ.lift h).get (0 : Fin (Δ.length + 1)) = Eqv.var 0 (by simp [h]) := by
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  rfl
+
+@[simp]
+theorem Subst.Eqv.get_lift_succ {h : lo ≤ hi} {σ : Eqv φ Γ Δ} {i : Fin Δ.length}
+  : (σ.lift h).get i.succ = (σ.get i).wk0 := by
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  rfl
+
+@[simp]
+theorem Subst.Eqv.get_liftn₂_zero {h₁ : lo₁ ≤ hi₁} {h₂ : lo₂ ≤ hi₂} {σ : Eqv φ Γ Δ}
+  : (σ.liftn₂ h₁ h₂).get (0 : Fin (Δ.length + 2)) = Eqv.var 0 (by simp [h₁]) := by
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  rfl
+
+theorem Subst.Eqv.get_liftn₂_one {h₁ : lo₁ ≤ hi₁} {h₂ : lo₂ ≤ hi₂} {σ : Eqv φ Γ Δ}
+  : (σ.liftn₂ h₁ h₂).get (1 : Fin (Δ.length + 2)) = Eqv.var 1 (by simp [h₂]) := by
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  rfl
+
+theorem Subst.Eqv.get_liftn₂_succ_succ
+  {h₁ : lo₁ ≤ hi₁} {h₂ : lo₂ ≤ hi₂} {σ : Eqv φ Γ Δ} {i : Fin Δ.length}
+  : (σ.liftn₂ h₁ h₂).get i.succ.succ = (σ.get i).wk0.wk0 := by
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_term_eq
+  simp only [Nat.succ_eq_add_one, List.get_eq_getElem, List.length_cons, Fin.val_succ,
+    List.getElem_cons_succ, Set.mem_setOf_eq, InS.coe_get, InS.coe_liftn₂, liftn, Nat.reduceSubDiff,
+    InS.coe_wk, Ctx.InS.coe_wk0, wk_wk]
+  rfl
+
+@[simp]
+theorem Subst.Eqv.get_liftn₂_succ {h₁ : lo₁ ≤ hi₁} {h₂ : lo₂ ≤ hi₂} {σ : Eqv φ Γ Δ}
+  {i : Fin (Δ.length + 1)}
+  : (σ.liftn₂ h₁ h₂).get i.succ = ((σ.lift h₂).get i).wk0 := by
+  cases i using Fin.cases with
+  | zero => convert get_liftn₂_one; simp
+  | succ i => convert get_liftn₂_succ_succ using 1; simp
+
 theorem Subst.Eqv.ext_quot {σ τ : Subst.InS φ Γ Δ}
   (h : ∀i, (⟦σ.get i⟧ : Term.Eqv φ _ _) = ⟦τ.get i⟧) : (⟦σ⟧ : Subst.Eqv φ Γ Δ) = ⟦τ⟧
   := Quotient.sound (λi => Quotient.exact $ h i)

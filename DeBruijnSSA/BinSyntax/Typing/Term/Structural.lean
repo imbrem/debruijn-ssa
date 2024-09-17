@@ -67,6 +67,13 @@ theorem wk_lift_unpack0 {x : ℕ} : (unpack0 (φ := φ) x).wk (Nat.liftWk ρ) = 
   | succ x ih => simp only [wk_pr, Function.iterate_succ_apply', ih]
 
 @[simp]
+theorem fvi_unpack0 {x : ℕ} : fvi (unpack0 (φ := φ) x) = 1 := by
+  simp only [fvi, Nat.reduceAdd, le_refl, tsub_eq_zero_of_le, zero_le, max_eq_left]
+  induction x with
+  | zero => rfl
+  | succ x ih => simp [Function.iterate_succ_apply', ih]
+
+@[simp]
 theorem subst_lift_unpack0 {x : ℕ} {σ : Subst φ} : (unpack0 x).subst σ.lift = unpack0 x := by
   simp only [unpack0, subst_pl]
   apply congrArg
@@ -175,6 +182,16 @@ theorem InS.coe_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
 theorem InS.wk1_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
   : (InS.unpack0 (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk1 (inserted := inserted) = unpack0 i := by
   ext; rw [coe_unpack0, coe_wk1, coe_unpack0, Term.wk1_unpack0]
+
+@[simp]
+theorem InS.wk_lift_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length} {ρ : Γ.InS Δ}
+  : (InS.unpack0 (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk (ρ.lift (le_refl _)) = unpack0 i := by
+  ext; rw [coe_unpack0, coe_wk, coe_unpack0, Ctx.InS.coe_lift, Term.wk_lift_unpack0]
+
+@[simp]
+theorem InS.subst_lift_unpack0 {Γ Δ Δ' : Ctx α ε} {i : Fin Γ.length} {σ : Subst.InS φ Δ' Δ}
+  : (InS.unpack0 (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).subst (σ.lift (le_refl _)) = unpack0 i := by
+  ext; rw [coe_unpack0, coe_subst, coe_unpack0, Subst.InS.coe_lift, Term.subst_lift_unpack0]
 
 @[simp]
 theorem InS.subst0_nil_pr_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}

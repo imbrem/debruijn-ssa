@@ -106,6 +106,17 @@ theorem Eqv.wk1_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
   simp [unpack0]
 
 @[simp]
+theorem Eqv.wk_lift_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length} {ρ : Γ.InS Δ}
+  : (Eqv.unpack0 (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk (ρ.lift (le_refl _)) = unpack0 i := by
+  simp [unpack0]
+
+@[simp]
+theorem Eqv.subst_lift_unpack0 {Γ Δ Δ' : Ctx α ε} {i : Fin Γ.length} {σ : Subst.Eqv φ Δ' Δ}
+  : (Eqv.unpack0 (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).subst (σ.lift (le_refl _)) = unpack0 i := by
+  induction σ using Quotient.inductionOn
+  simp [unpack0]
+
+@[simp]
 theorem Eqv.subst0_nil_pr_unpack0 {Γ Δ : Ctx α ε} {i : Fin Γ.length}
   : (Eqv.unpack0 (φ := φ) (Γ := Γ) (e := e) i).subst (nil.pr.subst0)
   = unpack0 (φ := φ) (Γ := V::Γ) (Δ := Δ) i.succ := by
@@ -122,6 +133,9 @@ theorem Eqv.pl_pack_drop'  {Γ Δ : Ctx α ε} {i : Fin Γ.length}
 
 theorem Eqv.unpack0_def {Γ Δ : Ctx α ε} (i : Fin Γ.length) :
   Eqv.unpack0 (φ := φ) (Δ := Δ) (e := e) i = ⟦Term.InS.unpack0 i⟧ := rfl
+
+theorem Eqv.unpack0_zero {Γ Δ : Ctx α ε}
+  : Eqv.unpack0 (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) (0 : Fin (Γ.length + 1)) = pi_l := rfl
 
 theorem Eqv.unpack0_succ {Γ Δ : Ctx α ε} (i : Fin Γ.length)
   : unpack0 (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) i.succ = pi_r ;;' unpack0 i := by
@@ -224,20 +238,106 @@ theorem Eqv.unpack0_eq_unpack0' {Γ Δ : Ctx α ε} (i : Fin Γ.length) :
       unpack0', Fin.val_zero, List.getElem_cons_zero, Fin.cases_succ, <-I]
     rw [<-wk1_unpack0, <-wk1_unpack0, <-nil, <-pi_r_seq, unpack0_succ]
 
--- theorem Eqv.unpacked_unpack0 {Γ : Ctx α ε} {h : Γ.Pure} {i}
---   : (Eqv.unpack0 (φ := φ) (e := e) i).unpacked h = var i (h.any_effect_refl i.prop)
---   := sorry
+theorem Eqv.unpacked_unpack0 {Γ : Ctx α ε} {h : Γ.Pure} {i}
+  : (Eqv.unpack0 (φ := φ) (e := e) i).unpacked h = var i (h.any_effect_refl i.prop)
+  := by induction Γ with
+  | nil => exact i.elim0
+  | cons V Γ I => cases i using Fin.cases with
+  | zero =>
+    simp [unpack0_zero, unpacked_def', pi_l, nil, subst_var, pl, Subst.Eqv.get_liftn₂_one]
+    rw [<-pl, pack, Pure.pl_pair]
+    exact Pure.wk0 ⟨h.tail.packE, by simp⟩
+  | succ i =>
+    rw [unpacked_def', unpack0_succ, seq]
+    simp only [List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ,
+      wk1_unpack0, subst_let1, subst_lift_unpack0]
+    simp [pi_r, pr, nil, subst_var]
+    rw [<-pr, pack, Pure.pr_pair, <-wk1_unpack0, <-wk0_let1, <-wk0_var]
+    apply congrArg
+    exact I (h := h.tail)
+    exact ⟨var 0 (h.any_effect_refl (by simp)), rfl⟩
 
--- @[simp]
--- theorem Subst.Eqv.packSE_comp_unpack {Γ : Ctx α ε} (h : Γ.Pure)
---   : h.packSE.comp unpack = Subst.Eqv.id (φ := φ) := by
---   ext k; simp only [List.get_eq_getElem, get_comp, get_unpack, get_id]
---   rw [<-Eqv.unpacked_unpack0, Eqv.unpacked_def']
+@[simp]
+theorem Subst.Eqv.packSE_comp_unpack {Γ : Ctx α ε} (h : Γ.Pure)
+  : h.packSE.comp unpack = Subst.Eqv.id (φ := φ) := by
+  ext k; simp only [List.get_eq_getElem, get_comp, get_unpack, get_id]
+  rw [<-Eqv.unpacked_unpack0, Eqv.unpacked_def']
 
 theorem Eqv.packed_unpacked {Γ : Ctx α ε} {a : Eqv φ [(Γ.pack, ⊥)] (A, e)} {h : Γ.Pure}
   : (a.unpacked h).packed = a := by simp [unpacked_def', packed, subst_subst]
 
--- theorem Eqv.unpacked_packed {Γ : Ctx α ε} {a : Eqv φ Γ (A, e)} {h : Γ.Pure}
---   : a.packed.unpacked h = a := by simp [unpacked_def', packed, subst_subst]
+theorem Eqv.unpacked_packed {Γ : Ctx α ε} {a : Eqv φ Γ (A, e)} {h : Γ.Pure}
+  : a.packed.unpacked h = a := by simp [unpacked_def', packed, subst_subst]
+
+theorem Eqv.packed_injective {Γ : Ctx α ε} {a b : Eqv φ Γ V} (hΓ : Γ.Pure)
+  (h : a.packed (Δ := []) = b.packed) : a = b := by
+  rw [<-unpacked_packed (a := a), <-unpacked_packed (a := b), h]; exact hΓ
+
+theorem Eqv.unpacked_injective {Γ : Ctx α ε} {a b : Eqv φ [(Γ.pack, ⊥)] (A, e)} {hΓ : Γ.Pure}
+  (h : a.unpacked hΓ = b.unpacked hΓ) : a = b := by
+  rw [<-packed_unpacked (a := a), <-packed_unpacked (a := b), h]
+
+@[simp]
+theorem Eqv.packed_var {Γ : Ctx α ε} {i} {hv}
+  : (var (V := V) i hv).packed (Δ := Δ)
+  = (unpack0 (φ := φ) (Γ := Γ) ⟨i, hv.length⟩).wk_res hv.get := by simp [packed, subst_var]
+
+theorem Eqv.packed_let1 {Γ : Ctx α ε} {A B : Ty α}
+  {a : Eqv φ Γ (A, e)} {b : Eqv φ ((A, ⊥)::Γ) (B, e)}
+  : (let1 a b).packed (Δ := Δ)
+  = let1 a.packed (let1 (pair (var 0 (by simp)) (var 1 (by simp))) b.packed) := by
+  rw [packed, subst_let1]; apply congrArg
+  rw [
+    packed, let1_beta' (a' := pair (var 0 (by simp)) (var 1 (by simp))) (h := by simp),
+    subst_subst
+  ]; congr
+  ext k
+  cases k using Fin.cases with
+  | zero =>
+    simp [Subst.Eqv.get_comp, unpack0_zero, pi_l, nil, pl, let2_pair, let1_beta_var0, let1_beta_var1]
+  | succ k =>
+    simp [
+      Subst.Eqv.get_comp, unpack0_succ, seq, pi_r, nil, pr, let2_pair, let1_beta_var0,
+      let1_beta_var1
+    ]
+    rw [wk0, <-subst_fromWk]
+    apply eq_of_term_eq
+    apply subst_eqOn_fvi
+    intro i
+    simp only [InS.coe_unpack0, fvi_unpack0]
+    simp only [Set.mem_Iio, Nat.lt_one_iff, Set.mem_setOf_eq, Ctx.InS.coe_toSubst, Ctx.InS.coe_wk0,
+      Subst.fromWk_apply, Nat.succ_eq_add_one, InS.coe_subst0, InS.coe_var]
+    intro i; cases i; rfl
+
+-- theorem Eqv.packed_let2 {Γ : Ctx α ε} {A B C : Ty α}
+--   {a : Eqv φ Γ (A.prod B, e)} {b : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) (C, e)}
+--   : (let2 a b).packed (Δ := Δ)
+--   = let2 a.packed (
+--       let1 (pair (var 0 (by simp)) (pair (var 1 (by simp)) (var 2 (by simp)))) b.packed) := by
+--   sorry
+
+-- theorem Eqv.packed_case {Γ : Ctx α ε} {A B : Ty α}
+--   {a : Eqv φ Γ (A.coprod B, e)} {l : Eqv φ ((A, ⊥)::Γ) (C, e)} {r : Eqv φ ((B, ⊥)::Γ) (C, e)}
+--   : (case a l r).packed (Δ := Δ)
+--   = case a.packed
+--     (let1 (pair (var 0 (by simp)) (var 1 (by simp))) l.packed)
+--     (let1 (pair (var 0 (by simp)) (var 1 (by simp))) r.packed) := by
+--   sorry
+
+@[simp]
+theorem Eqv.packed_inl {Γ : Ctx α ε} {A B : Ty α} {a : Eqv φ Γ (A, e)}
+  : (inl (B := B) a).packed (Δ := Δ) = inl a.packed := by simp [packed]
+
+@[simp]
+theorem Eqv.packed_inr {Γ : Ctx α ε} {A B : Ty α} {a : Eqv φ Γ (B, e)}
+  : (inr (A := A) a).packed (Δ := Δ) = inr a.packed := by simp [packed]
+
+@[simp]
+theorem Eqv.packed_abort {Γ : Ctx α ε} {A : Ty α} {a : Eqv φ Γ (Ty.empty, e)}
+  : (abort a A).packed (Δ := Δ) = abort a.packed A := by simp [packed]
+
+@[simp]
+theorem Eqv.packed_unit {Γ : Ctx α ε} : (unit (φ := φ) (Γ := Γ) (e := e)).packed (Δ := Δ) = unit _
+  := rfl
 
 end Term
