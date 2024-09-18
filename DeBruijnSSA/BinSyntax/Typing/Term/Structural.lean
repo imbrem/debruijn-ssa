@@ -424,3 +424,19 @@ theorem InS.wk1_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
   : (InS.inj_n (φ := φ) (Γ := Γ) R i).wk1 (inserted := inserted) = inj_n R i := by ext; simp
 
 end Sum
+
+-- section Arrow
+
+-- def arr : Term φ → Term φ
+-- | var x => pi_n x
+-- | op f a => a.arr.seq (op f nil)
+-- | let1 a b => let1 a.arr sorry
+-- | pair a b => sorry
+-- | let2 a b => sorry
+-- | inl a => sorry
+-- | inr a => sorry
+-- | case a l r => sorry
+-- | unit => sorry
+-- | abort a => sorry
+
+-- end Arrow

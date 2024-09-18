@@ -410,6 +410,29 @@ def Eqv.sum {A A' B B' : Ty α} {Γ : Ctx α ε}
 
 -- TODO: sum is a bifunctor; so that's nil nil and seq!
 
+@[simp]
+theorem Eqv.sum_nil {A B : Ty α} {Γ : Ctx α ε}
+  : sum (φ := φ) (A := A) (B := B) (Γ := Γ) (e := e) nil nil = nil := by
+  simp [sum, coprod_inl_inr]
+
+theorem Eqv.sum_coprod {A A' B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩}
+  {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩}
+  {f : Eqv φ (⟨A', ⊥⟩::Γ) ⟨C, e⟩}
+  {g : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : sum l r ;;' coprod f g = coprod (l ;;' f) (r ;;' g) := by
+  simp [sum, coprod_seq, <-seq_assoc, inj_l_coprod, inj_r_coprod]
+
+theorem Eqv.sum_seq {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A₀, ⊥⟩::Γ) ⟨A₁, e⟩}
+  {r : Eqv φ (⟨B₀, ⊥⟩::Γ) ⟨B₁, e⟩}
+  {l' : Eqv φ (⟨A₁, ⊥⟩::Γ) ⟨A₂, e⟩}
+  {r' : Eqv φ (⟨B₁, ⊥⟩::Γ) ⟨B₂, e⟩}
+  : sum l r ;;' sum l' r' = sum (l ;;' l') (r ;;' r') := by
+  conv => lhs; rhs; rw [sum]
+  simp only [sum_coprod, seq_assoc]
+  rfl
+
 def Eqv.braid_sum {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ⟨B.coprod A, e⟩
   := nil.swap_sum
 

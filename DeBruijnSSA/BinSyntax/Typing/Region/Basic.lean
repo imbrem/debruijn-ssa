@@ -152,6 +152,17 @@ theorem InS.cast_inj {Γ Γ' : Ctx α ε} {L L' : LCtx α} {r r' : InS φ Γ L}
 def Wf.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.Wf Γ L) : InS φ Γ L
   := ⟨r, h⟩
 
+@[simp]
+theorem Wf.coe_toInS {Γ : Ctx α ε} {r : Region φ} {L} {h : r.Wf Γ L}
+  : h.toInS.val = r := rfl
+
+def WfD.toInS {Γ : Ctx α ε} {r : Region φ} {L} (h : r.WfD Γ L) : InS φ Γ L
+  := ⟨r, h.toWf⟩
+
+@[simp]
+theorem WfD.coe_toInS {Γ : Ctx α ε} {r : Region φ} {L} {h : r.WfD Γ L}
+  : h.toInS.val = r := rfl
+
 def InS.br {Γ : Ctx α ε} {L : LCtx α} (ℓ) (a : Term.InS φ Γ ⟨A, ⊥⟩)
   (hℓ : L.Trg ℓ A) : InS φ Γ L
   := ⟨Region.br ℓ a, Wf.br hℓ a.2⟩

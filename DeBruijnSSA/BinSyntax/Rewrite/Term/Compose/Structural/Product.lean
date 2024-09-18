@@ -1,5 +1,3 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Seq
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Sum
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Product
 import DeBruijnSSA.BinSyntax.Typing.Term.Structural
 

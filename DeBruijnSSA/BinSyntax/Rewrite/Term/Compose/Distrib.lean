@@ -75,3 +75,34 @@ theorem Eqv.distl_inv_distl {A B C : Ty α} {Γ : Ctx α ε}
     <-wk_eff_distl (h := bot_le), <-wk_eff_distl_inv (h := bot_le), <-wk_eff_seq,
     distl_inv_distl_pure, wk_eff_nil
   ]
+
+def Eqv.distr {A B C : Ty α} {Γ : Ctx α ε}
+  : Eqv φ (⟨(A.prod C).coprod (B.prod C), ⊥⟩::Γ) ⟨(A.coprod B).prod C, e⟩
+  := coprod (inj_l ⋉' C) (inj_r ⋉' C)
+
+theorem Eqv.distl_braid {A B C : Ty α} {Γ : Ctx α ε}
+  : distl ;;' braid
+  = sum braid braid ;;' distr (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) := by
+  rw [distr, sum_coprod, distl, coprod_seq, rtimes_braid, rtimes_braid]
+
+theorem Eqv.distr_braid {A B C : Ty α} {Γ : Ctx α ε}
+  : distr ;;' braid
+  = sum braid braid ;;' distl (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)
+  := by rw [distl, sum_coprod, distr, coprod_seq, ltimes_braid, ltimes_braid]
+
+def Eqv.distr_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : Eqv φ (⟨(A.coprod B).prod C, ⊥⟩::Γ) ⟨(A.prod C).coprod (B.prod C), e⟩
+  := let2 nil (case (var 1 (by simp))
+    (pair (var 0 Ctx.Var.bhead) (var 1 (by simp))).inl
+    (pair (var 0 Ctx.Var.bhead) (var 1 (by simp))).inr)
+
+-- theorem Eqv.distr_distr_inv {A B C : Ty α} {Γ : Ctx α ε}
+--   : (distr : Eqv φ (⟨(A.prod C).coprod (B.prod C), ⊥⟩::Γ) ⟨(A.coprod B).prod C, e⟩)
+--   ;;' distr_inv = nil := by
+--   rw [distr, coprod_seq]
+  -- simp only [distr, distr_inv, coprod_seq]
+  -- simp [
+  --   seq, let1_beta_pure, coprod, wk1_let2, rtimes, wk1_tensor, let2_tensor, subst_liftn₂_tensor,
+  --   wk2, Nat.liftnWk, nil, inj_l, inj_r, case_inl, case_inr, <-inl_let2, <-inr_let2, let2_eta,
+  --   case_eta
+  -- ]

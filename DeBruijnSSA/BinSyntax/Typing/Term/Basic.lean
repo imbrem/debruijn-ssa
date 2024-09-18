@@ -269,6 +269,20 @@ theorem Term.WfD.toWf {Γ : Ctx α ε} {a : Term φ} {V} (h : WfD Γ a V) : Wf �
   | abort da => Wf.abort da.toWf
   | unit e => Wf.unit e
 
+def Term.Wf.toIns {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : InS φ Γ V
+  := ⟨a, h⟩
+
+@[simp]
+theorem Term.Wf.coe_toInS {Γ : Ctx α ε} {a : Term φ} {V} {h : Wf Γ a V}
+  : (h.toIns : Term φ) = a := rfl
+
+def Term.WfD.toInS {Γ : Ctx α ε} {a : Term φ} (h : WfD Γ a V) : InS φ Γ V
+  := ⟨a, h.toWf⟩
+
+@[simp]
+theorem Term.WfD.coe_toInS {Γ : Ctx α ε} {a : Term φ} {V} {h : WfD Γ a V}
+  : (h.toInS : Term φ) = a := rfl
+
 theorem Term.Wf.nonempty {Γ : Ctx α ε} {a : Term φ} {V} (h : Wf Γ a V) : Nonempty (WfD Γ a V)
   := match h with
   | var dv => ⟨WfD.var dv⟩
