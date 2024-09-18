@@ -686,6 +686,7 @@ theorem IsInitial.head_or_tail {head} {Γ : Ctx α ε} (h : IsInitial (head::Γ)
   | head => exact Or.inl hV0
   | tail _ hV => exact Or.inr ⟨V, hV, hV0⟩
 
+@[simp]
 theorem IsInitial.cons_iff {head} {Γ : Ctx α ε}
   : IsInitial (head::Γ) ↔ (Ty.IsInitial head.1 ∧ head.2 = ⊥) ∨ IsInitial Γ
   := ⟨IsInitial.head_or_tail, λ| Or.inl ⟨hA, he⟩ => head' hA he Γ | Or.inr h => h.cons⟩

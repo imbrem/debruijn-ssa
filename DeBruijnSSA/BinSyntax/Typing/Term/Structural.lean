@@ -56,46 +56,77 @@ theorem InS.wk_eff_pack {Γ : Ctx α ε} {h : ∀i, Γ.effect i ≤ lo} {h' : lo
   : (pack (φ := φ) h).wk_eff h' = pack (λi => (h i).trans h') := by
   ext; simp
 
-def pi_n (x : ℕ) (e : Term φ) : Term φ :=  pl (pr^[x] e)
-
--- TODO: pi_n well-formedness lore
-
-def proj_n (x : ℕ) : Term φ := pl (pr^[x] (var 0))
+def pn (x : ℕ) (e : Term φ) : Term φ :=  pl (pr^[x] e)
 
 @[simp]
-theorem wk_lift_proj_n {x : ℕ} : (proj_n (φ := φ) x).wk (Nat.liftWk ρ) = proj_n x := by
-  simp only [proj_n, wk_pl]
+theorem wk_pn {x : ℕ} {e : Term φ} : (pn x e).wk ρ = pn x (e.wk ρ) := by
+  simp only [pn, wk_pl]
   apply congrArg
   induction x with
   | zero => rfl
   | succ x ih => simp only [wk_pr, Function.iterate_succ_apply', ih]
 
 @[simp]
-theorem fvi_proj_n {x : ℕ} : fvi (proj_n (φ := φ) x) = 1 := by
-  simp only [fvi, Nat.reduceAdd, le_refl, tsub_eq_zero_of_le, zero_le, max_eq_left]
+theorem subst_pn {x : ℕ} {e : Term φ} : (pn x e).subst σ = pn x (e.subst σ) := by
+  simp only [pn, subst_pl]
+  apply congrArg
+  induction x with
+  | zero => rfl
+  | succ x ih => simp only [subst_pr, Function.iterate_succ_apply', ih]
+
+theorem wk0_pn {x : ℕ} {e : Term φ} : (pn x e).wk0 = pn x (e.wk0) := by
+  simp only [wk0, wk_pn]
+
+theorem wk1_pn {x : ℕ} {e : Term φ} : (pn x e).wk1 = pn x (e.wk1) := by
+  simp only [wk1, wk_pn]
+
+theorem wk2_pn {x : ℕ} {e : Term φ} : (pn x e).wk2 = pn x (e.wk2) := by
+  simp only [wk2, wk_pn]
+
+@[simp]
+theorem fvi_pn {x : ℕ} {e : Term φ} : fvi (pn x e) = fvi e := by
+  simp only [pn, fvi, Nat.reduceAdd, le_refl, tsub_eq_zero_of_le, zero_le, max_eq_left]
   induction x with
   | zero => rfl
   | succ x ih => simp [Function.iterate_succ_apply', ih]
 
-@[simp]
-theorem subst_lift_proj_n {x : ℕ} {σ : Subst φ} : (proj_n x).subst σ.lift = proj_n x := by
-  simp only [proj_n, subst_pl]
-  apply congrArg
-  induction x with
-  | zero => rfl
-  | succ x ih => simp only [subst_pr, Function.iterate_succ_apply', ih]
+-- theorem Wf.pn {Γ Δ : Ctx α ε} {i : Fin Δ.length} {a : Term φ}
+--   (h : a.Wf Γ (Δ.pack, ⊥)) : Term.Wf (φ := φ) Γ (pn i a) (Δ.get i)  := by
+--   induction R generalizing Γ with
+--   | nil => exact i.elim0
+--   | cons _ _ I =>
+--     cases i using Fin.cases with
+--     | zero => apply Wf.pl; convert h using 1; simp only [List.get_eq_getElem, List.length_cons,
+--       Fin.val_zero, List.getElem_cons_zero, LCtx.pack]
+--     | succ i => sorry
+
+def pi_n (x : ℕ) : Term φ := pn x nil
 
 @[simp]
-theorem wk1_proj_n {x : ℕ} : (proj_n (φ := φ) x).wk1 = proj_n x := wk_lift_proj_n
+theorem wk_lift_pi_n {x : ℕ} : (pi_n (φ := φ) x).wk (Nat.liftWk ρ) = pi_n x := by
+  simp only [pi_n, wk_pn]; rfl
 
 @[simp]
-theorem subst0_nil_pr_proj_n {x : ℕ} : (proj_n x).subst nil.pr.subst0 = proj_n (φ := φ) (x + 1)
+theorem fvi_pi_n {x : ℕ} : fvi (pi_n (φ := φ) x) = 1 := by
+  simp only [pi_n, fvi_pn]; rfl
+
+@[simp]
+theorem subst_lift_pi_n {x : ℕ} {σ : Subst φ} : (pi_n x).subst σ.lift = pi_n x := by
+  simp only [pi_n, subst_pn]; rfl
+
+@[simp]
+theorem wk1_pi_n {x : ℕ} : (pi_n (φ := φ) x).wk1 = pi_n x := wk_lift_pi_n
+
+@[simp]
+theorem subst0_nil_pr_pi_n {x : ℕ} : (pi_n x).subst nil.pr.subst0 = pi_n (φ := φ) (x + 1)
   := by
-  simp only [proj_n, subst_pl]
+  simp only [pi_n, nil, pn, subst_pl]
   apply congrArg
   induction x with
   | zero => rfl
   | succ x ih => simp only [subst_pr, Function.iterate_succ_apply', ih]
+
+def drop (x : ℕ) (e : Term φ) : Term φ := pr^[x] e
 
 theorem Wf.pack_drop' {Γ Δ : Ctx α ε} {i : ℕ} (hi : i < Γ.length)
   : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (Term.pr^[i] (Term.var 0))
@@ -103,11 +134,11 @@ theorem Wf.pack_drop' {Γ Δ : Ctx α ε} {i : ℕ} (hi : i < Γ.length)
   := by induction i generalizing Γ with
   | zero => cases Γ with
     | nil => cases hi
-    | cons _ Γ => simp [proj_n, Ctx.pack]
+    | cons _ Γ => simp [pi_n, Ctx.pack]
   | succ i I => cases Γ with
     | nil => cases hi
     | cons head Γ =>
-      simp only [BinSyntax.Term.proj_n, List.length_cons, Fin.val_succ, Function.iterate_succ',
+      simp only [BinSyntax.Term.pi_n, List.length_cons, Fin.val_succ, Function.iterate_succ',
         Function.comp_apply, List.get_eq_getElem, List.getElem_cons_succ, Ctx.pack]
       apply Wf.pr
       convert I (Γ := head::Γ) (Nat.lt_of_succ_lt hi)
@@ -130,8 +161,8 @@ theorem Wf.pack_drop {Γ Δ : Ctx α ε} {i : ℕ} (hi : i < Γ.length)
   : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (Term.pr^[i] (Term.var 0)) (Ctx.pack (Γ.drop i), e)
   := by rw [Ctx.pack_drop hi]; apply Wf.pack_drop' hi
 
-theorem Wf.proj_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (proj_n i) ((Γ.get i).1, e)
+theorem Wf.pi_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (pi_n i) ((Γ.get i).1, e)
   := Wf.pl (pack_drop' i.prop)
 
 def InS.pack_drop {Γ Δ : Ctx α ε} (i : Fin Γ.length)
@@ -168,46 +199,46 @@ def InS.pack_drop_succ {Γ Δ : Ctx α ε} (i : Fin Γ.length)
   rw [<-Term.pr, <-Function.iterate_succ_apply, Function.iterate_succ_apply']
   rfl
 
-def InS.proj_n {Γ Δ : Ctx α ε} (i : Fin Γ.length)
+def InS.pi_n {Γ Δ : Ctx α ε} (i : Fin Γ.length)
   : InS φ ((Γ.pack, ⊥)::Δ) ((Γ.get i).1, e)
-  := ⟨Term.proj_n i, Wf.proj_n⟩
+  := ⟨Term.pi_n i, Wf.pi_n⟩
 
 theorem InS.pl_pack_drop' {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : (InS.pack_drop' (φ := φ) (Δ := Δ) (e := e) i).pl = proj_n i := rfl
+  : (InS.pack_drop' (φ := φ) (Δ := Δ) (e := e) i).pl = pi_n i := rfl
 
-theorem InS.coe_proj_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : (InS.proj_n (φ := φ) (Δ := Δ) (e := e) i : Term φ) = Term.proj_n i := rfl
+theorem InS.coe_pi_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : (InS.pi_n (φ := φ) (Δ := Δ) (e := e) i : Term φ) = Term.pi_n i := rfl
 
--- TODO: wk_lift proj_n
+-- TODO: wk_lift pi_n
 
--- TODO: subst_lift proj_n
-
-@[simp]
-theorem InS.wk1_proj_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : (InS.proj_n (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk1 (inserted := inserted) = proj_n i := by
-  ext; rw [coe_proj_n, coe_wk1, coe_proj_n, Term.wk1_proj_n]
+-- TODO: subst_lift pi_n
 
 @[simp]
-theorem InS.wk_lift_proj_n {Γ Δ : Ctx α ε} {i : Fin Γ.length} {ρ : Γ.InS Δ}
-  : (InS.proj_n (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk (ρ.lift (le_refl _)) = proj_n i := by
-  ext; rw [coe_proj_n, coe_wk, coe_proj_n, Ctx.InS.coe_lift, Term.wk_lift_proj_n]
+theorem InS.wk1_pi_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : (InS.pi_n (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk1 (inserted := inserted) = pi_n i := by
+  ext; rw [coe_pi_n, coe_wk1, coe_pi_n, Term.wk1_pi_n]
 
 @[simp]
-theorem InS.subst_lift_proj_n {Γ Δ Δ' : Ctx α ε} {i : Fin Γ.length} {σ : Subst.InS φ Δ' Δ}
-  : (InS.proj_n (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).subst (σ.lift (le_refl _)) = proj_n i := by
-  ext; rw [coe_proj_n, coe_subst, coe_proj_n, Subst.InS.coe_lift, Term.subst_lift_proj_n]
+theorem InS.wk_lift_pi_n {Γ Δ : Ctx α ε} {i : Fin Γ.length} {ρ : Γ.InS Δ}
+  : (InS.pi_n (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).wk (ρ.lift (le_refl _)) = pi_n i := by
+  ext; rw [coe_pi_n, coe_wk, coe_pi_n, Ctx.InS.coe_lift, Term.wk_lift_pi_n]
 
 @[simp]
-theorem InS.subst0_nil_pr_proj_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : (InS.proj_n (φ := φ) (Γ := Γ) (e := e) i).subst (nil.pr.subst0)
-  = proj_n (φ := φ) (Γ := V::Γ) (Δ := Δ) i.succ := by ext; exact Term.subst0_nil_pr_proj_n
+theorem InS.subst_lift_pi_n {Γ Δ Δ' : Ctx α ε} {i : Fin Γ.length} {σ : Subst.InS φ Δ' Δ}
+  : (InS.pi_n (φ := φ) (Γ := Γ) (Δ := Δ) (e := e) i).subst (σ.lift (le_refl _)) = pi_n i := by
+  ext; rw [coe_pi_n, coe_subst, coe_pi_n, Subst.InS.coe_lift, Term.subst_lift_pi_n]
 
-def proj_n' (n : ℕ) (i : ℕ) : Term φ := match n with
+@[simp]
+theorem InS.subst0_nil_pr_pi_n {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : (InS.pi_n (φ := φ) (Γ := Γ) (e := e) i).subst (nil.pr.subst0)
+  = pi_n (φ := φ) (Γ := V::Γ) (Δ := Δ) i.succ := by ext; exact Term.subst0_nil_pr_pi_n
+
+def pi_n' (n : ℕ) (i : ℕ) : Term φ := match n with
 | 0 => unit
-| n + 1 => let2 (var 0) (match i with | 0 => var 1 | i + 1 => proj_n' n i)
+| n + 1 => let2 (var 0) (match i with | 0 => var 1 | i + 1 => pi_n' n i)
 
-theorem Wf.proj_n' {Γ Δ : Ctx α ε} (i : Fin Γ.length)
-  : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (proj_n' Γ.length i) ((Γ.get i).1, e)
+theorem Wf.pi_n' {Γ Δ : Ctx α ε} (i : Fin Γ.length)
+  : Wf (φ := φ) ((Γ.pack, ⊥)::Δ) (pi_n' Γ.length i) ((Γ.get i).1, e)
   := by induction Γ generalizing Δ with
   | nil => exact i.elim0
   | cons V Γ I =>
@@ -219,41 +250,41 @@ theorem Wf.proj_n' {Γ Δ : Ctx α ε} (i : Fin Γ.length)
       simp only [List.length_cons, Fin.val_succ, List.get_eq_getElem, List.getElem_cons_succ]
       exact I i
 
-def InS.proj_n' {Γ Δ : Ctx α ε} (i : Fin Γ.length) : InS φ ((Γ.pack, ⊥)::Δ) ((Γ.get i).1, e)
+def InS.pi_n' {Γ Δ : Ctx α ε} (i : Fin Γ.length) : InS φ ((Γ.pack, ⊥)::Δ) ((Γ.get i).1, e)
   := match Γ with
   | [] => i.elim0
   | V::Γ => let2
     (var (V := (V.1.prod (Ctx.pack Γ), e)) 0 (by simp [Ctx.pack]))
-    (i.cases (var 1 (by simp)) (λi => proj_n' (Γ := Γ) i))
+    (i.cases (var 1 (by simp)) (λi => pi_n' (Γ := Γ) i))
 
 @[simp]
-theorem InS.coe_proj_n' {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : (InS.proj_n' (φ := φ) (Δ := Δ) (e := e) i : Term φ) = Term.proj_n' Γ.length i := by
+theorem InS.coe_pi_n' {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : (InS.pi_n' (φ := φ) (Δ := Δ) (e := e) i : Term φ) = Term.pi_n' Γ.length i := by
   induction Γ generalizing Δ with
   | nil => exact i.elim0
   | cons V Γ I =>
-    simp only [List.get_eq_getElem, List.length_cons, Set.mem_setOf_eq, proj_n', Fin.val_zero,
-      List.getElem_cons_zero, InS.coe_let2, coe_var, Term.proj_n', let2.injEq, true_and]
+    simp only [List.get_eq_getElem, List.length_cons, Set.mem_setOf_eq, pi_n', Fin.val_zero,
+      List.getElem_cons_zero, InS.coe_let2, coe_var, Term.pi_n', let2.injEq, true_and]
     cases i using Fin.cases with
     | zero => rfl
     | succ i => exact I
 
-theorem InS.proj_n_zero' {Γ Δ : Ctx α ε}
-  : InS.proj_n' (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) (by simp only [List.length_cons]; exact 0)
+theorem InS.pi_n_zero' {Γ Δ : Ctx α ε}
+  : InS.pi_n' (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) (by simp only [List.length_cons]; exact 0)
   = (by simp only [Ctx.pack]; apply InS.pi_l) := rfl
 
-theorem InS.proj_n_succ' {Γ Δ : Ctx α ε} {i : Fin Γ.length}
-  : InS.proj_n' (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) i.succ
+theorem InS.pi_n_succ' {Γ Δ : Ctx α ε} {i : Fin Γ.length}
+  : InS.pi_n' (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) i.succ
   = let2
     (var (V := (V.1.prod (Ctx.pack Γ), e)) 0 (by simp [Ctx.pack]))
-    (proj_n' (Γ := Γ) i) := rfl
+    (pi_n' (Γ := Γ) i) := rfl
 
-def Subst.proj_n : Subst φ := λi => Term.proj_n i
+def Subst.pi_n : Subst φ := λi => Term.pi_n i
 
-theorem Subst.Wf.proj_n {Γ Δ : Ctx α ε}
-  : Subst.Wf (φ := φ) ((Γ.pack, ⊥)::Δ) Γ Subst.proj_n := λ_ => Term.Wf.proj_n
+theorem Subst.Wf.pi_n {Γ Δ : Ctx α ε}
+  : Subst.Wf (φ := φ) ((Γ.pack, ⊥)::Δ) Γ Subst.pi_n := λ_ => Term.Wf.pi_n
 
-def Subst.InS.unpack {Γ Δ : Ctx α ε} : Subst.InS φ ((Γ.pack, ⊥)::Δ) Γ := ⟨Subst.proj_n, Wf.proj_n⟩
+def Subst.InS.unpack {Γ Δ : Ctx α ε} : Subst.InS φ ((Γ.pack, ⊥)::Δ) Γ := ⟨Subst.pi_n, Wf.pi_n⟩
 
 def Subst.pack (n : ℕ) : Subst φ := λ_ => Term.pack n
 
