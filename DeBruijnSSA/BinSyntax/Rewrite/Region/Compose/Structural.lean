@@ -55,6 +55,37 @@ theorem Eqv.unpacked_packed {Γ : Ctx α ε} {R : LCtx α}
   {r : Eqv φ Γ R} {h : Γ.Pure} : r.packed.unpacked h = r
   := by rw [unpacked, packed_def', unpacked_out_packed_out, unpacked_in_packed_in]
 
+@[simp]
+theorem Eqv.vwk_slift_packed {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R} {ρ : Δ'.InS Δ}
+  : r.packed.vwk ρ.slift = r.packed (Δ := Δ') := by simp [packed]
+
+@[simp]
+theorem Eqv.vwk_liftn₂_packed {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R} {ρ : Δ'.InS Δ}
+  : r.packed.vwk (ρ.liftn₂ (le_refl _) (le_refl V)) = r.packed (Δ := _::Δ') := by
+  simp [<-Ctx.InS.lift_lift]
+
+@[simp]
+theorem Eqv.vwk1_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
+  : r.packed.vwk1 (inserted := inserted) = r.packed (Δ := _::Δ) := by
+  rw [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_packed]
+
+@[simp]
+theorem Eqv.vwk2_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::V::Γ) R}
+  : r.packed.vwk2 (inserted := inserted) = r.packed (Δ := head::_::Δ) := by
+  rw [vwk2, <-Ctx.InS.lift_wk1, vwk_slift_packed]
+
+@[simp]
+theorem Eqv.vsubst_lift_packed {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
+  {σ : Term.Subst.Eqv φ Δ' Δ}
+  : r.packed.vsubst (σ.lift (le_refl _)) = r.packed (Δ := Δ') := by
+  simp [packed]
+
+@[simp]
+theorem Eqv.vsubst_liftn₂_packed {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
+  {σ : Term.Subst.Eqv φ Δ' Δ}
+  : r.packed.vsubst (σ.liftn₂ (le_refl _) (le_refl V)) = r.packed (Δ := _::Δ') := by
+  simp [<-Term.Subst.Eqv.lift_lift]
+
 open Term.Eqv
 
 theorem Eqv.packed_br {Γ : Ctx α ε} {L : LCtx α}

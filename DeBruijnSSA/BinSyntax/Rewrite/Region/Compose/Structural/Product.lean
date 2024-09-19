@@ -32,6 +32,48 @@ theorem Eqv.packed_in_unpacked_in
   : (r.unpacked_in h).packed_in = r := by
   rw [unpacked_in_def', packed_in, vsubst_vsubst, Term.Subst.Eqv.unpack_comp_packSE, vsubst_id]
 
+@[simp]
+theorem Eqv.vwk_slift_packed_in {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R} {ρ : Δ'.InS Δ}
+  : r.packed_in.vwk ρ.slift = r.packed_in (Δ := Δ') := by
+  rw [packed_in, <-vsubst_fromWk, vsubst_vsubst, packed_in]
+  congr
+  ext k
+  simp [Term.Subst.Eqv.get_comp, Term.Eqv.subst_fromWk]
+  apply Term.Eqv.eq_of_term_eq
+  simp only [
+    Set.mem_setOf_eq, Term.InS.coe_wk, Term.InS.coe_pi_n, Ctx.InS.coe_slift, Term.wk_lift_pi_n
+  ]
+
+@[simp]
+theorem Eqv.vwk_liftn₂_packed_in {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R} {ρ : Δ'.InS Δ}
+  : r.packed_in.vwk (ρ.liftn₂ (le_refl _) (le_refl V)) = r.packed_in (Δ := _::Δ') := by
+  simp [<-Ctx.InS.lift_lift]
+
+@[simp]
+theorem Eqv.vwk1_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
+  : r.packed_in.vwk1 (inserted := inserted) = r.packed_in (Δ := _::Δ) := by
+  rw [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_packed_in]
+
+@[simp]
+theorem Eqv.vwk2_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::V::Γ) R}
+  : r.packed_in.vwk2 (inserted := inserted) = r.packed_in (Δ := head::_::Δ) := by
+  rw [vwk2, <-Ctx.InS.lift_wk1, vwk_slift_packed_in]
+
+@[simp]
+theorem Eqv.vsubst_lift_packed_in {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
+  {σ : Term.Subst.Eqv φ Δ' Δ}
+  : r.packed_in.vsubst (σ.lift (le_refl _)) = r.packed_in (Δ := Δ') := by
+  rw [packed_in, vsubst_vsubst, packed_in]
+  congr
+  ext k
+  simp [Term.Subst.Eqv.get_comp]
+
+@[simp]
+theorem Eqv.vsubst_liftn₂_packed_in {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
+  {σ : Term.Subst.Eqv φ Δ' Δ}
+  : r.packed_in.vsubst (σ.liftn₂ (le_refl _) (le_refl V)) = r.packed_in (Δ := _::Δ') := by
+  simp [<-Term.Subst.Eqv.lift_lift]
+
 open Term.Eqv
 
 theorem Eqv.packed_in_br {Γ : Ctx α ε} {L : LCtx α}

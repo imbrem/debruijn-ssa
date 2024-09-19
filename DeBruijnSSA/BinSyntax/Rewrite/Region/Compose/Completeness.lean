@@ -63,10 +63,41 @@ theorem Eqv.packed_let1_den {Γ : Ctx α ε} {R : LCtx α}
       Nat.liftnWk]
     rfl
 
--- theorem Eqv.packed_let2_den {Γ : Ctx α ε} {R : LCtx α}
---   {a : Term.Eqv φ Γ (A.prod B, e)} {r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) R}
---   : (let2 a r).packed (Δ := Δ)
---   = ret Term.Eqv.split ;; _ ⋊ lret a.packed ;; assoc_inv ;; r.packed := by sorry
+theorem Eqv.packed_let2_den {Γ : Ctx α ε} {R : LCtx α}
+  {a : Term.Eqv φ Γ (A.prod B, e)} {r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) R}
+  : (let2 a r).packed (Δ := Δ)
+  = ret Term.Eqv.split ;; _ ⋊ lret a.packed ;; assoc_inv ;; r.packed := by
+  rw [ret_seq_rtimes]
+  simp only [
+    Term.Eqv.split, Term.Eqv.nil, lret, vwk1_let1, Term.Eqv.wk1_packed,
+    let2_pair, Term.Eqv.wk0_var, zero_add, let1_beta, nil_vwk2, let1_seq, vwk1_ret,
+    Term.Eqv.wk1_pair, nil_seq, Term.Eqv.wk1_var_succ, Term.Eqv.wk1_var0, vsubst_let1,
+    vwk1_assoc_inv, vwk1_packed, packed_let2
+  ]
+  rw [let2_bind]
+  congr
+  · induction a using Quotient.inductionOn
+    apply Term.Eqv.eq_of_term_eq
+    simp [Term.subst_subst]
+    congr
+    funext n
+    simp only [Term.Subst.pi_n, Term.pi_n, Term.Subst.comp, Term.subst_pn]
+    rfl
+  · simp? [
+      assoc_inv, vsubst_ret, ret_seq, vwk1_let2, let2_seq, vwk3, Nat.liftnWk, let2_pair, let1_beta,
+      vwk2
+    ]
+    congr
+    simp [<-vsubst_fromWk, vsubst_vsubst, packed, packed_in]
+    congr 1
+    ext k
+    apply Term.Eqv.eq_of_term_eq
+    simp only [List.get_eq_getElem, List.length_cons, Set.mem_setOf_eq, Term.Subst.InS.get_comp,
+      Term.InS.coe_subst, Ctx.InS.coe_toSubst, Ctx.InS.coe_wk2, Term.InS.coe_subst0,
+      Term.InS.coe_pair, Term.InS.coe_var, Term.Subst.liftn, Nat.ofNat_pos, ↓reduceIte,
+      Term.subst_fromWk, Term.Subst.InS.unpack, Term.Subst.InS.get, Term.Subst.InS.coe_comp,
+      Term.Subst.pi_n, Term.Subst.comp, Term.pi_n, Term.subst_pn, Term.wk_pn]
+    rfl
 
 -- theorem Eqv.packed_case_den {Γ : Ctx α ε} {R : LCtx α}
 --   {a : Term.Eqv φ Γ (A.coprod B, e)} {r : Eqv φ ((A, ⊥)::Γ) R} {s : Eqv φ ((B, ⊥)::Γ) R}
