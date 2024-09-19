@@ -302,6 +302,11 @@ theorem Eqv.wk2_inj_l {A B : Ty α} {Γ : Ctx α ε}
   : (inj_l (φ := φ) (e := e) (A := A) (B := B) (Γ := head::Γ)).wk2 (inserted := inserted) = inj_l
   := by simp [inj_l]
 
+@[simp]
+theorem Eqv.wk_eff_inj_l {A B : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
+  : (inj_l (φ := φ) (A := A) (B := B) (Γ := Γ)).wk_eff h = inj_l
+  := by simp [inj_l]
+
 theorem Eqv.seq_inj_l {A B C : Ty α} {Γ : Ctx α ε} {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
   : f ;;' inj_l (B := C) = f.inl := by
   rw [seq, wk1_inj_l, inj_l]
@@ -318,6 +323,11 @@ theorem Eqv.wk1_inj_r {A B : Ty α} {Γ : Ctx α ε}
 @[simp]
 theorem Eqv.wk2_inj_r {A B : Ty α} {Γ : Ctx α ε}
   : (inj_r (φ := φ) (e := e) (A := A) (B := B) (Γ := head::Γ)).wk2 (inserted := inserted) = inj_r
+  := by simp [inj_r]
+
+@[simp]
+theorem Eqv.wk_eff_inj_r {A B : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
+  : (inj_r (φ := φ) (A := A) (B := B) (Γ := Γ)).wk_eff h = inj_r
   := by simp [inj_r]
 
 theorem Eqv.seq_inj_r {Γ : Ctx α ε} {f : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}

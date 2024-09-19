@@ -84,6 +84,21 @@ theorem Eqv.inj_n_def {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
 theorem Eqv.inj_n_def' {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
   : Eqv.inj_n (φ := φ) (Γ := Γ) (e := e) R i = nil.inj := by rw [inj_n_def, nil, var, inj_quot]; rfl
 
+theorem Eqv.wk1_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
+  : (inj_n (φ := φ) (Γ := Γ) (e := e) R i).wk1 (inserted := inserted) = inj_n R i := by
+  rw [inj_n_def', wk1_inj, wk1_nil, inj_n_def']
+
+theorem Eqv.seq_inj_n  {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
+  {a : Eqv φ ((X, ⊥)::Γ) (R.get i, e)}
+  : a ;;' Eqv.inj_n R i = a.inj := by
+  rw [seq, wk1_inj_n]
+  induction R generalizing Γ with
+  | nil => exact i.elim0
+  | cons _ _ I =>
+    cases i using Fin.cases with
+    | zero => simp [inj_n, <-inr_let1, nil, let1_eta]
+    | succ i => simp [inj_n, <-inl_let1, I, inj]
+
 -- def Eqv.pack_case {Γ : Ctx α ε} {R : LCtx α}
 --   (d : Eqv φ Γ (R.pack, e)) (G : ∀i : Fin R.length, Eqv φ ((R.get i, ⊥)::Γ) (A, e))
 --   : Eqv φ Γ (C, e) := sorry

@@ -391,6 +391,10 @@ theorem InS.lift_wk1 {left right inserted} {Γ : Ctx α ε}
   : wk1.lift (le_refl _) = (wk2 : InS (left::right::inserted::Γ) (left::right::Γ))
   := by ext; simp [Nat.liftnWk_two]
 
+theorem InS.lift_wk2 {left middle right inserted} {Γ : Ctx α ε}
+  : wk2.lift (le_refl _) = (wk3 : InS (left::middle::right::inserted::Γ) (left::middle::right::Γ))
+  := by ext; simp [Nat.liftnWk_succ, Nat.liftnWk_zero]
+
 theorem Wkn.liftn_append (Ξ) (h : Γ.Wkn Δ ρ)
   : Wkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
   := Wkn_iff.mpr ((Wkn_iff.mp h).liftn_append Ξ)

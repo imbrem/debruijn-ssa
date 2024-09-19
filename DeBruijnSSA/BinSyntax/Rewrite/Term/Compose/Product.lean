@@ -513,6 +513,14 @@ theorem Eqv.pi_l_runit {A : Ty α} {Γ : Ctx α ε}
 def Eqv.braid {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩
   := let2 nil $ pair (var 0 (by simp)) (var 1 (by simp))
 
+@[simp]
+theorem Eqv.wk_eff_braid {A B : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
+  : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, lo⟩).wk_eff h = braid := rfl
+
+@[simp]
+theorem Eqv.Pure.braid {A B : Ty α} {Γ : Ctx α ε}
+  : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).Pure := ⟨Eqv.braid, rfl⟩
+
 theorem Eqv.wk1_braid {A B : Ty α} {Γ : Ctx α ε}
   : (braid : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨B.prod A, e⟩).wk1 (inserted := inserted) = braid := rfl
 
@@ -855,9 +863,9 @@ theorem Eqv.Pure.right_central {A A' B B' : Ty α} {Γ : Ctx α ε}
   := by
   apply Eq.symm
   rw [
-    <-braid_ltimes_braid, <-seq_assoc, braid_ltimes (l := l), seq_assoc, <-seq_assoc (a := braid),
-    hr.left_central, seq_assoc, braid_rtimes, <-seq_assoc, ltimes_braid (l := r), seq_assoc,
-    <-seq_assoc (c := braid), braid_braid, seq_nil
+    <-braid_ltimes_braid, <-seq_assoc, braid_ltimes (l := l), seq_assoc,
+    <-seq_assoc (a := Eqv.braid), hr.left_central, seq_assoc, braid_rtimes, <-seq_assoc,
+    ltimes_braid (l := r), seq_assoc, <-seq_assoc (c := Eqv.braid), braid_braid, seq_nil
   ]
 
 theorem Eqv.tensor_seq_of_comm {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : Ctx α ε}

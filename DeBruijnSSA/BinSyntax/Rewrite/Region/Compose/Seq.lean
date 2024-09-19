@@ -73,6 +73,14 @@ theorem Eqv.nil_vwk1 {Γ : Ctx α ε} {L : LCtx α}
   : (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L)).vwk1 (inserted := inserted)
   = Eqv.nil := rfl
 
+theorem Eqv.nil_vwk2 {Γ : Ctx α ε} {L : LCtx α}
+  : (Eqv.nil (φ := φ) (ty := ty) (rest := head::Γ) (targets := L)).vwk2 (inserted := inserted)
+  = Eqv.nil := rfl
+
+theorem Eqv.nil_vsubst_lift {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ}
+  : (Eqv.nil (φ := φ) (ty := ty) (rest := Δ) (targets := L)).vsubst (σ.lift (le_refl _))
+  = Eqv.nil := by induction σ using Quotient.inductionOn; rfl
+
 @[simp]
 theorem Eqv.nil_lwk1 {Γ : Ctx α ε} {L : LCtx α}
   : (Eqv.nil (φ := φ) (ty := ty) (rest := Γ) (targets := L)).lwk1 (inserted := inserted)
