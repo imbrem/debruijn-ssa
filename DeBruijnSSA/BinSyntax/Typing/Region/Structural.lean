@@ -40,7 +40,7 @@ theorem Subst.InS.vlift_pack {Γ : Ctx α ε} {R : LCtx α}
 
 def unpack : ℕ → Region φ
   | 0 => loop
-  | r + 1 => case (var 0) nil ((unpack r).lwk0)
+  | r + 1 => case (var 0) ((unpack r).lwk0) nil
 
 @[simp]
 theorem vwk_lift_unpack (r : ℕ) : (unpack r).vwk (Nat.liftWk ρ) = unpack (φ := φ) r := by
@@ -70,14 +70,14 @@ theorem Wf.unpack' {Γ : Ctx α ε} {R L : LCtx α}
   : Wf ((R.pack, ⊥)::Γ) (unpack (φ := φ) R.length) (R ++ L) :=
   by induction R generalizing Γ with
   | nil => exact Wf.loop
-  | cons _ _ I => exact Wf.case (Term.Wf.var Ctx.Var.shead) Wf.nil I.lwk0
+  | cons _ _ I => exact Wf.case (Term.Wf.var Ctx.Var.shead) I.lwk0 Wf.nil
 
 @[simp]
 theorem Wf.unpack {Γ : Ctx α ε} {R : LCtx α}
   : Wf ((R.pack, ⊥)::Γ) (unpack (φ := φ) R.length) R :=
   by induction R generalizing Γ with
   | nil => exact Wf.loop
-  | cons _ _ I => exact Wf.case (Term.Wf.var Ctx.Var.shead) Wf.nil I.lwk0
+  | cons _ _ I => exact Wf.case (Term.Wf.var Ctx.Var.shead) I.lwk0 Wf.nil
 
 @[simp]
 def InS.unpack {Γ : Ctx α ε} {R : LCtx α} : InS φ ((R.pack, ⊥)::Γ) R :=

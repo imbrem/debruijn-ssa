@@ -61,14 +61,14 @@ open Term.Eqv
 theorem Eqv.packed_let1 {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A, e)} {r : Eqv φ ((A, ⊥)::Γ) R}
   : (let1 a r).packed (Δ := Δ)
-  = let1 a.packed (let1 (pair (var 0 Ctx.Var.shead) (var 1 (by simp))) r.packed) := by
+  = let1 a.packed (let1 (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)) r.packed) := by
   rw [packed, packed_out_let1, packed_in_let1, <-packed]
 
 theorem Eqv.packed_let2 {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A.prod B, e)} {r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) R}
   : (let2 a r).packed (Δ := Δ)
   = let2 a.packed (let1
-    (pair (var 0 Ctx.Var.shead) (pair (var 1 (by simp)) (var 2 (by simp))))
+    (pair (pair (var 2 (by simp)) (var 1 (by simp))) (var 0 Ctx.Var.shead))
     r.packed) := by
   rw [packed, packed_out_let2, packed_in_let2, <-packed]
 
@@ -76,8 +76,8 @@ theorem Eqv.packed_case {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A.coprod B, e)} {r : Eqv φ ((A, ⊥)::Γ) R} {s : Eqv φ ((B, ⊥)::Γ) R}
   : (case a r s).packed (Δ := Δ)
   = case a.packed
-    (let1 (pair (var 0 Ctx.Var.shead) (var 1 (by simp))) r.packed)
-    (let1 (pair (var 0 Ctx.Var.shead) (var 1 (by simp))) s.packed) := by
+    (let1 (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)) r.packed)
+    (let1 (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)) s.packed) := by
   simp only [packed, packed_out_case, packed_in_case]
 
 -- TODO: cfg

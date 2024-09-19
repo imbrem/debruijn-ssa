@@ -475,6 +475,10 @@ theorem Wkn.from_nil {ρ : ℕ → ℕ} (hρ : Wkn [] Γ ρ) : Γ = []
 theorem Wkn.nil_iff {ρ : ℕ → ℕ} : Wkn [] Γ ρ ↔ Γ = []
   := ⟨Wkn.from_nil, λh => h.symm ▸ Wkn.drop⟩
 
+theorem Wkn.pred {Γ : Ctx α ε} : Wkn (V::Γ) (V::V::Γ) Nat.pred
+  := λi hi => by cases i <;> simp
+
+def InS.pred {Γ : Ctx α ε} : InS (V::Γ) (V::V::Γ) := ⟨Nat.pred, Wkn.pred⟩
 
 theorem Var.mem {Γ : Ctx α ε} {n V} (h : Var Γ n V) : ∃V', V' ∈ Γ ∧ V' ≤ V
   := by induction n generalizing Γ with
@@ -697,17 +701,17 @@ section Pack
 
 def pack : Ctx α ε → Ty α
   | [] => Ty.unit
-  | V::Γ => V.1.prod (pack Γ)
+  | V::Γ => (pack Γ).prod V.1
 
 theorem pack_drop {Γ : Ctx α ε} {i : ℕ} (hi : i < Γ.length)
-  : pack (Γ.drop i) = (Γ[i]).1.prod (Ctx.pack (Γ.drop (i + 1)))
+  : pack (Γ.drop i) =  (Ctx.pack (Γ.drop (i + 1))).prod Γ[i].1
   := by induction i generalizing Γ with
   | zero => cases Γ with | nil => cases hi | cons V Γ => rfl
   | succ i I => cases Γ with | nil => cases hi | cons V Γ =>
     simp [pack, I (Nat.lt_of_succ_lt_succ hi)]
 
 theorem pack_drop_fin {Γ : Ctx α ε} {i : Fin Γ.length}
-  : pack (Γ.drop i) = (Γ.get i).1.prod (Ctx.pack (Γ.drop (i + 1)))
+  : pack (Γ.drop i) = (Ctx.pack (Γ.drop (i + 1))).prod (Γ.get i).1
   := pack_drop i.prop
 
 end Pack

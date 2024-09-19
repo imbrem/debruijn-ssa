@@ -394,6 +394,10 @@ theorem Eqv.zero_eq {A : Ty α} {Γ : Ctx α ε}
 theorem Eqv.zero_seq {A B : Ty α} {Γ : Ctx α ε} {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
   : zero ;;' f = zero := zero_eq _ _
 
+theorem Eqv.seq_zero {A B : Ty α} {Γ : Ctx α ε} {f : Eqv φ (⟨A, ⊥⟩::Γ) ⟨Ty.empty, e⟩}
+  : f ;;' zero (A := B) = abort f B
+  := by rw [<-let1_eta (a := f.abort _), let1_abort, wk1_var0, let1_eta]; rfl
+
 def Eqv.lzero {Γ : Ctx α ε} {A : Ty α}
   : Eqv φ (⟨Ty.empty.coprod A, ⊥⟩::Γ) (A, e)
   := coprod zero nil

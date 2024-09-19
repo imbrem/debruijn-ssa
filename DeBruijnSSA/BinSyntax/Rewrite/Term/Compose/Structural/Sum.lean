@@ -1,6 +1,4 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Sum
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Product
 import DeBruijnSSA.BinSyntax.Typing.Term.Structural
 
 
@@ -15,14 +13,14 @@ def Eqv.inj
   {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} (a : Eqv φ Γ (R.get i, e)) : Eqv φ Γ (R.pack, e)
   := match R with
   | [] => i.elim0
-  | _::R => by cases i using Fin.cases with | zero => exact a.inl | succ i => exact inr (inj a)
+  | _::R => by cases i using Fin.cases with | zero => exact a.inr | succ i => exact inl (inj a)
 
 -- TODO: pack_inj is just inj (nil)
 
 def Eqv.inj_n {Γ : Ctx α ε} (R : LCtx α) (i : Fin R.length) : Eqv φ ((R.get i, ⊥)::Γ) (R.pack, e)
   := match R with
   | [] => i.elim0
-  | _::R => i.cases (inl nil) (λi => inr (inj_n R i))
+  | _::R => i.cases (inr nil) (λi => inl (inj_n R i))
 
 theorem Eqv.inj_n_def {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
   : Eqv.inj_n (φ := φ) (Γ := Γ) R i = ⟦Term.InS.inj_n R i⟧ := by
@@ -32,7 +30,7 @@ theorem Eqv.inj_n_def {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
     cases i using Fin.cases with
     | zero => rfl
     | succ i =>
-      simp only [inj_n, I, inr_quot, Fin.cases_succ]
+      simp only [inj_n, I, inl_quot, Fin.cases_succ]
       apply congrArg
       ext
       simp [Term.inj_n, Term.inj, Term.Wf.inj_n, -Function.iterate_succ, Function.iterate_succ']

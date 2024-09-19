@@ -13,7 +13,7 @@ namespace Region
 def Eqv.unpack {Γ : Ctx α ε} {R : LCtx α} : Eqv φ ((R.pack, ⊥)::Γ) R :=
   match R with
   | [] => loop
-  | _::_ => coprod nil unpack.lwk0
+  | _::_ => coprod unpack.lwk0 nil
 
 theorem Eqv.unpack_def {Γ : Ctx α ε} {R : LCtx α}
   : Eqv.unpack (φ := φ) (Γ := Γ) (R := R) = ⟦InS.unpack (Γ := Γ) (R := R)⟧ := by induction R with
@@ -87,14 +87,14 @@ theorem Eqv.vsubst0_pack_unpack {Γ : Ctx α ε} {R : LCtx α} {ℓ : Fin R.leng
     cases ℓ using Fin.cases with
     | zero =>
       simp only [Term.Eqv.inj_n, Fin.val_succ, Fin.cases_zero, unpack, coprod, vsubst_case,
-        Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, case_inl, let1_beta]
+        Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, case_inr, let1_beta]
       rfl
     | succ ℓ =>
       simp only [
         List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ, unpack,
         LCtx.pack.eq_2, Term.Eqv.inj_n, Fin.val_zero, List.getElem_cons_zero, Fin.cases_succ,
         coprod, vwk1_quot, InS.nil_vwk1, vwk1_lwk0, vwk1_unpack, vsubst_case, Term.Eqv.var0_subst0,
-        Fin.zero_eta, Term.Eqv.wk_res_self, vsubst_lwk0, vsubst_lift_unpack, case_inr, let1_beta, I]
+        Fin.zero_eta, Term.Eqv.wk_res_self, vsubst_lwk0, vsubst_lift_unpack, case_inl, let1_beta, I]
       rfl
 
 def Eqv.unpacked_out {Γ : Ctx α ε} {R : LCtx α} (r : Eqv φ Γ [R.pack]) : Eqv φ Γ R
@@ -147,7 +147,7 @@ theorem Eqv.packed_out_case {Γ : Ctx α ε} {R : LCtx α}
 -- TODO: packing a cfg is half of Böhm–Jacopini, and I believe the best we can do sans dinaturality
 
 theorem Eqv.packed_out_lwk0_arrow {Γ : Ctx α ε} {R : LCtx α}
-  (r : Eqv φ ((A, ⊥)::Γ) R) : (r.lwk0 (head := head)).packed_out = r.packed_out ;; inj_r := by
+  (r : Eqv φ ((A, ⊥)::Γ) R) : (r.lwk0 (head := head)).packed_out = r.packed_out ;; inj_l := by
   induction r using Quotient.inductionOn
   apply Eqv.eq_of_reg_eq
   simp only [LCtx.pack.eq_2, Set.mem_setOf_eq, Subst.InS.pack, InS.coe_lsubst, InS.coe_lwk,
@@ -181,7 +181,7 @@ theorem Eqv.packed_out_unpack {Γ : Ctx α ε} {R : LCtx α}
     apply Eq.trans _ Eqv.sum_nil
     simp only [sum, coprod, packed_out, lsubst_case]
     congr
-    simp only [Subst.Eqv.vlift_pack, vwk1_seq, nil_vwk1, vwk1_inj_r]
+    simp only [Subst.Eqv.vlift_pack, vwk1_seq, nil_vwk1, vwk1_inj_l]
     rw [<-packed_out, packed_out_lwk0_arrow, I]
 
   theorem Subst.Eqv.pack_comp_unpack {Γ : Ctx α ε} {R : LCtx α}

@@ -147,6 +147,10 @@ theorem Eqv.wk_eff_seq {A B C : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
 theorem Eqv.seq_nil {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ ((A, ⊥)::Γ) (B, e))
   : a ;;' nil = a := let1_eta
 
+theorem Eqv.let1_nil {A B : Ty α} {Γ : Ctx α ε}
+  (a : Eqv φ ((A, ⊥)::(A, ⊥)::Γ) (B, e)) : let1 nil a = a.subst nil.subst0 := by
+  rw [nil, let1_beta_var0]; rfl
+
 @[simp]
 theorem Eqv.nil_seq {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ ((A, ⊥)::Γ) (B, e))
   : nil ;;' a = a := by

@@ -345,10 +345,10 @@ end LCtx
 @[simp]
 def LCtx.pack : LCtx α → Ty α
   | [] => Ty.empty
-  | A::L => Ty.coprod A (pack L)
+  | A::L => Ty.coprod (pack L) A
 
 theorem LCtx.IsInitial.pack_iff {L : LCtx α} : L.pack.IsInitial ↔ L.IsInitial := by
-  induction L <;> simp [*]
+  induction L <;> simp [and_comm, *]
 
 theorem LCtx.IsInitial.pack {L : LCtx α} : L.IsInitial → Ty.IsInitial (LCtx.pack L)
   := pack_iff.mpr
