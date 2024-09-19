@@ -70,7 +70,7 @@ theorem Eqv.vwk1_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
   rw [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_packed]
 
 @[simp]
-theorem Eqv.vwk2_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::V::Γ) R}
+theorem Eqv.vwk2_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
   : r.packed.vwk2 (inserted := inserted) = r.packed (Δ := head::_::Δ) := by
   rw [vwk2, <-Ctx.InS.lift_wk1, vwk_slift_packed]
 

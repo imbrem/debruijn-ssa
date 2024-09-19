@@ -205,6 +205,18 @@ theorem Eqv.inj_r_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   rw [Region.vsubst_id']
   funext k; cases k <;> rfl
 
+theorem Eqv.ret_inl_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨X, ⊥⟩::Γ) (A, ⊥)}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : ret a.inl ;; (coprod l r) = ret a ;; l := by
+  rw [<-ret_seq_inj_l, seq_assoc, inj_l_coprod]
+
+theorem Eqv.ret_inr_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {a : Term.Eqv φ (⟨X, ⊥⟩::Γ) (B, ⊥)}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : ret a.inr ;; (coprod l r) = ret a ;; r := by
+  rw [<-ret_seq_inj_r, seq_assoc, inj_r_coprod]
+
 theorem Eqv.inj_l_rzero
   : inj_l ;; rzero = nil (φ := φ) (ty := A) (rest := Γ) (targets := L) := by
   rw [rzero, inj_l_coprod]
