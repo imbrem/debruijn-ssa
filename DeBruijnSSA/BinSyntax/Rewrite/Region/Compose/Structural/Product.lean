@@ -34,7 +34,10 @@ theorem Eqv.packed_in_unpacked_in
 
 open Term.Eqv
 
--- TODO: br
+theorem Eqv.packed_in_br {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.Eqv φ Γ (A, ⊥)} {hℓ}
+  : (br (L := L) ℓ a hℓ).packed_in (Δ := Δ) = br ℓ a.packed hℓ := by
+  simp [packed_in, Term.Eqv.packed]
 
 theorem Eqv.packed_in_let1 {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A, e)} {r : Eqv φ ((A, ⊥)::Γ) R}

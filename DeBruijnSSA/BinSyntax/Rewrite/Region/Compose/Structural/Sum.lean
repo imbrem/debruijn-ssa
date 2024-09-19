@@ -129,7 +129,16 @@ def Eqv.packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ 
 theorem Eqv.packed_out_quot {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ R)
   : packed_out ⟦r⟧ = ⟦r.packed_out⟧ := rfl
 
--- TODO: br becomes an injection
+theorem Eqv.packed_out_br {Γ : Ctx α ε} {L : LCtx α}
+  {ℓ} {a : Term.Eqv φ Γ (A, ⊥)} {hℓ}
+  : (br (L := L) ℓ a hℓ).packed_out = br 0 (a.wk_res ⟨hℓ.get, by rfl⟩).inj (by simp) := by
+  simp [packed_out]
+  induction a using Quotient.inductionOn
+  simp only [Term.Eqv.subst0_quot, Term.Eqv.inj_n_def, List.get_eq_getElem, Term.Eqv.wk_id_quot,
+    Term.Eqv.subst_quot, br_quot, Term.Eqv.wk_res_quot]
+  rw [Term.Eqv.inj_quot]
+  simp only [br_quot]
+  congr; ext; simp [Term.inj_n]
 
 theorem Eqv.packed_out_let1 {Γ : Ctx α ε} {R : LCtx α}
   (a : Term.Eqv φ Γ (A, e)) (r : Eqv φ ((A, ⊥)::Γ) R)

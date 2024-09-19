@@ -401,6 +401,10 @@ theorem Term.Wf.wk_res {Γ : Ctx α ε} {a : Term φ} {V V'} (h : Wf Γ a V) (hV
 def Term.InS.wk_res {Γ : Ctx α ε} {V V'} (hV : V ≤ V') (a : InS φ Γ V) : InS φ Γ V'
   := ⟨a, a.prop.wk_res hV⟩
 
+@[simp]
+theorem Term.InS.coe_wk_res {Γ : Ctx α ε} {V V'} {a : InS φ Γ V} (hV : V ≤ V')
+  : (a.wk_res hV : Term φ) = (a : Term φ) := rfl
+
 theorem Term.Wf.to_op' {Γ : Ctx α ε} {a : Term φ}
   (h : Wf Γ (Term.op f a) V)
   (hV : ⟨Φ.src f, V.2⟩ ≤ V')

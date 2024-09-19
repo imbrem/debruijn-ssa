@@ -386,12 +386,12 @@ theorem subst_lift_inj_n {ℓ : ℕ} {σ : Subst φ} : (inj_n ℓ).subst σ.lift
 
 @[simp]
 theorem Wf.inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
-  : Term.Wf (φ := φ) ((R.get i, ⊥)::Γ) (inj_n i) (R.pack, ⊥)  := by
+  : Term.Wf (φ := φ) ((R.get i, ⊥)::Γ) (inj_n i) (R.pack, e)  := by
   induction R generalizing Γ with
   | nil => exact i.elim0
   | cons _ _ I =>
     cases i using Fin.cases with
-    | zero => exact Wf.inr $ Wf.var Ctx.Var.shead
+    | zero => exact Wf.inr $ Wf.var Ctx.Var.bhead
     | succ i =>
       simp only [
         Fin.val_succ, BinSyntax.Term.inj_n, Function.iterate_succ', Function.comp_apply, LCtx.pack,
@@ -400,32 +400,33 @@ theorem Wf.inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
       apply I
 
 def InS.inj_n {Γ : Ctx α ε} (R : LCtx α) (i : Fin R.length)
-  : Term.InS φ ((R.get i, ⊥)::Γ) (R.pack, ⊥) :=
+  : Term.InS φ ((R.get i, ⊥)::Γ) (R.pack, e) :=
   ⟨Term.inj_n i, Term.Wf.inj_n⟩
 
 @[simp]
 theorem InS.coe_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
-  : (InS.inj_n (φ := φ) (Γ := Γ) (R := R) i : Term φ) = Term.inj_n i := rfl
+  : (InS.inj_n (φ := φ) (Γ := Γ) (R := R) (e := e) i : Term φ) = Term.inj_n i := rfl
 
 @[simp]
 theorem InS.wk_lift_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {ρ : Γ.InS Δ}
-  : (InS.inj_n (φ := φ) R i).wk (ρ.lift (le_refl _)) = inj_n R i := by ext; simp
+  : (InS.inj_n (φ := φ) (e := e) R i).wk (ρ.lift (le_refl _)) = inj_n R i := by ext; simp
 
 @[simp]
 theorem InS.wk_slift_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {ρ : Γ.InS Δ}
-  : (InS.inj_n (φ := φ) R i).wk (ρ.slift) = inj_n R i := by ext; simp
+  : (InS.inj_n (φ := φ) (e := e) R i).wk (ρ.slift) = inj_n R i := by ext; simp
 
 @[simp]
 theorem InS.subst_lift_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {σ : Subst.InS φ Γ Δ}
-  : (InS.inj_n (φ := φ) R i).subst (σ.lift (le_refl _)) = inj_n R i := by ext; simp
+  : (InS.inj_n (φ := φ) (e := e) R i).subst (σ.lift (le_refl _)) = inj_n R i := by ext; simp
 
 @[simp]
 theorem InS.subst_slift_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {σ : Subst.InS φ Γ Δ}
-  : (InS.inj_n (φ := φ) R i).subst σ.slift = inj_n R i := by ext; simp
+  : (InS.inj_n (φ := φ) (e := e) R i).subst σ.slift = inj_n R i := by ext; simp
 
 @[simp]
 theorem InS.wk1_inj_n {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
-  : (InS.inj_n (φ := φ) (Γ := Γ) R i).wk1 (inserted := inserted) = inj_n R i := by ext; simp
+  : (InS.inj_n (φ := φ) (Γ := Γ) (e := e) R i).wk1 (inserted := inserted) = inj_n R i
+  := by ext; simp
 
 end Sum
 
