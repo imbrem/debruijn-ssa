@@ -436,8 +436,6 @@ theorem Eqv.fixpoint_strong_left {X A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp only [<-vwk1_fixpoint]
   rfl
 
--- TODO: this is derivable, probably: see Proposition 16 in Unifying Guarded and Unguarded Iteration
--- by Goncharov et al
 theorem Eqv.fixpoint_dinaturality_seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))
   (g : Eqv φ (⟨C, ⊥⟩::Γ) ((B.coprod A)::L))
@@ -450,6 +448,9 @@ theorem Eqv.fixpoint_dinaturality_seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : 
     seq_assoc
   ]
   rfl
+
+-- TODO: these should be derivable sans dinatuality axiom: see Proposition 16 in Unifying Guarded
+-- and Unguarded Iteration by Goncharov et al
 
 -- theorem Eqv.fixpoint_dinaturality_left_loop {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 --   (f : Eqv φ (⟨A, ⊥⟩::Γ) ((B.coprod C)::L))

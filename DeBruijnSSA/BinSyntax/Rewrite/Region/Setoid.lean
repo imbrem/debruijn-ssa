@@ -399,10 +399,10 @@ theorem InS.codiagonal {Γ : Ctx α ε} {L : LCtx α}
     funext i; cases i using Fin.elim1
     rfl
 
--- theorem InS.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
---   {σ : Subst.InS φ Γ R (R' ++ L)} {β : InS φ Γ (R ++ L)}
---   {G : (i : Fin R'.length) → InS φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
---   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
---   ≈ cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst_append G).vlift) := by
---   rw [eqv_def]
---   convert Uniform.dinaturality σ.prop β.prop (λi => (G i).prop)
+theorem InS.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
+  {σ : Subst.InS φ Γ R (R' ++ L)} {β : InS φ Γ (R ++ L)}
+  {G : (i : Fin R'.length) → InS φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
+  ≈ cfg R β (λi => (σ.cfg i).lsubst (CFG.toSubst_append G).vlift) := by
+  rw [eqv_def]
+  convert Uniform.dinaturality σ.prop β.prop (λi => (G i).prop)
