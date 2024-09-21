@@ -289,12 +289,22 @@ theorem Eqv.coprod_seq {A B C : Ty α} {Γ : Ctx α ε}
   : coprod l r ;;' f = coprod (l ;;' f) (r ;;' f)
   := by rw [coprod, seq, let1_case, coprod, wk1_seq, wk1_seq]; rfl
 
+theorem Eqv.wk_lift_coprod {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  {l : Eqv φ ((A, ⊥)::Δ) ⟨C, e⟩} {r : Eqv φ ((B, ⊥)::Δ) ⟨C, e⟩}
+  : wk ρ.slift (coprod l r) = coprod (wk ρ.slift l) (wk ρ.slift r)
+  := by simp [coprod, wk1, wk_wk]; congr 2 <;> ext k <;> cases k <;> rfl
+
 def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inl nil
 
 @[simp]
 theorem Eqv.wk1_inj_l {A B : Ty α} {Γ : Ctx α ε}
   : (inj_l (φ := φ) (e := e) (A := A) (B := B) (Γ := Γ)).wk1 (inserted := inserted) = inj_l
+  := by simp [inj_l]
+
+@[simp]
+theorem Eqv.wk_lift_inj_l {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  : wk ρ.slift (inj_l (φ := φ) (e := e) (A := A) (B := B)) = inj_l
   := by simp [inj_l]
 
 @[simp]
@@ -318,6 +328,11 @@ def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨B, ⊥⟩::Γ)
 @[simp]
 theorem Eqv.wk1_inj_r {A B : Ty α} {Γ : Ctx α ε}
   : (inj_r (φ := φ) (e := e) (A := A) (B := B) (Γ := Γ)).wk1 (inserted := inserted) = inj_r
+  := by simp [inj_r]
+
+@[simp]
+theorem Eqv.wk_lift_inj_r {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  : wk ρ.slift (inj_r (φ := φ) (e := e) (A := A) (B := B)) = inj_r
   := by simp [inj_r]
 
 @[simp]

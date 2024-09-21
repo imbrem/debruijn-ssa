@@ -9,25 +9,36 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 namespace Term
 
 set_option linter.unusedVariables false in
-def Eqv.inj
+def Eqv.inj'
   {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} (a : Eqv φ Γ (R.get i, e)) : Eqv φ Γ (R.pack, e)
   := match R with
   | [] => i.elim0
-  | _::R => by cases i using Fin.cases with | zero => exact a.inr | succ i => exact inl (inj a)
+  | _::R => by cases i using Fin.cases with | zero => exact a.inr | succ i => exact inl (inj' a)
 
 @[simp]
-theorem Eqv.inj_quot {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {a : InS φ Γ (R.get i, e)}
-  : Eqv.inj ⟦a⟧ = ⟦Term.InS.inj a⟧ := by
+theorem Eqv.inj_quot' {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {a : InS φ Γ (R.get i, e)}
+  : Eqv.inj' ⟦a⟧ = ⟦Term.InS.inj a⟧ := by
   induction R generalizing Γ with
   | nil => exact i.elim0
   | cons _ _ I =>
     cases i using Fin.cases with
     | zero => rfl
     | succ i =>
-      simp only [inj, I, inl_quot, Fin.cases_succ]
+      simp only [inj', I, inl_quot, Fin.cases_succ]
       apply congrArg
       ext
       simp [Term.inj, Term.Wf.inj, -Function.iterate_succ, Function.iterate_succ']
+
+def Eqv.inj
+  {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} (a : Eqv φ Γ (R.get i, e)) : Eqv φ Γ (R.pack, e)
+  := Quotient.liftOn a (λa => ⟦a.inj⟧) (λ_ _ h => by simp [<-Eqv.inj_quot', Quotient.sound h])
+
+@[simp]
+theorem Eqv.inj_quot {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {a : InS φ Γ (R.get i, e)}
+  : Eqv.inj ⟦a⟧ = ⟦a.inj⟧ := rfl
+
+theorem Eqv.inj_eq_inj' {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length} {a : Eqv φ Γ (R.get i, e)}
+  : a.inj = Eqv.inj' a := by induction a using Quotient.inductionOn; rw [inj_quot']; rfl
 
 @[simp]
 theorem Eqv.wk_inj {Γ Δ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
@@ -61,7 +72,7 @@ theorem Eqv.inj_zero {Γ : Ctx α ε} {R : LCtx α}
 
 theorem Eqv.inj_succ {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
   {a : Eqv φ Γ (List.get (A::R) i.succ, e)}
-  : a.inj = (a.inj (R := R)).inl := rfl
+  : a.inj = (a.inj (R := R)).inl := by rw [inj_eq_inj', inj_eq_inj']; rfl
 
 def Eqv.inj_n {Γ : Ctx α ε} (R : LCtx α) (i : Fin R.length) : Eqv φ ((R.get i, ⊥)::Γ) (R.pack, e)
   := match R with
@@ -97,24 +108,67 @@ theorem Eqv.seq_inj_n  {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
   | cons _ _ I =>
     cases i using Fin.cases with
     | zero => simp [inj_n, <-inr_let1, nil, let1_eta]
-    | succ i => simp [inj_n, <-inl_let1, I, inj]
+    | succ i => simp [inj_n, <-inl_let1, I, inj_succ]
 
--- def Eqv.pack_case {Γ : Ctx α ε} {R : LCtx α}
---   (d : Eqv φ Γ (R.pack, e)) (G : ∀i : Fin R.length, Eqv φ ((R.get i, ⊥)::Γ) (A, e))
---   : Eqv φ Γ (C, e) := sorry
+def Eqv.pack_app_inr {Γ : Ctx α ε} {L R : LCtx α} : Eqv φ ((L.pack, ⊥)::Γ) ((L ++ R).pack, e)
+  := match L with
+  | [] => zero
+  | _::_ => coprod (pack_app_inr ;;' inj_l) inj_r
 
--- def Eqv.pack_app_inl {Γ : Ctx α ε} {L R : LCtx α} : Eqv φ ((L.pack, ⊥)::Γ) ((L ++ R).pack, e)
---   := sorry
+def Eqv.pack_app_inl {Γ : Ctx α ε} {L R : LCtx α} : Eqv φ ((R.pack, ⊥)::Γ) ((L ++ R).pack, e)
+  := match L with
+  | [] => nil
+  | _::_ => pack_app_inl ;;' inj_l
 
--- def Eqv.pack_app_inr {Γ : Ctx α ε} {L R : LCtx α} : Eqv φ ((R.pack, ⊥)::Γ) ((L ++ R).pack, e)
---   := sorry
+def Eqv.pack_app {Γ : Ctx α ε} {L R : LCtx α}
+  : Eqv φ (((L ++ R).pack, ⊥)::Γ) (R.pack.coprod L.pack, e)
+  := match L with
+  | [] => inj_l
+  | _::L => coprod (pack_app (L := L) ;;' sum nil inj_l) (inj_r ;;' inj_r)
 
--- def Eqv.pack_app {Γ : Ctx α ε} {L R : LCtx α}
---   : Eqv φ (((L ++ R).pack, ⊥)::Γ) (L.pack.coprod R.pack, e)
---   := sorry
+@[simp]
+theorem Eqv.wk_lift_pack_app {Γ Δ : Ctx α ε} {L R : LCtx α} {ρ : Γ.InS Δ}
+  : (pack_app (φ := φ) (Γ := Δ) (L := L) (R := R) (e := e)).wk ρ.slift = pack_app := by
+  induction L generalizing R with
+  | nil => rfl
+  | cons A L I => simp [pack_app, wk_lift_seq, Term.Eqv.wk_lift_coprod, Term.Eqv.sum, I]
 
--- TODO: pack_app
+@[simp]
+theorem Eqv.wk1_pack_app {Γ : Ctx α ε} {L R : LCtx α}
+  : (pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e)).wk1 (inserted := inserted) = pack_app
+  := by rw [wk1, <-Ctx.InS.lift_wk0, wk_lift_pack_app]
 
--- TODO: pack_app_pack_case => pack_case
+theorem Eqv.pack_app_coprod {Γ : Ctx α ε} {L R : LCtx α}
+  : pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e) ;;' coprod pack_app_inl pack_app_inr = nil
+  := by induction L generalizing R with
+  | nil => simp [pack_app, pack_app_inl, inj_l_coprod]
+  | cons A L I =>
+    simp only [List.cons_append, LCtx.pack.eq_2, pack_app, List.append_eq, coprod_seq, ← seq_assoc,
+      sum_coprod, nil_seq, inj_r_coprod]
+    simp [
+      pack_app_inl, pack_app_inr, inj_l_coprod, inj_r_coprod, <-coprod_seq, seq_assoc, I,
+      coprod_inl_inr
+    ]
+
+theorem Eqv.pack_app_inl_pack_app {Γ : Ctx α ε} {L R : LCtx α}
+  : pack_app_inl ;;' pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e) = inj_l
+  := by induction L generalizing R with
+  | nil => simp [pack_app_inl, pack_app, inj_l_coprod]
+  | cons A L I =>
+    simp only [LCtx.pack.eq_2, List.cons_append, pack_app_inl, pack_app, List.append_eq, ←
+      seq_assoc, inj_l_coprod]
+    rw [seq_assoc, I, sum, inj_l_coprod, nil_seq]
+
+theorem Eqv.pack_app_inr_pack_app {Γ : Ctx α ε} {L R : LCtx α}
+  : pack_app_inr ;;' pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e) = inj_r
+  := by induction L generalizing R with
+  | nil => apply zero_eq
+  | cons A L I =>
+    simp [pack_app_inr, pack_app, coprod_seq, <-seq_assoc, inj_l_coprod, inj_r_coprod]
+    rw [seq_assoc, I, sum, inj_r_coprod, <-coprod_seq, coprod_inl_inr, nil_seq]
+
+theorem Eqv.coprod_pack_app {Γ : Ctx α ε} {L R : LCtx α}
+  : coprod pack_app_inl pack_app_inr ;;' pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e) = nil
+  := by simp [coprod_seq, pack_app_inl_pack_app, pack_app_inr_pack_app, coprod_inl_inr]
 
 end Term

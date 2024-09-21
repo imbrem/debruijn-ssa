@@ -633,6 +633,11 @@ theorem Region.Subst.InS.vlift_slift {Γ : Ctx α ε} {L K : LCtx α}
   {σ : Subst.InS φ Γ L K}
   : (σ.slift (head := head')).vlift (head := head) = σ.vlift.slift := vlift_lift
 
+theorem Region.Subst.InS.vlift_liftn_append {Γ : Ctx α ε} {L K J : LCtx α}
+  {σ : Subst.InS φ Γ L K}
+  : (σ.liftn_append J).vlift (head := head) = σ.vlift.liftn_append J := by
+  ext; simp [Region.Subst.vlift_liftn_comm]
+
 theorem Region.InS.vwk1_lsubst_vlift {Γ : Ctx α ε} {L K : LCtx α}
   {σ : Subst.InS φ Γ L K} {r : Region.InS φ (head::Γ) L}
   : (r.lsubst σ.vlift).vwk1 (inserted := inserted) = r.vwk1.lsubst σ.vlift.vlift := by

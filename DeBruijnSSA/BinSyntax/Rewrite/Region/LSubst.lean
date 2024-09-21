@@ -389,6 +389,12 @@ theorem Subst.Eqv.liftn_append_quot {Γ : Ctx α ε} {L K : LCtx α} {J : LCtx �
   {σ : Subst.InS φ Γ L K}
   : liftn_append J ⟦σ⟧ = ⟦σ.liftn_append J⟧ := rfl
 
+theorem Subst.Eqv.vlift_liftn_append {Γ : Ctx α ε} {L K : LCtx α} {J : LCtx α}
+  {σ : Subst.Eqv φ Γ L K}
+  : (σ.liftn_append J).vlift (head := head) = σ.vlift.liftn_append J := by
+  induction σ using Quotient.inductionOn
+  simp [Subst.InS.vlift_liftn_append]
+
 @[simp]
 theorem Subst.Eqv.liftn_append_get_le {Γ : Ctx α ε} {L K : LCtx α} {J : LCtx α}
   {σ : Subst.Eqv φ Γ L K} {i : Fin (J ++ L).length}
@@ -407,6 +413,12 @@ theorem Subst.Eqv.liftn_append_singleton {Γ : Ctx α ε} {L K : LCtx α} {V : T
   {σ : Subst.Eqv φ Γ L K}
   : σ.liftn_append [V] = σ.slift
   := by induction σ using Quotient.inductionOn; simp
+
+@[simp]
+theorem Subst.Eqv.liftn_append_empty {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : Subst.Eqv φ Γ L K}
+  : σ.liftn_append [] = σ
+  := by induction σ using Quotient.inductionOn; rw [liftn_append_quot]; congr; ext; simp
 
 @[simp]
 theorem Eqv.lsubst_cfg {Γ : Ctx α ε} {L : LCtx α}
@@ -431,6 +443,12 @@ theorem Subst.InS.vsubst_congr {Γ Δ : Ctx α ε} {L K : LCtx α}
   {ρ ρ' : Term.Subst.InS φ Γ Δ} {σ σ' : Subst.InS φ Δ L K}
   (hρ : ρ ≈ ρ') (hσ : σ ≈ σ') : σ.vsubst ρ ≈ σ'.vsubst ρ'
   := λi => Region.InS.vsubst_congr (Term.Subst.InS.slift_congr hρ) (hσ i)
+
+-- theorem Eqv.vwk_lsubst {Γ Δ : Ctx α ε}
+--   {L K : LCtx α} {σ : Subst.Eqv φ Δ L K} {ρ : Γ.InS Δ}
+--   {r : Eqv φ Δ L}
+--   : (r.lsubst σ).vwk ρ = (r.vwk ρ).lsubst (σ.vwk ρ)
+--   := sorry
 
 def Subst.Eqv.vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
   (ρ : Term.Subst.Eqv φ Γ Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K

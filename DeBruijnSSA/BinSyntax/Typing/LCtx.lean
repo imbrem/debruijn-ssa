@@ -354,16 +354,42 @@ theorem LCtx.IsInitial.pack {L : LCtx α} : L.IsInitial → Ty.IsInitial (LCtx.p
   := pack_iff.mpr
 
 @[simp]
-def LCtx.pack' : LCtx α → Ty α
+def LCtx.dist (X : Ty α) : LCtx α → LCtx α
+  | [] => []
+  | A::L => (Ty.prod X A)::(dist X L)
+
+theorem LCtx.IsInitial.dist_iff {X : Ty α} {L : LCtx α}
+  : (L.dist X).IsInitial ↔ X.IsInitial ∨ L.IsInitial
+  := by induction L <;> aesop
+
+theorem LCtx.IsInitial.dist {X : Ty α} {L : LCtx α}
+  : L.IsInitial → (L.dist X).IsInitial
+  := dist_iff.mpr ∘ Or.inr
+
+theorem Ty.IsInitial.dist {X : Ty α} {L : LCtx α}
+  : X.IsInitial → (L.dist X).IsInitial
+  := LCtx.IsInitial.dist_iff.mpr ∘ Or.inl
+
+theorem LCtx.length_dist {X : Ty α} {L : LCtx α} : (L.dist X).length = L.length
+  := by induction L <;> simp [*]
+
+theorem LCtx.getElem_dist {X : Ty α} {L : LCtx α} {n} {h : n < (L.dist X).length}
+  : (L.dist X)[n] = Ty.prod X (L[n]'(L.length_dist ▸ h))
+  := by induction L generalizing n with
+  | nil => cases h
+  | cons _ _ I => cases n <;> simp [*]
+
+theorem LCtx.get_dist {X : Ty α} {L : LCtx α} {i}
+  : (L.dist X).get i = Ty.prod X (L.get <| i.cast L.length_dist)
+  := getElem_dist
+
+@[simp]
+def LCtx.dpack (X : Ty α) : LCtx α → Ty α
   | [] => Ty.empty
-  | [A] => A
-  | A::L => Ty.coprod A (pack' L)
+  | A::L => Ty.coprod (dpack X L) (Ty.prod X A)
 
-theorem LCtx.IsInitial.pack_iff' {L : LCtx α} : L.pack'.IsInitial ↔ L.IsInitial := by
-  induction L with | nil => simp | cons _ L I => cases L <;> simp [*]
-
-theorem LCtx.IsInitial.pack' {L : LCtx α} : L.IsInitial → Ty.IsInitial (LCtx.pack L)
-  := pack_iff.mpr
+theorem LCtx.pack_dist {X : Ty α} {L : LCtx α} : LCtx.pack (L.dist X) = LCtx.dpack X L := by
+  induction L <;> simp [*]
 
 def Ty.unpack_sum : Ty α → LCtx α
   | Ty.empty => []
