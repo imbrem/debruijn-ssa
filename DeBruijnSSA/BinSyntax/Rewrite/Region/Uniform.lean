@@ -505,9 +505,34 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
             add_tsub_cancel_right, vsubst0_var0_vwk1]
           rfl
           simp [vsubst0_var0_vwk1]
-      · funext i
-        sorry
-    · sorry
+      · funext i; congr
+        funext k
+        simp [Subst.vlift, Subst.extend, Subst.liftn, Subst.comp]
+        split
+        · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply,
+          Subst.extend, ↓reduceIte, vsubst0_var0_vwk1, *]
+          simp [vwk1_lsubst, <-Function.comp.assoc, vwk2_comp_vwk1]
+        · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply,
+          Subst.liftn, add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right,
+          vsubst0_var0_vwk1]
+          simp only [vwk1_lwk]
+          simp only [← lsubst_fromLwk, lsubst_lsubst]
+          congr
+          funext j
+          simp [Subst.comp, Subst.vlift, Subst.extend]
+    · simp [lsubst_lsubst]
+      funext i; congr; funext k;
+      simp [Subst.vlift, Subst.liftn, Subst.comp, Subst.fromFCFG]
+      split
+      · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply,
+        Subst.fromFCFG, ↓reduceDIte, vsubst0_var0_vwk1, *]
+        simp [vwk1_lsubst, <-Function.comp.assoc, vwk2_comp_vwk1]
+      · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply, Subst.liftn,
+        add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right, vsubst0_var0_vwk1]
+        simp only [vwk1_lwk]
+        simp only [← lsubst_fromLwk, lsubst_lsubst]
+        congr
+        funext j; simp [Subst.comp, Subst.fromFCFG, Subst.vlift]
 
 theorem Uniform.vsubst_flatten {P : Ctx α ε → LCtx α → Region φ → Region φ → Prop} {Γ Δ L r r'}
   (toVsubst : ∀{Γ Δ L σ r r'}, σ.Wf Γ Δ → P Δ L r r' → Uniform P Γ L (r.vsubst σ) (r'.vsubst σ))
