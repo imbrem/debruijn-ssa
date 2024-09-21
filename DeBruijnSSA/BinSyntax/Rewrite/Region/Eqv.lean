@@ -410,6 +410,10 @@ def Eqv.lwk_id {Γ : Ctx α ε} {L K : LCtx α} (hρ : L.Wkn K id) (r : Eqv φ �
       simp only [InS.lwk_id_eq_lwk]
       exact Quotient.sound (InS.lwk_congr_right _ h))
 
+theorem Eqv.lwk_id_eq_lwk {Γ : Ctx α ε} {L K : LCtx α} {r : Eqv φ Γ L}
+  (hρ : L.Wkn K id) : Eqv.lwk_id hρ r = r.lwk ⟨id, hρ⟩ := by
+  induction r using Quotient.inductionOn; apply eq_of_reg_eq; simp
+
 def Eqv.vsubst {Γ Δ : Ctx α ε} {L : LCtx α} (σ : Term.Subst.Eqv φ Γ Δ) (r : Eqv φ Δ L)
   : Eqv φ Γ L := Quotient.liftOn₂ σ r
     (λσ r => InS.q (r.vsubst σ))

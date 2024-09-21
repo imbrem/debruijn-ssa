@@ -141,6 +141,10 @@ theorem InS.lwk_congr {Γ : Ctx α ε} {L K : LCtx α} {r r' : InS φ Γ L}
   {ρ ρ' : L.InS K} (hρ : ρ ≈ ρ') (hr : r ≈ r') : r.lwk ρ ≈ r'.lwk ρ'
   := r.lwk_equiv hρ ▸ lwk_congr_right ρ' hr
 
+theorem InS.lwk_id_congr {Γ : Ctx α ε} {L K : LCtx α} {r r' : InS φ Γ L}
+  (h : L.Wkn K id) (hr : r ≈ r') : r.lwk_id h ≈ r'.lwk_id h
+  := by rw [lwk_id_eq_lwk, lwk_id_eq_lwk]; apply lwk_congr_right; assumption
+
 theorem InS.let1_beta {Γ : Ctx α ε} {L : LCtx α}
   (a : Term.InS φ Γ ⟨A, ⊥⟩)
   (r : InS φ (⟨A, ⊥⟩::Γ) L)

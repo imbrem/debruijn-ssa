@@ -681,6 +681,17 @@ theorem Region.InS.coe_csubst {Γ : Ctx α ε} {L : LCtx α} {r : Region.InS φ 
   : (r.csubst : Region.Subst φ) = r.val.csubst
   := rfl
 
+theorem Region.Subst.InS.vlift_extend_in {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L (K ++ R)}
+  : σ.extend_in.vlift (head := head) = σ.vlift.extend_in := by ext k; simp only [Set.mem_setOf_eq,
+    coe_vlift, Subst.vlift, coe_extend_in, Function.comp_apply, Subst.extend]; split <;> rfl
+
+theorem Region.Subst.InS.vlift_extend_out {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
+  : σ.extend_out.vlift (head := head) = σ.vlift.extend_out (R := R) := by rfl
+
+theorem Region.Subst.InS.vlift_extend {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K}
+  : σ.extend.vlift (head := head) = σ.vlift.extend (R := R)
+  := by rw [<-extend_in_extend_out, vlift_extend_in, vlift_extend_out, extend_in_extend_out]
+
 end RegionSubst
 
 end BinSyntax

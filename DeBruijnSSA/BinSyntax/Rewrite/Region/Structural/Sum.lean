@@ -1,7 +1,8 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Structural.Sum
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Gloop
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Sum
 import DeBruijnSSA.BinSyntax.Typing.Region.Structural
 
 namespace BinSyntax
@@ -50,6 +51,10 @@ def Subst.Eqv.unpack {Γ : Ctx α ε} {R : LCtx α} : Subst.Eqv φ Γ [R.pack] R
 theorem Subst.Eqv.unpack_def {Γ : Ctx α ε} {R : LCtx α}
   : Subst.Eqv.unpack (φ := φ) (Γ := Γ) (R := R) = ⟦InS.unpack (Γ := Γ) (R := R)⟧
   := by rw [unpack, Region.Eqv.unpack_def]; rfl
+
+theorem Subst.Eqv.unpack_zero {Γ : Ctx α ε} {R : LCtx α}
+  : (Subst.Eqv.unpack (φ := φ) (Γ := Γ) (R := R)).get (0 : Fin 1) = Region.Eqv.unpack
+  := by rw [unpack_def, Region.Eqv.unpack_def]; rfl
 
 @[simp]
 theorem Subst.Eqv.vlift_unpack {Γ : Ctx α ε} {R : LCtx α}
@@ -219,3 +224,21 @@ theorem Eqv.unpacked_out_inj {Γ : Ctx α ε} {R : LCtx α} {r s : Eqv φ Γ [R.
 
 theorem Eqv.packed_out_inj {Γ : Ctx α ε} {R : LCtx α} {r s : Eqv φ Γ R}
   : r.packed_out = s.packed_out ↔ r = s := ⟨λh => packed_out_injective h, λh => by simp [h]⟩
+
+theorem Eqv.cfg_unpack_rec {Γ : Ctx α ε} {R L : LCtx α}
+  {β : Eqv φ Γ (R.pack::L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R.pack::L)}
+  : cfg R (β.lsubst Subst.Eqv.unpack.extend) (λi => (G i).lsubst Subst.Eqv.unpack.extend)
+  = gloop R.pack β (Eqv.unpack.lsubst (Subst.Eqv.fromFCFG G).vlift) := by
+  convert dinaturality_to_gloop_rec
+  · rw [Subst.Eqv.vlift_extend, Subst.Eqv.vlift_unpack]
+  · rw [Subst.Eqv.unpack_zero]
+
+-- theorem Eqv.gloop_pack_entry_rec {Γ : Ctx α ε} {R L : LCtx α}
+--   {β : Eqv φ Γ (R ++ L)} {G : Eqv φ (⟨R.pack, ⊥⟩::Γ) (R.pack::L)}
+--   : gloop R.pack (β.lsubst Subst.Eqv.pack.extend) G
+--   = cfg R β (λi => (ret (Term.Eqv.inj_n R i) ;; G).lsubst Subst.Eqv.unpack.extend)
+--   := sorry
+
+end Region
+
+end BinSyntax

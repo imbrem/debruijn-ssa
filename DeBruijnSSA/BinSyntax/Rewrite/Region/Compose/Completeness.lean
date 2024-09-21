@@ -1,4 +1,4 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Structural
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Functor
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Elgot
 

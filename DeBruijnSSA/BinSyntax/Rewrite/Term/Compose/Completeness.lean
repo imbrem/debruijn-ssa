@@ -1,5 +1,5 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Structural.Product
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Structural.Sum
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Product
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Sum
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Distrib
 
 namespace BinSyntax

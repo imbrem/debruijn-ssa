@@ -107,6 +107,10 @@ theorem Subst.InS.extend_in_congr {Γ : Ctx α ε} {L K R : LCtx α}
       exact InS.hext (by rw [List.getElem_append_left]; rfl) rfl (by simp)
     case _ => rfl
 
+theorem Subst.InS.extend_out_congr {Γ : Ctx α ε} {L K R : LCtx α}
+  {σ τ : Subst.InS φ Γ L K} (h : σ ≈ τ) : σ.extend_out (R := R) ≈ τ.extend_out
+  := λi => Region.InS.lwk_id_congr (K := K ++ R) LCtx.Wkn.id_right_append (h i)
+
 open Subst.InS
 
 theorem InS.lsubst_congr_subst {Γ : Ctx α ε} {L K : LCtx α} {σ τ : Subst.InS φ Γ L K}
@@ -217,6 +221,35 @@ def Subst.Eqv.extend_in {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L (K 
 @[simp]
 theorem Subst.Eqv.extend_in_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L (K ++ R)}
   : extend_in ⟦σ⟧ = ⟦σ.extend_in⟧ := rfl
+
+def Subst.Eqv.extend_out {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L K)
+  : Eqv φ Γ L (K ++ R) := Quotient.liftOn σ (λσ => ⟦σ.extend_out⟧)
+    (λ_ _ h => Quotient.sound <| Subst.InS.extend_out_congr h)
+
+@[simp]
+theorem Subst.Eqv.extend_out_quot {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.InS φ Γ L K}
+  : extend_out (R := R) ⟦σ⟧ = ⟦σ.extend_out⟧ := rfl
+
+theorem Subst.Eqv.extend_in_extend_out {Γ : Ctx α ε} {L K R : LCtx α} (σ : Eqv φ Γ L K)
+  : σ.extend_out.extend_in = σ.extend (R := R) := by
+  induction σ using Quotient.inductionOn
+  rw [extend_out_quot, extend_in_quot, Subst.InS.extend_in_extend_out]; rfl
+
+theorem Subst.Eqv.vlift_extend_in {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L (K ++ R)}
+  : σ.extend_in.vlift (head := head) = σ.vlift.extend_in
+  := by induction σ using Quotient.inductionOn; simp [Subst.InS.vlift_extend_in]
+
+theorem Subst.Eqv.vlift_extend_out {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  : σ.extend_out.vlift (head := head) = σ.vlift.extend_out (R := R)
+  := by induction σ using Quotient.inductionOn; rfl
+
+theorem Subst.Eqv.vlift_extend {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  : σ.extend.vlift (head := head) = σ.vlift.extend (R := R)
+  := by rw [<-extend_in_extend_out, vlift_extend_in, vlift_extend_out, extend_in_extend_out]
+
+theorem Subst.Eqv.get_extend_out {Γ : Ctx α ε} {L K R : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  {i : Fin L.length} : (extend_out (R := R) σ).get i = (σ.get i).lwk_id LCtx.Wkn.id_right_append
+  := by induction σ using Quotient.inductionOn; rfl
 
 @[simp]
 theorem InS.lsubst_q {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.InS φ Γ L K} {r : InS φ Γ L}
@@ -638,6 +671,11 @@ def Subst.Eqv.fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
   := Quotient.liftOn (Quotient.finChoice G) (λG => ⟦Region.CFG.toSubst G⟧)
       (λ_ _ h => Quotient.sound <| λi => by simp [h i])
 
+theorem Subst.Eqv.fromFCFG_quot {Γ : Ctx α ε} {L K : LCtx α}
+  {G : ∀i : Fin L.length, Region.InS φ ((L.get i, ⊥)::Γ) K}
+  : fromFCFG (λi => ⟦G i⟧) = ⟦Region.CFG.toSubst G⟧ := by
+  simp [fromFCFG, Quotient.finChoice_eq_choice]
+
 def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
   (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) (K ++ R))
   : Subst.Eqv φ Γ (L ++ R) (K ++ R)
@@ -688,6 +726,21 @@ theorem Eqv.dinaturality {Γ : Ctx α ε} {R R' L : LCtx α}
     rw [Subst.Eqv.fromFCFG_append_quot]
     simp [Subst.InS.cfg]
 
+theorem Eqv.dinaturality_rec {Γ : Ctx α ε} {R R' L : LCtx α}
+  {σ : Subst.Eqv φ Γ R R'} {β : Eqv φ Γ (R ++ L)}
+  {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (R ++ L)}
+  : cfg R' (β.lsubst σ.extend) (λi => (G i).lsubst σ.extend.vlift)
+  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG G).vlift)
+  := by
+  rw [<-Subst.Eqv.extend_in_extend_out, dinaturality]
+  congr; funext i
+  rw [Subst.Eqv.get_extend_out, lwk_id_eq_lwk, <-Eqv.lsubst_toSubst, lsubst_lsubst]
+  congr; ext k
+  induction G using Eqv.choiceInduction
+  rw [Subst.Eqv.fromFCFG_append_quot, Subst.Eqv.fromFCFG_quot]
+  apply Eqv.eq_of_reg_eq
+  simp [Subst.fromFCFG, Subst.vlift, Region.vsubst0_var0_vwk1]
+
 theorem Eqv.dinaturality_from_one {Γ : Ctx α ε} {R L : LCtx α}
   {σ : Subst.Eqv φ Γ R (B::L)} {β : Eqv φ Γ (R ++ L)}
   {G : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ L)}
@@ -695,12 +748,26 @@ theorem Eqv.dinaturality_from_one {Γ : Ctx α ε} {R L : LCtx α}
   = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG_append (L := [B]) (Fin.elim1 G)).vlift)
   := dinaturality (Γ := Γ) (R := R) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
 
+theorem Eqv.dinaturality_from_one_rec {Γ : Ctx α ε} {R L : LCtx α}
+  {σ : Subst.Eqv φ Γ R [B]} {β : Eqv φ Γ (R ++ L)}
+  {G : Eqv φ (⟨B, ⊥⟩::Γ) (R ++ L)}
+  : cfg [B] (β.lsubst σ.extend) (Fin.elim1 $ G.lsubst σ.extend.vlift)
+  = cfg R β (λi => (σ.get i).lsubst (Subst.Eqv.fromFCFG (Fin.elim1 G)).vlift)
+  := dinaturality_rec (Γ := Γ) (R := R) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+
 theorem Eqv.dinaturality_to_one {Γ : Ctx α ε} {R' L : LCtx α}
   {σ : Subst.Eqv φ Γ [A] (R' ++ L)} {β : Eqv φ Γ (A::L)}
   {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (A::L)}
   : cfg R' (β.lsubst σ.extend_in) (λi => (G i).lsubst σ.extend_in.vlift)
   = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG_append G).vlift)
   := dinaturality (Γ := Γ) (R := [A]) (R' := R') (L := L) (σ := σ) (β := β) (G := G)
+
+theorem Eqv.dinaturality_to_one_rec {Γ : Ctx α ε} {R' L : LCtx α}
+  {σ : Subst.Eqv φ Γ [A] R'} {β : Eqv φ Γ (A::L)}
+  {G : (i : Fin R'.length) → Eqv φ (⟨R'.get i, ⊥⟩::Γ) (A::L)}
+  : cfg R' (β.lsubst σ.extend) (λi => (G i).lsubst σ.extend.vlift)
+  = cfg [A] β (Fin.elim1 $ (σ.get _).lsubst (Subst.Eqv.fromFCFG G).vlift)
+  := dinaturality_rec (Γ := Γ) (R := [A]) (R' := R') (L := L) (σ := σ) (β := β) (G := G)
 
 theorem Eqv.dinaturality_one {Γ : Ctx α ε} {L : LCtx α}
   {σ : Subst.Eqv φ Γ [A] ([B] ++ L)} {β : Eqv φ Γ (A::L)}

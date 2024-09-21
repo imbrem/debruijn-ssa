@@ -1,6 +1,6 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Structural.Sum
-import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Structural.Product
-import DeBruijnSSA.BinSyntax.Rewrite.Term.Compose.Structural
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Sum
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Product
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural
 
 namespace BinSyntax
 
