@@ -406,8 +406,8 @@ theorem Eqv.Pure.central_left {A A' B B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_pair, Term.InS.wk_var, Ctx.InS.coe_wk1,
     Nat.liftWk_succ, Nat.succ_eq_add_one, zero_add, Nat.reduceAdd, Nat.liftWk_zero, InS.coe_vsubst,
     Term.InS.coe_subst0, Term.InS.coe_wk, Ctx.InS.coe_wk0, Term.InS.coe_var, InS.coe_vwk,
-    Ctx.InS.coe_wk2, InS.coe_lsubst, InS.coe_alpha0, InS.coe_br, Term.InS.coe_pair, vwk_lsubst,
-    Region.vsubst_lsubst, Term.InS.coe_subst]
+    Ctx.InS.coe_wk2, InS.coe_lsubst, InS.coe_alpha0, InS.coe_br, Term.InS.coe_pair,
+    Region.vwk_lsubst, Region.vsubst_lsubst, Term.InS.coe_subst]
   congr
   · funext k
     cases k with
@@ -519,7 +519,7 @@ theorem Eqv.assoc_left_nat {A B C A' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     Nat.liftWk_zero, Nat.liftWk_succ, Nat.succ_eq_add_one, zero_add, Nat.reduceAdd, InS.coe_vsubst,
     Term.Subst.InS.coe_liftn₂, Term.InS.coe_subst0, Term.InS.coe_var, InS.coe_vwk,
     Ctx.InS.coe_liftn₂, Ctx.InS.coe_wk2, InS.coe_lsubst, InS.coe_alpha0, InS.coe_br,
-    Term.InS.coe_pair, vwk_lsubst, Region.vsubst_lsubst]
+    Term.InS.coe_pair, Region.vwk_lsubst, Region.vsubst_lsubst]
   congr 1
   · funext k; cases k <;> rfl
   · simp only [Region.vwk_vwk]
@@ -569,7 +569,7 @@ theorem Eqv.assoc_mid_nat {A B C B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     Nat.liftWk_zero, Nat.liftWk_succ, Nat.succ_eq_add_one, zero_add, Nat.reduceAdd, InS.coe_vsubst,
     Term.Subst.InS.coe_liftn₂, Term.InS.coe_subst0, Term.InS.coe_var, InS.coe_vwk,
     Ctx.InS.coe_liftn₂, Ctx.InS.coe_wk2, InS.coe_lsubst, InS.coe_alpha0, InS.coe_br,
-    InS.coe_let2, Term.InS.coe_pair, vwk_lsubst, Region.vsubst_lsubst]
+    InS.coe_let2, Term.InS.coe_pair, Region.vwk_lsubst, Region.vsubst_lsubst]
   congr 1
   · funext k; cases k <;> rfl
   · simp only [Region.vwk_vwk]
@@ -596,7 +596,7 @@ theorem Eqv.seq_let2_wk0_pure {Γ : Ctx α ε} {L : LCtx α}
   induction s using Quotient.inductionOn
   apply Eqv.eq_of_reg_eq
   simp only [Set.mem_setOf_eq, InS.coe_vwk, Ctx.InS.coe_lift, Ctx.InS.coe_swap01, InS.coe_lsubst,
-    InS.coe_alpha0, Ctx.InS.coe_wk1, vwk_lsubst, Ctx.InS.coe_swap02]
+    InS.coe_alpha0, Ctx.InS.coe_wk1, Region.vwk_lsubst, Ctx.InS.coe_swap02]
   congr 1
   · funext k
     cases k with
@@ -644,8 +644,8 @@ theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_pair, Term.InS.wk_var, Ctx.InS.coe_swap02,
     Nat.ofNat_pos, Nat.swap0_lt, Nat.swap0_0, Nat.one_lt_ofNat, Ctx.InS.coe_wk1, Nat.liftWk_succ,
     Nat.succ_eq_add_one, Nat.reduceAdd, zero_add, Nat.liftWk_zero, InS.coe_vwk, InS.coe_lsubst,
-    InS.coe_alpha0, InS.coe_br, Term.InS.coe_pair, Term.InS.coe_var, vwk_lsubst, InS.coe_vsubst,
-    Term.InS.coe_subst0, Term.Subst.InS.coe_liftn₂, Region.vsubst_lsubst]
+    InS.coe_alpha0, InS.coe_br, Term.InS.coe_pair, Term.InS.coe_var, Region.vwk_lsubst,
+    InS.coe_vsubst, Term.InS.coe_subst0, Term.Subst.InS.coe_liftn₂, Region.vsubst_lsubst]
   congr
   · funext k; cases k with
     | zero => simp

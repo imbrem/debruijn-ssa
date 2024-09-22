@@ -516,6 +516,23 @@ theorem Region.InS.lsubst_lsubst {Γ : Ctx α ε}
   : (r.lsubst τ).lsubst σ = r.lsubst (σ.comp τ)
   := by ext; simp [Region.lsubst_lsubst]
 
+def Region.Subst.InS.vwk {Γ Δ : Ctx α ε}
+  (ρ : Γ.InS Δ) (σ : Region.Subst.InS φ Δ L K)
+  : Region.Subst.InS φ Γ L K
+  := ⟨Region.vwk (Nat.liftWk ρ.val) ∘ σ.val, (λi => (σ.prop i).vwk ρ.prop.slift)⟩
+
+@[simp]
+theorem Region.Subst.InS.coe_vwk {Γ Δ : Ctx α ε}
+  (ρ : Γ.InS Δ) (σ : Region.Subst.InS φ Δ L K)
+  : (σ.vwk ρ : Region.Subst φ) = Region.vwk (Nat.liftWk ρ.val) ∘ (σ : Region.Subst φ)
+  := rfl
+
+@[simp]
+theorem Region.Subst.InS.get_vwk {Γ Δ : Ctx α ε}
+  {ρ : Γ.InS Δ} {σ : Region.Subst.InS φ Δ L K} {i : Fin L.length}
+  : (σ.vwk ρ).get i = (σ.get i).vwk ρ.slift
+  := rfl
+
 def Region.Subst.InS.vsubst {Γ Δ : Ctx α ε}
   (ρ : Term.Subst.InS φ Γ Δ) (σ : Region.Subst.InS φ Δ L K)
   : Region.Subst.InS φ Γ L K
@@ -543,6 +560,11 @@ theorem Region.Subst.InS.vsubst_comp {Γ Δ Ξ : Ctx α ε}
   := by ext; simp [Region.vsubst_vsubst, Term.Subst.lift_comp]
 
 -- TODO: vsubst_comp, and other lore...
+
+theorem Region.InS.vwk_lsubst {Γ Δ : Ctx α ε}
+  {ρ : Γ.InS Δ} {σ : Region.Subst.InS φ Δ L K} {r : Region.InS φ Δ L}
+  : (r.lsubst σ).vwk ρ = (r.vwk ρ).lsubst (σ.vwk ρ)
+  := by ext; simp [Region.vwk_lsubst]
 
 theorem Region.InS.vsubst_lsubst {Γ Δ : Ctx α ε}
   {σ : Region.Subst.InS φ Δ L K} {ρ : Term.Subst.InS φ Γ Δ}
@@ -643,7 +665,7 @@ theorem Region.InS.vwk1_lsubst_vlift {Γ : Ctx α ε} {L K : LCtx α}
   : (r.lsubst σ.vlift).vwk1 (inserted := inserted) = r.vwk1.lsubst σ.vlift.vlift := by
   ext
   simp only [Set.mem_setOf_eq, vwk1, coe_vwk, Ctx.InS.coe_wk1, coe_lsubst, Subst.InS.coe_vlift,
-    Subst.vlift, vwk_lsubst]
+    Subst.vlift, Region.vwk_lsubst]
   congr
   simp only [<-Function.comp.assoc, Region.vwk1, <-Region.vwk_comp]
   apply congrFun

@@ -216,7 +216,7 @@ theorem Eqv.seq_let1_wk0_pure {Γ : Ctx α ε} {L : LCtx α}
   apply Eqv.eq_of_reg_eq
   simp only [Set.mem_setOf_eq, InS.coe_lsubst, InS.coe_alpha0, InS.coe_vwk, Ctx.InS.coe_wk1,
     InS.coe_vsubst, Term.InS.coe_subst0, Term.InS.coe_wk, Ctx.InS.coe_wk0, Ctx.InS.coe_swap01,
-    vwk_lsubst, Region.vsubst_lsubst]
+    Region.vwk_lsubst, Region.vsubst_lsubst]
   congr
   · funext k; cases k with
     | zero =>

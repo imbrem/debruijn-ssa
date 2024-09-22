@@ -444,11 +444,29 @@ theorem Subst.InS.vsubst_congr {Γ Δ : Ctx α ε} {L K : LCtx α}
   (hρ : ρ ≈ ρ') (hσ : σ ≈ σ') : σ.vsubst ρ ≈ σ'.vsubst ρ'
   := λi => Region.InS.vsubst_congr (Term.Subst.InS.slift_congr hρ) (hσ i)
 
--- theorem Eqv.vwk_lsubst {Γ Δ : Ctx α ε}
---   {L K : LCtx α} {σ : Subst.Eqv φ Δ L K} {ρ : Γ.InS Δ}
---   {r : Eqv φ Δ L}
---   : (r.lsubst σ).vwk ρ = (r.vwk ρ).lsubst (σ.vwk ρ)
---   := sorry
+theorem Subst.InS.vwk_congr {Γ Δ : Ctx α ε} {L K : LCtx α}
+  {ρ ρ' : Γ.InS Δ} {σ σ' : Subst.InS φ Δ L K}
+  (hρ : ρ ≈ ρ') (hσ : σ ≈ σ') : σ.vwk ρ ≈ σ'.vwk ρ'
+  := λi => Region.InS.vwk_congr (Ctx.InS.slift_congr hρ) (hσ i)
+
+def Subst.Eqv.vwk {Γ Δ : Ctx α ε} {L K : LCtx α}
+  (ρ : Γ.InS Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K
+  := Quotient.liftOn σ (λσ => ⟦σ.vwk ρ⟧)
+    (λ_ _ hσ => Quotient.sound <| Subst.InS.vwk_congr (by rfl) hσ)
+
+@[simp]
+theorem Subst.Eqv.vwk_quot {Γ Δ : Ctx α ε} {L K : LCtx α}
+  {ρ : Γ.InS Δ} {σ : Subst.InS φ Δ L K}
+  : vwk ρ ⟦σ⟧ = ⟦σ.vwk ρ⟧ := rfl
+
+theorem Eqv.vwk_lsubst {Γ Δ : Ctx α ε}
+  {L K : LCtx α} {σ : Subst.Eqv φ Δ L K} {ρ : Γ.InS Δ}
+  {r : Eqv φ Δ L}
+  : (r.lsubst σ).vwk ρ = (r.vwk ρ).lsubst (σ.vwk ρ)
+  := by
+  induction r using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  simp [InS.vwk_lsubst]
 
 def Subst.Eqv.vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
   (ρ : Term.Subst.Eqv φ Γ Δ) (σ : Subst.Eqv φ Δ L K) : Subst.Eqv φ Γ L K
@@ -693,6 +711,11 @@ theorem Subst.Eqv.fromFCFG_quot {Γ : Ctx α ε} {L K : LCtx α}
   {G : ∀i : Fin L.length, Region.InS φ ((L.get i, ⊥)::Γ) K}
   : fromFCFG (λi => ⟦G i⟧) = ⟦Region.CFG.toSubst G⟧ := by
   simp [fromFCFG, Quotient.finChoice_eq_choice]
+
+theorem Subst.Eqv.get_fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
+  {G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) K} {i : Fin L.length}
+  : (fromFCFG G).get i = G i
+  := by induction G using Eqv.choiceInduction; rw [Subst.Eqv.fromFCFG_quot]; simp
 
 def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
   (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) (K ++ R))
