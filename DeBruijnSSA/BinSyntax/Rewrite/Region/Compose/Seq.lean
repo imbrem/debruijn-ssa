@@ -592,7 +592,7 @@ theorem Eqv.lsubst_vlift_slift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx 
     | zero => rfl
     | succ k =>
       simp only [Function.comp_apply, Subst.lift, vwk2_vwk1]
-      simp only [Region.vwk1_lwk, vsubst_lwk]
+      simp only [Region.vwk1_lwk, Region.vsubst_lwk]
       congr
       simp only [Region.vwk1, Region.vwk_vwk]
       simp only [<-Region.vsubst_fromWk, Region.vsubst_vsubst]

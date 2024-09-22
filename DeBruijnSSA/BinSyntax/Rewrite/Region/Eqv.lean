@@ -859,19 +859,19 @@ theorem Eqv.lwk0_vwk1 {Γ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (head::Γ) L}
   : r.vwk1.lwk0 = (r.lwk0 (head := head')).vwk1 (inserted := inserted) := by rw [vwk1_lwk0]
 
-theorem Eqv.vsubst_lwk0 {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ L}
-  : r.lwk0.vsubst σ = (r.vsubst σ).lwk0 (head := head) := by
+theorem Eqv.vsubst_lwk {Γ Δ : Ctx α ε} {L K : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ L}
+  {ρ : L.InS K}
+  : (r.lwk ρ).vsubst σ = (r.vsubst σ).lwk ρ := by
   induction σ using Quotient.inductionOn
   induction r using Quotient.inductionOn
   apply Eqv.eq_of_reg_eq
   simp [Region.vsubst_lwk]
 
+theorem Eqv.vsubst_lwk0 {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ L}
+  : r.lwk0.vsubst σ = (r.vsubst σ).lwk0 (head := head) := vsubst_lwk
+
 theorem Eqv.lwk0_vsubst {Γ Δ : Ctx α ε} {L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ L}
-  : (r.vsubst σ).lwk0 (head := head) = r.lwk0.vsubst σ := by
-  induction σ using Quotient.inductionOn
-  induction r using Quotient.inductionOn
-  apply Eqv.eq_of_reg_eq
-  simp [Region.vsubst_lwk]
+  : (r.vsubst σ).lwk0 (head := head) = r.lwk0.vsubst σ := by rw [vsubst_lwk0]
 
 @[simp]
 theorem Eqv.lwk0_quot

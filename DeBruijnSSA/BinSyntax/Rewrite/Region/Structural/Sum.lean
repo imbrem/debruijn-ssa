@@ -285,15 +285,13 @@ theorem Eqv.lsubst_pack_append_unpack {Γ : Ctx α ε} {L R : LCtx α}
           Term.Eqv.inj_l, Term.Eqv.inj_r, vwk2, Nat.liftnWk, case_inl, case_inr, let1_beta, lwk_lwk,
           vwk1_lwk]
         congr
-        sorry
-        -- generalize Term.Eqv.pack_app (φ := φ) = P
-        -- induction P using Quotient.inductionOn
-        -- simp only [unpack_def]
-        -- apply eq_of_reg_eq
-        -- simp [<-Region.vsubst_fromWk, Region.vsubst_vsubst]
-        -- congr
-        -- funext k; cases k using Nat.cases2 <;> simp [Nat.liftnWk, Term.Subst.comp]
-        -- sorry
+        simp only [<-Ctx.InS.lift_wk1, vwk_lwk, vwk_lift_unpack, vsubst_lwk, vsubst_lift_unpack]
+        congr 1
+        conv =>
+          lhs; rhs; rw [<-vwk1_unpack, vwk1, <-vsubst_fromWk, vsubst_vsubst, vsubst_id']
+          · skip
+          · tactic => ext i; apply Term.Eqv.eq_of_term_eq; cases i using Fin.cases <;> rfl
+        rw [vsubst_lift_unpack]
     · simp only [Eqv.nil_vwk1, Term.Eqv.seq_inj_r, Term.Eqv.wk1_inr, Term.Eqv.wk1_inj_r,
       vwk1_br, Term.Eqv.wk1_nil, vwk1_case, Term.Eqv.wk1_var0, List.length_cons, Fin.zero_eta,
       List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vwk2_br, Term.Eqv.wk2_nil]
