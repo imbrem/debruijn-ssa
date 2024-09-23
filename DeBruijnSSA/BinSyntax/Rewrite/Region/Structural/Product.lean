@@ -1,6 +1,7 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Gloop
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Product
 import DeBruijnSSA.BinSyntax.Typing.Region.Structural
 
@@ -113,6 +114,32 @@ theorem Eqv.packed_in_cfg {Γ : Ctx α ε} {R L : LCtx α}
   := by
   rw [packed_in, vsubst_cfg]; apply congrArg; funext i
   rw [packed_in, let1_beta, vsubst_vsubst, Term.Subst.Eqv.lift_unpack]
+
+theorem Eqv.packed_in_gloop {Γ : Ctx α ε}
+  {β : Eqv φ Γ (A::L)} {G : Eqv φ ((A, ⊥)::Γ) (A::L)}
+  : (gloop A β G).packed_in (Δ := Δ)
+  = gloop A β.packed_in (let1 (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)) G.packed_in)
+  := by
+  rw [packed_in, vsubst_gloop]; apply congrArg
+  rw [packed_in, let1_beta, vsubst_vsubst, Term.Subst.Eqv.lift_unpack]
+
+theorem Eqv.packed_in_gloop_uniform {Γ : Ctx α ε}
+  {β : Eqv φ Γ (A::L)} {G : Eqv φ ((A, ⊥)::Γ) (A::L)}
+  : (gloop A β G).packed_in (Δ := Δ)
+  = gloop (Γ.pack.prod A)
+      (β.packed_in.wrseq (ret (pair (var 1 (by simp)) (var 0 Ctx.Var.shead))))
+      (G.packed_in.vwk1 ;; (ret (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)))) := by
+  rw [packed_in_gloop]
+  apply (uniform_gloop _).symm
+  rw [ret_seq, let1_beta, vwk1_seq, seq, vsubst_lsubst, seq]
+  congr 1
+  · ext k; apply eq_of_reg_eq; cases k using Fin.cases <;> simp [Region.alpha, Subst.id]
+  · simp only [vwk1, packed_in, ← vsubst_fromWk, vsubst_vsubst]
+    congr; ext k
+    simp only [List.get_eq_getElem, List.length_cons, Term.Subst.Eqv.get_comp,
+      Term.Subst.Eqv.get_unpack, subst_fromWk]
+    rw [<-Term.Eqv.wk1, <-Term.Eqv.wk1]
+    simp [Term.Eqv.wk1_pi_n]
 
 end Region
 

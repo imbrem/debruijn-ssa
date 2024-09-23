@@ -1,4 +1,4 @@
-import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 
 namespace BinSyntax
 
@@ -77,3 +77,8 @@ theorem Eqv.dinaturality_gloop {Γ : Ctx α ε} {L : LCtx α}
   = gloop A β ((σ.get (0 : Fin 1)).lsubst
     (Subst.Eqv.fromFCFG_append (K := [A]) (Fin.elim1 G)).vlift)
   := dinaturality (Γ := Γ) (R := [A]) (R' := [B]) (L := L) (σ := σ) (β := β) (G := Fin.elim1 G)
+
+theorem Eqv.uniform_gloop {Γ : Ctx α ε} {L : LCtx α}
+  {β : Eqv φ Γ (A::L)} {e : Term.Eqv φ ((A, ⊥)::Γ) (B, ⊥)}
+  {r : Eqv φ ((B, ⊥)::Γ) (B::L)} {s : Eqv φ ((A, ⊥)::Γ) (A::L)}
+  (hrs : (ret e) ;; r = s ;; (ret e)) : gloop B (β.wrseq (ret e)) r = gloop A β s := Eqv.uniform hrs

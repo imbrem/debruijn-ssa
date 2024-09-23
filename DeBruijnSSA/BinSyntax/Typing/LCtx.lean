@@ -383,6 +383,9 @@ theorem LCtx.get_dist {X : Ty α} {L : LCtx α} {i}
   : (L.dist X).get i = Ty.prod X (L.get <| i.cast L.length_dist)
   := getElem_dist
 
+theorem LCtx.dist_append {X : Ty α} {L K : LCtx α} : (L ++ K).dist X = L.dist X ++ K.dist X
+  := by induction L <;> simp [*]
+
 @[simp]
 def LCtx.dpack (X : Ty α) : LCtx α → Ty α
   | [] => Ty.empty
