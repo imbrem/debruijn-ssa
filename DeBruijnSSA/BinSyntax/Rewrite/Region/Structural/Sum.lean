@@ -25,17 +25,66 @@ theorem Eqv.unpack_def {Γ : Ctx α ε} {R : LCtx α}
     simp [
       Region.unpack, Region.nil, Region.ret, Region.lwk0, Region.vwk_lwk, Region.vwk_lift_unpack]
 
--- def Eqv.pack_case {Γ : Ctx α ε} {R : LCtx α} {X : Ty α}
---   (r : Eqv φ ((X.prod R, ⊥)::Γ) (R.dist X, e)) : Eqv φ ((R.dist X, ⊥)::Γ) (R.pack, e) :=
---   case (Term.Eqv.dist X)
---     (br (List.length R) Term.Eqv.pi_r (by simp))
---     (lwk_id LCtx.Wkn.id_right_dist r)
+def Eqv.pack_case {Γ : Ctx α ε} {R L : LCtx α}
+  (a : Term.Eqv φ Γ (R.pack, e)) (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) L)
+  : Eqv φ Γ L := match R with
+  | [] => let1 a loop
+  | _::R => case a
+    (pack_case (e := e) Term.Eqv.nil (λi => (G i.succ).vwk1))
+    (G (0 : Fin (R.length + 1)))
 
-def Eqv.pack_coprod {Γ : Ctx α ε} {R : LCtx α}
-  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (A::L)) : Eqv φ ((R.pack, ⊥)::Γ) (A::L) :=
+theorem Eqv.vwk_pack_case {Γ : Ctx α ε} {R L : LCtx α}
+  {a : Term.Eqv φ Δ (R.pack, e)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Δ) L}
+  {ρ : Γ.InS Δ}
+  : (pack_case a G).vwk ρ = pack_case (a.wk ρ) (λi => (G i).vwk ρ.slift) := by
+  induction R generalizing Γ Δ with
+  | nil => simp [pack_case]
+  | cons A R I =>
+    simp only [pack_case, vwk_case, I]
+    congr; funext i; simp only [vwk1, vwk_vwk]
+    congr 1; ext k; cases k <;> rfl
+
+theorem Eqv.vwk1_pack_case {Γ : Ctx α ε} {R L : LCtx α}
+  (a : Term.Eqv φ (V::Γ) (R.pack, e)) (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::V::Γ) L)
+  : (pack_case a G).vwk1 (inserted := inserted) = pack_case (φ := φ) a.wk1 (λi => (G i).vwk2) := by
+  simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_pack_case]
+  simp only [Ctx.InS.lift_wk0, Ctx.InS.lift_wk1]; rfl
+
+-- TODO: vsubst_pack_case, lwk_pack_case, lsubst_pack_case
+
+def Eqv.pack_coprod {Γ : Ctx α ε} {R L : LCtx α}
+  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) L) : Eqv φ ((R.pack, ⊥)::Γ) L :=
   match R with
-  | [] => zero
+  | [] => loop
   | _::R => coprod (pack_coprod (λi => G i.succ)) (G (0 : Fin (R.length + 1)))
+
+theorem Eqv.pack_case_nil_vwk1 {Γ : Ctx α ε} {R L : LCtx α}
+  (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) L)
+  : pack_case (e := e) Term.Eqv.nil (λi => (G i).vwk1) = pack_coprod G := by induction R with
+  | nil => rw [
+    pack_coprod, pack_case, <-Term.Eqv.wk_eff_nil (h := bot_le), let1_wk_eff,
+    let1_beta, vsubst_loop
+  ]
+  | cons A R I =>
+    rw [
+      pack_case, pack_coprod, <-I, coprod, <-Term.Eqv.wk_eff_nil (h := bot_le), case_wk_eff,
+      vwk1_pack_case]
+    simp only [vwk1_vwk2]
+    rfl
+
+-- TODO: vwk_lift_pack_coprod, vsubst_lift_pack_coprod, lwk_pack_coprod, lsubst_pack_coprod
+
+theorem Eqv.pack_coprod_empty {Γ : Ctx α ε} {L : LCtx α}
+  (G : (i : Fin 0) → Eqv φ (⟨[].get i, ⊥⟩::Γ) L) : (pack_coprod (R := []) G) = loop := rfl
+
+theorem Eqv.pack_coprod_cons {Γ : Ctx α ε} {R : LCtx α} {L : LCtx α}
+  (G : (i : Fin (R.length + 1)) → Eqv φ (⟨(A::R).get i, ⊥⟩::Γ) L)
+  : (pack_coprod (R := A::R) G) = coprod (pack_coprod (λi => G i.succ)) (G (0 : Fin (R.length + 1)))
+  := rfl
+
+theorem Eqv.pack_coprod_zero {Γ : Ctx α ε} {L : LCtx α}
+  (G : (i : Fin 0) → Eqv φ (⟨[].get i, ⊥⟩::Γ) (A::L)) : (pack_coprod (R := []) G) = zero := by
+  rw [pack_coprod_empty]; apply Eqv.zero_eq
 
 @[simp]
 theorem Eqv.vwk_lift_unpack {Γ Δ : Ctx α ε} {R : LCtx α} (ρ : Γ.InS Δ)
@@ -56,6 +105,32 @@ theorem Eqv.vsubst_lift_unpack {Γ Δ : Ctx α ε} {R : LCtx α} (σ : Term.Subs
   rw [unpack_def, Term.Subst.Eqv.lift_quot, vsubst_quot, unpack_def]
   apply Eqv.eq_of_reg_eq
   simp
+
+theorem Eqv.lsubst_vlift_fromFCFG_unpack {Γ : Ctx α ε} {L K : LCtx α}
+  {G : (i : Fin L.length) → Eqv φ (⟨L.get i, ⊥⟩::Γ) K}
+  : Eqv.lsubst (Subst.Eqv.fromFCFG G).vlift Eqv.unpack = Eqv.pack_coprod G := by
+  induction L with
+  | nil => simp [unpack, pack_coprod]
+  | cons A L I =>
+    simp [unpack, pack_coprod, lsubst_vlift_coprod]
+    rw [<-I, lwk0, <-lsubst_toSubstE, lsubst_lsubst]
+    congr
+    · ext k; simp only [List.get_eq_getElem, Subst.Eqv.get_comp, Subst.Eqv.get_toSubstE,
+      Set.mem_setOf_eq, LCtx.InS.coe_wk0, Nat.succ_eq_add_one, lsubst_br, List.length_cons, id_eq,
+      List.getElem_cons_succ, Subst.Eqv.get_vlift, Subst.Eqv.get_fromFCFG, vwk_id_eq,
+      vsubst0_var0_vwk1]; rfl
+    · simp [<-br_zero_eq_ret, <-ret_nil, Subst.Eqv.get_fromFCFG, Term.Eqv.nil, vsubst0_var0_vwk1]
+
+theorem Eqv.lsubst_vlift_unpack {Γ : Ctx α ε} {L K : LCtx α} (σ : Subst.Eqv φ Γ L K)
+  : Eqv.lsubst σ.vlift Eqv.unpack = Eqv.pack_coprod σ.get := by
+  rw [<-Subst.Eqv.fromFCFG_get (σ := σ), lsubst_vlift_fromFCFG_unpack, Subst.Eqv.fromFCFG_get]
+
+theorem Eqv.lsubst_fromFCFG_vwk1_unpack {Γ : Ctx α ε} {R L : LCtx α}
+  {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) L}
+  : Eqv.lsubst (Subst.Eqv.fromFCFG (λi => (G i).vwk1)) Eqv.unpack
+  = Eqv.pack_coprod G := by
+  convert Eqv.lsubst_vlift_fromFCFG_unpack
+  ext l; simp [Subst.Eqv.get_fromFCFG]
 
 def Subst.Eqv.unpack {Γ : Ctx α ε} {R : LCtx α} : Subst.Eqv φ Γ [R.pack] R
   := Region.Eqv.unpack.csubst
@@ -285,7 +360,7 @@ theorem Eqv.lsubst_pack_append_vlift_unpack {Γ : Ctx α ε} {L R : LCtx α}
         funext k
         simp only [Subst.comp, Region.lsubst, Subst.vlift, Nat.succ_eq_add_one, Function.comp_apply,
           Subst.liftn, add_lt_add_iff_right, Region.lwk, zero_add, Nat.reduceSubDiff,
-          vsubst0_var0_vwk1, Subst.vwk1_comp_fromLwk, vwk2_vwk1, lsubst_fromLwk]
+          Region.vsubst0_var0_vwk1, Subst.vwk1_comp_fromLwk, vwk2_vwk1, lsubst_fromLwk]
         split <;> rfl
       · simp [
           lwk0, Term.Eqv.seq, let1_let1, Term.Eqv.sum, Term.Eqv.coprod, Term.Eqv.wk2, Term.Eqv.nil,
@@ -318,6 +393,12 @@ theorem Eqv.lsubst_pack_append_vlift_unpack {Γ : Ctx α ε} {L R : LCtx α}
         Nat.reduceSub, Nat.succ_eq_add_one, Nat.reduceAdd]
       apply eq_of_reg_eq
       simp
+
+theorem Eqv.pack_coprod_pack_append {Γ : Ctx α ε} {L R : LCtx α}
+  : pack_coprod (Subst.Eqv.liftn_append R Subst.Eqv.pack).get
+  = unpack_right_out (φ := φ) (Γ := Γ) (R := R) (L := L) := by
+  convert lsubst_pack_append_vlift_unpack
+  rw [lsubst_vlift_unpack]
 
 theorem Eqv.lsubst_pack_append_unpack {Γ : Ctx α ε} {L R : LCtx α}
   : lsubst (Subst.Eqv.liftn_append R Subst.Eqv.pack) (unpack (φ := φ) (Γ := Γ) (R := R ++ L))
@@ -433,10 +514,11 @@ theorem Eqv.extend_unpack_unpacked_app_out
   : r.unpacked_app_out.lsubst Subst.Eqv.unpack.extend = r.unpacked_right_out := by
   rw [unpacked_app_out, lsubst_lsubst, Subst.Eqv.extend_unpack_comp_unpack_app_out]; rfl
 
-theorem Eqv.packed_out_cfg_gloop {Γ : Ctx α ε} {R L : LCtx α}
+theorem Eqv.packed_out_cfg_gloop_unpack {Γ : Ctx α ε} {R L : LCtx α}
   {β : Eqv φ Γ (R ++ L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : (cfg R β G).packed_out
-  = gloop R.pack β.packed_out.unpacked_app_out
+  = gloop R.pack
+      β.packed_out.unpacked_app_out
       (unpack.lsubst (Subst.Eqv.fromFCFG (λi => (G i).packed_out.unpacked_app_out.vwk1))) := calc
   _ = (cfg R (β.packed_out.unpacked_app_out.lsubst Subst.Eqv.unpack.extend)
               (λi => (G i).packed_out.unpacked_app_out.lsubst Subst.Eqv.unpack.extend.vlift))
@@ -446,6 +528,14 @@ theorem Eqv.packed_out_cfg_gloop {Γ : Ctx α ε} {R L : LCtx α}
     congr
     · ext k; simp [Subst.Eqv.get_fromFCFG]
     · simp [Subst.Eqv.unpack]
+
+theorem Eqv.packed_out_cfg_gloop {Γ : Ctx α ε} {R L : LCtx α}
+  {β : Eqv φ Γ (R ++ L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
+  : (cfg R β G).packed_out
+  = gloop R.pack
+    β.packed_out.unpacked_app_out
+    (pack_coprod (λi => (G i).packed_out.unpacked_app_out))
+  := by rw [packed_out_cfg_gloop_unpack, lsubst_fromFCFG_vwk1_unpack]
 
 -- theorem Eqv.packed_out_gloop {Γ : Ctx α ε} {R L : LCtx α}
 --   {β : Eqv φ Γ (A::L)} {G : Eqv φ (⟨A, ⊥⟩::Γ) (A::L)}

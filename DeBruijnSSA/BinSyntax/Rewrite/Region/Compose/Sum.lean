@@ -11,20 +11,20 @@ namespace Region
 
 open Term.Eqv
 
-def Eqv.coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  (l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)) (r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L))
-  : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) (C::L)
+def Eqv.coprod {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) L) (r : Eqv φ (⟨B, ⊥⟩::Γ) L)
+  : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) L
   := case (var 0 Ctx.Var.shead) l.vwk1 r.vwk1
 
-theorem Eqv.lwk_slift_coprod {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
-  {ρ : L.InS K} {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
-  : (l.coprod r).lwk ρ.slift = (l.lwk ρ.slift).coprod (r.lwk ρ.slift)
+theorem Eqv.lwk_coprod {A B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {ρ : L.InS K} {l : Eqv φ (⟨A, ⊥⟩::Γ) L} {r : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  : (l.coprod r).lwk ρ = (l.lwk ρ).coprod (r.lwk ρ)
   := by simp only [coprod, lwk_case, vwk1_lwk]
 
 theorem Eqv.lwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
   : (l.coprod r).lwk1 (inserted := inserted) = (l.lwk1).coprod (r.lwk1)
-  := by simp only [lwk1, <-LCtx.InS.slift_wk0, lwk_slift_coprod]
+  := by simp only [lwk1, <-LCtx.InS.slift_wk0, lwk_coprod]
 
 theorem Eqv.vwk_slift_coprod {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {ρ : Γ.InS Δ}
@@ -37,6 +37,13 @@ theorem Eqv.vwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
   : (l.coprod r).vwk1 (inserted := inserted) = l.vwk1.coprod r.vwk1 := by
   simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_coprod]
+
+theorem Eqv.lsubst_vlift_coprod {A B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : Subst.Eqv φ Γ L K} {l : Eqv φ (⟨A, ⊥⟩::Γ) L} {r : Eqv φ (⟨B, ⊥⟩::Γ) L}
+  : (l.coprod r).lsubst σ.vlift = (l.lsubst σ.vlift).coprod (r.lsubst σ.vlift)
+  := by
+  simp only [coprod, lsubst_case, vwk1, vwk_lsubst, <-Subst.Eqv.vwk_wk0, Subst.Eqv.vwk_vwk]
+  rfl
 
 theorem Eqv.ret_of_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Term.Eqv φ (⟨A, ⊥⟩::Γ) (C, ⊥)} {r : Term.Eqv φ (⟨B, ⊥⟩::Γ) (C, ⊥)}
@@ -146,7 +153,7 @@ def Eqv.sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.lwk_slift_sum {A B C D : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
   {ρ : L.InS K} {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L)}
   : (l.sum r).lwk ρ.slift = (l.lwk ρ.slift).sum (r.lwk ρ.slift)
-  := by simp only [sum, lwk_slift_coprod, lwk_slift_seq]; rfl
+  := by simp only [sum, lwk_coprod, lwk_slift_seq]; rfl
 
 theorem Eqv.lwk1_sum {A B C D : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (D::L)}

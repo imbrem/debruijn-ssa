@@ -1,6 +1,7 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Functor
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Elgot
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Cast
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Distrib
 
 namespace BinSyntax
@@ -148,14 +149,11 @@ theorem Eqv.packed_case_den {Γ : Ctx α ε} {R : LCtx α}
 
 theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (Δ := Δ)
-  = ret Term.Eqv.split ;; _ ⋊ (β.packed ;; ret Term.Eqv.pack_app) ;; distl_inv
-  ;; coprod pi_r (fixpoint (ret Term.Eqv.distl_pack ;; unpack.lsubst (Subst.Eqv.fromFCFG (λi =>
-    ret (Term.Eqv.nil.cast
-      (V := ((R.dist Γ.pack).get i, ⊥))
-      (V' := (Γ.pack.prod (R.get (i.cast R.length_dist)), ⊥)) rfl (by simp [R.getElem_dist]))
-    ;; ret Term.Eqv.split ⋉ _
-    ;; assoc
-    ;; _ ⋊ ((G (i.cast R.length_dist)).packed ;; ret Term.Eqv.pack_app)
-    ;; sorry
-  ))))
+  = ret Term.Eqv.split ;; _ ⋊ β.packed ;; fixpoint (
+    _ ⋊ ret Term.Eqv.pack_app ;; distl_inv ;; sum pi_r (
+      ret Term.Eqv.distl_pack ;; pack_coprod
+        (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
+            ;; _ ⋊ (G (i.cast R.length_dist)).packed
+        )
+    ))
   := sorry

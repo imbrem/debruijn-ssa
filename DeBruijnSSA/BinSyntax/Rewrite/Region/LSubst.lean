@@ -459,6 +459,16 @@ theorem Subst.Eqv.vwk_quot {Γ Δ : Ctx α ε} {L K : LCtx α}
   {ρ : Γ.InS Δ} {σ : Subst.InS φ Δ L K}
   : vwk ρ ⟦σ⟧ = ⟦σ.vwk ρ⟧ := rfl
 
+theorem Subst.Eqv.vwk_wk0 {Γ : Ctx α ε} {σ : Subst.Eqv φ Γ L K}
+  : (σ.vwk <| Ctx.InS.wk0 (head := head)) = σ.vlift := by
+  induction σ using Quotient.inductionOn; rfl
+
+theorem Subst.Eqv.vwk_vwk {Γ Δ Ξ : Ctx α ε} {L K : LCtx α}
+  {ρ : Γ.InS Δ} {τ : Δ.InS Ξ} {σ : Subst.Eqv φ Ξ L K}
+  : (σ.vwk τ).vwk ρ = σ.vwk (ρ.comp τ) := by
+  induction σ using Quotient.inductionOn
+  simp [Subst.InS.vwk_vwk]
+
 theorem Eqv.vwk_lsubst {Γ Δ : Ctx α ε}
   {L K : LCtx α} {σ : Subst.Eqv φ Δ L K} {ρ : Γ.InS Δ}
   {r : Eqv φ Δ L}
@@ -716,6 +726,13 @@ theorem Subst.Eqv.get_fromFCFG {Γ : Ctx α ε} {L K : LCtx α}
   {G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) K} {i : Fin L.length}
   : (fromFCFG G).get i = G i
   := by induction G using Eqv.choiceInduction; rw [Subst.Eqv.fromFCFG_quot]; simp
+
+theorem Subst.Eqv.fromFCFG_get {Γ : Ctx α ε} {L K : LCtx α} {σ : Subst.Eqv φ Γ L K}
+  : (fromFCFG σ.get) = σ := by ext k; simp [Subst.Eqv.get_fromFCFG]
+
+theorem Subst.Eqv.get_fromFCFG' {Γ : Ctx α ε} {L K : LCtx α}
+  {G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) K}
+  : (fromFCFG G).get = G := funext (λ_ => get_fromFCFG)
 
 def Subst.Eqv.fromFCFG_append {Γ : Ctx α ε} {L K R : LCtx α}
   (G : ∀i : Fin L.length, Region.Eqv φ ((L.get i, ⊥)::Γ) (K ++ R))

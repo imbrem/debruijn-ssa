@@ -819,6 +819,13 @@ theorem Eqv.vwk1_let2 {L : LCtx α}
   apply Eqv.eq_of_reg_eq
   simp [Nat.liftnWk_succ]
 
+theorem Eqv.vsubst0_var0_vwk1 {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ (head::Γ) L}
+  : (r.vwk1 (inserted := _)).vsubst (Term.Eqv.var 0 Ctx.Var.shead).subst0 = r := by
+  induction r using Quotient.inductionOn
+  apply eq_of_reg_eq
+  simp
+  exact Region.vsubst0_var0_vwk1 _
+
 def Eqv.vswap01
   {Γ : Ctx α ε} {L : LCtx α} (r : Eqv φ (left::right::Γ) L)
   : Eqv φ (right::left::Γ) L := Eqv.vwk Ctx.InS.swap01 r

@@ -533,6 +533,11 @@ theorem Region.Subst.InS.get_vwk {Γ Δ : Ctx α ε}
   : (σ.vwk ρ).get i = (σ.get i).vwk ρ.slift
   := rfl
 
+theorem Region.Subst.InS.vwk_vwk {Γ Δ Ξ : Ctx α ε}
+  {ρ : Γ.InS Δ} {τ : Δ.InS Ξ} {σ : Region.Subst.InS φ Ξ L K}
+  : (σ.vwk τ).vwk ρ = σ.vwk (ρ.comp τ)
+  := by ext; simp [Region.vwk_vwk, Nat.liftWk_comp]
+
 def Region.Subst.InS.vsubst {Γ Δ : Ctx α ε}
   (ρ : Term.Subst.InS φ Γ Δ) (σ : Region.Subst.InS φ Δ L K)
   : Region.Subst.InS φ Γ L K
