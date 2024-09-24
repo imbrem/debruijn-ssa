@@ -1,4 +1,5 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Elgot
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Functor
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Elgot
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Cast
@@ -96,7 +97,7 @@ theorem Eqv.packed_let2_den {Γ : Ctx α ε} {R : LCtx α}
     Term.Eqv.subst_liftn₂_var_add_2, Term.Eqv.subst_liftn₂_var_one, let2_pair, let1_beta,
     ↓dreduceIte, let2_seq, vwk1_packed]
     congr
-    simp [<-vsubst_fromWk, vsubst_vsubst, packed, packed_in]
+    simp only [packed, packed_in, vsubst_vsubst, ← vsubst_fromWk]
     congr 1
     ext k
     apply Term.Eqv.eq_of_term_eq
@@ -130,12 +131,21 @@ theorem Eqv.packed_case_den {Γ : Ctx α ε} {R : LCtx α}
     simp only [Term.Subst.pi_n, Term.pi_n, Term.Subst.comp, Term.subst_pn]
     rfl
   · rw [distl_inv, ret_seq]
-    simp [vwk1_let2, vwk3, Nat.liftnWk, let2_pair, let1_beta]
+    simp only [let1_beta, vwk1_let2, Term.Eqv.wk1_var0, List.length_cons, Fin.zero_eta,
+      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vwk3, vwk_case, Term.Eqv.wk_var,
+      Set.mem_setOf_eq, Ctx.InS.coe_wk3, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte, vwk_br,
+      Term.Eqv.wk_inl, Term.Eqv.wk_pair, Ctx.InS.coe_lift, Nat.liftWk_succ, Nat.one_lt_ofNat,
+      Nat.reduceAdd, Nat.liftWk_zero, Term.Eqv.wk_inr, vsubst_let2, Term.Eqv.var0_subst0,
+      Term.Eqv.wk_res_self, vsubst_case, ge_iff_le, le_refl, Term.Eqv.subst_liftn₂_var_zero,
+      vsubst_br, Term.Eqv.subst_inl, Term.Eqv.subst_pair, Term.Eqv.subst_lift_var_succ,
+      Term.Eqv.subst_liftn₂_var_one, Term.Eqv.wk0_var, Term.Eqv.subst_lift_var_zero,
+      Term.Eqv.subst_inr, let2_pair, zero_add, Term.Eqv.var_succ_subst0, ↓dreduceIte, Nat.reduceSub,
+      Nat.succ_eq_add_one]
     rw [<-ret, <-ret, case_seq]
     simp only [vwk1_coprod, vwk1_packed, ret_inl_coprod, ret_inr_coprod]
     simp only [ret_seq, vwk1_packed]
     congr 1 <;> {
-      simp [vwk1, <-vsubst_fromWk, vsubst_vsubst, packed, packed_in]
+      simp only [vwk1, packed, packed_in, vsubst_vsubst, ← vsubst_fromWk]
       congr 1
       ext k
       apply Term.Eqv.eq_of_term_eq
@@ -147,6 +157,8 @@ theorem Eqv.packed_case_den {Γ : Ctx α ε} {R : LCtx α}
       rfl
     }
 
+open Term.Eqv
+
 theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (Δ := Δ)
   = ret Term.Eqv.split ;; _ ⋊ β.packed ;; fixpoint (
@@ -154,6 +166,11 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
       ret Term.Eqv.distl_pack ;; pack_coprod
         (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
             ;; _ ⋊ (G (i.cast R.length_dist)).packed
-        )
-    ))
-  := sorry
+        ))) := by
+  rw [
+    packed_cfg_unpack, letc_to_vwk1, letc_vwk1_den, ret_seq, <-vsubst_packed_out,
+    <-vwk1_packed_out, <-ret_seq
+  ]
+  simp only [seq_assoc]
+  congr 1
+  sorry

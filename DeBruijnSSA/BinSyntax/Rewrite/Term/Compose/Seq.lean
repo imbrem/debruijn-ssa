@@ -175,3 +175,8 @@ theorem Eqv.let1_seq {A B C : Ty α} {Γ : Ctx α ε}
 theorem Eqv.seq_assoc {A B C D : Ty α} {Γ : Ctx α ε}
   (a : Eqv φ ((A, ⊥)::Γ) (B, e)) (b : Eqv φ ((B, ⊥)::Γ) (C, e)) (c : Eqv φ ((C, ⊥)::Γ) (D, e))
   : a ;;' (b ;;' c) = (a ;;' b) ;;' c := by simp only [seq, let1_let1, wk1_let1, wk1_wk2]
+
+theorem Eqv.Pure.seq_dist_pair {Γ : Ctx α ε}
+  {a : Eqv φ ((X, ⊥)::Γ) ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+  {c : Eqv φ ((A, ⊥)::Γ) (C, e)} (h : a.Pure) : a ;;' (pair b c) = pair (a ;;' b) (a ;;' c)
+  := by simp [seq, h.let1_dist_pair]

@@ -465,6 +465,18 @@ theorem Eqv.vwk_wrseq {B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   induction right using Quotient.inductionOn;
   simp only [wrseq_quot, vwk_quot, InS.vwk_wrseq]
 
+theorem Eqv.vsubst_wrseq {B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.Eqv φ Γ Δ}
+  {left : Eqv φ Δ (B::L)}
+  {right : Eqv φ (⟨B, ⊥⟩::Δ) (C::L)}
+  : (left.wrseq right).vsubst σ
+  = (left.vsubst σ).wrseq (right.vsubst (σ.lift (le_refl _))) := by
+  induction left using Quotient.inductionOn;
+  induction right using Quotient.inductionOn;
+  induction σ using Quotient.inductionOn;
+  simp only [wrseq_quot, vsubst_quot, Term.Subst.Eqv.lift_quot, InS.vsubst_wrseq]
+  rfl
+
 theorem Eqv.lwk_lift_wrseq {B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
   {ρ : LCtx.InS L K}
   {left : Eqv φ Γ (B::L)}
@@ -540,6 +552,10 @@ theorem Eqv.wseq_eq_seq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
       vsubst_br, Term.Eqv.var0_subst0, Term.Eqv.wk_res_self]
     rfl
   | succ k => simp [Subst.Eqv.get_comp, cfgSubst'_get, get_alpha0, Term.Eqv.nil]
+
+theorem Eqv.seq_eq_wrseq {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {left : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)} {right : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : left ;; right = left.wrseq right.vwk1 := by rw [<-wseq_eq_seq, wseq_eq_wrseq]
 
 theorem Eqv.lwk_lift_seq {A B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
   {ρ : LCtx.InS L K}
@@ -801,6 +817,20 @@ theorem Eqv.seq_cfg {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     ((f.lwk LCtx.InS.shf.slift ;; g.shf).ushf)
     (λi => (G i).vwk1)
   := by simp only [<-wseq_eq_seq, wseq_cfg]
+
+theorem Eqv.wrseq_cont {B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  (f : Eqv φ Γ (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))
+  (h : Eqv φ (⟨C, ⊥⟩::Γ) (C::D::L))
+  : f.wrseq (cfg [C] g (Fin.elim1 h.vwk1))
+  = cfg [C] (f.lwk1.wrseq g) (Fin.elim1 h)
+  := by
+  convert Eqv.wrseq_cfg (R := [C]) f g (Fin.elim1 h)
+  · rename Fin 1 => i; cases i using Fin.elim1; rfl
+  · induction f using Quotient.inductionOn
+    induction g using Quotient.inductionOn
+    induction h using Quotient.inductionOn
+    apply Eqv.eq_of_reg_eq
+    rfl
 
 theorem Eqv.seq_cont {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (f : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) (g : Eqv φ (⟨B, ⊥⟩::Γ) (C::D::L))

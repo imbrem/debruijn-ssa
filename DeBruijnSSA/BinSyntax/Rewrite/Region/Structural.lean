@@ -2,6 +2,8 @@ import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Sum
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Product
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Distrib
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural
+import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Distrib
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Cast
 
 namespace BinSyntax
 
@@ -121,25 +123,37 @@ theorem Eqv.packed_case {Γ : Ctx α ε} {R : LCtx α}
 
 theorem Eqv.packed_cfg_unpack {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (Δ := Δ)
-  = gloop R.pack
+  = letc R.pack
       β.packed.unpacked_app_out
       (unpack.lsubst (Subst.Eqv.fromFCFG (λi =>
         (let1 (pair (var 2 (by simp)) (var 0 Ctx.Var.shead)) (G i).packed.unpacked_app_out)))) := by
-  rw [packed_def', packed_in_cfg, packed_out_cfg_gloop_unpack, <-packed_def']
+  rw [packed_def', packed_in_cfg, packed_out_cfg_letc_unpack, <-packed_def']
   congr; funext i
   rw [vwk1_unpacked_app_out, packed_out_let1, <-packed_def', <-unpacked_app_out_let1]
   simp
 
 theorem Eqv.packed_cfg {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (Δ := Δ)
-  = gloop R.pack
+  = letc R.pack
       β.packed.unpacked_app_out
       (pack_coprod
         (λi => (let1 (pair (var 1 (by simp)) (var 0 Ctx.Var.shead)) (G i).packed.unpacked_app_out)))
   := by
-  rw [packed_def', packed_in_cfg, packed_out_cfg_gloop, <-packed_def']
+  rw [packed_def', packed_in_cfg, packed_out_cfg_letc, <-packed_def']
   congr; funext i
   rw [packed_out_let1, <-packed_def', unpacked_app_out_let1]
+
+theorem Eqv.packed_cfg_split {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
+  : (cfg R β G).packed (Δ := Δ)
+  = letc (Γ.pack.prod R.pack)
+      (ret Term.Eqv.split ;; _ ⋊ β.packed.unpacked_app_out)
+      (ret Term.Eqv.split ⋉ _ ;; assoc
+        ;; _ ⋊ (ret Term.Eqv.distl_pack
+          ;; pack_coprod (λi => acast R.get_dist
+            ;; (G (i.cast R.length_dist)).packed.unpacked_app_out))) := by
+  sorry
+
+-- TODO: unpacked_app_out ltimes dinaturality
 
 end Region
 

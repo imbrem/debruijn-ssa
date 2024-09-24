@@ -285,6 +285,14 @@ theorem InS.vwk_wrseq {B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   = (left.vwk ρ).wrseq (right.vwk ρ.slift) := by
   ext; simp only [coe_vwk, coe_wrseq, Ctx.InS.coe_lift, Region.vwk_wrseq]
 
+theorem InS.vsubst_wrseq {B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.InS φ Γ Δ}
+  {left : InS φ Δ (B::L)}
+  {right : InS φ (⟨B, ⊥⟩::Δ) (C::L)}
+  : (left.wrseq right).vsubst σ
+  = (left.vsubst σ).wrseq (right.vsubst (σ.slift)) := by
+  ext; simp only [coe_vsubst, coe_wrseq, Region.vsubst_wrseq]; rfl
+
 theorem InS.lwk_lift_wrseq {B C : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
   {ρ : LCtx.InS L K}
   {left : InS φ Γ (B::L)}

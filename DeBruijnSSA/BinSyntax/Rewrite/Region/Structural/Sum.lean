@@ -1,7 +1,7 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
-import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Gloop
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Letc
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Sum
 import DeBruijnSSA.BinSyntax.Typing.Region.Structural
 
@@ -170,6 +170,21 @@ theorem Subst.Eqv.vliftn₂_pack {Γ : Ctx α ε} {R : LCtx α}
   : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R)).vliftn₂ (left := left) (right := right)
   = pack := by simp [Subst.Eqv.vliftn₂_eq_vlift_vlift]
 
+@[simp]
+theorem Subst.Eqv.vwk_pack {Γ : Ctx α ε} {R : LCtx α} {ρ : Γ.InS Δ}
+  : (Subst.Eqv.pack (φ := φ) (R := R)).vwk ρ = pack := by
+  rw [pack, vwk_quot, pack]
+  congr
+  ext; simp [Subst.pack]
+
+@[simp]
+theorem Subst.Eqv.vsubst_pack {Γ Δ : Ctx α ε} {R : LCtx α} (σ : Term.Subst.Eqv φ Δ Γ)
+  : (Subst.Eqv.pack (φ := φ) (R := R)).vsubst σ = pack := by
+  induction σ using Quotient.inductionOn
+  rw [pack, vsubst_quot, pack]
+  congr
+  ext; simp [Subst.pack]
+
 theorem Eqv.vsubst0_pack_unpack {Γ : Ctx α ε} {R : LCtx α} {ℓ : Fin R.length}
   : (unpack (φ := φ) (Γ := _::Γ) (R := R)).vsubst (Term.Eqv.inj_n R ℓ).subst0
   = br ℓ (Term.Eqv.var 0 Ctx.Var.shead) (by simp) := by
@@ -220,6 +235,15 @@ def Eqv.packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ 
 @[simp]
 theorem Eqv.packed_out_quot {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ R)
   : packed_out ⟦r⟧ = ⟦r.packed_out⟧ := rfl
+
+@[simp]
+theorem Eqv.vwk_packed_out {Γ : Ctx α ε} {R : LCtx α} {ρ : Γ.InS Δ} {r : Eqv φ Δ R}
+  : r.packed_out.vwk ρ = (r.vwk ρ).packed_out := by simp [packed_out, vwk_lsubst]
+
+@[simp]
+theorem Eqv.vsubst_packed_out {Γ : Ctx α ε} {R : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ}
+  {r : Eqv φ Δ R} : r.packed_out.vsubst σ = (r.vsubst σ).packed_out := by
+  simp [packed_out, vsubst_lsubst]
 
 theorem Eqv.packed_out_br {Γ : Ctx α ε} {L : LCtx α}
   {ℓ} {a : Term.Eqv φ Γ (A, ⊥)} {hℓ}
@@ -319,8 +343,8 @@ theorem Eqv.packed_out_inj {Γ : Ctx α ε} {R : LCtx α} {r s : Eqv φ Γ R}
 theorem Eqv.cfg_unpack_rec {Γ : Ctx α ε} {R L : LCtx α}
   {β : Eqv φ Γ (R.pack::L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R.pack::L)}
   : cfg R (β.lsubst Subst.Eqv.unpack.extend) (λi => (G i).lsubst Subst.Eqv.unpack.extend)
-  = gloop R.pack β (Eqv.unpack.lsubst (Subst.Eqv.fromFCFG G).vlift) := by
-  convert dinaturality_to_gloop_rec
+  = letc R.pack β (Eqv.unpack.lsubst (Subst.Eqv.fromFCFG G).vlift) := by
+  convert dinaturality_to_letc_rec
   · rw [Subst.Eqv.vlift_extend, Subst.Eqv.vlift_unpack]
   · rw [Subst.Eqv.unpack_zero]
 
@@ -514,33 +538,33 @@ theorem Eqv.extend_unpack_unpacked_app_out
   : r.unpacked_app_out.lsubst Subst.Eqv.unpack.extend = r.unpacked_right_out := by
   rw [unpacked_app_out, lsubst_lsubst, Subst.Eqv.extend_unpack_comp_unpack_app_out]; rfl
 
-theorem Eqv.packed_out_cfg_gloop_unpack {Γ : Ctx α ε} {R L : LCtx α}
+theorem Eqv.packed_out_cfg_letc_unpack {Γ : Ctx α ε} {R L : LCtx α}
   {β : Eqv φ Γ (R ++ L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : (cfg R β G).packed_out
-  = gloop R.pack
+  = letc R.pack
       β.packed_out.unpacked_app_out
       (unpack.lsubst (Subst.Eqv.fromFCFG (λi => (G i).packed_out.unpacked_app_out.vwk1))) := calc
   _ = (cfg R (β.packed_out.unpacked_app_out.lsubst Subst.Eqv.unpack.extend)
               (λi => (G i).packed_out.unpacked_app_out.lsubst Subst.Eqv.unpack.extend.vlift))
       := by simp [packed_out_cfg, extend_unpack_unpacked_app_out, Subst.Eqv.vlift_extend]
   _ = _ := by
-    rw [dinaturality_to_gloop_rec]
+    rw [dinaturality_to_letc_rec]
     congr
     · ext k; simp [Subst.Eqv.get_fromFCFG]
     · simp [Subst.Eqv.unpack]
 
-theorem Eqv.packed_out_cfg_gloop {Γ : Ctx α ε} {R L : LCtx α}
+theorem Eqv.packed_out_cfg_letc {Γ : Ctx α ε} {R L : LCtx α}
   {β : Eqv φ Γ (R ++ L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
   : (cfg R β G).packed_out
-  = gloop R.pack
+  = letc R.pack
     β.packed_out.unpacked_app_out
     (pack_coprod (λi => (G i).packed_out.unpacked_app_out))
-  := by rw [packed_out_cfg_gloop_unpack, lsubst_fromFCFG_vwk1_unpack]
+  := by rw [packed_out_cfg_letc_unpack, lsubst_fromFCFG_vwk1_unpack]
 
--- theorem Eqv.packed_out_gloop {Γ : Ctx α ε} {R L : LCtx α}
+-- theorem Eqv.packed_out_letc {Γ : Ctx α ε} {R L : LCtx α}
 --   {β : Eqv φ Γ (A::L)} {G : Eqv φ (⟨A, ⊥⟩::Γ) (A::L)}
---   : (gloop A β G).packed_out
---   = gloop (Ty.empty.coprod A)
+--   : (letc A β G).packed_out
+--   = letc (Ty.empty.coprod A)
 --     (β.packed_out.unpacked_app_out (R := [A]))
 --     (coprod zero nil ;; G.packed_out.unpacked_app_out (R := [A])) := by sorry
 

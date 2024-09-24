@@ -652,6 +652,17 @@ theorem Eqv.subst_liftn₂_tensor {A A' B B' : Ty α} {Δ : Ctx α ε} {σ : Sub
   = tensor (l.subst (σ.liftn₂ (le_refl _) (le_refl _))) (r.subst (σ.liftn₂ (le_refl _) (le_refl _)))
   := by simp only [←Subst.Eqv.lift_lift, subst_lift_tensor]
 
+def Eqv.tensor_eq_pair {A A' B B' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩}
+  : tensor l r = pair (pi_l ;;' l) (pi_r ;;' r)
+  := by
+  simp only [tensor, Pure.nil, Pure.let2_dist_pair, pi_l, pl, seq_let2, pi_r, pr]
+  simp only [seq, let1_beta_var1, let1_beta_var0, subst0_var0_wk1]
+  congr
+  simp only [wk0, wk1, ← subst_fromWk, subst_subst]
+  congr 1
+  ext k; cases k using Fin.cases <;> rfl
+
 def Eqv.ltimes {A A' : Ty α} {Γ : Ctx α ε} (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (B)
   : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A'.prod B, e⟩ := tensor l nil
 
@@ -930,6 +941,10 @@ theorem Eqv.split_tensor {A B C : Ty α} {Γ : Ctx α ε}
     apply Eqv.eq_of_term_eq
     cases k using Fin.cases <;> rfl
   }
+
+theorem Eqv.Pure.dup_pair {A B : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩) (h : l.Pure) : l ;;' Eqv.split = l.pair l
+  := by rw [h.dup, split_tensor]
 
 theorem Eqv.pair_tensor_of_comm {A B B' C C' : Ty α} {Γ : Ctx α ε}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', e⟩}
