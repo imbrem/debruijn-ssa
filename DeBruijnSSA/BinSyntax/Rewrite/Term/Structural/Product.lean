@@ -126,9 +126,16 @@ theorem Eqv.pi_n_def {Γ Δ : Ctx α ε} (i : Fin Γ.length) :
 theorem Eqv.pi_n_zero {Γ Δ : Ctx α ε}
   : Eqv.pi_n (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) (0 : Fin (Γ.length + 1)) = pi_r := rfl
 
+theorem Eqv.pi_n_zero' {Γ Δ : Ctx α ε}
+  : Eqv.pi_n (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) ⟨0, by simp⟩ = pi_r := rfl
+
 theorem Eqv.pi_n_succ {Γ Δ : Ctx α ε} (i : Fin Γ.length)
   : pi_n (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) i.succ = pi_l ;;' pi_n i := by
   rw [seq, <-wk_eff_pi_l, let1_beta, wk1_pi_n, subst0_pi_l_pi_n]
+
+theorem Eqv.pi_n_succ' {Γ Δ : Ctx α ε} (i : Fin Γ.length)
+  : pi_n (φ := φ) (Γ := V::Γ) (Δ := Δ) (e := e) ⟨i + 1, by simp⟩ = pi_l ;;' pi_n i
+  := pi_n_succ i
 
 theorem Eqv.pi_n_one {Γ Δ : Ctx α ε}
   : Eqv.pi_n (φ := φ) (Γ := V::V'::Γ) (Δ := Δ) (e := e) (1 : Fin (Γ.length + 2))

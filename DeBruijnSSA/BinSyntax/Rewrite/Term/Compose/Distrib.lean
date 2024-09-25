@@ -15,6 +15,25 @@ def Eqv.distl_inv {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨A.prod (B.coprod C), ⊥⟩::Γ) ⟨(A.prod B).coprod (A.prod C), e⟩
   := let2 nil (coprod (inl (pair (var 1 (by simp)) nil)) (inr (pair (var 1 (by simp)) nil)))
 
+@[simp]
+theorem Eqv.wk1_distl_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : (distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e)).wk1
+    (inserted := inserted)
+  = distl_inv := rfl
+
+theorem Eqv.seq_distl_inv_eq_let {X A B C : Ty α} {Γ : Ctx α ε}
+  {r : Eqv φ ((X, ⊥)::Γ) ⟨A.prod (B.coprod C), e⟩}
+  : r ;;' distl_inv = let1 r distl_inv
+  := by rw [seq, wk1_distl_inv]
+
+theorem Eqv.seq_distl_inv {X A B C : Ty α} {Γ : Ctx α ε}
+  {r : Eqv φ ((X, ⊥)::Γ) ⟨A.prod (B.coprod C), e⟩}
+  : r ;;' distl_inv
+  = let2 r (coprod (inl (pair (var 1 (by simp)) nil)) (inr (pair (var 1 (by simp)) nil))) := by
+  rw [seq_distl_inv_eq_let, distl_inv]
+  convert let2_bind.symm
+  simp [wk2, coprod, nil, Nat.liftnWk]
+
 theorem Eqv.distl_distl_inv_pure {A B C : Ty α} {Γ : Ctx α ε}
   : (distl : Eqv φ (⟨(A.prod B).coprod (A.prod C), ⊥⟩::Γ) ⟨A.prod (B.coprod C), ⊥⟩)
   ;;' distl_inv = nil := by
