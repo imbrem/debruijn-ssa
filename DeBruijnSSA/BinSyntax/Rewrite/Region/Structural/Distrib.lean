@@ -24,4 +24,7 @@ theorem Eqv.packed_in_pack_coprod_arr {Γ : Ctx α ε} {R L : LCtx α}
   : (pack_coprod G).packed_in (Δ := Δ)
   = ret (distl_pack (X := Γ.pack))
     ;; pack_coprod (λi => acast R.get_dist ;; (G (i.cast R.length_dist)).packed_in)
-  := by rw [packed_in_pack_coprod, ret_seq]; congr; sorry
+  := by
+    rw [packed_in_pack_coprod, ret_seq]; congr;
+    rw [vwk1_pack_coprod]; congr; funext i
+    rw [vwk1_seq, vwk1_packed_in, vwk1_acast, acast_seq]

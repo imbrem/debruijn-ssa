@@ -86,6 +86,22 @@ theorem Eqv.pack_coprod_zero {Γ : Ctx α ε} {L : LCtx α}
   (G : (i : Fin 0) → Eqv φ (⟨[].get i, ⊥⟩::Γ) (A::L)) : (pack_coprod (R := []) G) = zero := by
   rw [pack_coprod_empty]; apply Eqv.zero_eq
 
+theorem Eqv.vwk_lift_pack_coprod {Γ Δ : Ctx α ε} {R L : LCtx α}
+  {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Δ) L} {ρ : Γ.InS Δ}
+  : (pack_coprod G).vwk ρ.slift = pack_coprod (λi => (G i).vwk ρ.slift) := by
+  induction R <;> simp [pack_coprod, vwk_slift_coprod, *]
+
+theorem Eqv.vwk1_pack_coprod {Γ : Ctx α ε} {R L : LCtx α}
+  {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) L}
+  : (pack_coprod G).vwk1 (inserted := inserted) = pack_coprod (λi => (G i).vwk1) := by
+  rw [vwk1, <-Ctx.InS.lift_wk0, vwk_lift_pack_coprod]; rfl
+
+theorem Eqv.vsubst_lift_pack_coprod {Γ Δ : Ctx α ε} {R L : LCtx α}
+  {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Δ) L} {σ : Term.Subst.Eqv φ Γ Δ}
+  : (pack_coprod G).vsubst (σ.lift (le_refl _))
+  = pack_coprod (λi => (G i).vsubst (σ.lift (le_refl _))) := by
+  induction R <;> simp [pack_coprod, vsubst_lift_coprod, *]
+
 @[simp]
 theorem Eqv.vwk_lift_unpack {Γ Δ : Ctx α ε} {R : LCtx α} (ρ : Γ.InS Δ)
   : Eqv.vwk (ρ.lift (le_refl _)) (Eqv.unpack (φ := φ) (R := R)) = unpack := by

@@ -26,17 +26,35 @@ theorem Eqv.lwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (l.coprod r).lwk1 (inserted := inserted) = (l.lwk1).coprod (r.lwk1)
   := by simp only [lwk1, <-LCtx.InS.slift_wk0, lwk_coprod]
 
-theorem Eqv.vwk_slift_coprod {A B C : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+theorem Eqv.vwk_slift_coprod {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
   {ρ : Γ.InS Δ}
-  {l : Eqv φ (⟨A, ⊥⟩::Δ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Δ) (C::L)}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) L} {r : Eqv φ (⟨B, ⊥⟩::Δ) L}
   : (l.coprod r).vwk ρ.slift = (l.vwk ρ.slift).coprod (r.vwk ρ.slift) := by
   simp only [coprod, vwk_case, vwk1, vwk_vwk]
   congr 2 <;> ext k <;> cases k <;> rfl
 
-theorem Eqv.vwk1_coprod {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
-  {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+theorem Eqv.vwk1_coprod {A B: Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) L} {r : Eqv φ (⟨B, ⊥⟩::Γ) L}
   : (l.coprod r).vwk1 (inserted := inserted) = l.vwk1.coprod r.vwk1 := by
   simp only [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_coprod]
+
+theorem Eqv.vsubst_lift_coprod {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {σ : Term.Subst.Eqv φ Γ Δ}
+  {l : Eqv φ (⟨A, ⊥⟩::Δ) L} {r : Eqv φ (⟨B, ⊥⟩::Δ) L}
+  : (l.coprod r).vsubst (σ.lift (le_refl _))
+  = (l.vsubst (σ.lift (le_refl _))).coprod (r.vsubst (σ.lift (le_refl _))) := by
+  simp only [coprod, vsubst_case, vwk1, <-vsubst_fromWk, vsubst_vsubst, subst_lift_var_zero]
+  congr 2 <;> {
+    ext k; induction σ using Quotient.inductionOn;
+    apply eq_of_term_eq
+    cases k using Fin.cases with
+    | zero => rfl
+    | succ k => simp only [List.get_eq_getElem, List.length_cons, Fin.val_succ,
+      List.getElem_cons_succ, Set.mem_setOf_eq, Term.Subst.InS.get_comp, Fin.getElem_fin,
+      Nat.succ_eq_add_one, Term.InS.coe_subst, Term.subst, Ctx.InS.coe_wk1, Nat.liftWk_succ,
+      Term.Subst.InS.coe_lift, Term.Subst.lift_succ, Term.wk_wk, Ctx.InS.coe_toSubst,
+      Term.Subst.InS.coe_get, Term.subst_fromWk, Nat.liftWk_succ_comp_succ]; rfl
+  }
 
 theorem Eqv.lsubst_vlift_coprod {A B : Ty α} {Γ : Ctx α ε} {L K : LCtx α}
   {σ : Subst.Eqv φ Γ L K} {l : Eqv φ (⟨A, ⊥⟩::Γ) L} {r : Eqv φ (⟨B, ⊥⟩::Γ) L}

@@ -14,6 +14,21 @@ def Eqv.acast {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} (h : X = Y)
 theorem Eqv.acast_rfl {Γ : Ctx α ε} {L : LCtx α} {X : Ty α}
   : Eqv.acast (φ := φ) (Γ := Γ) (L := L) (X := X) rfl = Eqv.nil := rfl
 
+@[simp]
+theorem Eqv.vwk1_acast {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} {h : X = Y}
+  : (Eqv.acast (φ := φ) (Γ := Γ) (L := L) h).vwk1 (inserted := inserted) = Eqv.acast h
+  := by cases h; simp
+
+theorem Eqv.acast_seq {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} {h : X = Y}
+  {r : Eqv φ ((Y, ⊥)::Γ) (Z::L)}
+  : Eqv.acast (φ := φ) (Γ := Γ) (L := L) h ;; r = r.cast (by rw [h]) rfl
+  := by cases h; simp
+
+theorem Eqv.seq_acast {Γ : Ctx α ε} {L : LCtx α} {Y Z : Ty α} {h : Y = Z}
+  {r : Eqv φ ((X, ⊥)::Γ) (Y::L)}
+  : r ;; Eqv.acast (φ := φ) (Γ := Γ) (L := L) h = r.cast rfl (by rw [h])
+  := by cases h; simp
+
 theorem Eqv.acast_acast {Γ : Ctx α ε} {L : LCtx α} {X Y Z : Ty α} {h : X = Y} {h' : Y = Z}
   : (Eqv.acast (φ := φ) (Γ := Γ) (L := L) h) ;; acast h' = Eqv.acast (by rw [h, h'])
   := by cases h; cases h'; simp
