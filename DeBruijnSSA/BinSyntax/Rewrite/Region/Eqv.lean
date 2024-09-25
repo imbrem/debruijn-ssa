@@ -823,7 +823,8 @@ theorem Eqv.vsubst0_var0_vwk1 {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ (head::
   : (r.vwk1 (inserted := _)).vsubst (Term.Eqv.var 0 Ctx.Var.shead).subst0 = r := by
   induction r using Quotient.inductionOn
   apply eq_of_reg_eq
-  simp
+  simp only [Set.mem_setOf_eq, InS.coe_vsubst, Term.InS.coe_subst0, Term.InS.coe_var, InS.coe_vwk,
+    Ctx.InS.coe_wk1]
   exact Region.vsubst0_var0_vwk1 _
 
 def Eqv.vswap01

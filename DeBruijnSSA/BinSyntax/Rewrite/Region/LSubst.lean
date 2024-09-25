@@ -459,6 +459,12 @@ theorem Subst.Eqv.vwk_quot {Γ Δ : Ctx α ε} {L K : LCtx α}
   {ρ : Γ.InS Δ} {σ : Subst.InS φ Δ L K}
   : vwk ρ ⟦σ⟧ = ⟦σ.vwk ρ⟧ := rfl
 
+theorem Subst.Eqv.get_vwk {Γ Δ : Ctx α ε} {L K : LCtx α}
+  {ρ : Γ.InS Δ} {σ : Subst.Eqv φ Δ L K} {i : Fin L.length}
+  : (σ.vwk ρ).get i = (σ.get i).vwk ρ.slift := by
+  induction σ using Quotient.inductionOn
+  rfl
+
 theorem Subst.Eqv.vwk_wk0 {Γ : Ctx α ε} {σ : Subst.Eqv φ Γ L K}
   : (σ.vwk <| Ctx.InS.wk0 (head := head)) = σ.vlift := by
   induction σ using Quotient.inductionOn; rfl
@@ -497,6 +503,13 @@ theorem Eqv.vsubst_lsubst {Γ Δ : Ctx α ε}
   induction ρ using Quotient.inductionOn
   induction r using Quotient.inductionOn
   simp [InS.vsubst_lsubst]
+
+theorem Subst.Eqv.get_vsubst {Γ Δ : Ctx α ε} {L K : LCtx α}
+  {ρ : Term.Subst.Eqv φ Γ Δ} {σ : Subst.Eqv φ Δ L K} {i : Fin L.length}
+  : (σ.vsubst ρ).get i = (σ.get i).vsubst (ρ.lift (le_refl _)) := by
+  induction σ using Quotient.inductionOn
+  induction ρ using Quotient.inductionOn
+  rfl
 
 theorem InS.cfgSubstCongr {Γ : Ctx α ε} {L : LCtx α}
   {R : LCtx α} {G G' : ∀i, InS φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)} (hG : G ≈ G')

@@ -138,6 +138,13 @@ theorem Eqv.wk1_pack_app {Γ : Ctx α ε} {L R : LCtx α}
   : (pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e)).wk1 (inserted := inserted) = pack_app
   := by rw [wk1, <-Ctx.InS.lift_wk0, wk_lift_pack_app]
 
+@[simp]
+theorem Eqv.subst_lift_pack_app {Γ Δ : Ctx α ε} {L R : LCtx α} {ρ : Subst.Eqv φ Γ Δ}
+  : (pack_app (φ := φ) (Γ := Δ) (L := L) (R := R) (e := e)).subst (ρ.lift (le_refl _)) = pack_app
+  := by induction L generalizing R with
+  | nil => induction ρ using Quotient.inductionOn; rfl
+  | cons A L I => simp [pack_app, subst_lift_seq, Term.Eqv.subst_lift_coprod, Term.Eqv.sum, I]
+
 theorem Eqv.pack_app_coprod {Γ : Ctx α ε} {L R : LCtx α}
   : pack_app (φ := φ) (Γ := Γ) (L := L) (R := R) (e := e) ;;' coprod pack_app_inl pack_app_inr = nil
   := by induction L generalizing R with

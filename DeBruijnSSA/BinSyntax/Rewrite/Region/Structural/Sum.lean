@@ -472,6 +472,16 @@ theorem Eqv.vwk1_unpack_app_out {Γ : Ctx α ε} {R L : LCtx α}
   : (unpack_app_out (φ := φ) (Γ := Γ) (R := R) (L := L)).vwk1 (inserted := inserted)
   = unpack_app_out := by simp only [unpack_app_out, vwk1_case, Term.Eqv.wk1_pack_app]; rfl
 
+@[simp]
+theorem Eqv.vwk_lift_unpack_app_out {Γ Δ : Ctx α ε} {R L : LCtx α} {ρ : Γ.InS Δ}
+  : (unpack_app_out (φ := φ) (R := R) (L := L)).vwk ρ.slift
+  = unpack_app_out := by simp [unpack_app_out]
+
+@[simp]
+theorem Eqv.vsubst_lift_unpack_app_out {Γ Δ : Ctx α ε} {R L : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ}
+  : (unpack_app_out (φ := φ) (R := R) (L := L)).vsubst (σ.lift (le_refl _)) = unpack_app_out := by
+  simp [unpack_app_out, <-ret_nil]
+
 def Subst.Eqv.unpack_app_out {Γ : Ctx α ε} {R L : LCtx α}
   : Subst.Eqv φ Γ [(R ++ L).pack] [R.pack, L.pack] := Region.Eqv.unpack_app_out.csubst
 
@@ -481,6 +491,18 @@ theorem Subst.Eqv.vlift_unpack_app_out {Γ : Ctx α ε} {R L : LCtx α}
   = unpack_app_out := by
   ext k; cases k using Fin.elim1
   simp [unpack_app_out]
+
+@[simp]
+theorem Subst.Eqv.vwk_unpack_app_out {Γ : Ctx α ε} {R L : LCtx α} {ρ : Γ.InS Δ}
+  : (Subst.Eqv.unpack_app_out (φ := φ) (R := R) (L := L)).vwk ρ = unpack_app_out := by
+  ext k; cases k using Fin.elim1
+  simp [unpack_app_out, Subst.Eqv.get_vwk]
+
+@[simp]
+theorem Subst.Eqv.vsubst_unpack_app_out {Γ Δ : Ctx α ε} {R L : LCtx α} {σ : Term.Subst.Eqv φ Δ Γ}
+  : (Subst.Eqv.unpack_app_out (φ := φ) (R := R) (L := L)).vsubst σ = unpack_app_out := by
+  ext k; cases k using Fin.elim1
+  simp [unpack_app_out, Subst.Eqv.get_vsubst]
 
 theorem Subst.Eqv.extend_unpack_comp_unpack_app_out {Γ : Ctx α ε} {R L : LCtx α}
   : Subst.Eqv.unpack.extend.comp Subst.Eqv.unpack_app_out

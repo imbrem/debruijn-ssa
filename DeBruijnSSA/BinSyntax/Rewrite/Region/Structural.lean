@@ -42,6 +42,11 @@ theorem Eqv.packed_out_packed_in {Γ : Ctx α ε} {R : LCtx α}
   {r : Eqv φ Γ R} : r.packed_in.packed_out = r.packed_out.packed_in (Δ := Δ) := by
   apply unpacked_out_injective; simp [unpacked_out_packed_in]
 
+theorem Eqv.packed_in_unpacked_app_out {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ Γ [(R ++ L).pack]}
+  : r.unpacked_app_out.packed_in (Δ := Δ) = r.packed_in.unpacked_app_out := by
+  simp [unpacked_app_out, packed_in, vsubst_lsubst, unpacked_app_out]
+
 theorem Eqv.packed_def' {Γ : Ctx α ε} {R : LCtx α}
   {r : Eqv φ Γ R} : r.packed (Δ := Δ) = r.packed_in.packed_out
   := by simp [packed, packed_out_packed_in]
@@ -151,7 +156,10 @@ theorem Eqv.packed_cfg_split {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R
         ;; _ ⋊ (ret Term.Eqv.distl_pack
           ;; pack_coprod (λi => acast R.get_dist
             ;; (G (i.cast R.length_dist)).packed.unpacked_app_out))) := by
-  sorry
+  rw [packed, packed_out_cfg_letc, packed_in_letc_split]
+  congr 3
+  · rw [packed_in_unpacked_app_out, <-packed]
+  · rw [packed_in_pack_coprod_arr]; congr; funext i; rw [packed_in_unpacked_app_out, <-packed]
 
 -- TODO: unpacked_app_out ltimes dinaturality
 

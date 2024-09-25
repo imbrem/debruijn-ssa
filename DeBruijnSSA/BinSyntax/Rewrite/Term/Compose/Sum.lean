@@ -294,6 +294,21 @@ theorem Eqv.wk_lift_coprod {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   : wk ρ.slift (coprod l r) = coprod (wk ρ.slift l) (wk ρ.slift r)
   := by simp [coprod, wk1, wk_wk]; congr 2 <;> ext k <;> cases k <;> rfl
 
+theorem Eqv.subst_lift_coprod {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Subst.Eqv φ Γ Δ}
+  {l : Eqv φ ((A, ⊥)::Δ) ⟨C, e⟩} {r : Eqv φ ((B, ⊥)::Δ) ⟨C, e⟩}
+  : subst (ρ.lift (le_refl _)) (coprod l r)
+  = coprod (subst (ρ.lift (le_refl _)) l) (subst (ρ.lift (le_refl _)) r) := by
+  induction l using Quotient.inductionOn; induction r using Quotient.inductionOn;
+  induction ρ using Quotient.inductionOn;
+  apply eq_of_term_eq
+  simp only [Set.mem_setOf_eq, InS.coe_subst, Term.subst, Subst.InS.coe_lift, Subst.lift_zero,
+    InS.coe_wk, Ctx.InS.coe_wk1, ← Term.subst_fromWk, Term.subst_subst, InS.coe_case, InS.coe_var,
+    ]
+  congr <;> {
+    funext k; cases k <;> simp only [Subst.comp, Term.subst, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Subst.lift_succ, Term.wk_wk, Term.subst_fromWk, Nat.liftWk_succ_comp_succ] <;> rfl
+  }
+
 def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inl nil
 
@@ -305,6 +320,11 @@ theorem Eqv.wk1_inj_l {A B : Ty α} {Γ : Ctx α ε}
 @[simp]
 theorem Eqv.wk_lift_inj_l {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   : wk ρ.slift (inj_l (φ := φ) (e := e) (A := A) (B := B)) = inj_l
+  := by simp [inj_l]
+
+@[simp]
+theorem Eqv.subst_lift_inj_l {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Subst.Eqv φ Γ Δ}
+  : subst (ρ.lift (le_refl _)) (inj_l (φ := φ) (e := e) (A := A) (B := B)) = inj_l
   := by simp [inj_l]
 
 @[simp]
@@ -333,6 +353,11 @@ theorem Eqv.wk1_inj_r {A B : Ty α} {Γ : Ctx α ε}
 @[simp]
 theorem Eqv.wk_lift_inj_r {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
   : wk ρ.slift (inj_r (φ := φ) (e := e) (A := A) (B := B)) = inj_r
+  := by simp [inj_r]
+
+@[simp]
+theorem Eqv.subst_lift_inj_r {A B : Ty α} {Γ Δ : Ctx α ε} {ρ : Subst.Eqv φ Γ Δ}
+  : subst (ρ.lift (le_refl _)) (inj_r (φ := φ) (e := e) (A := A) (B := B)) = inj_r
   := by simp [inj_r]
 
 @[simp]
