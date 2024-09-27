@@ -124,8 +124,23 @@ theorem Eqv.split_rtimes_pi_r_distl_pure {X A B C : Ty α} {Γ : Ctx α ε}
     (_ ⋊' (split ;;' inj_r ⋉' _) ;;' assoc_inv) := by
   apply distl_seq_injective
   conv => rhs; rw [seq_assoc, distl_distl_inv, nil_seq]
-  rw [distl, coprod_seq]
-  sorry
+  rw [distl, coprod_seq, sum]
+  congr 1
+  · rw [seq_assoc, seq_assoc, dup_pure, split, pair_tensor_pure, pair_rtimes, seq_distl_inv]
+    conv =>
+      lhs
+      simp only [← seq_assoc, rtimes_pi_r, let2_pair, nil_seq]
+      simp only [seq, inj_l, wk1_inl, wk1_nil]
+    simp [let1_beta_pure, subst0_var0_wk1, wk1_inj_l, coprod, case_inl, seq_inj_l]
+    apply congrArg
+    simp [
+      split, pair_ltimes_pure, nil_seq, rtimes, tensor, wk1_pair, seq_assoc_inv, reassoc_inv_let2,
+      reassoc_inv_beta, nil, pi_r, pr
+    ]
+    rw [<-Pure.let2_dist_pair (ha := by simp)]
+    simp [seq, let1_beta_pure, inj_l]
+  · sorry
+
 --   rw [seq_distl_inv]
 --   simp [
 --     seq_rtimes, split, distl_inv, seq_let2, coprod_seq, sum, wk1_seq, wk1_coprod,

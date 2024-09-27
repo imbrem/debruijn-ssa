@@ -452,7 +452,7 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
       funext i
       cases i using Fin.elim1
       simp only [Subst.liftn_one, ← Subst.vlift_lift_comm, Fin.isValue, Fin.elim1_zero, vwk1_lsubst]
-      simp [Subst.vlift, <-Function.comp.assoc, vwk2_comp_vwk1]
+      simp [Subst.vlift, <-Function.comp_assoc, vwk2_comp_vwk1]
     · simp only [BinSyntax.Region.lsubst, Subst.liftn_one, cfg.injEq, heq_eq_eq, true_and]
       funext i
       cases i using Fin.elim1
@@ -511,7 +511,7 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
         split
         · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply,
           Subst.extend, ↓reduceIte, vsubst0_var0_vwk1, *]
-          simp [vwk1_lsubst, <-Function.comp.assoc, vwk2_comp_vwk1]
+          simp [vwk1_lsubst, <-Function.comp_assoc, vwk2_comp_vwk1]
         · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply,
           Subst.liftn, add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right,
           vsubst0_var0_vwk1]
@@ -526,7 +526,7 @@ theorem Uniform.lsubst {P Q : Ctx α ε → LCtx α → Region φ → Region φ 
       split
       · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply,
         Subst.fromFCFG, ↓reduceDIte, vsubst0_var0_vwk1, *]
-        simp [vwk1_lsubst, <-Function.comp.assoc, vwk2_comp_vwk1]
+        simp [vwk1_lsubst, <-Function.comp_assoc, vwk2_comp_vwk1]
       · simp only [BinSyntax.Region.lsubst, wk, Nat.liftWk_zero, Function.comp_apply, Subst.liftn,
         add_lt_iff_neg_right, not_lt_zero', ↓reduceIte, add_tsub_cancel_right, vsubst0_var0_vwk1]
         simp only [vwk1_lwk]

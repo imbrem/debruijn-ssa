@@ -326,7 +326,7 @@ theorem Cong.fv_eq {P : Region φ → Region φ → Sort _} {r r' : Region φ}
     funext k
     simp only [<-Function.comp_apply (f := Multiset.liftnFv 1)]
     simp only [<-Function.comp_apply (g := G)]
-    rw [Function.comp.assoc]
+    rw [Function.comp_assoc]
     rw [Function.update_eq_self]
   | _ => simp [*]
 

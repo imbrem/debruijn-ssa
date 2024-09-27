@@ -287,7 +287,7 @@ theorem Subst.id_comp (σ : Subst φ) : Subst.id.comp σ = σ
 
 theorem Subst.vlift_comp_liftWk_stepn (σ : Subst φ) (n)
   : vlift (vwk (Nat.liftWk (· + n)) ∘ σ) = vwk (Nat.liftWk (· + n)) ∘ σ.vlift := by
-  simp only [vlift, vwk1, <-Function.comp.assoc]
+  simp only [vlift, vwk1, <-Function.comp_assoc]
   apply congrArg₂
   funext i
   simp only [Function.comp_apply, vwk_vwk]
@@ -350,7 +350,7 @@ theorem vwk_lsubst (σ ρ) (t : Terminator φ)
   | _ =>
     simp only [vwk, lsubst, *]
     congr <;> simp only [
-      Subst.vlift, vwk1, <-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ
+      Subst.vlift, vwk1, <-Function.comp_assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ
     ]
 
 theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
@@ -360,7 +360,7 @@ theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
   simp only [Function.comp_apply, comp, vlift, vliftn, vwk1, Function.comp_apply]
   generalize τ m = t
   rw [vwk_lsubst]
-  simp only [<-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
+  simp only [<-Function.comp_assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
 
 theorem Subst.vlift_comp (σ τ : Subst φ) : (σ.comp τ).vlift = σ.vlift.comp τ.vlift
   := σ.vliftn_comp 1 τ

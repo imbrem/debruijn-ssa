@@ -272,13 +272,13 @@ theorem Reduce.lwk {r r' : Region φ} (ρ : ℕ → ℕ) (p : Reduce r r') : Red
 --     rw [sup_assoc, sup_comm (r.effect _), <-sup_assoc]
 --     simp
 --   | wk_cfg _ _ _ _ _ =>
---     simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
+--     simp only [effect_cfg, effect_lwk, <-Function.comp_assoc, effect_comp_lwk]
 --     apply sup_le_sup_left
 --     apply Fin.sup_comp_le
 --   | dead_cfg_left _ _ _ _ =>
 --     simp only [effect_cfg, effect_lwk, Fin.comp_addCases, Fin.sup_addCases]
 --     apply sup_le_sup_left
 --     apply le_sup_of_le_right
---     rw [<-Function.comp.assoc, effect_comp_lwk]
+--     rw [<-Function.comp_assoc, effect_comp_lwk]
 --   | ucfg β n G =>
 --     simp only [effect_cfg, Region.ucfg, effect_lsubst, Fin.sup_ucfg]

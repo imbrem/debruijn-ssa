@@ -672,7 +672,7 @@ theorem Region.InS.vwk1_lsubst_vlift {Γ : Ctx α ε} {L K : LCtx α}
   simp only [Set.mem_setOf_eq, vwk1, coe_vwk, Ctx.InS.coe_wk1, coe_lsubst, Subst.InS.coe_vlift,
     Subst.vlift, Region.vwk_lsubst]
   congr
-  simp only [<-Function.comp.assoc, Region.vwk1, <-Region.vwk_comp]
+  simp only [<-Function.comp_assoc, Region.vwk1, <-Region.vwk_comp]
   apply congrFun
   apply congrArg
   apply congrArg

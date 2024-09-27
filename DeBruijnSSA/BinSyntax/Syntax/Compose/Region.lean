@@ -228,7 +228,7 @@ theorem lsubst_vlift_lift_append {r₀ r₁ : Region φ} {σ : Region.Subst φ}
       vwk1_lsubst, vsubst_lsubst, Term.wk, Nat.liftWk
     ]
     congr
-    · simp only [<-Function.comp.assoc, vwk1, vwk2, <-vwk_comp]
+    · simp only [<-Function.comp_assoc, vwk1, vwk2, <-vwk_comp]
       apply congrFun
       apply congrArg
       funext r

@@ -130,7 +130,7 @@ def RewriteD.cast {r₀ r₀' r₁ r₁' : Region φ} (h₀ : r₀ = r₀') (h�
 --     funext i
 --     simp [Region.effect_lwk]
 --   -- | cfg_fuse β n G k ρ hρ =>
---   --   simp only [effect_cfg, effect_lwk, <-Function.comp.assoc, effect_comp_lwk]
+--   --   simp only [effect_cfg, effect_lwk, <-Function.comp_assoc, effect_comp_lwk]
 --   --   apply congrArg
 --   --   rw [Fin.sup_comp_surj _ hρ]
 --   | let1_eta => sorry

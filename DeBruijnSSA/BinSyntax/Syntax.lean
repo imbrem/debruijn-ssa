@@ -208,8 +208,8 @@ theorem TRegion.coe_toRegion_vsubst (σ : Term.Subst φ) (t : TRegion φ)
 def BBCFG.toTCFG : BBCFG φ ≃ TCFG φ where
   toFun := λG => ⟨G.length, TRegion.ofBBRegion ∘ G.targets⟩
   invFun := λG => ⟨G.length, TRegion.ofBBRegion.symm ∘ G.targets⟩
-  left_inv := λ⟨_, _⟩ => by simp [<-Function.comp.assoc]
-  right_inv := λ⟨_, _⟩ => by simp [<-Function.comp.assoc]
+  left_inv := λ⟨_, _⟩ => by simp [<-Function.comp_assoc]
+  right_inv := λ⟨_, _⟩ => by simp [<-Function.comp_assoc]
 
 /-- Convert a terminator CFG to a basic block CFG -/
 def TCFG.toBBCFG : TCFG φ ≃ BBCFG φ := BBCFG.toTCFG.symm

@@ -308,7 +308,7 @@ theorem Subst.id_comp (σ : Subst φ) : Subst.id.comp σ = σ
 
 theorem Subst.vlift_comp_liftWk_stepn (σ : Subst φ) (n)
     : vlift (vwk (Nat.liftWk (· + n)) ∘ σ) = vwk (Nat.liftWk (· + n)) ∘ σ.vlift := by
-  simp only [vlift, vwk1, <-Function.comp.assoc]
+  simp only [vlift, vwk1, <-Function.comp_assoc]
   apply congrArg₂
   funext i
   simp only [Function.comp_apply, vwk_vwk]
@@ -378,11 +378,11 @@ theorem Subst.vwk_liftWk_comp_liftn (σ : Subst φ) (ρ)
 
 theorem Subst.vwk_liftWk_liftWk_comp_vlift (σ : Subst φ) (ρ)
     : vwk (Nat.liftWk (Nat.liftWk ρ)) ∘ σ.vlift = vlift (vwk (Nat.liftWk ρ) ∘ σ) := by
-  simp only [vlift, vwk1, ← Function.comp.assoc, ← vwk_comp, ← Nat.liftWk_comp, Nat.liftWk_comp_succ]
+  simp only [vlift, vwk1, ← Function.comp_assoc, ← vwk_comp, ← Nat.liftWk_comp, Nat.liftWk_comp_succ]
 
 theorem Subst.vwk_liftWk_liftnWk_comp_vliftn (n : ℕ) (σ : Subst φ) (ρ)
     : vwk (Nat.liftWk (Nat.liftnWk n ρ)) ∘ σ.vliftn n = vliftn n (vwk (Nat.liftWk ρ) ∘ σ) := by
-  simp only [vliftn, ← Function.comp.assoc, ← vwk_comp, ← Nat.liftWk_comp, Nat.liftnWk_comp_add]
+  simp only [vliftn, ← Function.comp_assoc, ← vwk_comp, ← Nat.liftWk_comp, Nat.liftnWk_comp_add]
 
 theorem vwk_lsubst (σ ρ) (t : Region φ)
   : (t.lsubst σ).vwk ρ = (t.vwk ρ).lsubst (vwk (Nat.liftWk ρ) ∘ σ)
@@ -400,12 +400,12 @@ theorem vwk1_lsubst (σ) (t : Region φ)
 
 theorem vwk1_lsubst_vlift (σ : Subst φ) (t : Region φ)
   : (t.lsubst σ.vlift).vwk1 = t.vwk1.lsubst σ.vlift.vlift
-  := by simp only [Subst.vlift, vwk1_lsubst, ←Function.comp.assoc, vwk2_comp_vwk1]
+  := by simp only [Subst.vlift, vwk1_lsubst, ←Function.comp_assoc, vwk2_comp_vwk1]
 
 theorem vwk2_lsubst_vlift₂ (σ : Subst φ) (t : Region φ)
   : (t.lsubst σ.vlift.vlift).vwk2 = t.vwk2.lsubst σ.vlift.vlift.vlift
   := by
-  simp only [Subst.vlift, vwk2, vwk_lsubst, vwk1, <-vwk_comp, <-Function.comp.assoc]
+  simp only [Subst.vlift, vwk2, vwk_lsubst, vwk1, <-vwk_comp, <-Function.comp_assoc]
   congr
   apply congrFun
   apply congrArg
@@ -419,16 +419,16 @@ theorem Subst.vliftn_comp (n : ℕ) (σ τ : Subst φ)
   simp only [Function.comp_apply, comp, vlift, vliftn, vwk1, Function.comp_apply]
   generalize τ m = t
   rw [vwk_lsubst]
-  simp only [<-Function.comp.assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
+  simp only [<-Function.comp_assoc, <-vwk_comp, <-Nat.liftWk_comp, Nat.liftWk_comp_succ]
 
 theorem Subst.vlift_comp (σ τ : Subst φ) : (σ.comp τ).vlift = σ.vlift.comp τ.vlift
   := σ.vliftn_comp 1 τ
 
 theorem Subst.lwk_comp_vlift (ρ) (σ : Subst φ) : lwk ρ ∘ σ.vlift = vlift (lwk ρ ∘ σ)
-  := by simp only [vlift, vwk1, <-Function.comp.assoc, vwk_comp_lwk]
+  := by simp only [vlift, vwk1, <-Function.comp_assoc, vwk_comp_lwk]
 
 theorem Subst.lwk_comp_vliftn (ρ) (σ : Subst φ) (n) : lwk ρ ∘ σ.vliftn n = vliftn n (lwk ρ ∘ σ)
-  := by simp only [vliftn, <-Function.comp.assoc, vwk_comp_lwk]
+  := by simp only [vliftn, <-Function.comp_assoc, vwk_comp_lwk]
 
 theorem Subst.vlift_comp_lwk (σ : Subst φ) (ρ) : vlift (σ ∘ ρ) = σ.vlift ∘ ρ := rfl
 
@@ -469,7 +469,7 @@ theorem Subst.liftn_comp (n : ℕ) (σ τ : Subst φ) : (σ.comp τ).liftn n = (
   case isFalse h =>
     rw [lwk_lsubst, lsubst_lwk]
     congr
-    rw [lwk_comp_vlift, vlift, vlift, Function.comp.assoc, liftn_comp_add]
+    rw [lwk_comp_vlift, vlift, vlift, Function.comp_assoc, liftn_comp_add]
 
 theorem Subst.lift_comp (σ τ : Subst φ) : (σ.comp τ).lift = σ.lift.comp τ.lift := by
   have h := Subst.liftn_comp 1 σ τ
@@ -516,8 +516,8 @@ theorem llsubst_lcomp (σ τ : Subst φ) : llsubst (σ.lcomp τ) = llsubst σ �
   funext k
   simp only [Function.comp_apply, vwk, Term.wk, Nat.liftWk_zero, let1.injEq, true_and, vwk_vwk]
   congr
-  simp only [<-Nat.liftWk_comp, Nat.liftWk_comp_succ, <-Function.comp.assoc]
-  rw [Function.comp.assoc, Nat.liftWk_comp_succ, Function.comp.assoc]
+  simp only [<-Nat.liftWk_comp, Nat.liftWk_comp_succ, <-Function.comp_assoc]
+  rw [Function.comp_assoc, Nat.liftWk_comp_succ, Function.comp_assoc]
 
 theorem llsubst_llsubst (σ τ : Subst φ) (t : Region φ)
   : (t.llsubst τ).llsubst σ = t.llsubst (σ.lcomp τ)
@@ -603,7 +603,7 @@ theorem vsubst_lift₃_vwk2 {ρ : Term.Subst φ} {r : Region φ}
 
 theorem vsubst_lift_lift_comp_vlift {ρ : Term.Subst φ} {σ : Subst φ}
   : (vsubst ρ.lift.lift ∘ σ.vlift) = Subst.vlift (vsubst ρ.lift ∘ σ) := by
-  rw [Subst.vlift, <-Function.comp.assoc, vsubst_lift_lift_comp_vwk1]; rfl
+  rw [Subst.vlift, <-Function.comp_assoc, vsubst_lift_lift_comp_vwk1]; rfl
 
 theorem Subst.vsubst_lift_comp_liftn (σ : Subst φ) (ρ : Term.Subst φ)
     : vsubst ρ.lift ∘ σ.liftn n = liftn n (vsubst ρ.lift ∘ σ) := by

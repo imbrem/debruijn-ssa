@@ -326,6 +326,15 @@ theorem Eqv.seq_reassoc_inv {X Y A B C : Ty α} {Γ : Ctx α ε}
   : a ;;' reassoc_inv b = reassoc_inv (a ;;' b)
   := by rw [seq, wk1_reassoc_inv, let1_reassoc_inv]; rfl
 
+theorem Eqv.subst_reassoc_inv {A B C : Ty α} {Γ Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {a : Eqv φ Δ ⟨A.prod (B.prod C), e⟩}
+  : (reassoc_inv a).subst σ = reassoc_inv (a.subst σ) := by
+  induction a using Quotient.inductionOn; induction σ using Quotient.inductionOn; rfl
+
+theorem Eqv.reassoc_inv_subst {A B C : Ty α} {Γ Δ : Ctx α ε} {σ : Subst.Eqv φ Γ Δ}
+  {a : Eqv φ Δ ⟨A.prod (B.prod C), e⟩}
+  : reassoc_inv (a.subst σ) = (reassoc_inv a).subst σ := subst_reassoc_inv.symm
+
 def Eqv.pi_l {A B : Ty α} {Γ : Ctx α ε} : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨A, e⟩
   := nil.pl
 
@@ -900,14 +909,26 @@ theorem Eqv.Pure.tensor_seq_right {A₀ A₁ A₂ B₀ B₁ B₂ : Ty α} {Γ : 
   (hr : r.Pure) : tensor l r ;;' tensor l' r' = tensor (l ;;' l') (r ;;' r')
   := tensor_seq_of_comm (hr.right_central _)
 
-theorem Eqv.tensor_seq_pure {A B B' C C' : Ty α} {Γ : Ctx α ε}
-  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B', ⊥⟩}
+theorem Eqv.tensor_seq_pure {A A' B B' C C' : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨A', ⊥⟩::Γ) ⟨B', ⊥⟩}
   {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C', ⊥⟩}
   : tensor l r ;;' tensor l' r' = tensor (l ;;' l') (r ;;' r')
   := Eqv.Pure.tensor_seq_left (by simp)
 
+theorem Eqv.tensor_ltimes_pure {A A' B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {l' : Eqv φ (⟨B, ⊥⟩::Γ) ⟨C, ⊥⟩}
+  {r : Eqv φ (⟨A', ⊥⟩::Γ) ⟨B', ⊥⟩}
+  : tensor l r ;;' ltimes l' B' = tensor (l ;;' l') r := by
+  rw [ltimes, tensor_seq_pure, seq_nil]
+
+theorem Eqv.tensor_rtimes {A A' B B' C : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩}
+  {r : Eqv φ (⟨A', ⊥⟩::Γ) ⟨B', e⟩} {r' : Eqv φ (⟨B', ⊥⟩::Γ) ⟨C, e⟩}
+  : tensor l r ;;' rtimes B r' = tensor l (r ;;' r') := by
+  rw [<-ltimes_rtimes, <-seq_assoc, rtimes_rtimes, ltimes_rtimes]
+
 theorem Eqv.Pure.dup {A B : Ty α} {Γ : Ctx α ε}
-  (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩) : l.Pure → l ;;' split = split ;;' l.tensor l
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, e⟩} : l.Pure → l ;;' split = split ;;' l.tensor l
   | ⟨l, hl⟩ => by
     cases hl
     rw [seq_tensor]
@@ -919,6 +940,10 @@ theorem Eqv.Pure.dup {A B : Ty α} {Γ : Ctx α ε}
     rw [subst_subst, wk1, wk1, wk_wk, <-subst_fromWk, subst_subst, subst_id']
     ext k
     cases k using Fin.cases <;> rfl
+
+theorem Eqv.dup_pure {A B : Ty α} {Γ : Ctx α ε}
+  {l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} : l ;;' split = split ;;' l.tensor l
+  := Eqv.Pure.dup (by simp)
 
 @[simp]
 theorem Eqv.wk_eff_split {A : Ty α} {Γ : Ctx α ε} {h : lo ≤ hi}
@@ -1284,3 +1309,13 @@ theorem Eqv.Pure.pair_eta {A B : Ty α} {Γ : Ctx α ε} {p : Eqv φ Γ ⟨A.pro
 theorem Eqv.pair_eta_pure {A B : Ty α} {Γ : Ctx α ε} {p : Eqv φ Γ ⟨A.prod B, ⊥⟩}
   : pair p.pl p.pr = p
   := Eqv.Pure.pair_eta (by simp)
+
+theorem Eqv.ltimes_pi_l {A B : Ty α} {Γ : Ctx α ε} {l : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+  : ltimes l C ;;' pi_l = pi_l ;;' l := by
+  simp [ltimes, tensor, seq_let2, pair_pi_l, pi_l_seq]
+
+theorem Eqv.rtimes_pi_r {A B : Ty α} {Γ : Ctx α ε} {r : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+  : rtimes C r ;;' pi_r = pi_r ;;' r := by
+  simp only [rtimes, tensor, wk1_nil, seq_let2, wk1_pi_r, pi_r_seq]
+  rw [pair_pi_r]
+  exact ⟨(var 1 Ctx.Var.shead.step), rfl⟩

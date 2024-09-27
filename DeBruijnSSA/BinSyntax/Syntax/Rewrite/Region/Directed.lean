@@ -205,7 +205,7 @@ def RWD.cast {P} {Γ : ℕ → ε} {r₀ r₀' r₁ r₁' : Region φ} (hr₀ : 
 --     (by
 --       rw [
 --         <-Fin.comp_addCases,
---         <-Function.comp.assoc,
+--         <-Function.comp_assoc,
 --         lwk_lwk, comp_lwk,
 --         Fin.swapAdd
 --       ]
@@ -347,7 +347,7 @@ def RWD.cfg_blocks {P} {Γ : ℕ → ε} (β n) (G G' : Fin n → Region φ)
 --     (cfg β n G) :=
 --     (cast_trg (swap_cfg (β.lwk (n.liftnWk (· + m))) n (lwk (n.liftnWk (· + m)) ∘ G) m G')
 --       (by rw [
---         Fin.comp_addCases, lwk_lwk, <-Function.comp.assoc, comp_lwk,
+--         Fin.comp_addCases, lwk_lwk, <-Function.comp_assoc, comp_lwk,
 --         Fin.toNatWk_swapAdd_comp_liftnWk_add]
 --       )).comp
 --     (dead_cfg_left β m _ n G)
