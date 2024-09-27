@@ -313,6 +313,10 @@ def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ)
   := inl nil
 
 @[simp]
+theorem Eqv.Pure.inj_l {A B : Ty α} {Γ : Ctx α ε}
+  : Pure (inj_l (φ := φ) (A := A) (B := B) (Γ := Γ) (e := e)) := ⟨Eqv.inj_l, rfl⟩
+
+@[simp]
 theorem Eqv.wk1_inj_l {A B : Ty α} {Γ : Ctx α ε}
   : (inj_l (φ := φ) (e := e) (A := A) (B := B) (Γ := Γ)).wk1 (inserted := inserted) = inj_l
   := by simp [inj_l]
@@ -344,6 +348,10 @@ theorem Eqv.seq_inj_l {A B C : Ty α} {Γ : Ctx α ε} {f : Eqv φ (⟨A, ⊥⟩
 
 def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨B, ⊥⟩::Γ) ⟨A.coprod B, e⟩
   := inr nil
+
+@[simp]
+theorem Eqv.Pure.inj_r {A B : Ty α} {Γ : Ctx α ε}
+  : Pure (inj_r (φ := φ) (A := A) (B := B) (Γ := Γ) (e := e)) := ⟨Eqv.inj_r, rfl⟩
 
 @[simp]
 theorem Eqv.wk1_inj_r {A B : Ty α} {Γ : Ctx α ε}

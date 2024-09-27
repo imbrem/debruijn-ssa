@@ -34,16 +34,65 @@ theorem Eqv.packed_in_coprod_dist {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) L} {r : Eqv φ (⟨B, ⊥⟩::Γ) L}
   : (l.coprod r).packed_in (Δ := Δ) = case (Term.Eqv.distl_inv (e := ⊥)) l.packed_in r.packed_in
   := by
-  rw [coprod, packed_in_case_split]
-  sorry
+  rw [coprod, packed_in_case_split, packed_var, pi_n_zero', Term.Eqv.pi_r]
+  simp only [List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, wk_res_self]
+  rw [<-Term.Eqv.pi_r, Term.Eqv.split_rtimes_pi_r_distl_packed]
+  conv => rhs; rw [case_bind, <-coprod]
+  rw [case_bind, <-coprod, Term.Eqv.seq, let1_let1]
+  apply congrArg
+  simp [
+    Term.Eqv.sum, Term.Eqv.coprod, let1_case, coprod, let1_beta, Term.Eqv.wk1_seq,
+    Term.Eqv.wk2_seq, Term.Eqv.seq_inj_l, Term.Eqv.seq_inj_r, case_case, case_inl, case_inr
+  ]
+  congr 1 <;> {
+    simp [packed_in, vsubst_vsubst, vwk1, <-vsubst_fromWk]
+    congr; ext k; cases k using Fin.cases with
+    | zero =>
+      simp only [List.get_eq_getElem, List.length_cons, Fin.val_zero, List.getElem_cons_zero,
+        Term.Subst.Eqv.get_comp, Term.Subst.Eqv.get_fromWk, Fin.zero_eta, Set.mem_setOf_eq,
+        Ctx.InS.coe_wk1, Nat.liftWk_zero, subst_var, id_eq, Term.Subst.Eqv.get_unpack, wk_res_self]
+      rw [<-let1_beta_pure, <-wk1_pi_n, <-Term.Eqv.seq, Term.Eqv.wk1_wk2]
+      simp only [List.get_eq_getElem, List.length_cons, Fin.val_zero, List.getElem_cons_zero, split,
+        Term.Eqv.ltimes, pair_tensor_pure, Term.Eqv.nil_seq, Term.Eqv.seq_nil, wk1_rtimes, wk1_pair,
+        wk1_inj_l, wk1_nil]
+      simp only [Term.Eqv.rtimes, tensor, wk1_nil, wk1_pair, wk1_inj_l, seq_assoc_inv,
+        reassoc_inv_let2, reassoc_inv_beta, seq_let2, wk1_pi_n, pi_n_zero, Term.Eqv.pi_r, pr]
+      congr
+      exact Term.Eqv.pair_pi_r_pure _ _
+    | succ k =>
+      simp only [List.get_eq_getElem, List.length_cons, Fin.val_succ, List.getElem_cons_succ, split,
+        pair_ltimes_pure, Term.Eqv.nil_seq, wk1_wk2, Term.Subst.Eqv.get_comp,
+        Term.Subst.Eqv.get_fromWk, Set.mem_setOf_eq, Ctx.InS.coe_wk1, Nat.liftWk_succ,
+        Nat.succ_eq_add_one, subst_var, id_eq, Term.Subst.Eqv.get_unpack, wk_res_self]
+      simp only [wk1_rtimes, wk1_pair, wk1_inj_l, wk1_nil]
+      simp only [Term.Eqv.rtimes, tensor, Term.Eqv.nil, wk1_var0, List.length_cons, Fin.zero_eta,
+        List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk0_var, zero_add, wk1_pair,
+        wk1_inj_l, seq_assoc_inv, reassoc_inv_let2, reassoc_inv_beta]
+      rw [pi_n_succ2']
+      conv => lhs; rhs; rw [<-Term.Eqv.seq_assoc, Term.Eqv.seq]
+      simp only [List.get_eq_getElem, wk1_seq, wk1_pi_l, wk1_pi_n, subst_let1, subst_lift_seq,
+        subst_lift_pi_l, subst_lift_pi_n]
+      conv => lhs; lhs; rw [Term.Eqv.pi_l]
+      simp only [subst_pl, nil_subst0, wk_eff_let2, wk_eff_var, wk_eff_pair, wk_eff_inj_l, pl_let2]
+      rw [Term.Eqv.Pure.pl_pair (hb := by exact ⟨var 0 Ctx.Var.shead, rfl⟩)]
+      rw [
+        <-Term.Eqv.wk1_pi_l, <-Term.Eqv.wk1_pi_n, <-Term.Eqv.wk1_seq, <-Term.Eqv.seq,
+        Term.Eqv.seq_assoc, Term.Eqv.seq_let2
+      ]
+      simp only [wk1_inj_r, wk_eff_inj_r, wk1_pi_l, Term.Eqv.Pure.inj_r, pair_pi_l, pi_n_succ,
+        Term.Eqv.Pure.inj_l, List.get_eq_getElem]
+      rfl
+  }
 
 theorem Eqv.packed_in_coprod_arr {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ (⟨A, ⊥⟩::Γ) (C::L)} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
   : (l.coprod r).packed_in (Δ := Δ)
   = distl_inv ;; coprod l.packed_in r.packed_in
   := by
-  rw [coprod, packed_in_case_split, coprod]
-  sorry
+  rw [packed_in_coprod_dist, coprod, distl_inv_eq_ret, ret_seq]
+  simp
+  congr <;> exact vsubst_lift_packed_in.symm
 
 theorem Eqv.packed_in_pack_coprod_arr {Γ : Ctx α ε} {R L : LCtx α}
   {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (A::L)}

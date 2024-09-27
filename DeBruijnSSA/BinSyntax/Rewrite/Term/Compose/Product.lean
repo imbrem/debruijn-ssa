@@ -1054,12 +1054,24 @@ def Eqv.assoc {A B C : Ty α} {Γ : Ctx α ε}
 def Eqv.assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv (φ := φ) (⟨A.prod (B.prod C), ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩ := nil.reassoc_inv
 
+@[simp]
 theorem Eqv.wk1_assoc {A B C : Ty α} {Γ : Ctx α ε}
   : (assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).wk1 (inserted := inserted) = assoc
   := rfl
 
+@[simp]
+theorem Eqv.wk2_assoc {A B C : Ty α} {Γ : Ctx α ε}
+  : (assoc (φ := φ) (Γ := V::Γ) (A := A) (B := B) (C := C) (e := e)).wk2 (inserted := inserted)
+  = assoc := rfl
+
+@[simp]
 theorem Eqv.wk1_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
   : (assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).wk1 (inserted := inserted)
+  = assoc_inv := rfl
+
+@[simp]
+theorem Eqv.wk2_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : (assoc_inv (φ := φ) (Γ := V::Γ) (A := A) (B := B) (C := C) (e := e)).wk2 (inserted := inserted)
   = assoc_inv := rfl
 
 theorem Eqv.seq_prod_assoc {A B C : Ty α} {Γ : Ctx α ε}
@@ -1319,3 +1331,7 @@ theorem Eqv.rtimes_pi_r {A B : Ty α} {Γ : Ctx α ε} {r : Eqv φ ((A, ⊥)::Γ
   simp only [rtimes, tensor, wk1_nil, seq_let2, wk1_pi_r, pi_r_seq]
   rw [pair_pi_r]
   exact ⟨(var 1 Ctx.Var.shead.step), rfl⟩
+
+theorem Eqv.pl_let2 {A B C : Ty α} {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩} {r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) ⟨C.prod B, e⟩}
+  : (let2 a r).pl = let2 a r.pl := by simp [pl, let2_let2]

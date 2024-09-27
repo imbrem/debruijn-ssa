@@ -163,6 +163,15 @@ theorem Eqv.split_rtimes_pi_r_distl_pure {X A B : Ty α}
     rw [<-Pure.let2_dist_pair (ha := by simp)]
     simp [seq, let1_beta_pure, inj_r]
 
+theorem Eqv.split_rtimes_pi_r_distl {X A B : Ty α}
+  : split (φ := φ) (A := X.prod (A.coprod B)) (e := e) (Γ := Γ)
+  ;;' _ ⋊' pi_r ;;' distl_inv
+  = distl_inv
+  ;;' sum
+    (_ ⋊' (split ;;' inj_l ⋉' _) ;;' assoc_inv)
+    (_ ⋊' (split ;;' inj_r ⋉' _) ;;' assoc_inv)
+  := congrArg (wk_eff (he := bot_le)) (split_rtimes_pi_r_distl_pure)
+
 --   rw [seq_distl_inv]
 --   simp [
 --     seq_rtimes, split, distl_inv, seq_let2, coprod_seq, sum, wk1_seq, wk1_coprod,
