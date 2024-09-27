@@ -115,8 +115,8 @@ theorem Eqv.distl_braid {A B C : Ty α} {Γ : Ctx α ε}
 --   = pi_r ;;' a ;;' sum sorry sorry := by
 --   sorry
 
-theorem Eqv.split_rtimes_pi_r_distl_pure {X A B C : Ty α} {Γ : Ctx α ε}
-  : split (φ := φ) (A := X.prod (A.coprod B)) (e := ⊥) (Γ := Δ)
+theorem Eqv.split_rtimes_pi_r_distl_pure {X A B : Ty α}
+  : split (φ := φ) (A := X.prod (A.coprod B)) (e := ⊥) (Γ := Γ)
   ;;' _ ⋊' pi_r ;;' distl_inv
   = distl_inv
   ;;' sum
@@ -131,15 +131,37 @@ theorem Eqv.split_rtimes_pi_r_distl_pure {X A B C : Ty α} {Γ : Ctx α ε}
       lhs
       simp only [← seq_assoc, rtimes_pi_r, let2_pair, nil_seq]
       simp only [seq, inj_l, wk1_inl, wk1_nil]
-    simp [let1_beta_pure, subst0_var0_wk1, wk1_inj_l, coprod, case_inl, seq_inj_l]
+    simp only [let1_beta_pure, subst_inl, nil_subst0, wk_eff_self, wk0_inl, coprod, wk1_inl,
+      wk1_pair, wk1_var_succ, zero_add, wk1_nil, wk1_inr, subst_case, subst_pair,
+      subst_lift_var_succ, var_succ_subst0, wk0_var, subst_lift_nil, subst_inr, case_inl,
+      var0_subst0, List.length_cons, Nat.reduceAdd, Nat.liftWk_succ, Nat.succ_eq_add_one,
+      Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self,
+      subst0_wk0, seq_inj_l]
     apply congrArg
     simp [
       split, pair_ltimes_pure, nil_seq, rtimes, tensor, wk1_pair, seq_assoc_inv, reassoc_inv_let2,
       reassoc_inv_beta, nil, pi_r, pr
     ]
     rw [<-Pure.let2_dist_pair (ha := by simp)]
-    simp [seq, let1_beta_pure, inj_l]
-  · sorry
+    simp only [seq, inj_l, wk1_inl, wk1_nil, let1_beta_pure, subst_inl, nil_subst0, wk_eff_self,
+      wk1_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+      List.getElem_cons_zero]
+  · rw [seq_assoc, seq_assoc, dup_pure, split, pair_tensor_pure, pair_rtimes, seq_distl_inv]
+    conv =>
+      lhs
+      simp only [← seq_assoc, rtimes_pi_r, let2_pair, nil_seq]
+      simp only [seq, inj_r, wk1_inr, wk1_nil]
+    simp only [let1_beta_pure, subst_inr, nil_subst0, wk_eff_self, wk0_inr, coprod, wk1_inl,
+      wk1_pair, wk1_var_succ, zero_add, wk1_nil, wk1_inr, subst_case, subst_inl, subst_pair,
+      subst_lift_var_succ, var_succ_subst0, wk0_var, subst_lift_nil, case_inr, var0_subst0,
+      List.length_cons, Nat.reduceAdd, Nat.liftWk_succ, Nat.succ_eq_add_one, Fin.zero_eta,
+      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self, subst0_wk0, seq_inj_r]
+    apply congrArg
+    simp only [rtimes, tensor, nil, wk1_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem,
+      Fin.val_zero, List.getElem_cons_zero, wk0_var, zero_add, wk1_inr, pi_r, pr, split,
+      pair_ltimes_pure, wk1_pair, seq_assoc_inv, reassoc_inv_let2, reassoc_inv_beta]
+    rw [<-Pure.let2_dist_pair (ha := by simp)]
+    simp [seq, let1_beta_pure, inj_r]
 
 --   rw [seq_distl_inv]
 --   simp [
