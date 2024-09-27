@@ -1033,6 +1033,10 @@ theorem Eqv.wk1_assoc {A B C : Ty α} {Γ : Ctx α ε}
   : (assoc (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).wk1 (inserted := inserted) = assoc
   := rfl
 
+theorem Eqv.wk1_assoc_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : (assoc_inv (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e)).wk1 (inserted := inserted)
+  = assoc_inv := rfl
+
 theorem Eqv.seq_prod_assoc {A B C : Ty α} {Γ : Ctx α ε}
   (r : Eqv φ (⟨X, ⊥⟩::Γ) ⟨(A.prod B).prod C, e⟩)
   : r ;;' assoc = r.reassoc := by rw [assoc, seq_reassoc, seq_nil]

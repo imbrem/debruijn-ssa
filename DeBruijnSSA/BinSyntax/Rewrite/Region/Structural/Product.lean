@@ -51,12 +51,12 @@ theorem Eqv.vwk_liftn₂_packed_in {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eq
   simp [<-Ctx.InS.lift_lift]
 
 @[simp]
-theorem Eqv.vwk1_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
+theorem Eqv.vwk1_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
   : r.packed_in.vwk1 (inserted := inserted) = r.packed_in (Δ := _::Δ) := by
   rw [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_packed_in]
 
 @[simp]
-theorem Eqv.vwk2_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::V::Γ) R}
+theorem Eqv.vwk2_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
   : r.packed_in.vwk2 (inserted := inserted) = r.packed_in (Δ := head::_::Δ) := by
   rw [vwk2, <-Ctx.InS.lift_wk1, vwk_slift_packed_in]
 

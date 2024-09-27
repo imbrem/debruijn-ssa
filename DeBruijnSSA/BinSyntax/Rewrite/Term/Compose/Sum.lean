@@ -462,6 +462,10 @@ def Eqv.sum {A A' B B' : Ty α} {Γ : Ctx α ε}
   (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
   : Eqv φ (⟨A.coprod B, ⊥⟩::Γ) ⟨A'.coprod B', e⟩ := coprod (l.seq inj_l) (r.seq inj_r)
 
+theorem Eqv.sum_def' {A A' B B' : Ty α} {Γ : Ctx α ε}
+  (l : Eqv φ (⟨A, ⊥⟩::Γ) ⟨A', e⟩) (r : Eqv φ (⟨B, ⊥⟩::Γ) ⟨B', e⟩)
+  : sum l r = coprod l.inl r.inr := by simp [sum, seq_inj_l, seq_inj_r]
+
 -- TODO: sum is a bifunctor; so that's nil nil and seq!
 
 @[simp]

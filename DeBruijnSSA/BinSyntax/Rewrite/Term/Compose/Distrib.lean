@@ -95,6 +95,11 @@ theorem Eqv.distl_inv_distl {A B C : Ty α} {Γ : Ctx α ε}
     distl_inv_distl_pure, wk_eff_nil
   ]
 
+theorem Eqv.distl_seq_injective {A B C : Ty α} {Γ : Ctx α ε}
+  {r s : Eqv φ (⟨A.prod (B.coprod C), ⊥⟩::Γ) ⟨X, e⟩} (h : distl ;;' r = distl ;;' s)
+  : r = s := by
+  rw [<-nil_seq r, <-nil_seq s, <-distl_inv_distl, <-seq_assoc, h, seq_assoc]
+
 def Eqv.distr {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨(A.prod C).coprod (B.prod C), ⊥⟩::Γ) ⟨(A.coprod B).prod C, e⟩
   := coprod (inj_l ⋉' C) (inj_r ⋉' C)
@@ -103,6 +108,44 @@ theorem Eqv.distl_braid {A B C : Ty α} {Γ : Ctx α ε}
   : distl ;;' braid
   = sum braid braid ;;' distr (φ := φ) (Γ := Γ) (A := A) (B := B) (C := C) (e := e) := by
   rw [distr, sum_coprod, distl, coprod_seq, rtimes_braid, rtimes_braid]
+
+-- theorem Eqv.rtimes_seq_distr {X Y A B C : Ty α} {Γ : Ctx α ε}
+--   {a : Eqv φ ((Y, ⊥)::Γ) ⟨A.coprod B, e⟩}
+--   : X ⋊' a ;;' distl_inv
+--   = pi_r ;;' a ;;' sum sorry sorry := by
+--   sorry
+
+theorem Eqv.split_rtimes_pi_r_distl_pure {X A B C : Ty α} {Γ : Ctx α ε}
+  : split (φ := φ) (A := X.prod (A.coprod B)) (e := ⊥) (Γ := Δ)
+  ;;' _ ⋊' pi_r ;;' distl_inv
+  = distl_inv
+  ;;' sum
+    (_ ⋊' (split ;;' inj_l ⋉' _) ;;' assoc_inv)
+    (_ ⋊' (split ;;' inj_r ⋉' _) ;;' assoc_inv) := by
+  apply distl_seq_injective
+  conv => rhs; rw [seq_assoc, distl_distl_inv, nil_seq]
+  rw [distl, coprod_seq]
+  sorry
+--   rw [seq_distl_inv]
+--   simp [
+--     seq_rtimes, split, distl_inv, seq_let2, coprod_seq, sum, wk1_seq, wk1_coprod,
+--     inl_coprod, inr_coprod, seq_assoc, seq_ltimes, wk1_rtimes, let2_let2, let2_pair,
+--     wk1_assoc_inv
+--   ]
+--   simp [
+--     nil, inj_l, inj_r, let1_beta_var0, let1_beta_var1, let2_pair, subst_lift_coprod,
+--     pi_r, pr,
+--   ]
+--   simp [
+--     coprod, let1_let2, let1_beta_var0, wk2, Nat.liftnWk, nil, seq_assoc_inv, reassoc_inv_beta,
+--     wk1_seq
+--   ]
+--   simp [seq, let1_beta_pure]
+--   rw [<-Eqv.pair_eta_pure (p := var 0 _)]
+--   simp [let2_pair, wk0_pl, wk0_pr, let1_beta_pure]
+--   conv => lhs; rw [<-case_eta (a := (var 0 _).pr)]
+--   simp [case_case]
+--   sorry
 
 theorem Eqv.distr_braid {A B C : Ty α} {Γ : Ctx α ε}
   : distr ;;' braid
