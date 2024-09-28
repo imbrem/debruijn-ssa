@@ -110,3 +110,11 @@ theorem Eqv.packed_in_pack_coprod_arr {Γ : Ctx α ε} {R L : LCtx α}
     congr 3
     · rw [<-inj_l_eq_ret, pack_coprod_cons, inj_l_coprod]; rfl
     · rw [<-inj_r_eq_ret, pack_coprod_cons, inj_r_coprod]; simp
+
+theorem Eqv.packed_out_binary_rtimes {Γ : Ctx α ε} {L : LCtx α}
+  {r : Eqv φ ((A, ⊥)::Γ) [B, C]}
+  : (D ⋊ r).packed_out (L := L) = D ⋊ r.packed_out ;; distl_inv ;; sum pi_r nil := by
+  simp only [LCtx.pack.eq_2, LCtx.pack.eq_1, rtimes, packed_out_let2, packed_out_binary_ret_seq,
+    let2_seq, vwk1_distl_inv, vwk1_sum, vwk1_pi_r, nil_vwk1, vwk1_packed_out, seq_assoc]
+  congr 2
+  simp [<-seq_assoc, ret_seq, distl_inv_eq_ret, pi_r, vwk1_sum, vwk1_let2, vwk3, Nat.liftnWk]
