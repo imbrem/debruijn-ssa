@@ -94,13 +94,15 @@ theorem Eqv.distl_seq_injective {A B C : Ty α} {Γ : Ctx α ε}
   : r = s := by
   rw [<-nil_seq r, <-nil_seq s, <-distl_inv_distl, seq_assoc, h, seq_assoc]
 
-theorem Eqv.rtimes_inj_l_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+theorem Eqv.rtimes_inj_l_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : A ⋊ inj_l ;; distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) = inj_l := by
-  sorry
+  rw [inj_l_eq_ret, rtimes_eq_ret, distl_inv_eq_ret, <-ret_of_seq, Term.Eqv.rtimes_inj_l_distl_inv]
+  rfl
 
-theorem Eqv.rtimes_inj_r_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+theorem Eqv.rtimes_inj_r_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : A ⋊ inj_r ;; distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L) = inj_r := by
-  sorry
+  rw [inj_r_eq_ret, rtimes_eq_ret, distl_inv_eq_ret, <-ret_of_seq, Term.Eqv.rtimes_inj_r_distl_inv]
+  rfl
 
 theorem Eqv.rtimes_sum_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {l : Eqv φ ((A, ⊥)::Γ) (A'::L)} {r : Eqv φ ((B, ⊥)::Γ) (B'::L)}
@@ -109,5 +111,5 @@ theorem Eqv.rtimes_sum_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx 
   apply distl_seq_injective
   rw [<-seq_assoc, <-seq_assoc, distl_distl_inv, nil_seq, distl, coprod_seq, coprod_seq, sum]
   congr 1
-  · rw [rtimes_rtimes, inj_l_coprod, <-rtimes_rtimes, seq_assoc, rtimes_inj_l_seq_distl_inv]
-  · rw [rtimes_rtimes, inj_r_coprod, <-rtimes_rtimes, seq_assoc, rtimes_inj_r_seq_distl_inv]
+  · rw [rtimes_rtimes, inj_l_coprod, <-rtimes_rtimes, seq_assoc, rtimes_inj_l_distl_inv]
+  · rw [rtimes_rtimes, inj_r_coprod, <-rtimes_rtimes, seq_assoc, rtimes_inj_r_distl_inv]
