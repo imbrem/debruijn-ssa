@@ -631,6 +631,57 @@ theorem Eqv.packed_out_cfg_letc {Γ : Ctx α ε} {R L : LCtx α}
 --     (β.packed_out.unpacked_app_out (R := [A]))
 --     (coprod zero nil ;; G.packed_out.unpacked_app_out (R := [A])) := by sorry
 
+theorem Eqv.packed_out_binary_ret_seq  {Γ : Ctx α ε}
+  {r : Eqv φ ((X, ⊥)::Γ) [A, B]} {c : Term.Eqv φ ((A, ⊥)::Γ) (C, ⊥)}
+  : (r ;; ret c).packed_out = r.packed_out ;; sum nil (ret c) := by
+  simp [packed_out, seq, lsubst_lsubst]
+  congr 1
+  ext k; cases k using Fin.cases with
+  | zero =>
+    simp only [List.get_eq_getElem, List.length_cons, List.length_singleton, Nat.reduceAdd,
+      Fin.val_zero, List.getElem_cons_zero, Subst.Eqv.get_comp, Subst.Eqv.vlift_pack, get_alpha0,
+      Fin.val_succ, List.getElem_cons_succ, Fin.coe_fin_one, zero_add, Term.Eqv.nil, Fin.cases_zero,
+      lsubst_br, Fin.zero_eta, Fin.isValue, Subst.Eqv.pack_get, LCtx.pack.eq_2, LCtx.pack.eq_1,
+      Term.Eqv.inj_n, List.length_nil, vwk_id_eq, vsubst_br, Term.Eqv.subst_inr,
+      Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, sum, coprod, nil_seq, inj_r, ret_seq, vwk1_br,
+      Term.Eqv.wk1_inr, Term.Eqv.wk1_var0, vwk1_case, vwk2_br, Term.Eqv.wk2_inr, Term.Eqv.wk1_wk2,
+      Subst.Eqv.get_vlift, vsubst_case, case_inr, let1_beta]
+    simp only [Term.Eqv.wk1, ← Term.Eqv.subst_fromWk, Term.Eqv.subst_subst]
+    congr; ext k; cases k using Fin.cases <;> rfl
+  | succ k =>
+    cases k using Fin.elim1
+    simp [
+      Subst.Eqv.get_comp, Eqv.get_alpha0, Fin.cases, Fin.induction, Fin.induction.go,
+      Term.Eqv.inj_n, sum, coprod, case_inl, Term.Eqv.nil, let1_beta, inj_l
+    ]
+
+theorem Eqv.packed_out_unpacked_app_out_inner  {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]}
+  : r.unpacked_app_out.packed_out
+  = r ;; ret (Term.Eqv.pack_app ;;' Term.Eqv.sum Term.Eqv.inj_r Term.Eqv.nil)
+  := sorry
+
+theorem Eqv.packed_out_unpacked_app_out  {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]}
+  : r.unpacked_app_out.packed_out = r ;; ret Term.Eqv.pack_app ;; sum inj_r nil
+  := by
+  rw [packed_out_unpacked_app_out_inner]
+  simp [Term.Eqv.sum, ret_of_coprod, sum, ret_of_seq, inj_l_eq_ret, inj_r_eq_ret, seq_assoc]
+
+theorem Eqv.packed_out_unpacked_app_out_ret_seq  {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]} {c : Term.Eqv φ ((R.pack, ⊥)::Γ) (C, ⊥)}
+  : (r.unpacked_app_out ;; ret c).packed_out
+  = r ;; ret Term.Eqv.pack_app ;; sum inj_r (ret c) := by
+  rw [packed_out_binary_ret_seq, packed_out_unpacked_app_out, seq_assoc, sum_seq_sum]
+  simp
+
+theorem Eqv.packed_out_unpacked_app_out_ret_seq_inner  {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]} {c : Term.Eqv φ ((R.pack, ⊥)::Γ) (C, ⊥)}
+  : (r.unpacked_app_out ;; ret c).packed_out
+  = r ;; (ret (Term.Eqv.pack_app ;;' Term.Eqv.sum Term.Eqv.inj_r c)) := by
+  rw [packed_out_unpacked_app_out_ret_seq, ret_of_seq]
+  simp [Term.Eqv.sum, ret_of_coprod, sum, ret_of_seq, inj_l_eq_ret, inj_r_eq_ret, seq_assoc]
+
 end Region
 
 end BinSyntax
