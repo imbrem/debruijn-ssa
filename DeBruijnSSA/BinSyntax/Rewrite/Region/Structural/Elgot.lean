@@ -33,13 +33,11 @@ theorem Eqv.coprod_left_letc_binary {Γ : Ctx α ε}
   = letc A (coprod (l.lwk1 ;; br 1 (Term.Eqv.var 0 Ctx.Var.shead) (by simp)) β) G.vwk1 := by
   sorry
 
-theorem Eqv.letc_vwk1_den {Γ : Ctx α ε}
-  {A B : Ty α} {β : Eqv φ ((X, ⊥)::Γ) [A, B]} {G : Eqv φ ((A, ⊥)::Γ) [A, B]}
-  : letc A β G.vwk1 = (β.packed_out ;; sum (coprod zero nil) nil) ;;
-                    coprod nil (fixpoint (G.packed_out ;; coprod (coprod zero inj_l) inj_r)) := by
-  rw [fixpoint_def_vwk1, coprod_left_letc_binary, nil_lwk1, nil_seq, seq_letc_vwk1]
-  congr
-  · rw [
+theorem Eqv.packed_out_sum_coprod {β : Eqv φ ((X, ⊥)::Γ) [A, B]}
+  :  (β.packed_out ;; (zero.coprod nil).sum nil).lwk1
+      ;; (br 1 (Term.Eqv.var 0 Ctx.Var.shead) (by simp)).coprod nil = β
+  := by
+    rw [
       lwk1_seq, lwk1_packed_out, lwk1_sum, lwk1_coprod, nil_lwk1, nil_lwk1, seq, seq, packed_out,
       lsubst_lsubst, lsubst_lsubst, lsubst_id'
     ]
@@ -65,7 +63,7 @@ theorem Eqv.letc_vwk1_den {Γ : Ctx α ε}
         Term.Eqv.inj_n, Fin.cases, Fin.induction, Fin.induction.go, List.length_nil, eq_mpr_eq_cast,
         cast_eq, lsubst_br, Subst.Eqv.get_vlift, get_alpha0, lsubst_case, vwk_id_eq, vsubst_case,
         Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, nil_vwk2, inj_l]
-      simp [case_inl, let1_beta]
+      simp only [case_inl, let1_beta]
       conv =>
         lhs; rhs; rhs; rhs; rhs;
         rw [
@@ -84,4 +82,18 @@ theorem Eqv.letc_vwk1_den {Γ : Ctx α ε}
         Term.Eqv.seq, Term.Eqv.inj_l, Term.Eqv.nil, <-Term.Eqv.inl_let1, case_inl, let1_beta,
         Subst.Eqv.get_id, Term.Eqv.let1_beta_pure, Nat.liftnWk, Term.Eqv.case_inr
       ]
-  · sorry
+
+
+theorem Eqv.packed_out_sum_left_exit {β : Eqv φ ((X, ⊥)::Γ) [A, B]}
+  : (β.packed_out ;; (zero.coprod nil).sum nil).lwk1 ;; left_exit = β
+  := packed_out_sum_coprod
+
+theorem Eqv.letc_vwk1_den {Γ : Ctx α ε}
+  {A B : Ty α} {β : Eqv φ ((X, ⊥)::Γ) [A, B]} {G : Eqv φ ((A, ⊥)::Γ) [A, B]}
+  : letc A β G.vwk1 = (β.packed_out ;; sum (coprod zero nil) nil) ;;
+                    coprod nil (fixpoint (G.packed_out ;; coprod (coprod zero inj_l) inj_r)) := by
+  rw [fixpoint_def_vwk1, coprod_left_letc_binary, nil_lwk1, nil_seq, seq_letc_vwk1]
+  congr
+  · rw [packed_out_sum_coprod]
+  · convert packed_out_sum_left_exit.symm
+    simp [sum, coprod_seq, zero_seq]

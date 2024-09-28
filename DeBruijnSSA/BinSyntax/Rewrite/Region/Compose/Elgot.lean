@@ -33,6 +33,11 @@ theorem Eqv.left_exit_eq_coprod {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
     coprod (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩) (ret (var 0 (by simp)))
   := rfl
 
+def Eqv.left_exit_eq_coprod' {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : left_exit (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)
+  = coprod (br 1 (var 0 (by simp)) ⟨by simp, le_refl _⟩) nil
+  := rfl
+
 theorem Eqv.lwk1_sum_seq_left_exit {A B A' B' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {f : Eqv φ (⟨A, ⊥⟩::Γ) (A'::L)} {g : Eqv φ (⟨B, ⊥⟩::Γ) (B'::L)}
   : (sum f g).lwk1 ;; left_exit
