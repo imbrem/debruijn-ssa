@@ -655,6 +655,11 @@ theorem Eqv.packed_out_binary_ret_seq  {Γ : Ctx α ε}
       Term.Eqv.inj_n, sum, coprod, case_inl, Term.Eqv.nil, let1_beta, inj_l
     ]
 
+theorem Eqv.packed_out_ret_seq {Γ : Ctx α ε}
+  {c : Term.Eqv φ ((X, ⊥)::Γ) (Y, ⊥)} {r : Eqv φ ((Y, ⊥)::Γ) (A::L)}
+  : (ret c ;; r).packed_out = ret c ;; r.packed_out := by
+  simp [ret_seq, vsubst_packed_out, vwk1_packed_out]
+
 theorem Eqv.packed_out_unpacked_app_out_inner  {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]}
   : r.unpacked_app_out.packed_out

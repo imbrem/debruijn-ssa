@@ -196,12 +196,17 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
   = (ret Term.Eqv.split ;; _ ⋊ (β.packed ;; ret Term.Eqv.pack_app) ;; distl_inv ;; sum pi_r nil)
     ;; coprod nil (
       fixpoint (
-        ret Term.Eqv.distl_pack ;; pack_coprod
-          (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
-              ;; _ ⋊ ((G (i.cast R.length_dist)).packed ;; ret Term.Eqv.pack_app)
-              ;; distl_inv
-              ;; sum pi_r nil
-          )
+        ret split ⋉ R.pack ;; assoc ;; Γ.pack ⋊ (ret distl_pack
+          ;; pack_coprod (λ i =>
+            acast R.get_dist ;; (G (Fin.cast R.length_dist i)).packed)
+          ;; ret Term.Eqv.pack_app
+        ) ;; distl_inv ;; sum pi_r nil
+        -- ret Term.Eqv.distl_pack ;; pack_coprod
+        --   (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
+        --       ;; _ ⋊ ((G (i.cast R.length_dist)).packed ;; ret Term.Eqv.pack_app)
+        --       ;; distl_inv
+        --       ;; sum pi_r nil
+        --   )
       )
     )
    := by
@@ -256,5 +261,7 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
     rfl
   · rw [fixpoint_def']
     congr 5
-
+    simp [seq_assoc, ltimes_eq_ret, assoc_eq_ret, packed_out_ret_seq]
+    apply congrArg
+    apply congrArg
     sorry
