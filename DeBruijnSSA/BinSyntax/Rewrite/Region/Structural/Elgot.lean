@@ -31,7 +31,17 @@ theorem Eqv.coprod_left_letc_binary {Γ : Ctx α ε}
   {β : Eqv φ ((Y, ⊥)::Γ) [A, B]} {G : Eqv φ ((A, ⊥)::Γ) [A, B]}
   : coprod l (letc A β G.vwk1)
   = letc A (coprod (l.lwk1 ;; br 1 (Term.Eqv.var 0 Ctx.Var.shead) (by simp)) β) G.vwk1 := by
-  sorry
+  rw [coprod, coprod, letc, letc, cfg_case]
+  congr
+  · rw [cfg_eq_ucfg', ucfg', seq]
+    conv => rhs; rhs; rw [vwk1, vwk_lsubst]
+    rw [<-vwk1, lsubst_lsubst, vwk1_lwk1, lwk1, <-lsubst_toSubstE, lsubst_lsubst, lsubst_id']
+    ext k; cases k using Fin.elim1
+    simp [
+      Subst.Eqv.get_comp, Subst.Eqv.get_vwk, get_alpha0, cfgSubst'_get_ge, Nat.liftnWk,
+      Subst.Eqv.get_id
+    ]
+  · rw [vwk1_cfg]; congr; funext i; cases i using Fin.elim1; simp [vwk1_vwk2]
 
 theorem Eqv.packed_out_sum_coprod {β : Eqv φ ((X, ⊥)::Γ) [A, B]}
   :  (β.packed_out ;; (zero.coprod nil).sum nil).lwk1
