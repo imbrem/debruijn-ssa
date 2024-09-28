@@ -13,13 +13,13 @@ namespace Region
 
 theorem Eqv.packed_br_den {Γ : Ctx α ε} {L : LCtx α}
   {ℓ} {a : Term.Eqv φ Γ (A, ⊥)} {hℓ}
-  : (br (L := L) ℓ a hℓ).packed (Δ := Δ)
+  : (br (L := L) ℓ a hℓ).packed (L := L) (Δ := Δ)
   = ret ((a.packed.wk_res ⟨hℓ.get, by rfl⟩)) ;; ret (Term.Eqv.inj_n _ ⟨ℓ, hℓ.length⟩) := by
   rw [<-ret_of_seq, Term.Eqv.seq_inj_n, packed_br]
 
 theorem Eqv.packed_let1_den {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A, e)} {r : Eqv φ ((A, ⊥)::Γ) R}
-  : (let1 a r).packed (Δ := Δ)
+  : (let1 a r).packed (L := L) (Δ := Δ)
   = ret Term.Eqv.split ;; _ ⋊ lret a.packed ;; r.packed := by
   rw [<-lret_rtimes, ret_seq, lret]
   simp only [Term.Eqv.rtimes, Term.Eqv.tensor, Term.Eqv.wk1_nil, Term.Eqv.wk1_packed, let1_let2,
@@ -68,7 +68,7 @@ theorem Eqv.packed_let1_den {Γ : Ctx α ε} {R : LCtx α}
 
 theorem Eqv.packed_let2_den {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A.prod B, e)} {r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) R}
-  : (let2 a r).packed (Δ := Δ)
+  : (let2 a r).packed (L := L) (Δ := Δ)
   = ret Term.Eqv.split ;; _ ⋊ lret a.packed ;; assoc_inv ;; r.packed := by
   rw [ret_seq_rtimes]
   simp only [
@@ -110,7 +110,7 @@ theorem Eqv.packed_let2_den {Γ : Ctx α ε} {R : LCtx α}
 
 theorem Eqv.packed_case_den {Γ : Ctx α ε} {R : LCtx α}
   {a : Term.Eqv φ Γ (A.coprod B, e)} {r : Eqv φ ((A, ⊥)::Γ) R} {s : Eqv φ ((B, ⊥)::Γ) R}
-  : (case a r s).packed (Δ := Δ)
+  : (case a r s).packed (L := L) (Δ := Δ)
   = ret Term.Eqv.split ;; _ ⋊ lret a.packed ;; distl_inv ;; coprod r.packed s.packed := by
   rw [ret_seq_rtimes, Term.Eqv.split, let2_pair]
   simp only [Term.Eqv.nil, Term.Eqv.wk0_var, zero_add, lret, vwk1_let1, Term.Eqv.wk1_packed,
@@ -192,7 +192,7 @@ theorem Eqv.unpacked_app_out_eq_left_exit {Γ : Ctx α ε} {R L : LCtx α}
   rfl
 
 theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
-  : (cfg R β G).packed (Δ := Δ)
+  : (cfg R β G).packed (L := []) (Δ := Δ)
   = (ret Term.Eqv.split ;; _ ⋊ (β.packed ;; ret Term.Eqv.pack_app) ;; distl_inv ;; sum pi_r nil)
     ;; coprod nil (
       fixpoint (

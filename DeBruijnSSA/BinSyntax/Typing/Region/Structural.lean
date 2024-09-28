@@ -20,15 +20,15 @@ def Subst.pack : Region.Subst φ := λℓ => br 0 (Term.inj_n ℓ)
 
 @[simp]
 theorem Subst.Wf.pack {Γ : Ctx α ε} {R : LCtx α}
-  : Subst.Wf Γ R [R.pack] (Subst.pack (φ := φ)) := λ_ => Wf.br LCtx.Trg.shead Term.Wf.inj_n
+  : Subst.Wf Γ R (R.pack::L) (Subst.pack (φ := φ)) := λ_ => Wf.br LCtx.Trg.shead Term.Wf.inj_n
 
 @[simp]
-def Subst.InS.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.InS φ Γ R [R.pack] :=
+def Subst.InS.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.InS φ Γ R (R.pack::L) :=
   ⟨Subst.pack, Subst.Wf.pack⟩
 
 @[simp]
 theorem Subst.InS.coe_pack {Γ : Ctx α ε} {R : LCtx α}
-  : (Subst.InS.pack (φ := φ) (Γ := Γ) (R := R) : Region.Subst φ) = Subst.pack := rfl
+  : (Subst.InS.pack (φ := φ) (Γ := Γ) (R := R) (L := L) : Region.Subst φ) = Subst.pack := rfl
 
 @[simp]
 theorem Subst.vlift_pack
@@ -36,7 +36,7 @@ theorem Subst.vlift_pack
 
 @[simp]
 theorem Subst.InS.vlift_pack {Γ : Ctx α ε} {R : LCtx α}
-  : (pack (φ := φ) (Γ := Γ) (R := R)).vlift (head := head) = pack := by ext; simp
+  : (pack (φ := φ) (Γ := Γ) (R := R) (L := L)).vlift (head := head) = pack := by ext; simp
 
 def unpack : ℕ → Region φ
   | 0 => loop

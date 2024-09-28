@@ -182,33 +182,33 @@ theorem Subst.Eqv.vsubst_unpack {Γ Δ : Ctx α ε} {R : LCtx α} (σ : Term.Sub
   rw [unpack_def, vsubst_quot, unpack_def]
   apply congrArg; ext; simp
 
-def Subst.Eqv.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.Eqv φ Γ R [R.pack] := ⟦Subst.InS.pack⟧
+def Subst.Eqv.pack {Γ : Ctx α ε} {R : LCtx α} : Subst.Eqv φ Γ R (R.pack::L) := ⟦Subst.InS.pack⟧
 
 @[simp]
 theorem Subst.Eqv.pack_get {Γ : Ctx α ε} {R : LCtx α} {i : Fin R.length}
-  : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R)).get i
+  : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R) (L := L)).get i
   = Eqv.br 0 (Term.Eqv.inj_n R i) LCtx.Trg.shead := by rw [pack, Term.Eqv.inj_n_def]; rfl
 
 @[simp]
 theorem Subst.Eqv.vlift_pack {Γ : Ctx α ε} {R : LCtx α}
-  : (pack (φ := φ) (Γ := Γ) (R := R)).vlift (head := head) = pack
+  : (pack (φ := φ) (Γ := Γ) (R := R) (L := L)).vlift (head := head) = pack
   := by simp only [pack, vlift_quot, Subst.InS.vlift_pack]
 
 @[simp]
 theorem Subst.Eqv.vliftn₂_pack {Γ : Ctx α ε} {R : LCtx α}
-  : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R)).vliftn₂ (left := left) (right := right)
+  : (Subst.Eqv.pack (φ := φ) (Γ := Γ) (R := R) (L := L)).vliftn₂ (left := left) (right := right)
   = pack := by simp [Subst.Eqv.vliftn₂_eq_vlift_vlift]
 
 @[simp]
 theorem Subst.Eqv.vwk_pack {Γ : Ctx α ε} {R : LCtx α} {ρ : Γ.InS Δ}
-  : (Subst.Eqv.pack (φ := φ) (R := R)).vwk ρ = pack := by
+  : (Subst.Eqv.pack (φ := φ) (R := R) (L := L)).vwk ρ = pack := by
   rw [pack, vwk_quot, pack]
   congr
   ext; simp [Subst.pack]
 
 @[simp]
 theorem Subst.Eqv.vsubst_pack {Γ Δ : Ctx α ε} {R : LCtx α} (σ : Term.Subst.Eqv φ Δ Γ)
-  : (Subst.Eqv.pack (φ := φ) (R := R)).vsubst σ = pack := by
+  : (Subst.Eqv.pack (φ := φ) (R := R) (L := L)).vsubst σ = pack := by
   induction σ using Quotient.inductionOn
   rw [pack, vsubst_quot, pack]
   congr
@@ -264,7 +264,7 @@ theorem Eqv.unpacked_out_vsubst {Γ : Ctx α ε} {R : LCtx α} {σ : Term.Subst.
   {r : Eqv φ Δ [R.pack]} : (r.vsubst σ).unpacked_out = r.unpacked_out.vsubst σ
   := vsubst_unpacked_out.symm
 
-def Eqv.packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ [R.pack]
+def Eqv.packed_out {Γ : Ctx α ε} {R L : LCtx α} (h : Eqv φ Γ R) : Eqv φ Γ (R.pack::L)
   := h.lsubst Subst.Eqv.pack
 
 @[simp]
@@ -273,16 +273,16 @@ theorem Eqv.packed_out_quot {Γ : Ctx α ε} {R : LCtx α} (r : InS φ Γ R)
 
 @[simp]
 theorem Eqv.vwk_packed_out {Γ : Ctx α ε} {R : LCtx α} {ρ : Γ.InS Δ} {r : Eqv φ Δ R}
-  : r.packed_out.vwk ρ = (r.vwk ρ).packed_out := by simp [packed_out, vwk_lsubst]
+  : r.packed_out.vwk ρ = (r.vwk ρ).packed_out (L := L) := by simp [packed_out, vwk_lsubst]
 
 @[simp]
 theorem Eqv.vsubst_packed_out {Γ : Ctx α ε} {R : LCtx α} {σ : Term.Subst.Eqv φ Γ Δ}
-  {r : Eqv φ Δ R} : r.packed_out.vsubst σ = (r.vsubst σ).packed_out := by
+  {r : Eqv φ Δ R} : r.packed_out.vsubst σ = (r.vsubst σ).packed_out (L := L) := by
   simp [packed_out, vsubst_lsubst]
 
 theorem Eqv.packed_out_br {Γ : Ctx α ε} {L : LCtx α}
   {ℓ} {a : Term.Eqv φ Γ (A, ⊥)} {hℓ}
-  : (br (L := L) ℓ a hℓ).packed_out = br 0 (a.wk_res ⟨hℓ.get, by rfl⟩).inj (by simp) := by
+  : (br (L := L) ℓ a hℓ).packed_out (L := R) = br 0 (a.wk_res ⟨hℓ.get, by rfl⟩).inj (by simp) := by
   simp [packed_out]
   induction a using Quotient.inductionOn
   simp only [Term.Eqv.subst0_quot, Term.Eqv.inj_n_def, List.get_eq_getElem, Term.Eqv.wk_id_quot,
@@ -293,21 +293,22 @@ theorem Eqv.packed_out_br {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.packed_out_let1 {Γ : Ctx α ε} {R : LCtx α}
   (a : Term.Eqv φ Γ (A, e)) (r : Eqv φ ((A, ⊥)::Γ) R)
-  : (let1 a r).packed_out = let1 a r.packed_out := by simp [packed_out]
+  : (let1 a r).packed_out (L := L) = let1 a r.packed_out := by simp [packed_out]
 
 theorem Eqv.packed_out_let2 {Γ : Ctx α ε} {R : LCtx α}
   (a : Term.Eqv φ Γ (A.prod B, e)) (r : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) R)
-  : (let2 a r).packed_out = let2 a r.packed_out := by simp [packed_out]
+  : (let2 a r).packed_out (L := L) = let2 a r.packed_out := by simp [packed_out]
 
 theorem Eqv.packed_out_case {Γ : Ctx α ε} {R : LCtx α}
   (a : Term.Eqv φ Γ (A.coprod B, e))
   (l : Eqv φ ((A, ⊥)::Γ) R) (r : Eqv φ ((B, ⊥)::Γ) R)
-  : (case a l r).packed_out = case a l.packed_out r.packed_out := by simp [packed_out]
+  : (case a l r).packed_out (L := L) = case a l.packed_out r.packed_out := by simp [packed_out]
 
 -- TODO: packing a cfg is half of Böhm–Jacopini, and I believe the best we can do sans dinaturality
 
 theorem Eqv.packed_out_lwk0_arrow {Γ : Ctx α ε} {R : LCtx α}
-  (r : Eqv φ ((A, ⊥)::Γ) R) : (r.lwk0 (head := head)).packed_out = r.packed_out ;; inj_l := by
+  (r : Eqv φ ((A, ⊥)::Γ) R) : (r.lwk0 (head := head)).packed_out (L := L) = r.packed_out ;; inj_l
+  := by
   induction r using Quotient.inductionOn
   apply Eqv.eq_of_reg_eq
   simp only [LCtx.pack.eq_2, Set.mem_setOf_eq, Subst.InS.pack, InS.coe_lsubst, InS.coe_lwk,
@@ -329,7 +330,7 @@ theorem Eqv.unpacked_out_packed_out {Γ : Ctx α ε} {R : LCtx α} (h : Eqv φ �
 
 @[simp]
 theorem Eqv.packed_out_unpack {Γ : Ctx α ε} {R : LCtx α}
-  : (unpack (φ := φ) (Γ := Γ) (R := R)).packed_out
+  : (unpack (φ := φ) (Γ := Γ) (R := R)).packed_out (L := L)
   = nil := by
   induction R generalizing Γ with
   | nil =>
@@ -345,7 +346,7 @@ theorem Eqv.packed_out_unpack {Γ : Ctx α ε} {R : LCtx α}
     rw [<-packed_out, packed_out_lwk0_arrow, I]
 
 theorem Eqv.lsubst_pack_unpack {Γ : Ctx α ε} {R : LCtx α}
-  : lsubst Subst.Eqv.pack (unpack (φ := φ) (Γ := Γ) (R := R)) = nil := by
+  : lsubst (Subst.Eqv.pack (L := L)) (unpack (φ := φ) (Γ := Γ) (R := R)) = nil := by
   rw [<-Eqv.packed_out, Eqv.packed_out_unpack]
 
 theorem Subst.Eqv.pack_comp_unpack {Γ : Ctx α ε} {R : LCtx α}
@@ -366,14 +367,15 @@ theorem Eqv.unpacked_out_injective {Γ : Ctx α ε} {R : LCtx α}
   intros x y h; convert congrArg Eqv.packed_out h <;> simp
 
 theorem Eqv.packed_out_injective {Γ : Ctx α ε} {R : LCtx α}
-  : Function.Injective (Eqv.packed_out (φ := φ) (Γ := Γ) (R := R)) := by
+  : Function.Injective (Eqv.packed_out (φ := φ) (Γ := Γ) (R := R) (L := [])) := by
   intros x y h; convert congrArg Eqv.unpacked_out h <;> simp
 
 theorem Eqv.unpacked_out_inj {Γ : Ctx α ε} {R : LCtx α} {r s : Eqv φ Γ [R.pack]}
   : r.unpacked_out = s.unpacked_out ↔ r = s := ⟨λh => unpacked_out_injective h, λh => by simp [h]⟩
 
 theorem Eqv.packed_out_inj {Γ : Ctx α ε} {R : LCtx α} {r s : Eqv φ Γ R}
-  : r.packed_out = s.packed_out ↔ r = s := ⟨λh => packed_out_injective h, λh => by simp [h]⟩
+  : r.packed_out (L := []) = s.packed_out ↔ r = s
+  := ⟨λh => packed_out_injective h, λh => by simp [h]⟩
 
 theorem Eqv.cfg_unpack_rec {Γ : Ctx α ε} {R L : LCtx α}
   {β : Eqv φ Γ (R.pack::L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R.pack::L)}
@@ -385,7 +387,7 @@ theorem Eqv.cfg_unpack_rec {Γ : Ctx α ε} {R L : LCtx α}
 
 theorem Eqv.packed_out_cfg_liftn {Γ : Ctx α ε} {R L : LCtx α}
   {β : Eqv φ Γ (R ++ L)} {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (R ++ L)}
-  : (cfg R β G).packed_out
+  : (cfg R β G).packed_out (L := K)
   = cfg R (β.lsubst (Subst.Eqv.pack.liftn_append _))
           (λi => (G i).lsubst (Subst.Eqv.pack.liftn_append _))
   := by simp only [packed_out, lsubst_cfg, Subst.Eqv.vlift_liftn_append, Subst.Eqv.vlift_pack]
@@ -571,15 +573,15 @@ theorem Eqv.vwk1_unpacked_app_out {Γ : Ctx α ε} {R L : LCtx α} {r : Eqv φ (
     Subst.Eqv.vlift_unpack_app_out, Subst.Eqv.vlift_unpack_app_out, <-unpacked_app_out]
 
 theorem Eqv.vwk1_packed_out {Γ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
-  : r.packed_out.vwk1 (inserted := inserted) = r.vwk1.packed_out := by
+  : r.packed_out.vwk1 (inserted := inserted) = r.vwk1.packed_out (L := L) := by
   rw [packed_out, packed_out, <-Subst.Eqv.vlift_pack, Subst.Eqv.vwk1_lsubst_vlift,
       Subst.Eqv.vlift_pack, Subst.Eqv.vlift_pack, <-packed_out]
 
--- theorem Eqv.lwk1_packed_out {Γ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
---   : r.packed_out.lwk1 (inserted := inserted) = r.packed_out := by
---   sorry
-  -- rw [packed_out, packed_out, <-Subst.Eqv.vlift_pack, Subst.Eqv.lwk1_lsubst_vlift,
-  --     Subst.Eqv.vlift_pack, Subst.Eqv.vlift_pack, <-packed_out]
+theorem Eqv.lwk1_packed_out {Γ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
+  : (r.packed_out (L := L)).lwk1 (inserted := inserted) = r.packed_out := by
+  rw [packed_out, packed_out, <-Subst.Eqv.vlift_pack, lwk1, <-lsubst_toSubstE, lsubst_lsubst,
+      Subst.Eqv.vlift_pack]
+  rfl
 
 theorem Eqv.unpacked_app_out_let1 {Γ : Ctx α ε} {R L : LCtx α}
   {a : Term.Eqv φ Γ (A, e)} {r : Eqv φ ((A, ⊥)::Γ) [(R ++ L).pack]}
@@ -633,7 +635,7 @@ theorem Eqv.packed_out_cfg_letc {Γ : Ctx α ε} {R L : LCtx α}
 
 theorem Eqv.packed_out_binary_ret_seq  {Γ : Ctx α ε}
   {r : Eqv φ ((X, ⊥)::Γ) [A, B]} {c : Term.Eqv φ ((A, ⊥)::Γ) (C, ⊥)}
-  : (r ;; ret c).packed_out = r.packed_out ;; sum nil (ret c) := by
+  : (r ;; ret c).packed_out (L := L) = r.packed_out ;; sum nil (ret c) := by
   simp [packed_out, seq, lsubst_lsubst]
   congr 1
   ext k; cases k using Fin.cases with
@@ -657,7 +659,7 @@ theorem Eqv.packed_out_binary_ret_seq  {Γ : Ctx α ε}
 
 theorem Eqv.packed_out_ret_seq {Γ : Ctx α ε}
   {c : Term.Eqv φ ((X, ⊥)::Γ) (Y, ⊥)} {r : Eqv φ ((Y, ⊥)::Γ) (A::L)}
-  : (ret c ;; r).packed_out = ret c ;; r.packed_out := by
+  : (ret c ;; r).packed_out (L := R) = ret c ;; r.packed_out := by
   simp [ret_seq, vsubst_packed_out, vwk1_packed_out]
 
 theorem Eqv.packed_out_unpacked_app_out_inner  {Γ : Ctx α ε} {R L : LCtx α}
