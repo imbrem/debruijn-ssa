@@ -659,7 +659,14 @@ theorem Eqv.packed_out_unpacked_app_out_inner  {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]}
   : r.unpacked_app_out.packed_out
   = r ;; ret (Term.Eqv.pack_app ;;' Term.Eqv.sum Term.Eqv.inj_r Term.Eqv.nil)
-  := sorry
+  := by
+  rw [unpacked_app_out, packed_out, lsubst_lsubst, seq]
+  congr; ext k; cases k using Fin.elim1
+  stop
+  simp [
+    Subst.Eqv.get_comp, Subst.Eqv.unpack_app_out, Eqv.get_alpha0, Term.Eqv.wk1_seq,
+    Term.Eqv.sum, Term.Eqv.wk1_coprod
+  ]
 
 theorem Eqv.packed_out_unpacked_app_out  {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]}
