@@ -360,14 +360,14 @@ theorem Eqv.braid_pi_r {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.rtimes_pi_r {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
-  : Ty.unit ⋊ r ;; pi_r = pi_r ;; r := by
+  : C ⋊ r ;; pi_r = pi_r ;; r := by
   simp only [rtimes, let2_seq, vwk1_pi_r, seq_assoc, ret_pair_pi_r]
   simp only [pi_r, let2_seq]
   congr 1
   exact (seq_nil _).trans (nil_seq _).symm
 
 theorem Eqv.ltimes_pi_l {Γ : Ctx α ε} {L : LCtx α}
-  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) : r ⋉ Ty.unit ;; pi_l = pi_l ;; r := by
+  (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L)) : r ⋉ C ;; pi_l = pi_l ;; r := by
   rw [<-braid_rtimes_braid, seq_assoc, braid_pi_l, seq_assoc, rtimes_pi_r, <-seq_assoc, braid_pi_r]
 
 theorem Eqv.let2_tensor_vwk2 {Γ : Ctx α ε} {L : LCtx α}

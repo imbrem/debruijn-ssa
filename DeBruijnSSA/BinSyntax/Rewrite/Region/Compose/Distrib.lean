@@ -88,3 +88,8 @@ theorem Eqv.distl_inv_distl {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (L := L)
   ;; distl = nil := by
   rw [distl_eq_ret, distl_inv_eq_ret, <-ret_of_seq, Term.Eqv.distl_inv_distl_pure]; rfl
+
+def Eqv.rtimes_sum_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  {l : Eqv φ ((A, ⊥)::Γ) (A'::L)} {r : Eqv φ ((B, ⊥)::Γ) (B'::L)}
+  : C ⋊ (sum l r) ;; distl_inv = distl_inv ;; sum (C ⋊ l) (C ⋊ r)
+  := sorry

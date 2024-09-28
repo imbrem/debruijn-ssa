@@ -266,8 +266,23 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
     rfl
   · rw [fixpoint_def']
     congr 5
-    simp [seq_assoc, ltimes_eq_ret, assoc_eq_ret, packed_out_ret_seq]
+    simp only [LCtx.pack.eq_2, LCtx.pack.eq_1, ltimes_eq_ret, assoc_eq_ret, List.get_eq_getElem,
+      Fin.coe_cast, seq_assoc, packed_out_ret_seq]
     apply congrArg
     apply congrArg
-    --simp only [unpacked_app_out_eq_left_exit]
-    sorry
+    conv =>
+      lhs
+      rw [
+        packed_out_binary_rtimes, packed_out_unpacked_app_out, <-rtimes_rtimes,
+        seq_assoc (right := distl_inv), rtimes_sum_seq_distl_inv,
+        seq_assoc (right := sum _ _), seq_assoc (right := coprod _ _)
+      ]
+    congr 1
+    · rw [seq_assoc]
+    · rw [seq_assoc, seq_assoc]
+      apply congrArg
+      rw [
+        sum_seq_coprod, sum_seq_coprod, nil_seq, rtimes_nil, nil_seq, <-seq_assoc,
+        rtimes_pi_r, seq_assoc, inj_r_coprod
+      ]
+      rfl
