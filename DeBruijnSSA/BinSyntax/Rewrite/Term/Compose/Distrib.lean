@@ -105,6 +105,24 @@ theorem Eqv.distl_seq_injective {A B C : Ty α} {Γ : Ctx α ε}
   : r = s := by
   rw [<-nil_seq r, <-nil_seq s, <-distl_inv_distl, <-seq_assoc, h, seq_assoc]
 
+theorem Eqv.rtimes_inj_l_seq_distl_inv_pure {A B C : Ty α} {Γ : Ctx α ε}
+  : A ⋊' inj_l ;;' distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := ⊥) = inj_l := by
+  rw [seq_distl_inv, rtimes, tensor, let2_let2, let2_pair]
+  simp [nil, let1_beta_pure, inj_l, coprod, wk2, Nat.liftnWk, case_inl, <-inl_let2, let2_eta]
+
+theorem Eqv.rtimes_inj_r_seq_distl_inv_pure {A B C : Ty α} {Γ : Ctx α ε}
+  : A ⋊' inj_r ;;' distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := ⊥) = inj_r := by
+  rw [seq_distl_inv, rtimes, tensor, let2_let2, let2_pair]
+  simp [nil, let1_beta_pure, inj_r, coprod, wk2, Nat.liftnWk, case_inr, <-inr_let2, let2_eta]
+
+theorem Eqv.rtimes_inj_l_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : A ⋊' inj_l ;;' distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e) = inj_l
+  := congrArg (wk_eff (he := bot_le)) rtimes_inj_l_seq_distl_inv_pure
+
+theorem Eqv.rtimes_inj_r_seq_distl_inv {A B C : Ty α} {Γ : Ctx α ε}
+  : A ⋊' inj_r ;;' distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Γ) (e := e) = inj_r
+  := congrArg (wk_eff (he := bot_le)) rtimes_inj_r_seq_distl_inv_pure
+
 def Eqv.distr {A B C : Ty α} {Γ : Ctx α ε}
   : Eqv φ (⟨(A.prod C).coprod (B.prod C), ⊥⟩::Γ) ⟨(A.coprod B).prod C, e⟩
   := coprod (inj_l ⋉' C) (inj_r ⋉' C)
