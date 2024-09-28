@@ -117,4 +117,24 @@ theorem Eqv.packed_out_binary_rtimes {Γ : Ctx α ε} {L : LCtx α}
   simp only [LCtx.pack.eq_2, LCtx.pack.eq_1, rtimes, packed_out_let2, packed_out_binary_ret_seq,
     let2_seq, vwk1_distl_inv, vwk1_sum, vwk1_pi_r, nil_vwk1, vwk1_packed_out, seq_assoc]
   congr 2
-  simp [<-seq_assoc, ret_seq, distl_inv_eq_ret, pi_r, vwk1_sum, vwk1_let2, vwk3, Nat.liftnWk]
+  simp only [distl_inv_eq_ret, pi_r, ret_seq, vwk1_sum, vwk1_let2, wk1_var0, List.length_cons,
+    Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vwk3, vwk_br, wk_var,
+    Set.mem_setOf_eq, Ctx.InS.coe_wk3, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte,
+    nil_vwk1]
+  simp only [sum, coprod, nil_seq, vwk1_inj_l, vwk1_seq, vwk1_br, wk1_pair, wk1_var_succ, zero_add,
+    wk1_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, vwk1_inj_r, vwk1_let2, vwk3, vwk_br, wk_var, Set.mem_setOf_eq,
+    Ctx.InS.coe_wk3, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte, vsubst_case, var0_subst0, wk_res_self,
+    vsubst_lift_seq, vsubst_let2, subst_lift_var_zero, vsubst_br, ge_iff_le, le_refl,
+    subst_liftn₂_var_zero, vsubst_lift_inj_l, vsubst_lift_inj_r, vwk1_case, wk1_distl_inv, vwk2, ←
+    Ctx.InS.lift_wk1, vwk_lift_seq, vwk_let2, Ctx.InS.coe_lift, Ctx.InS.coe_wk1, Nat.liftWk_zero,
+    Ctx.InS.coe_liftn₂, vwk_lift_inj_l, vwk_lift_inj_r]
+  simp only [Term.Eqv.distl_inv, Term.Eqv.coprod, wk1_inl, wk1_pair, wk1_var_succ, zero_add,
+    wk1_nil, wk1_inr, subst_let2, nil_subst0, wk_eff_self, subst_case, nil_subst_liftn₂, subst_inl,
+    subst_pair, subst_lift_var_succ, subst_liftn₂_var_one, wk0_var, Nat.reduceAdd, subst_lift_nil,
+    subst_inr, Term.Eqv.let2_pair, let1_beta_pure, var_succ_subst0, var0_subst0, List.length_cons,
+    Nat.liftWk_succ, Nat.succ_eq_add_one, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+    List.getElem_cons_zero, wk_res_self, let2_seq, vwk1_inj_l, case_case, vwk1_let2, wk1_var0,
+    Nat.add_zero, Nat.zero_eq, Set.mem_setOf_eq, Ctx.InS.coe_lift, Ctx.InS.coe_wk1, Nat.liftWk_zero,
+    id_eq, vwk1_inj_r, case_inl, let1_beta, vsubst_let2, let2_pair, case_inr]
+  rfl
