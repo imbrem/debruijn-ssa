@@ -21,6 +21,11 @@ theorem Eqv.wk1_distl_inv {A B C : Ty α} {Γ : Ctx α ε}
     (inserted := inserted)
   = distl_inv := rfl
 
+@[simp]
+theorem Eqv.wk_lift_distl_inv {A B C : Ty α} {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  : (distl_inv (φ := φ) (A := A) (B := B) (C := C) (Γ := Δ) (e := e)).wk ρ.slift
+  = distl_inv := rfl
+
 theorem Eqv.seq_distl_inv_eq_let {X A B C : Ty α} {Γ : Ctx α ε}
   {r : Eqv φ ((X, ⊥)::Γ) ⟨A.prod (B.coprod C), e⟩}
   : r ;;' distl_inv = let1 r distl_inv

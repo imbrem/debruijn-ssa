@@ -159,18 +159,74 @@ theorem Eqv.packed_case_den {Γ : Ctx α ε} {R : LCtx α}
 
 open Term.Eqv
 
+-- theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
+--   : (cfg R β G).packed (Δ := Δ)
+--   = ret Term.Eqv.split ;; _ ⋊ β.packed ;; fixpoint (
+--     _ ⋊ ret Term.Eqv.pack_app ;; distl_inv ;; sum pi_r (
+--       ret Term.Eqv.distl_pack ;; pack_coprod
+--         (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
+--             ;; _ ⋊ (G (i.cast R.length_dist)).packed
+--         ))) := by
+--   -- rw [
+--   --   packed_cfg_unpack, letc_to_vwk1, letc_vwk1_den, ret_seq, <-vsubst_packed_out,
+--   --   <-vwk1_packed_out, <-ret_seq
+--   -- ]
+--   -- simp only [seq_assoc]
+--   -- congr 1
+--   sorry
+
+theorem Eqv.unpacked_app_out_eq_left_exit {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((A, ⊥)::Γ) [(R ++ L).pack]} : r.unpacked_app_out
+  = (r ;; ret Term.Eqv.pack_app).lwk1 ;; left_exit
+  := by
+  rw [seq, seq, lwk1, <-lsubst_toSubstE, lsubst_lsubst, lsubst_lsubst, unpacked_app_out]
+  congr; ext k; cases k using Fin.elim1
+  simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
+    List.getElem_cons_zero, Subst.Eqv.unpack_app_out, unpack_app_out, csubst_get, cast_rfl,
+    left_exit, List.getElem_cons_succ, vwk1_case, wk1_var0, List.length_cons, Fin.zero_eta, vwk2_br,
+    wk2_var0, vwk1_br, wk1_pack_app, Subst.Eqv.get_comp, get_alpha0, List.length_nil, Fin.val_succ,
+    Fin.cases_zero, lsubst_br, Subst.Eqv.get_vlift, Subst.Eqv.get_toSubstE, Set.mem_setOf_eq,
+    Fin.coe_fin_one, LCtx.InS.coe_wk1, Nat.liftWk_zero, Nat.reduceAdd, zero_add, vwk_id_eq,
+    vsubst_case, var0_subst0, wk_res_self, vsubst_br, subst_lift_var_zero, Nat.add_zero,
+    Nat.zero_eq]
+  rfl
+
 theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (Δ := Δ)
-  = ret Term.Eqv.split ;; _ ⋊ β.packed ;; fixpoint (
-    _ ⋊ ret Term.Eqv.pack_app ;; distl_inv ;; sum pi_r (
-      ret Term.Eqv.distl_pack ;; pack_coprod
-        (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
-            ;; _ ⋊ (G (i.cast R.length_dist)).packed
-        ))) := by
-  rw [
-    packed_cfg_unpack, letc_to_vwk1, letc_vwk1_den, ret_seq, <-vsubst_packed_out,
-    <-vwk1_packed_out, <-ret_seq
-  ]
-  simp only [seq_assoc]
+  = (ret Term.Eqv.split ;; _ ⋊ (β.packed ;; ret Term.Eqv.pack_app) ;; distl_inv ;; sum pi_r nil)
+    ;; coprod nil (
+      fixpoint (
+        ret Term.Eqv.distl_pack ;; pack_coprod
+          (λi => acast (R.get_dist (i := i)) ;; ret Term.Eqv.split ⋉ _ ;; assoc
+              ;; _ ⋊ ((G (i.cast R.length_dist)).packed ;; ret Term.Eqv.pack_app)
+              ;; distl_inv
+              ;; sum pi_r nil
+          )
+      )
+    )
+   := by
+  rw [packed_cfg_split_vwk1, fixpoint_def', letc_vwk1_den]
   congr 1
-  sorry
+  · rw [ret_seq, <-vsubst_packed_out, <-vwk1_packed_out, <-ret_seq]
+    simp only [seq_assoc]
+    congr 1
+    simp [distl_inv_eq_ret, ret_seq, sum, coprod, vwk1_vwk2]
+    simp [
+      vwk1_seq, Term.Eqv.distl_inv, vsubst_lift_seq, rtimes, packed_out_let2, let2_seq,
+      vwk1_unpacked_app_out, wk1_coprod, wk1_let2, <-Ctx.InS.lift_lift, wk_lift_coprod,
+      Nat.liftnWk
+    ]
+    congr 1
+    conv => rhs; rw [<-ret, case_let2, seq_assoc]; rhs; rw [ret_seq]
+    simp [
+      vwk1_let2, <-Term.Subst.Eqv.lift_lift, vsubst_lift_coprod, vwk2_seq, vwk1_seq, vwk3,
+      vwk_lift_seq, vsubst_lift_seq, <-Ctx.InS.lift_wk2, Nat.liftnWk, Term.Eqv.coprod, let2_pair,
+      let1_beta, case_case
+    ]
+    simp [
+      case_inl, case_inr
+    ]
+    sorry
+  · rw [fixpoint_def']
+    congr 5
+    sorry

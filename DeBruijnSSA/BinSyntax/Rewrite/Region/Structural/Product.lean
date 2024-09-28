@@ -60,6 +60,10 @@ theorem Eqv.vwk2_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
   : r.packed_in.vwk2 (inserted := inserted) = r.packed_in (Δ := head::_::Δ) := by
   rw [vwk2, <-Ctx.InS.lift_wk1, vwk_slift_packed_in]
 
+theorem Eqv.lwk1_packed_in {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ (A::R)}
+  : r.packed_in.lwk1 (inserted := inserted) = r.lwk1.packed_in (Δ := Δ) := by
+  rw [packed_in, lwk1, packed_in, lwk1, vsubst_lwk]
+
 @[simp]
 theorem Eqv.vsubst_lift_packed_in {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
   {σ : Term.Subst.Eqv φ Δ' Δ}

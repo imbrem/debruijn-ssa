@@ -22,6 +22,19 @@ theorem Eqv.split_rtimes_pi_r_distl_packed {A B : Ty α} {Γ : Ctx α ε}
     (_ ⋊' (split ;;' inj_r ⋉' _) ;;' assoc_inv)
   := split_rtimes_pi_r_distl
 
+@[simp]
+theorem Eqv.wk_lift_distl_pack {Γ Δ : Ctx α ε} {ρ : Γ.InS Δ}
+  : (distl_pack (φ := φ) (R := R) (X := X) (e := e)).wk ρ.slift = distl_pack := by
+  induction R with
+  | nil => rfl
+  | cons A R I => simp [distl_pack, wk_lift_seq, wk_lift_coprod, I]
+
+@[simp]
+theorem Eqv.wk1_distl_pack {Γ : Ctx α ε} {R : LCtx α} {X : Ty α}
+  : (distl_pack (φ := φ) (Γ := Γ) (R := R) (X := X) (e := e)).wk1 (inserted := inserted)
+  = distl_pack
+  := by rw [wk1, <-Ctx.InS.lift_wk0, wk_lift_distl_pack]
+
 -- theorem Eqv.split_rtimes_nil_packed_distl {A B C : Ty α} {Γ : Ctx α ε}
 --   : split (φ := φ) (A := Ctx.pack ((A.coprod B, ⊥)::Γ)) (e := e) (Γ := Δ)
 --   ;;' _ ⋊' Term.Eqv.nil.packed ;;' distl_inv

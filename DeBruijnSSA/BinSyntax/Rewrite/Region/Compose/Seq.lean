@@ -949,3 +949,27 @@ theorem Eqv.loop_seq {Γ : Ctx α ε} {L : LCtx α} {r : Eqv φ ((B, ⊥)::Γ) (
   : loop (Γ := (A, ⊥)::Γ) (L := B::L) ;; r = loop := by
   induction r using Quotient.inductionOn
   simp [loop_def, Region.InS.append_def]
+
+theorem Eqv.lsubst_vlift_ret_seq {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : Subst.Eqv φ Γ (C::L) K} {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (ret a ;; r).lsubst σ.vlift = vsubst a.subst0 (r.lsubst σ.vlift).vwk1 := by
+  induction a using Quotient.inductionOn
+  induction r using Quotient.inductionOn
+  induction σ using Quotient.inductionOn
+  apply Eqv.eq_of_reg_eq
+  simp only [Set.mem_setOf_eq, InS.lsubst_br, List.length_cons, Fin.zero_eta, List.get_eq_getElem,
+    Fin.val_zero, List.getElem_cons_zero, InS.coe_lsubst, Subst.InS.coe_vlift, InS.coe_vsubst,
+    Term.InS.coe_subst0, InS.coe_vwk_id, Subst.InS.coe_get, InS.coe_alpha0, InS.coe_vwk,
+    Ctx.InS.coe_wk1, ← Region.vsubst_fromWk, Region.vsubst_vsubst, Term.liftWk_succ_comp_subst0]
+  simp only [Subst.vlift, Region.vsubst_lsubst]
+  congr 1
+  · funext k;
+    simp only [Region.vwk1, ← Region.vsubst_fromWk, Function.comp_apply, Region.vsubst_vsubst]
+    congr
+    funext j; cases j <;> rfl
+  · simp [Region.alpha, Term.alpha, Region.vsubst_vsubst]
+
+theorem Eqv.lsubst_vlift_ret_seq' {Γ : Ctx α ε} {L K : LCtx α}
+  {σ : Subst.Eqv φ Γ (C::L) (C'::K)} {a : Term.Eqv φ (⟨A, ⊥⟩::Γ) ⟨B, ⊥⟩} {r : Eqv φ (⟨B, ⊥⟩::Γ) (C::L)}
+  : (ret a ;; r).lsubst σ.vlift = ret a ;; r.lsubst σ.vlift := by
+  rw [lsubst_vlift_ret_seq, ret_seq]

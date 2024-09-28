@@ -113,9 +113,27 @@ def Eqv.inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.inj_l_eq_ret {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.inj_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) = ret Term.Eqv.inj_l := rfl
 
+@[simp]
 theorem Eqv.vwk1_inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (inj_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
   = inj_l := rfl
+
+@[simp]
+theorem Eqv.vwk2_inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (inj_l (φ := φ) (A := A) (B := B) (Γ := V::Γ) (L := L)).vwk2 (inserted := inserted)
+  = inj_l := rfl
+
+@[simp]
+theorem Eqv.vwk_lift_inj_l {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Γ.InS Δ}
+  : (inj_l (φ := φ) (A := A) (B := B) (Γ := Δ) (L := L)).vwk (ρ.slift)
+  = inj_l := rfl
+
+@[simp]
+theorem Eqv.vsubst_lift_inj_l {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Term.Subst.Eqv φ Γ Δ}
+  : (inj_l (φ := φ) (A := A) (B := B) (Γ := Δ) (L := L)).vsubst (ρ.lift (le_refl _))
+  = inj_l := by induction ρ using Quotient.inductionOn; rfl
 
 theorem Eqv.lwk1_inj_l {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (inj_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).lwk1 (inserted := inserted)
@@ -135,9 +153,27 @@ def Eqv.inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.inj_r_eq_ret {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : Eqv.inj_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L) = ret Term.Eqv.inj_r := rfl
 
+@[simp]
 theorem Eqv.vwk1_inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (inj_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted)
   = inj_r := rfl
+
+@[simp]
+theorem Eqv.vwk2_inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
+  : (inj_r (φ := φ) (A := A) (B := B) (Γ := V::Γ) (L := L)).vwk2 (inserted := inserted)
+  = inj_r := rfl
+
+@[simp]
+theorem Eqv.vwk_lift_inj_r {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Γ.InS Δ}
+  : (inj_r (φ := φ) (A := A) (B := B) (Γ := Δ) (L := L)).vwk (ρ.slift)
+  = inj_r := rfl
+
+@[simp]
+theorem Eqv.vsubst_lift_inj_r {A B : Ty α} {Γ Δ : Ctx α ε} {L : LCtx α}
+  {ρ : Term.Subst.Eqv φ Γ Δ}
+  : (inj_r (φ := φ) (A := A) (B := B) (Γ := Δ) (L := L)).vsubst (ρ.lift (le_refl _))
+  = inj_r := by induction ρ using Quotient.inductionOn; rfl
 
 theorem Eqv.lwk1_inj_r {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : (inj_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).lwk1 (inserted := inserted)

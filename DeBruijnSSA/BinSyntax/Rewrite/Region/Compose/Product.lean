@@ -209,6 +209,19 @@ theorem Eqv.runit_eq_ret {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 theorem Eqv.vwk1_pi_l {Γ : Ctx α ε} {L : LCtx α}
   : (pi_l (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted) = pi_l := rfl
 
+@[simp]
+theorem Eqv.vwk2_pi_l {Γ : Ctx α ε} {L : LCtx α}
+  : (pi_l (φ := φ) (A := A) (B := B) (Γ := V::Γ) (L := L)).vwk2 (inserted := inserted) = pi_l := rfl
+
+@[simp]
+theorem Eqv.vwk_lift_pi_l {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Ctx.InS Γ Δ}
+  : (pi_l (φ := φ) (A := A) (B := B) (L := L)).vwk (ρ.lift (le_refl _)) = pi_l := rfl
+
+@[simp]
+theorem Eqv.vsubst_lift_pi_l {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Term.Subst.Eqv φ Γ Δ}
+  : (pi_l (φ := φ) (A := A) (B := B) (L := L)).vsubst (ρ.lift (le_refl _)) = pi_l := by
+  induction ρ using Quotient.inductionOn; rfl
+
 theorem Eqv.ret_pair_pi_l {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {a : Term.Eqv φ ((X, ⊥)::Γ) (A, ⊥)} {b : Term.Eqv φ ((X, ⊥)::Γ) (B, ⊥)}
   : ret (targets := L) (a.pair b) ;; pi_l = ret a
@@ -258,6 +271,19 @@ theorem Eqv.lunit_eq_ret {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 @[simp]
 theorem Eqv.vwk1_pi_r {Γ : Ctx α ε} {L : LCtx α}
   : (pi_r (φ := φ) (A := A) (B := B) (Γ := Γ) (L := L)).vwk1 (inserted := inserted) = pi_r := rfl
+
+@[simp]
+theorem Eqv.vwk2_pi_r {Γ : Ctx α ε} {L : LCtx α}
+  : (pi_r (φ := φ) (A := A) (B := B) (Γ := V::Γ) (L := L)).vwk2 (inserted := inserted) = pi_r := rfl
+
+@[simp]
+theorem Eqv.vwk_lift_pi_r {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Ctx.InS Γ Δ}
+  : (pi_r (φ := φ) (A := A) (B := B) (L := L)).vwk (ρ.lift (le_refl _)) = pi_r := rfl
+
+@[simp]
+theorem Eqv.vsubst_lift_pi_r {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Term.Subst.Eqv φ Γ Δ}
+  : (pi_r (φ := φ) (A := A) (B := B) (L := L)).vsubst (ρ.lift (le_refl _)) = pi_r := by
+  induction ρ using Quotient.inductionOn; rfl
 
 theorem Eqv.ret_pair_pi_r {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {a : Term.Eqv φ ((X, ⊥)::Γ) (A, ⊥)} {b : Term.Eqv φ ((X, ⊥)::Γ) (B, ⊥)}

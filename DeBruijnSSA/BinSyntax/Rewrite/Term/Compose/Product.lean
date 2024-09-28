@@ -90,6 +90,14 @@ theorem Eqv.let2_nil {A B : Ty α} {Γ : Ctx α ε} (a : Eqv φ Γ ⟨A.prod B, 
 def Eqv.split {A : Ty α} {Γ : Ctx α ε} : Eqv (φ := φ) (⟨A, ⊥⟩::Γ) ⟨A.prod A, e⟩
   := pair nil nil
 
+@[simp]
+theorem Eqv.wk_lift_split {A : Ty α} {Γ Δ : Ctx α ε} {ρ : Ctx.InS Γ Δ}
+  : split.wk ρ.slift = split (φ := φ) (A := A) (e := e) := rfl
+
+@[simp]
+theorem Eqv.wk1_split {A : Ty α} {Γ : Ctx α ε}
+  : (split (Γ := Γ)).wk1 (inserted := inserted) = split (φ := φ) (A := A) (e := e) := rfl
+
 theorem Eqv.pl_split {A : Ty α} {Γ : Ctx α ε}
   : split.pl = nil (φ := φ) (Γ := Γ) (A := A) (e := e)
   := by rw [pl, split, let2_pair, nil, let1_beta_var0, wk0_var, let1_beta_var1]; rfl

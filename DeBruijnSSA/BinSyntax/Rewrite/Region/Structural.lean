@@ -73,7 +73,7 @@ theorem Eqv.vwk_liftn₂_packed {Γ Δ Δ' : Ctx α ε} {R : LCtx α} {r : Eqv �
   simp [<-Ctx.InS.lift_lift]
 
 @[simp]
-theorem Eqv.vwk1_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
+theorem Eqv.vwk1_packed {Γ Δ : Ctx α ε} {R : LCtx α} {r : Eqv φ Γ R}
   : r.packed.vwk1 (inserted := inserted) = r.packed (Δ := _::Δ) := by
   rw [vwk1, <-Ctx.InS.lift_wk0, vwk_slift_packed]
 
@@ -160,6 +160,19 @@ theorem Eqv.packed_cfg_split {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R
   congr 3
   · rw [packed_in_unpacked_app_out, <-packed]
   · rw [packed_in_pack_coprod_arr]; congr; funext i; rw [packed_in_unpacked_app_out, <-packed]
+
+theorem Eqv.packed_cfg_split_vwk1 {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
+  : (cfg R β G).packed (Δ := Δ)
+  = letc (Γ.pack.prod R.pack)
+      (ret Term.Eqv.split ;; _ ⋊ β.packed.unpacked_app_out)
+      (ret Term.Eqv.split ⋉ _ ;; assoc
+        ;; _ ⋊ (ret Term.Eqv.distl_pack
+          ;; pack_coprod (λi => acast R.get_dist
+            ;; (G (i.cast R.length_dist)).packed.unpacked_app_out))).vwk1 := by
+  rw [packed_cfg_split]
+  simp only [List.get_eq_getElem, Fin.coe_cast, vwk1_seq, vwk1_ltimes, vwk1_br, wk1_split,
+    vwk1_rtimes, wk1_distl_pack, vwk1_pack_coprod, vwk1_acast, vwk1_unpacked_app_out, vwk1_packed]
+  rfl
 
 -- TODO: unpacked_app_out ltimes dinaturality
 
