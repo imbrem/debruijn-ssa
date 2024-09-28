@@ -175,7 +175,7 @@ open Term.Eqv
 --   -- congr 1
 --   sorry
 
-theorem Eqv.unpacked_app_out_eq_left_exit {Γ : Ctx α ε} {R L : LCtx α}
+theorem Eqv.unpacked_app_out_eq_left_exit' {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((A, ⊥)::Γ) [(R ++ L).pack]} : r.unpacked_app_out
   = (r ;; ret Term.Eqv.pack_app).lwk1 ;; left_exit
   := by
@@ -190,6 +190,11 @@ theorem Eqv.unpacked_app_out_eq_left_exit {Γ : Ctx α ε} {R L : LCtx α}
     vsubst_case, var0_subst0, wk_res_self, vsubst_br, subst_lift_var_zero, Nat.add_zero,
     Nat.zero_eq]
   rfl
+
+theorem Eqv.unpacked_app_out_eq_left_exit {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((A, ⊥)::Γ) [(R ++ L).pack]} : r.unpacked_app_out
+  = r.lwk1 ;; ret Term.Eqv.pack_app ;; left_exit
+  := by rw [unpacked_app_out_eq_left_exit', lwk1_seq, lwk1_ret]
 
 theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (L := []) (Δ := Δ)
@@ -264,4 +269,5 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
     simp [seq_assoc, ltimes_eq_ret, assoc_eq_ret, packed_out_ret_seq]
     apply congrArg
     apply congrArg
+    --simp only [unpacked_app_out_eq_left_exit]
     sorry

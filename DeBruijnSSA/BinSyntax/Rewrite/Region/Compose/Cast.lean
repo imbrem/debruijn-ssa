@@ -8,7 +8,7 @@ variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [SemilatticeSup ε] [O
 namespace Region
 
 def Eqv.acast {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} (h : X = Y)
-  : Eqv φ ((X, ⊥)::Γ) (Y::L) := (Eqv.nil (targets := L)).cast rfl (by rw [h])
+  : Eqv φ ((X, ⊥)::Γ) (Y::L) := ret (Term.Eqv.nil.cast rfl (by rw [h]))
 
 @[simp]
 theorem Eqv.acast_rfl {Γ : Ctx α ε} {L : LCtx α} {X : Ty α}
@@ -17,7 +17,12 @@ theorem Eqv.acast_rfl {Γ : Ctx α ε} {L : LCtx α} {X : Ty α}
 @[simp]
 theorem Eqv.vwk1_acast {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} {h : X = Y}
   : (Eqv.acast (φ := φ) (Γ := Γ) (L := L) h).vwk1 (inserted := inserted) = Eqv.acast h
-  := by cases h; simp
+  := rfl
+
+@[simp]
+theorem Eqv.lwk1_acast {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} {h : X = Y}
+  : (Eqv.acast (φ := φ) (Γ := Γ) (L := L) h).lwk1 (inserted := inserted) = Eqv.acast h
+  := rfl
 
 theorem Eqv.acast_seq {Γ : Ctx α ε} {L : LCtx α} {X Y : Ty α} {h : X = Y}
   {r : Eqv φ ((Y, ⊥)::Γ) (Z::L)}

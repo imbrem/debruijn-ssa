@@ -1,6 +1,7 @@
 import DeBruijnSSA.BinSyntax.Rewrite.Region.LSubst
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Seq
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Sum
+import DeBruijnSSA.BinSyntax.Rewrite.Region.Compose.Cast
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Structural.Letc
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Structural.Sum
 import DeBruijnSSA.BinSyntax.Typing.Region.Structural
@@ -57,6 +58,11 @@ def Eqv.pack_coprod {Γ : Ctx α ε} {R L : LCtx α}
   match R with
   | [] => loop
   | _::R => coprod (pack_coprod (λi => G i.succ)) (G (0 : Fin (R.length + 1)))
+
+theorem Eqv.pack_coprod_seq {Γ : Ctx α ε} {R L : LCtx α}
+  {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) (A::L)} {r : Eqv φ ((A, ⊥)::Γ) (B::L)}
+  : pack_coprod G ;; r = pack_coprod (λi => (G i) ;; r)
+  := by induction R <;> simp [pack_coprod, coprod_seq, *]
 
 theorem Eqv.pack_case_nil_vwk1 {Γ : Ctx α ε} {R L : LCtx α}
   (G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) L)
@@ -577,6 +583,13 @@ theorem Eqv.vwk1_packed_out {Γ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R
   rw [packed_out, packed_out, <-Subst.Eqv.vlift_pack, Subst.Eqv.vwk1_lsubst_vlift,
       Subst.Eqv.vlift_pack, Subst.Eqv.vlift_pack, <-packed_out]
 
+theorem Eqv.vsubst_unpacked_app_out  {Γ Δ : Ctx α ε} {R L : LCtx α}
+  {σ : Term.Subst.Eqv φ Γ Δ} {r : Eqv φ Δ [(R ++ L).pack]}
+  : r.unpacked_app_out.vsubst σ = (r.vsubst σ).unpacked_app_out := by
+  rw [unpacked_app_out, vsubst_lsubst, Subst.Eqv.vsubst_unpack_app_out]
+  rfl
+
+@[simp]
 theorem Eqv.lwk1_packed_out {Γ : Ctx α ε} {R : LCtx α} {r : Eqv φ (V::Γ) R}
   : (r.packed_out (L := L)).lwk1 (inserted := inserted) = r.packed_out := by
   rw [packed_out, packed_out, <-Subst.Eqv.vlift_pack, lwk1, <-lsubst_toSubstE, lsubst_lsubst,
@@ -597,6 +610,11 @@ theorem Eqv.unpacked_app_out_case {Γ : Ctx α ε} {R L : LCtx α}
   {l : Eqv φ ((A, ⊥)::Γ) [(R ++ L).pack]} {r : Eqv φ ((B, ⊥)::Γ) [(R ++ L).pack]}
   : (case a l r).unpacked_app_out = case a l.unpacked_app_out r.unpacked_app_out
   := by simp [unpacked_app_out]
+
+theorem Eqv.unpacked_app_out_coprod {Γ : Ctx α ε} {R L : LCtx α}
+  {l : Eqv φ ((A, ⊥)::Γ) [(R ++ L).pack]} {r : Eqv φ ((B, ⊥)::Γ) [(R ++ L).pack]}
+  : (coprod l r).unpacked_app_out = coprod l.unpacked_app_out r.unpacked_app_out
+  := by simp [coprod, unpacked_app_out_case, vwk1_unpacked_app_out]
 
 theorem Eqv.extend_unpack_unpacked_app_out
   {Γ : Ctx α ε} {R L : LCtx α} {r : Eqv φ Γ [(R ++ L).pack]}
@@ -691,20 +709,36 @@ theorem Eqv.packed_out_unpacked_app_out  {Γ : Ctx α ε} {R L : LCtx α}
   rw [packed_out_unpacked_app_out_inner]
   simp [Term.Eqv.sum, ret_of_coprod, sum, ret_of_seq, inj_l_eq_ret, inj_r_eq_ret, seq_assoc]
 
-theorem Eqv.packed_out_unpacked_app_out_ret_seq  {Γ : Ctx α ε} {R L : LCtx α}
+theorem Eqv.packed_out_unpacked_app_out_ret_seq {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]} {c : Term.Eqv φ ((R.pack, ⊥)::Γ) (C, ⊥)}
   : (r.unpacked_app_out ;; ret c).packed_out
   = r ;; ret Term.Eqv.pack_app ;; sum inj_r (ret c) := by
   rw [packed_out_binary_ret_seq, packed_out_unpacked_app_out, seq_assoc, sum_seq_sum]
   simp
 
-theorem Eqv.packed_out_unpacked_app_out_ret_seq_inner  {Γ : Ctx α ε} {R L : LCtx α}
+theorem Eqv.packed_out_unpacked_app_out_ret_seq_inner {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]} {c : Term.Eqv φ ((R.pack, ⊥)::Γ) (C, ⊥)}
   : (r.unpacked_app_out ;; ret c).packed_out
   = r ;; (ret (Term.Eqv.pack_app ;;' Term.Eqv.sum Term.Eqv.inj_r c)) := by
   rw [packed_out_unpacked_app_out_ret_seq, ret_of_seq]
   simp [Term.Eqv.sum, ret_of_coprod, sum, ret_of_seq, inj_l_eq_ret, inj_r_eq_ret, seq_assoc]
 
-end Region
+theorem Eqv.unpacked_app_out_pack_coprod {Γ : Ctx α ε} {R L K : LCtx α}
+  {G : (i : Fin R.length) → Eqv φ (⟨R.get i, ⊥⟩::Γ) [(L ++ K).pack]}
+  : (pack_coprod G).unpacked_app_out = pack_coprod (λi => (G i).unpacked_app_out)
+  := by induction R with
+  | nil => simp [pack_coprod, unpacked_app_out]
+  | cons B R I => simp [pack_coprod, unpacked_app_out_coprod, I]
 
-end BinSyntax
+theorem Eqv.unpacked_app_out_seq {Γ : Ctx α ε} {R L : LCtx α}
+  {r : Eqv φ ((A, ⊥)::Γ) [B]} {s : Eqv φ ((B, ⊥)::Γ) [(R ++ L).pack]}
+  : (r ;; s).unpacked_app_out = r.lwk1 ;; s.unpacked_app_out := by
+  rw [seq, unpacked_app_out, lsubst_lsubst, seq, lwk1, <-lsubst_toSubstE, lsubst_lsubst]
+  congr 1; ext k; cases k using Fin.elim1
+  simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
+    List.getElem_cons_zero, Subst.Eqv.get_comp, Subst.Eqv.vlift_unpack_app_out, get_alpha0,
+    List.length_nil, Fin.val_succ, List.getElem_cons_succ, Fin.cases_zero, Subst.Eqv.get_toSubstE,
+    Set.mem_setOf_eq, Fin.coe_fin_one, LCtx.InS.coe_wk1, Nat.liftWk_zero, lsubst_br,
+    List.length_cons, Nat.reduceAdd, Fin.zero_eta, Subst.Eqv.get_vlift, zero_add, vwk_id_eq,
+    vsubst0_var0_vwk1]
+  rw [vwk1_unpacked_app_out]; rfl
