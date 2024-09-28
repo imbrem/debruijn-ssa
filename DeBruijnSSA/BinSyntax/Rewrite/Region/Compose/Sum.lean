@@ -93,6 +93,21 @@ theorem Eqv.zero_eq {A : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   : r = s
   := by apply Eqv.initial; exact ⟨(Ty.empty, ⊥), by simp, Ty.IsInitial.empty, rfl⟩
 
+@[simp]
+theorem Eqv.vwk_lift_zero {Γ Δ : Ctx α ε} {L : LCtx α} {A : Ty α} {ρ : Γ.InS Δ}
+  : zero.vwk ρ.slift = zero (φ := φ) (L := L) (A := A)
+  := rfl
+
+@[simp]
+theorem Eqv.vwk1_zero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : (zero (Γ := Γ)).vwk1 (inserted := inserted) = zero (φ := φ) (L := L) (A := A)
+  := rfl
+
+@[simp]
+theorem Eqv.vwk2_zero {Γ : Ctx α ε} {L : LCtx α} {A : Ty α}
+  : (zero (Γ := V::Γ)).vwk2 (inserted := inserted) = zero (φ := φ) (L := L) (A := A)
+  := rfl
+
 theorem Eqv.zero_seq {A B : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   (r : Eqv φ (⟨A, ⊥⟩::Γ) (B::L))
   : Eqv.zero ;; r = Eqv.zero

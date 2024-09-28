@@ -662,11 +662,20 @@ theorem Eqv.packed_out_unpacked_app_out_inner  {Γ : Ctx α ε} {R L : LCtx α}
   := by
   rw [unpacked_app_out, packed_out, lsubst_lsubst, seq]
   congr; ext k; cases k using Fin.elim1
-  stop
-  simp [
-    Subst.Eqv.get_comp, Subst.Eqv.unpack_app_out, Eqv.get_alpha0, Term.Eqv.wk1_seq,
-    Term.Eqv.sum, Term.Eqv.wk1_coprod
-  ]
+  simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
+    List.getElem_cons_zero, LCtx.pack.eq_2, LCtx.pack.eq_1, Subst.Eqv.unpack_app_out,
+    unpack_app_out, Term.Eqv.nil, Subst.Eqv.get_comp, Subst.Eqv.vlift_pack, csubst_get, cast_rfl,
+    lsubst_case, lsubst_br, List.length_cons, Nat.reduceAdd, Fin.mk_one, Fin.val_one,
+    List.getElem_cons_succ, Subst.Eqv.pack_get, Term.Eqv.inj_n, Fin.cases, Fin.induction,
+    Fin.induction.go, Fin.zero_eta, Fin.succ_zero_eq_one, List.length_nil, eq_mpr_eq_cast, cast_eq,
+    vwk_id_eq, vsubst_br, Term.Eqv.subst_inl, Term.Eqv.subst_inr, Term.Eqv.var0_subst0,
+    Term.Eqv.wk_res_self, Term.Eqv.seq, Term.Eqv.sum, Term.Eqv.coprod, Term.Eqv.inj_r,
+    Term.Eqv.inj_l, Term.Eqv.wk1_inl, Term.Eqv.wk1_var0, Term.Eqv.let1_beta_pure, Term.Eqv.wk1_inr,
+    Term.Eqv.wk1_case, Term.Eqv.wk2_inl, Term.Eqv.wk2_inr, Term.Eqv.wk2_var0, Term.Eqv.subst_case,
+    Term.Eqv.subst_lift_var_zero, vwk1_br, Term.Eqv.wk1_pack_app, Nat.add_zero, Nat.zero_eq,
+    get_alpha0]
+  rw [<-ret, <-ret, <-case_ret]
+  rfl
 
 theorem Eqv.packed_out_unpacked_app_out  {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ ((X, ⊥)::Γ) [(R ++ L).pack]}

@@ -210,23 +210,47 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
   · rw [ret_seq, <-vsubst_packed_out, <-vwk1_packed_out, <-ret_seq]
     simp only [seq_assoc]
     congr 1
-    simp [distl_inv_eq_ret, ret_seq, sum, coprod, vwk1_vwk2]
-    simp [
-      vwk1_seq, Term.Eqv.distl_inv, vsubst_lift_seq, rtimes, packed_out_let2, let2_seq,
-      vwk1_unpacked_app_out, wk1_coprod, wk1_let2, <-Ctx.InS.lift_lift, wk_lift_coprod,
-      Nat.liftnWk
-    ]
+    simp only [LCtx.pack.eq_2, LCtx.pack.eq_1, sum, coprod, Eqv.nil_vwk1, nil_seq,
+      vwk1_inj_r, distl_inv_eq_ret, ret_seq, vwk1_case, wk1_var0, List.length_cons, Fin.zero_eta,
+      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vwk1_vwk2, vwk2_inj_r, vsubst_case,
+      var0_subst0, wk_res_self, vsubst_lift_inj_r, vwk1_zero]
+    simp only [rtimes, vwk1_unpacked_app_out, vwk1_packed, packed_out_let2, LCtx.pack.eq_2,
+      LCtx.pack.eq_1, vwk1_seq, vwk1_case, wk1_var0, List.length_cons, Fin.zero_eta,
+      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vwk2_zero, nil_vwk2, vwk1_inj_l,
+      let2_seq, vwk2_inj_r, vwk1_br, wk1_pack_app, Term.Eqv.distl_inv, vwk1_pi_r, vsubst_lift_seq,
+      vsubst_lift_pi_r, vsubst_lift_inj_l, wk1_let2, wk1_nil, ← Ctx.InS.lift_lift, Ctx.InS.lift_wk1,
+      wk_lift_coprod, wk_inl, wk_pair, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_lift, Ctx.InS.coe_wk2,
+      Nat.liftWk_succ, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte, zero_add, wk_lift_nil, wk_inr]
     congr 1
     conv => rhs; rw [<-ret, case_let2, seq_assoc]; rhs; rw [ret_seq]
+    simp only [vwk2, ← Ctx.InS.lift_wk1, vwk_lift_seq, vwk_case, wk_var, Set.mem_setOf_eq,
+      Ctx.InS.coe_lift, Ctx.InS.coe_wk1, Nat.liftWk_zero, vwk_lift_zero, InS.nil_vwk_lift,
+      vwk_lift_inj_l, Term.Eqv.coprod, wk1_inl, wk1_pair, wk1_var_succ, zero_add, wk1_nil, wk1_inr,
+      vwk_lift_pi_r, vwk1_seq, vwk1_pi_r, vwk1_inj_l, vwk1_inj_r, case_case, vwk1_let2, vwk3, ←
+      Ctx.InS.lift_wk2, wk_lift_nil, wk_inl, wk_pair, Nat.liftWk_succ, Nat.reduceAdd,
+      vwk_lift_inj_r, wk_inr, vsubst_let2, nil_subst0, wk_eff_self, ← Term.Subst.Eqv.lift_lift,
+      vsubst_case, subst_lift_nil, subst_inl, subst_pair, subst_lift_var_succ, subst_lift_var_zero,
+      wk0_var, vsubst_lift_seq, vsubst_lift_pi_r, vsubst_lift_inj_l, vsubst_lift_inj_r, subst_inr,
+      let2_pair, let1_beta, var_succ_subst0, var0_subst0, List.length_cons, Nat.add_zero,
+      Nat.zero_eq, Nat.succ_eq_add_one, Ctx.InS.coe_wk2, Nat.liftnWk, Nat.ofNat_pos, ↓dreduceIte,
+      Nat.reduceSub, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero,
+      wk_res_self, nil_vwk_lift]
     simp [
-      vwk1_let2, <-Term.Subst.Eqv.lift_lift, vsubst_lift_coprod, vwk2_seq, vwk1_seq, vwk3,
-      vwk_lift_seq, vsubst_lift_seq, <-Ctx.InS.lift_wk2, Nat.liftnWk, Term.Eqv.coprod, let2_pair,
-      let1_beta, case_case
+      case_inl, case_inr, packed_out_unpacked_app_out_ret_seq, seq_assoc
     ]
-    simp [
-      case_inl, case_inr
-    ]
-    sorry
+    apply congrArg
+    apply congrArg
+    simp only [sum, inj_r, inj_l, ret_seq, vwk1_br, wk1_inl, wk1_var0, List.length_cons,
+      Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vsubst_br, subst_inl,
+      var0_subst0, wk_res_self, wk1_inr, subst_inr, coprod_seq, vwk1_case, LCtx.pack.eq_2,
+      LCtx.pack.eq_1, vwk2, ← Ctx.InS.lift_wk1, vwk_lift_seq, vwk_case, wk_var, Set.mem_setOf_eq,
+      Ctx.InS.coe_lift, Ctx.InS.coe_wk1, Nat.liftWk_zero, vwk_lift_zero, nil_vwk_lift,
+      vwk_br, wk_inl, wk_inr, vsubst_case, subst_lift_var_zero, case_inl, let1_beta, case_inr,
+      Nat.add_zero, Nat.zero_eq, id_eq, pi_r_eq_ret, Term.Eqv.pi_r, subst_pr, nil_subst0,
+      wk_eff_self]
+    rw [coprod, zero, <-ret_nil, case_ret, ret_seq]
+    simp [Term.Eqv.case_inr, Term.Eqv.let1_beta_pure, Term.Eqv.Pure.pr_pair]
+    rfl
   · rw [fixpoint_def']
     congr 5
     sorry
