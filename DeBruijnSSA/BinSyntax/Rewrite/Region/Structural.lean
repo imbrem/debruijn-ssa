@@ -162,12 +162,12 @@ theorem Eqv.packed_cfg_split {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R
       (ret Term.Eqv.split ;; _ ⋊ β.packed.unpacked_app_out)
       (ret Term.Eqv.split ⋉ _ ;; assoc
         ;; _ ⋊ (ret Term.Eqv.distl_pack
-          ;; (pack_coprod (λi => acast R.get_dist
-            ;; (G (i.cast R.length_dist)).packed)).unpacked_app_out)) := by
+          ;; pack_coprod (λi => acast R.get_dist
+            ;; (G (i.cast R.length_dist)).packed)).unpacked_app_out) := by
   rw [packed, packed_out_cfg_letc, packed_in_letc_split]
   congr 3
   · rw [packed_in_unpacked_app_out, <-packed]
-  · rw [packed_in_pack_coprod_arr, unpacked_app_out_pack_coprod]
+  · rw [packed_in_pack_coprod_arr, unpacked_app_out_seq, lwk1_ret, unpacked_app_out_pack_coprod]
     congr; funext i; rw [packed_in_unpacked_app_out, <-packed, unpacked_app_out_seq, lwk1_acast]
 
 theorem Eqv.packed_cfg_split_vwk1 {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
@@ -176,8 +176,8 @@ theorem Eqv.packed_cfg_split_vwk1 {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ 
       (ret Term.Eqv.split ;; _ ⋊ β.packed.unpacked_app_out)
       (ret Term.Eqv.split ⋉ _ ;; assoc
         ;; _ ⋊ (ret Term.Eqv.distl_pack
-          ;; (pack_coprod (λi => acast R.get_dist
-            ;; (G (i.cast R.length_dist)).packed)).unpacked_app_out)).vwk1 := by
+          ;; pack_coprod (λi => acast R.get_dist
+            ;; (G (i.cast R.length_dist)).packed)).unpacked_app_out).vwk1 := by
   rw [packed_cfg_split]
   simp only [List.get_eq_getElem, Fin.coe_cast, vwk1_seq, vwk1_ltimes, vwk1_br, wk1_split,
     vwk1_rtimes, wk1_distl_pack, vwk1_pack_coprod, vwk1_acast, vwk1_unpacked_app_out, vwk1_packed]
