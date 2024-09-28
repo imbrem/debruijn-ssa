@@ -235,9 +235,7 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
       Nat.zero_eq, Nat.succ_eq_add_one, Ctx.InS.coe_wk2, Nat.liftnWk, Nat.ofNat_pos, ↓dreduceIte,
       Nat.reduceSub, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero,
       wk_res_self, nil_vwk_lift]
-    simp [
-      case_inl, case_inr, packed_out_unpacked_app_out_ret_seq, seq_assoc
-    ]
+    simp only [packed_out_unpacked_app_out_ret_seq, LCtx.pack.eq_1, seq_assoc, case_inl, case_inr]
     apply congrArg
     apply congrArg
     simp only [sum, inj_r, inj_l, ret_seq, vwk1_br, wk1_inl, wk1_var0, List.length_cons,
@@ -249,8 +247,14 @@ theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R +
       Nat.add_zero, Nat.zero_eq, id_eq, pi_r_eq_ret, Term.Eqv.pi_r, subst_pr, nil_subst0,
       wk_eff_self]
     rw [coprod, zero, <-ret_nil, case_ret, ret_seq]
-    simp [Term.Eqv.case_inr, Term.Eqv.let1_beta_pure, Term.Eqv.Pure.pr_pair]
+    simp only [vwk1_br, wk1_inl, wk1_var0, List.length_cons, Set.mem_setOf_eq, Ctx.InS.coe_lift,
+      Ctx.InS.coe_wk1, Nat.liftWk_zero, id_eq, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
+      List.getElem_cons_zero, vsubst_br, subst_inl, var0_subst0, wk_res_self, subst_case,
+      subst_lift_var_zero, subst_abort, subst_lift_nil, Nat.add_zero, Nat.zero_eq, LCtx.pack.eq_1,
+      Term.Eqv.case_inr, let1_beta_pure, nil_subst0, wk_eff_self, wk1_inr, wk1_pair, wk1_var_succ,
+      zero_add, pure_is_pure, Pure.pr_pair]
     rfl
   · rw [fixpoint_def']
     congr 5
+
     sorry
