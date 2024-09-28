@@ -33,16 +33,17 @@ theorem Eqv.unpacked_out_packed_in {Γ : Ctx α ε} {R : LCtx α}
     Term.Subst.Eqv.unpack, Subst.Eqv.vsubst_quot]
   congr; ext; simp
 
--- TODO: generalize these to arbitrary L
-
 theorem Eqv.packed_out_unpacked_in {Γ : Ctx α ε} {R : LCtx α}
   {r : Eqv φ [(Γ.pack, ⊥)] R} {h : Γ.Pure}
-  : (r.unpacked_in h).packed_out (L := []) = r.packed_out.unpacked_in h := by
-  apply unpacked_out_injective; simp [unpacked_out_unpacked_in]
+  : (r.unpacked_in h).packed_out (L := L) = r.packed_out.unpacked_in h := by
+  simp [
+    unpacked_in, packed_out, let1_beta, vsubst_lsubst, vwk_id_eq_vwk, <-vsubst_fromWk,
+    vsubst_vsubst
+  ]
 
 theorem Eqv.packed_out_packed_in {Γ : Ctx α ε} {R : LCtx α}
-  {r : Eqv φ Γ R} : r.packed_in.packed_out (L := []) = r.packed_out.packed_in (Δ := Δ) := by
-  apply unpacked_out_injective; simp [unpacked_out_packed_in]
+  {r : Eqv φ Γ R} : r.packed_in.packed_out (L := L) = r.packed_out.packed_in (Δ := Δ) := by
+  simp [packed_in, packed_out, vsubst_lsubst]
 
 theorem Eqv.packed_in_unpacked_app_out {Γ : Ctx α ε} {R L : LCtx α}
   {r : Eqv φ Γ [(R ++ L).pack]}
@@ -50,7 +51,7 @@ theorem Eqv.packed_in_unpacked_app_out {Γ : Ctx α ε} {R L : LCtx α}
   simp [unpacked_app_out, packed_in, vsubst_lsubst, unpacked_app_out]
 
 theorem Eqv.packed_def' {Γ : Ctx α ε} {R : LCtx α}
-  {r : Eqv φ Γ R} : r.packed (Δ := Δ) = r.packed_in.packed_out (L := [])
+  {r : Eqv φ Γ R} : r.packed (Δ := Δ) = r.packed_in.packed_out (L := L)
   := by simp [packed, packed_out_packed_in]
 
 theorem Eqv.unpacked_def' {Γ : Ctx α ε} {R : LCtx α}
