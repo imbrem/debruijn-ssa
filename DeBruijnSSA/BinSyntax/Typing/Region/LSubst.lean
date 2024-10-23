@@ -142,19 +142,18 @@ theorem Region.Subst.InS.coe_clip (σ : Region.Subst.InS φ Γ L K)
 theorem Region.Subst.Wf.extend_in (hσ : σ.Wf Γ L (K ++ R))
   : (σ.extend L.length K.length).Wf Γ (L ++ R) (K ++ R)
   := λi => by if h : i < L.length then
-    simp only [List.get_eq_getElem, extend_lt, h, List.getElem_append_left _ _ h]
+    simp only [List.get_eq_getElem, extend_lt, h, List.getElem_append_left h]
     exact (hσ ⟨i, h⟩)
   else
     have h' := i.prop
     simp only [List.length_append] at h'
     rw [
-      List.get_eq_getElem, List.getElem_append_right _ _ h,
+      List.get_eq_getElem, List.getElem_append_right (le_of_not_lt h),
       Region.Subst.extend_ge (Nat.ge_of_not_lt h)
     ]
     apply Wf.br _ (Term.Wf.var Ctx.Var.shead)
-    · omega
-    · rw [LCtx.Trg.ge_iff (by simp)]
-      simp
+    rw [LCtx.Trg.ge_iff (by simp)]
+    simp
 
 theorem Region.Subst.Wf.fromFCFG_append {Γ : Ctx α ε} {L K : LCtx α}
   {G : Fin L.length → Region φ} (hG : ∀i : Fin L.length, (G i).Wf (⟨L.get i, ⊥⟩::Γ) (K ++ R))
@@ -178,7 +177,6 @@ theorem Region.Subst.Wf.fromFCFG_append {Γ : Ctx α ε} {L K : LCtx α}
     · have hi' := i.prop;
       simp at hi';
       omega
-    · exact h
 
 theorem Region.Subst.Wf.fromFCFG_append' {Γ : Ctx α ε} {L K : LCtx α}
   {G : Fin n → Region φ}

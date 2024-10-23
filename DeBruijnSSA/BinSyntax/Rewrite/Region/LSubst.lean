@@ -48,22 +48,22 @@ theorem Subst.InS.liftn_append_congr {Γ : Ctx α ε} {L K J : LCtx α}
         by have h'' := i.prop; simp only [List.length_append] at h''; omega
       ⟩) using 1
     congr 3
-    rw [List.getElem_append_right _ _ h']
+    rw [List.getElem_append_right (le_of_not_lt h')]
     rfl
     congr 4
-    rw [List.getElem_append_right _ _ h']
+    rw [List.getElem_append_right (le_of_not_lt h')]
     rfl
     congr 1
     funext r
     simp only [Set.mem_setOf_eq, List.get_eq_getElem]
     congr 3
-    rw [List.getElem_append_right _ _ h']
+    rw [List.getElem_append_right (le_of_not_lt h')]
     apply proof_irrel_heq
     congr 1
     funext r
     simp only [Set.mem_setOf_eq, List.get_eq_getElem]
     congr 3
-    rw [List.getElem_append_right _ _ h']
+    rw [List.getElem_append_right (le_of_not_lt h')]
     apply proof_irrel_heq
 
 theorem Subst.InS.slift_congr {Γ : Ctx α ε} {L K : LCtx α}
@@ -589,9 +589,7 @@ theorem Eqv.cfgSubst'_get {Γ : Ctx α ε} {L : LCtx α}
           simp only [List.get_eq_getElem]
           rw [List.getElem_append_right]
           apply LCtx.Trg.of_getElem
-          assumption
-          have hi : i < R.length + L.length := List.length_append _ _ ▸ i.prop;
-          omega
+          exact (le_of_not_lt h)
         )
   := by
   induction G using Eqv.choiceInduction
@@ -608,8 +606,6 @@ theorem Eqv.cfgSubst'_get_ge  {Γ : Ctx α ε} {L : LCtx α}
       simp only [List.get_eq_getElem]
       rw [List.getElem_append_right]
       apply LCtx.Trg.of_getElem
-      omega
-      have hi : i < R.length + L.length := List.length_append _ _ ▸ i.prop;
       omega
     )
   := by rw [Eqv.cfgSubst'_get, dite_cond_eq_false]; simp [h]
@@ -705,9 +701,7 @@ theorem Eqv.cfgSubst_get' {Γ : Ctx α ε} {L : LCtx α}
           simp only [List.get_eq_getElem]
           rw [List.getElem_append_right]
           apply LCtx.Trg.of_getElem
-          assumption
-          have hi : i < R.length + L.length := List.length_append _ _ ▸ i.prop;
-          omega
+          exact (le_of_not_lt h)
         )
   := by rw [cfgSubst_eq_cfgSubst', cfgSubst'_get]
 
@@ -718,8 +712,6 @@ theorem Eqv.cfgSubst_get_ge  {Γ : Ctx α ε} {L : LCtx α}
       simp only [List.get_eq_getElem]
       rw [List.getElem_append_right]
       apply LCtx.Trg.of_getElem
-      omega
-      have hi : i < R.length + L.length := List.length_append _ _ ▸ i.prop;
       omega
     )
   := by rw [Eqv.cfgSubst_get', dite_cond_eq_false]; simp [h]

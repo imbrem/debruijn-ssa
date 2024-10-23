@@ -375,7 +375,7 @@ def InS.cfgSubst {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
   (G : ∀i : Fin R.length, InS φ ((R.get i, ⊥)::Γ) (R ++ L))
   : Subst.InS φ Γ (R ++ L) L := ⟨
     Region.cfgSubst R.length (λi => G i),
-    λℓ => Wf.cfg (hR := rfl)
+    λℓ => Wf.cfg _ _ (hR := rfl)
       (Wf.br ⟨ℓ.prop, by simp⟩ (Term.Wf.var Ctx.Var.shead))
       (λi => (G i).prop.vwk1)⟩
 
@@ -418,7 +418,7 @@ def InS.cfgSubst' {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
     Region.cfgSubst' R.length (λi => G i),
     λℓ => if h : ℓ < R.length then by
         simp only [Region.cfgSubst', h, ↓reduceIte]
-        exact Wf.cfg (hR := rfl)
+        exact Wf.cfg _ _ (hR := rfl)
           (Wf.br ⟨ℓ.prop, by simp⟩ (Term.Wf.var Ctx.Var.shead))
           (λi => (G i).prop.vwk1)
       else by
@@ -427,11 +427,11 @@ def InS.cfgSubst' {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
         constructor
         · simp only [List.get_eq_getElem]
           rw [List.getElem_append_right]
-          exact h
-        · rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt h)]
-          have h := ℓ.prop
-          simp at h
-          exact h
+          exact (le_of_not_lt h)
+        -- · rw [Nat.sub_lt_iff_lt_add (Nat.le_of_not_lt h)]
+        --   have h := ℓ.prop
+        --   simp at h
+        --   exact h
     ⟩
 
 @[simp]
@@ -446,7 +446,7 @@ theorem InS.get_cfgSubst' {Γ : Ctx α ε} {L : LCtx α} (R : LCtx α)
       InS.cfg R (InS.br ℓ (Term.InS.var 0 Ctx.Var.shead) (by simp)) (λi => (G i).vwk1)
     else InS.br (ℓ - R.length) (Term.InS.var 0 Ctx.Var.shead) ⟨
       by have hℓ := ℓ.prop; simp only [List.length_append] at hℓ; omega,
-      by rw [List.get_eq_getElem, List.getElem_append_right]; exact h⟩ := by
+      by rw [List.get_eq_getElem, List.getElem_append_right]; exact (le_of_not_lt h)⟩ := by
   ext
   simp only [List.get_eq_getElem, Set.mem_setOf_eq, Subst.InS.coe_get, coe_cfgSubst',
   Region.cfgSubst']

@@ -59,7 +59,7 @@ theorem Eqv.packed_out_sum_coprod {β : Eqv φ ((X, ⊥)::Γ) [A, B]}
         Term.Eqv.wk2_var0, vwk2_quot, sum, inj_r, nil_seq, Term.Eqv.wk1_inr, Term.Eqv.wk2_inr,
         Subst.Eqv.get_comp, Subst.Eqv.pack_get, Term.Eqv.inj_n, Term.Eqv.nil, Fin.val_succ,
         List.getElem_cons_succ, List.length_nil, Fin.cases_zero, lsubst_br, Fin.isValue,
-        Subst.Eqv.get_vlift, get_alpha0, Fin.coe_fin_one, zero_add, lsubst_case, vwk_id_eq,
+        Subst.Eqv.get_vlift, get_alpha0, Fin.val_eq_zero, zero_add, lsubst_case, vwk_id_eq,
         vsubst_case, Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, vsubst_br,
         Term.Eqv.subst_lift_var_zero, case_inr, let1_beta]
       rfl
@@ -83,8 +83,8 @@ theorem Eqv.packed_out_sum_coprod {β : Eqv φ ((X, ⊥)::Γ) [A, B]}
       simp only [vwk2, Term.Eqv.wk1_abort, Term.Eqv.wk1_var0, List.length_cons, Fin.zero_eta,
         List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, lsubst_br, List.length_singleton,
         Nat.reduceAdd, Fin.isValue, Subst.Eqv.get_vlift, get_alpha0, Fin.val_succ,
-        List.getElem_cons_succ, Fin.coe_fin_one, zero_add, Fin.cases_zero, vwk1_case, vwk_br,
-        Term.Eqv.wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk2, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte,
+        List.getElem_cons_succ, Fin.val_eq_zero, zero_add, Fin.cases_zero, vwk1_case, vwk_br,
+        Term.Eqv.wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk2, Nat.liftnWk, ↓reduceIte,
         vwk_id_eq, vsubst_case, Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, vsubst_br,
         Term.Eqv.subst_lift_var_zero, vwk_case, Ctx.InS.coe_lift, Nat.liftWk_zero]
       rw [<-vwk2, <-vwk2, nil_vwk2, nil_vwk2, <-ret_var_zero]

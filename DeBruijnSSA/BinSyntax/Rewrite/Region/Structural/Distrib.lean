@@ -119,12 +119,12 @@ theorem Eqv.packed_out_binary_rtimes {Γ : Ctx α ε} {L : LCtx α}
   congr 2
   simp only [distl_inv_eq_ret, pi_r, ret_seq, vwk1_sum, vwk1_let2, wk1_var0, List.length_cons,
     Fin.zero_eta, List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, vwk3, vwk_br, wk_var,
-    Set.mem_setOf_eq, Ctx.InS.coe_wk3, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte,
+    Set.mem_setOf_eq, Ctx.InS.coe_wk3, Nat.liftnWk, ↓reduceIte,
     nil_vwk1]
   simp only [sum, coprod, nil_seq, vwk1_inj_l, vwk1_seq, vwk1_br, wk1_pair, wk1_var_succ, zero_add,
     wk1_var0, List.length_cons, Fin.zero_eta, List.get_eq_getElem, Fin.val_zero,
     List.getElem_cons_zero, vwk1_inj_r, vwk1_let2, vwk3, vwk_br, wk_var, Set.mem_setOf_eq,
-    Ctx.InS.coe_wk3, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte, vsubst_case, var0_subst0, wk_res_self,
+    Ctx.InS.coe_wk3, Nat.liftnWk, ↓reduceIte, vsubst_case, var0_subst0, wk_res_self,
     vsubst_lift_seq, vsubst_let2, subst_lift_var_zero, vsubst_br, ge_iff_le, le_refl,
     subst_liftn₂_var_zero, vsubst_lift_inj_l, vsubst_lift_inj_r, vwk1_case, wk1_distl_inv, vwk2, ←
     Ctx.InS.lift_wk1, vwk_lift_seq, vwk_let2, Ctx.InS.coe_lift, Ctx.InS.coe_wk1, Nat.liftWk_zero,

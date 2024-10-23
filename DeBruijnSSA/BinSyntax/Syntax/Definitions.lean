@@ -219,7 +219,7 @@ theorem TRegion.toRegion_inj {t₁ t₂ : TRegion φ} : t₁.toRegion = t₂.toR
     simp only [toRegion, Region.cfg.injEq, Terminator.toRegion_inj, cfg.injEq, and_congr_right_iff]
     intro hβ hn
     cases hβ; cases hn
-    simp only [heq_eq_eq, Function.funext_iff, *]
+    simp only [heq_eq_eq, funext_iff, *]
   all_goals simp [Terminator.toRegion_inj, *]
 
 theorem TRegion.toRegion_injective : Function.Injective (@TRegion.toRegion φ)

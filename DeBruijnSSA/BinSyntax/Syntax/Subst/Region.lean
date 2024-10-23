@@ -596,7 +596,8 @@ theorem vsubst_lift₃_vwk2 {ρ : Term.Subst φ} {r : Region φ}
   funext k; cases k using Nat.cases2 with
   | rest k =>
     simp_arith only [
-      Term.Subst.comp, Term.Subst.lift, Term.subst, Nat.liftnWk, Term.subst_fromWk, Term.wk_wk
+      Term.Subst.comp, Term.Subst.lift, Term.subst, Nat.liftnWk, Term.subst_fromWk, Term.wk_wk,
+      ↓reduceIte
     ]
     rfl
   | _ => rfl

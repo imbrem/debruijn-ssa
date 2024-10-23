@@ -359,7 +359,7 @@ theorem Subst.Eqv.pack_comp_unpack {Γ : Ctx α ε} {R : LCtx α}
   : Subst.Eqv.pack.comp Subst.Eqv.unpack = Subst.Eqv.id (φ := φ) (Γ := Γ) (L := [R.pack]) := by
   ext ℓ
   induction ℓ using Fin.elim1
-  simp only [unpack, get_comp, vlift_pack, Eqv.csubst_get, Eqv.cast_rfl, get_id, Fin.coe_fin_one]
+  simp only [unpack, get_comp, vlift_pack, Eqv.csubst_get, Eqv.cast_rfl, get_id, Fin.val_eq_zero]
   rw [<-Eqv.packed_out, Eqv.packed_out_unpack]
   rfl
 
@@ -455,7 +455,7 @@ theorem Eqv.lsubst_pack_append_vlift_unpack {Γ : Ctx α ε} {L R : LCtx α}
         Term.Eqv.wk1_var0, vwk_id_eq, vsubst_br, Term.Eqv.var0_subst0, Term.Eqv.wk_res_self,
         Term.Eqv.inj_r, vwk2, lwk_id_eq_lwk, Set.mem_setOf_eq, lwk_case, lwk_quot, vwk1_case,
         LCtx.pack.eq_2, vwk_quot, vwk_case, Term.Eqv.wk_var, Ctx.InS.coe_wk2, Nat.liftnWk,
-        Nat.ofNat_pos, ↓reduceIte, let1_beta, vsubst_case, Term.Eqv.subst_lift_nil,
+        zero_lt_two, ↓reduceIte, let1_beta, vsubst_case, Term.Eqv.subst_lift_nil,
         Term.Eqv.subst_lift_var_zero, case_inr, Nat.add_zero, Nat.zero_eq, ↓dreduceIte,
         Nat.reduceSub, Nat.succ_eq_add_one, Nat.reduceAdd]
       apply eq_of_reg_eq
@@ -660,7 +660,7 @@ theorem Eqv.packed_out_binary_ret_seq  {Γ : Ctx α ε}
   | zero =>
     simp only [List.get_eq_getElem, List.length_cons, List.length_singleton, Nat.reduceAdd,
       Fin.val_zero, List.getElem_cons_zero, Subst.Eqv.get_comp, Subst.Eqv.vlift_pack, get_alpha0,
-      Fin.val_succ, List.getElem_cons_succ, Fin.coe_fin_one, zero_add, Term.Eqv.nil, Fin.cases_zero,
+      Fin.val_succ, List.getElem_cons_succ, Fin.val_eq_zero, zero_add, Term.Eqv.nil, Fin.cases_zero,
       lsubst_br, Fin.zero_eta, Fin.isValue, Subst.Eqv.pack_get, LCtx.pack.eq_2, LCtx.pack.eq_1,
       Term.Eqv.inj_n, List.length_nil, vwk_id_eq, vsubst_br, Term.Eqv.subst_inr,
       Term.Eqv.var0_subst0, Term.Eqv.wk_res_self, sum, coprod, nil_seq, inj_r, ret_seq, vwk1_br,
@@ -738,7 +738,7 @@ theorem Eqv.unpacked_app_out_seq {Γ : Ctx α ε} {R L : LCtx α}
   simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
     List.getElem_cons_zero, Subst.Eqv.get_comp, Subst.Eqv.vlift_unpack_app_out, get_alpha0,
     List.length_nil, Fin.val_succ, List.getElem_cons_succ, Fin.cases_zero, Subst.Eqv.get_toSubstE,
-    Set.mem_setOf_eq, Fin.coe_fin_one, LCtx.InS.coe_wk1, Nat.liftWk_zero, lsubst_br,
+    Set.mem_setOf_eq, Fin.val_eq_zero, LCtx.InS.coe_wk1, Nat.liftWk_zero, lsubst_br,
     List.length_cons, Nat.reduceAdd, Fin.zero_eta, Subst.Eqv.get_vlift, zero_add, vwk_id_eq,
     vsubst0_var0_vwk1]
   rw [vwk1_unpacked_app_out]; rfl

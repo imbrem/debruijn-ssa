@@ -120,10 +120,10 @@ def Eqv.ret_seq_rtimes {tyLeft tyIn tyOut : Ty α} {Γ : Ctx α ε} {L : LCtx α
     ret (pair (var 1 (by simp)) (var 0 (by simp)))) := by
     rw [ret_seq, rtimes, vwk1]
     simp only [vwk_let2, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk1, Nat.liftWk_zero, vwk_liftn₂_seq,
-      vwk_ret, wk_pair, Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte,
-      Nat.ofNat_pos, vsubst_let2, var0_subst0, List.length_cons, id_eq, Fin.zero_eta,
-      List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self, vsubst_liftn₂_seq,
-      vsubst_br, subst_pair, subst_liftn₂_var_one, ge_iff_le, le_refl, subst_liftn₂_var_zero]
+      vwk_br, wk_pair, Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.one_lt_ofNat, ↓reduceIte, zero_lt_two,
+      vsubst_let2, var0_subst0, List.length_cons, id_eq, Fin.zero_eta, List.get_eq_getElem,
+      Fin.val_zero, List.getElem_cons_zero, wk_res_self, vsubst_liftn₂_seq, vsubst_br, subst_pair,
+      subst_liftn₂_var_one, ge_iff_le, le_refl, subst_liftn₂_var_zero]
     congr
     induction r using Quotient.inductionOn
     induction e using Quotient.inductionOn
@@ -288,14 +288,7 @@ theorem Eqv.vsubst_lift_pi_r {Γ Δ : Ctx α ε} {L : LCtx α} {ρ : Term.Subst.
 theorem Eqv.ret_pair_pi_r {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {a : Term.Eqv φ ((X, ⊥)::Γ) (A, ⊥)} {b : Term.Eqv φ ((X, ⊥)::Γ) (B, ⊥)}
   : ret (targets := L) (a.pair b) ;; pi_r = ret b
-  := by
-  simp only [pi_r, ret_seq, vwk1, vwk_let2, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk1,
-    Nat.liftWk_zero, vwk_ret, Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte,
-    vsubst_let2, var0_subst0, List.length_cons, id_eq, Fin.zero_eta, List.get_eq_getElem,
-    Fin.val_zero, List.getElem_cons_zero, wk_res_self, vsubst_br, ge_iff_le, le_refl,
-    subst_liftn₂_var_zero, let2_pair, let1_beta, ret]
-  congr
-  exact subst0_wk0
+  := by simp [pi_r, ret_seq, vwk1, Nat.liftnWk, vsubst_let2, let2_pair, let1_beta]
 
 @[simp]
 theorem Eqv.Pure.pi_r {Γ : Ctx α ε} {L : LCtx α}
@@ -314,16 +307,8 @@ theorem Eqv.lunit_pi_r {ty : Ty α} {Γ : Ctx α ε} {L : LCtx α}
 
 theorem Eqv.ret_pair_braid {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {a : Term.Eqv φ ((X, ⊥)::Γ) (A, ⊥)} {b : Term.Eqv φ ((X, ⊥)::Γ) (B, ⊥)}
-  : ret (targets := L) (a.pair b) ;; braid = ret (pair b a) := by
-  simp only [braid, ret_seq, vwk1, vwk_let2, wk_var, Set.mem_setOf_eq, Ctx.InS.coe_wk1,
-    Nat.liftWk_zero, vwk_ret, wk_pair, Ctx.InS.coe_liftn₂, Nat.liftnWk, Nat.ofNat_pos, ↓reduceIte,
-    Nat.one_lt_ofNat, vsubst_let2, var0_subst0, List.length_cons, id_eq, Fin.zero_eta,
-    List.get_eq_getElem, Fin.val_zero, List.getElem_cons_zero, wk_res_self, vsubst_br, subst_pair,
-    ge_iff_le, le_refl, subst_liftn₂_var_zero, subst_liftn₂_var_one, let2_pair, let1_beta,
-    var_succ_subst0, ↓dreduceIte, Nat.reduceSub, Nat.reduceAdd]
-  simp only [ret]
-  congr
-  exact subst0_wk0
+  : ret (targets := L) (a.pair b) ;; braid = ret (pair b a)
+  := by simp [braid, ret_seq, vwk1, Nat.liftnWk, subst_pair, let2_pair, let1_beta, subst0_wk0]
 
 theorem Eqv.ltimes_def' {tyIn tyOut tyRight : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   {r : Eqv φ (⟨tyIn, ⊥⟩::Γ) (tyOut::L)}
@@ -668,7 +653,7 @@ theorem Eqv.assoc_right_nat {A B C C' : Ty α} {Γ : Ctx α ε} {L : LCtx α}
   induction r using Quotient.inductionOn
   apply Eqv.eq_of_reg_eq
   simp only [Set.mem_setOf_eq, InS.vwk_br, Term.InS.wk_pair, Term.InS.wk_var, Ctx.InS.coe_swap02,
-    Nat.ofNat_pos, Nat.swap0_lt, Nat.swap0_0, Nat.one_lt_ofNat, Ctx.InS.coe_wk1, Nat.liftWk_succ,
+    zero_lt_two, Nat.swap0_lt, Nat.swap0_0, Nat.one_lt_ofNat, Ctx.InS.coe_wk1, Nat.liftWk_succ,
     Nat.succ_eq_add_one, Nat.reduceAdd, zero_add, Nat.liftWk_zero, InS.coe_vwk, InS.coe_lsubst,
     InS.coe_alpha0, InS.coe_br, Term.InS.coe_pair, Term.InS.coe_var, Region.vwk_lsubst,
     InS.coe_vsubst, Term.InS.coe_subst0, Term.Subst.InS.coe_liftn₂, Region.vsubst_lsubst]

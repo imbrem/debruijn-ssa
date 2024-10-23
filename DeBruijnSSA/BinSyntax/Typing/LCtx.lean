@@ -71,12 +71,8 @@ theorem getElem_shf_rest_add {R : LCtx α} {Y : Ty α} {L : LCtx α} {n}
     simp only [shf_rest, drop, List.cons_append, List.drop_succ_cons, List.drop_zero,
       List.length_cons, Nat.add_comm R.length 1, <-Nat.add_assoc]
     rw [List.getElem_append_right]
-    simp only [Nat.add_sub_cancel]
-    simp
-    omega
-    simp at hn
-    simp only [add_tsub_cancel_right, List.length_cons, add_lt_add_iff_right]
-    omega
+    · simp
+    · omega
 
 variable [Φ: EffInstSet φ (Ty α) ε] [PartialOrder α] [PartialOrder ε] [Bot ε]
 
@@ -244,10 +240,10 @@ theorem Wkn.toFinWk_append {L L' R S : LCtx α} {ρ : Fin R.length → Fin S.len
   (hρ : (R ++ L).Wkn (S ++ L') (Fin.toNatWk ρ)) (i : Fin R.length)
   : R[i] ≤ S[ρ i] := by
   have hρ := hρ i (Nat.lt_of_lt_of_le i.prop (by simp));
-  rw [List.getElem_append _ (by simp), Fin.toNatWk_coe] at hρ
+  rw [List.getElem_append _ (by rw [List.length_append]; omega), Fin.toNatWk_coe] at hρ
   have hρ := hρ.getElem
-  rw [List.getElem_append _ (by simp)] at hρ
-  simp [hρ]
+  rw [List.getElem_append _ (by rw [List.length_append]; omega)] at hρ
+  convert hρ <;> simp
 
 theorem Trg.head (h : A' ≤ A) (L : LCtx α) : Trg (A::L) 0 A' where
   length := by simp
@@ -275,7 +271,7 @@ theorem Trg.of_ge {n} {A : Ty α} (h : Trg (R ++ L) n A) (hn : R.length ≤ n) :
   (hn' ▸ h).of_add
 
 theorem Trg.of_lt {n} {A : Ty α} (h : Trg (L ++ R) n A) (hn : n < L.length) : Trg L n A
-  := ⟨hn, List.getElem_append _ hn ▸ h.getElem⟩
+  := ⟨hn, by convert h.getElem using 1; simp [List.getElem_append, hn]⟩
 
 theorem Trg.add {n} {A : Ty α} (h : Trg L n A) (R) : Trg (R ++ L) (n + R.length) A
   := by induction R with
@@ -286,7 +282,8 @@ theorem Trg.ge {n} {A : Ty α} (h : Trg L (n - R.length) A) (hn : R.length ≤ n
   := by convert (h.add R); simp [*]
 
 theorem Trg.extend {n} {A : Ty α} (h : Trg L n A) : Trg (L ++ R) n A
-  := ⟨Nat.lt_of_lt_of_le h.length (by simp), List.getElem_append _ h.length ▸ h.getElem⟩
+  := ⟨Nat.lt_of_lt_of_le h.length (by simp),
+      by convert h.getElem using 1; simp [List.getElem_append, h.length]⟩
 
 theorem Trg.add_iff {n} {A : Ty α} {R : LCtx α} : Trg (R ++ L) (n + R.length) A ↔ Trg L n A
   := ⟨λh => h.of_add, λh => h.add R⟩

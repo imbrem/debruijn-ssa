@@ -278,7 +278,7 @@ theorem Subst.Eqv.unpack_comp_packSE {Γ : Ctx α ε} (h : Γ.Pure)
   : unpack.comp h.packSE = Subst.Eqv.id (φ := φ) := by
   ext k; cases k using Fin.elim1
   simp only [Fin.isValue, List.get_eq_getElem, List.length_singleton, Fin.val_zero,
-    List.getElem_cons_zero, get_comp, get_packSE_zero, get_id, Fin.coe_fin_one]
+    List.getElem_cons_zero, get_comp, get_packSE_zero, get_id, Fin.val_eq_zero]
   exact Eqv.packed_packE
 
 -- theorem Eqv.pi_n_eq_pi_n' {Γ Δ : Ctx α ε} (i : Fin Γ.length) :

@@ -1,6 +1,5 @@
 import Mathlib.Combinatorics.Quiver.Path
 import Mathlib.Combinatorics.Quiver.Symmetric
-import Mathlib.CategoryTheory.PathCategory
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 import Discretion.Correspondence.Definitions
