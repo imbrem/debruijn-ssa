@@ -196,6 +196,8 @@ theorem Eqv.unpacked_app_out_eq_left_exit {Γ : Ctx α ε} {R L : LCtx α}
   = r.lwk1 ;; ret Term.Eqv.pack_app ;; left_exit
   := by rw [unpacked_app_out_eq_left_exit', lwk1_seq, lwk1_ret]
 
+
+set_option maxHeartbeats 500000 in
 theorem Eqv.packed_cfg_den {Γ : Ctx α ε} {L R : LCtx α} {β : Eqv φ Γ (R ++ L)} {G}
   : (cfg R β G).packed (L := []) (Δ := Δ)
   = (ret Term.Eqv.split ;; _ ⋊ (β.packed ;; ret Term.Eqv.pack_app) ;; distl_inv ;; sum pi_r nil)

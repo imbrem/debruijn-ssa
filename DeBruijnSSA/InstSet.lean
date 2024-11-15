@@ -186,10 +186,10 @@ instance : HasEffect Linearity where
   isAffine_of_le _ _ h := h.2
   sup_isCentral _ _ _ _ := rfl
   sup_isRelevant _ _ := by
-    simp only [Sup.sup, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
+    simp only [max, SemilatticeSup.sup, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
     intros; simp [*]
   sup_isAffine _ _ := by
-    simp only [Sup.sup, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
+    simp only [max, SemilatticeSup.sup, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
     intros; simp [*]
   bot_isCentral := rfl
   bot_isRelevant := rfl

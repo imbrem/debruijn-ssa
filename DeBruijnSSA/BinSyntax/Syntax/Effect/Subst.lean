@@ -5,7 +5,7 @@ namespace BinSyntax
 
 section Definitions
 
-variable [Φ : EffectSet φ ε] [Bot ε] [Sup ε]
+variable [Φ : EffectSet φ ε] [Bot ε] [Max ε]
 
 namespace Term
 
