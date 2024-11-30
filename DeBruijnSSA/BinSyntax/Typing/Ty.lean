@@ -1,6 +1,6 @@
 
 import Discretion.Wk.List
-import Discretion.Basic
+import Discretion.Order.Discrete
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions

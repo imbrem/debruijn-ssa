@@ -1,5 +1,4 @@
 import Discretion.Wk.List
-import Discretion.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic
 import DeBruijnSSA.BinSyntax.Syntax.Effect.Definitions
@@ -520,7 +519,7 @@ theorem Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
   getElem := le_trans hΓ.get h
 
-theorem Var.wk_res₂ (hA : A ≤ A') (he : e ≤ e') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨A', e⟩
+theorem Var.wk_res₂ (hA : A ≤ A') (he : e ≤ e') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨A', e'⟩
   := hΓ.wk_res (by simp [hA, he])
 
 theorem Var.wk_ty (h : A ≤ A') (hΓ : Γ.Var n ⟨A, e⟩) : Γ.Var n ⟨A', e⟩

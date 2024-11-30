@@ -1,5 +1,4 @@
 import Discretion.Wk.List
-import Discretion.Basic
 import Discretion.Utils.Set
 import DeBruijnSSA.BinSyntax.Syntax.Definitions
 import DeBruijnSSA.BinSyntax.Syntax.Fv.Basic

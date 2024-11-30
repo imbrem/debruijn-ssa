@@ -1,5 +1,5 @@
 import Mathlib.Order.Monotone.Basic
-import Mathlib.Order.BoundedOrder
+import Mathlib.Order.BoundedOrder.Basic
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Lattice
 import Mathlib.Data.Set.Basic
