@@ -23,10 +23,6 @@ inductive Rewrite : Term φ → Term φ → Prop
     Rewrite (let1 (let1 a b) r) (let1 a $ let1 b $ r.wk1)
   | let1_let2 (a b r) :
     Rewrite (let1 (let2 a b) r) (let2 a $ let1 b $ r.wk1.wk1)
-  | let1_inl (e r) :
-    Rewrite (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.wk1)
-  | let1_inr (e r) :
-    Rewrite (let1 (inr e) r) (let1 e $ let1 (inr (var 0)) $ r.wk1)
   | let1_case (a l r s) :
     Rewrite (let1 (case a l r) s) (case a (let1 l $ s.wk1) (let1 r $ s.wk1))
   | let1_abort (e r) :
@@ -66,12 +62,6 @@ theorem Rewrite.subst {e e' : Term φ} (h : e.Rewrite e') (σ) : (e.subst σ).Re
   | let1_let2 a b r =>
     simp only [Term.subst, <-wk1_subst_lift, Subst.liftn_two]
     exact let1_let2 (a.subst σ) (b.subst σ.lift.lift) (r.subst σ.lift)
-  | let1_inl e r =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact let1_inl (e.subst σ) (r.subst (σ.lift))
-  | let1_inr e r =>
-    simp only [Term.subst, <-wk1_subst_lift]
-    exact let1_inr (e.subst σ) (r.subst (σ.lift))
   | let1_case a l r s =>
     simp only [Term.subst, <-wk1_subst_lift]
     exact let1_case (a.subst σ) (l.subst σ.lift) (r.subst σ.lift) (s.subst σ.lift)

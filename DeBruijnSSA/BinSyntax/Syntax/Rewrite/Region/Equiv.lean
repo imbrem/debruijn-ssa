@@ -79,9 +79,6 @@ theorem eqv_let1_inl {e r} : @let1 φ (inl e) r ≈ (let1 e $ let1 (inl (var 0))
 theorem eqv_let1_inr {e r} : @let1 φ (inr e) r ≈ (let1 e $ let1 (inr (var 0)) $ r.vwk1)
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_inr e r
 
-theorem eqv_let1_abort {e r} : @let1 φ (abort e) r ≈ (let1 e $ let1 (abort (var 0)) $ r.vwk1)
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_abort e r
-
 theorem eqv_let2_bind {e r} : @let2 φ e r ≈ (let1 e $ let2 (var 0) $ r.vwk (Nat.liftnWk 2 Nat.succ))
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let2_bind e r
 

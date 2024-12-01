@@ -212,20 +212,6 @@ theorem InS.let1_let2 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
     ≈ (let2 a $ let1 b $ r.vwk1.vwk1)
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_inl {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
-  {r : InS φ (⟨A.coprod B, ⊥⟩::Γ) L}
-  (a : Term.InS φ Γ ⟨A, e⟩)
-    : r.let1 a.inl
-    ≈ (r.vwk1.let1 ((var 0 (by simp)).inl (e := e'))).let1 a
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.let1_inr {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
-  {r : InS φ (⟨A.coprod B, ⊥⟩::Γ) L}
-  (b : Term.InS φ Γ ⟨B, e⟩)
-    : r.let1 b.inr
-    ≈ (r.vwk1.let1 ((var 0 (by simp)).inr (e := e'))).let1 b
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
 theorem InS.let1_case {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {s : InS φ (⟨C, ⊥⟩::Γ) L}
   (a : Term.InS φ Γ ⟨Ty.coprod A B, e⟩)

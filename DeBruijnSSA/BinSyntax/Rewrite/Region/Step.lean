@@ -1,5 +1,6 @@
 import DeBruijnSSA.BinSyntax.Typing.Region
-import DeBruijnSSA.BinSyntax.Syntax.Rewrite.Region.Step
+import DeBruijnSSA.BinSyntax.Syntax.Rewrite.Region.Rewrite
+import DeBruijnSSA.BinSyntax.Syntax.Rewrite.Region.Reduce
 import DeBruijnSSA.BinSyntax.Rewrite.Region.Cong
 import DeBruijnSSA.BinSyntax.Rewrite.Term.Setoid
 

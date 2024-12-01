@@ -137,14 +137,6 @@ theorem InS.let1_let2 {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.prod A B, e⟩}
   : let1 (let2 a b) r ≈ (let2 a $ let1 b $ r.wk1.wk1)
   := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
 
-theorem InS.let1_inl {Γ : Ctx α ε} {a : InS φ Γ ⟨A, e⟩} {r : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
-  : let1 (inl a) r ≈ (let1 a $ let1 (inl (var 0 (by simp))) $ r.wk1)
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
-theorem InS.let1_inr {Γ : Ctx α ε} {a : InS φ Γ ⟨B, e⟩} {r : InS φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
-  : let1 (inr a) r ≈ (let1 a $ let1 (inr (var 0 (by simp))) $ r.wk1)
-  := Uniform.rel $ TStep.rewrite InS.coe_wf InS.coe_wf (by constructor)
-
 theorem InS.let1_case {Γ : Ctx α ε} {a : InS φ Γ ⟨Ty.coprod A B, e⟩}
   {l : InS φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : InS φ (⟨B, ⊥⟩::Γ) ⟨C, e⟩}
   {s : InS φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}

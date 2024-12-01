@@ -215,6 +215,46 @@ theorem Eqv.case_let1_wk0_pure {Γ : Ctx α ε}
 
 -- TODO: derive these...
 
+theorem Eqv.let1_inl {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {r : Eqv φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (inl a) r = (let1 a $ let1 (inl (var 0 (by simp))) $ r.wk1) := by
+  rw [<-case_eta (a := inl a), let1_case, case_inl]
+
+theorem Eqv.let1_inr {Γ : Ctx α ε} {a : Eqv φ Γ ⟨B, e⟩} {r : Eqv φ (⟨Ty.coprod A B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (inr a) r = (let1 a $ let1 (inr (var 0 (by simp))) $ r.wk1) := by
+  rw [<-case_eta (a := inr a), let1_case, case_inr]
+
+theorem Eqv.inl_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩}
+  : a.inl (B := B) = let1 a (inl (var 0 (by simp))) := calc
+  _ = let1 a.inl (var 0 Ctx.Var.bhead) := by rw [let1_eta]
+  _ = let1 a (let1 (inl (var 0 Ctx.Var.bhead)) (var 0 Ctx.Var.bhead)) := by rw [let1_inl, wk1_var0]
+  _ = let1 a (let1 (wk_eff bot_le (inl (var 0 Ctx.Var.shead))) (var 0 Ctx.Var.bhead)) := by rfl
+  _ = _ := by rw [let1_beta]; rfl
+
+theorem Eqv.inr_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩}
+  : a.inr (A := B) = let1 a (inr (var 0 (by simp))) := calc
+  _ = let1 a.inr (var 0 Ctx.Var.bhead) := by rw [let1_eta]
+  _ = let1 a (let1 (inr (var 0 Ctx.Var.bhead)) (var 0 Ctx.Var.bhead)) := by rw [let1_inr, wk1_var0]
+  _ = let1 a (let1 (wk_eff bot_le (inr (var 0 Ctx.Var.shead))) (var 0 Ctx.Var.bhead)) := by rfl
+  _ = _ := by rw [let1_beta]; rfl
+
+theorem Eqv.inl_let1 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+  : (let1 a b).inl = let1 a (b.inl (B := C)) := by
+  rw [inl_bind, let1_let1, wk1_inl, wk1_var0, <-inl_bind]
+
+theorem Eqv.inr_let1 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ ((A, ⊥)::Γ) ⟨B, e⟩}
+  : (let1 a b).inr = let1 a (b.inr (A := C)) := by
+  rw [inr_bind, let1_let1, wk1_inr, wk1_var0, <-inr_bind]
+
+theorem Eqv.inl_let2 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩} {b : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) ⟨C, e⟩}
+  : (let2 a b).inl = let2 a (b.inl (B := D)) := by
+  rw [inl_bind, let1_let2, wk1_inl, wk1_inl, wk1_var0, wk1_var0, <-inl_bind]
+
+theorem Eqv.inr_let2 {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A.prod B, e⟩} {b : Eqv φ ((B, ⊥)::(A, ⊥)::Γ) ⟨C, e⟩}
+  : (let2 a b).inr = let2 a (b.inr (A := D)) := by
+  rw [inr_bind, let1_let2, wk1_inr, wk1_inr, wk1_var0, wk1_var0, <-inr_bind]
+
 theorem Eqv.case_inl_inl {Γ : Ctx α ε}
   {a : Eqv φ Γ ⟨A.coprod B, e⟩}
   {r : Eqv φ (⟨A, ⊥⟩::Γ) ⟨C, e⟩}
