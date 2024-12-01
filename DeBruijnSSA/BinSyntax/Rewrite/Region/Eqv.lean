@@ -969,19 +969,6 @@ theorem Eqv.let1_let1 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   induction r using Quotient.inductionOn
   apply Eqv.sound; apply InS.let1_let1
 
-theorem Eqv.let1_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
-  {r : Eqv φ (⟨Ty.prod A B, ⊥⟩::Γ) L}
-  (a : Term.Eqv φ Γ ⟨A, e⟩) (b : Term.Eqv φ Γ ⟨B, e⟩)
-    : Eqv.let1 (a.pair b) r = (
-      let1 a $
-      let1 (b.wk ⟨Nat.succ, (by simp)⟩) $
-      let1 ((var 1 (by simp)).pair (e := e') (var 0 (by simp))) $
-      r.vwk1.vwk1) := by
-  induction a using Quotient.inductionOn
-  induction b using Quotient.inductionOn
-  induction r using Quotient.inductionOn
-  apply Eqv.sound; apply InS.let1_pair
-
 theorem Eqv.let1_let2 {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α}
   {r : Eqv φ (⟨C, ⊥⟩::Γ) L}
   (a : Term.Eqv φ Γ ⟨A.prod B, e⟩) (b : Term.Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩)
@@ -1105,6 +1092,17 @@ theorem Eqv.let2_eta {Γ : Ctx α ε} {L : LCtx α}
   apply Eq.symm
   rw [<-Term.Eqv.let2_eta (a := a), let1_let2, Term.Eqv.let2_eta]
   rfl
+
+theorem Eqv.let1_pair {Γ : Ctx α ε} {L : LCtx α} {A B : Ty α} (e' := ⊥)
+  {r : Eqv φ (⟨Ty.prod A B, ⊥⟩::Γ) L}
+  (a : Term.Eqv φ Γ ⟨A, e⟩) (b : Term.Eqv φ Γ ⟨B, e⟩)
+    : Eqv.let1 (a.pair b) r = (
+      let1 a $
+      let1 (b.wk ⟨Nat.succ, (by simp)⟩) $
+      let1 ((var 1 (by simp)).pair (e := e') (var 0 (by simp))) $
+      r.vwk1.vwk1) := by
+    rw [<-Term.Eqv.let2_eta (a := a.pair b), Term.Eqv.let2_pair, let1_let1, let1_let1]
+    rfl
 
 -- theorem Eqv.cfg_cfg_eq_cfg' {Γ : Ctx α ε} {L : LCtx α}
 --   (R S : LCtx α) (β : Eqv φ Γ (R ++ (S ++ L)))

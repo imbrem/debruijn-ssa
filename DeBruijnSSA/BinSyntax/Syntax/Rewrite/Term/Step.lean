@@ -21,9 +21,6 @@ inductive Rewrite : Term φ → Term φ → Prop
     Rewrite (let1 (op f e) r) (let1 e $ let1 (op f (var 0)) $ r.wk1)
   | let1_let1 (a b r) :
     Rewrite (let1 (let1 a b) r) (let1 a $ let1 b $ r.wk1)
-  | let1_pair (a b r) :
-    Rewrite (let1 (pair a b) r)
-    (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.wk1.wk1)
   | let1_let2 (a b r) :
     Rewrite (let1 (let2 a b) r) (let2 a $ let1 b $ r.wk1.wk1)
   | let1_inl (e r) :
@@ -66,10 +63,6 @@ theorem Rewrite.subst {e e' : Term φ} (h : e.Rewrite e') (σ) : (e.subst σ).Re
   | let1_let1 a b r =>
     simp only [Term.subst, <-wk1_subst_lift]
     exact let1_let1 (a.subst σ) (b.subst (σ.lift)) (r.subst (σ.lift))
-  | let1_pair a b r =>
-    simp only [Term.subst, Subst.lift_succ, wk, Nat.succ_eq_add_one, zero_add,
-      Subst.lift_zero, <-Term.wk1_subst_lift, Term.subst_lift]
-    exact let1_pair (a.subst σ) (b.subst σ) (r.subst (σ.lift))
   | let1_let2 a b r =>
     simp only [Term.subst, <-wk1_subst_lift, Subst.liftn_two]
     exact let1_let2 (a.subst σ) (b.subst σ.lift.lift) (r.subst σ.lift)

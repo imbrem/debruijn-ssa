@@ -173,18 +173,6 @@ def StepD.let1_op_op {Γ : ℕ → ε} (f e) (r : Region φ)
   := StepD.rw_op $ RewriteD.let1_op f e r
 
 @[match_pattern]
-def StepD.let1_pair {Γ : ℕ → ε} (a b) (r : Region φ)
-  : StepD Γ (let1 (pair a b) r)
-    (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) r.vwk1.vwk1)
-  := StepD.rw $ RewriteD.let1_pair a b r
-
-@[match_pattern]
-def StepD.let1_pair_op {Γ : ℕ → ε} (a b) (r : Region φ)
-  : StepD Γ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) r.vwk1.vwk1)
-    (let1 (pair a b) r)
-  := StepD.rw_op $ RewriteD.let1_pair a b r
-
-@[match_pattern]
 def StepD.let1_inl {Γ : ℕ → ε} (e) (r : Region φ)
   : StepD Γ (let1 (inl e) r) (let1 e $ let1 (inl (var 0)) $ r.vwk (Nat.liftWk Nat.succ))
   := StepD.rw $ RewriteD.let1_inl e r

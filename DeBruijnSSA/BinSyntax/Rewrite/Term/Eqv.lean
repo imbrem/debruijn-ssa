@@ -1016,15 +1016,6 @@ theorem Eqv.let1_let1 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (�
   induction c using Quotient.inductionOn
   apply Eqv.sound; apply InS.let1_let1
 
-theorem Eqv.let1_pair {Γ : Ctx α ε}
-  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (Γ) ⟨B, e⟩} {r : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨C, e⟩}
-  : let1 (pair a b) r
-  = (let1 a $ let1 b.wk0 $ let1 (pair (var 1 (by simp)) (var 0 (by simp))) $ r.wk1.wk1) := by
-  induction a using Quotient.inductionOn
-  induction b using Quotient.inductionOn
-  induction r using Quotient.inductionOn
-  apply Eqv.sound; apply InS.let1_pair
-
 theorem Eqv.let1_let2 {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
   {b : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩} {r : Eqv φ (⟨C, ⊥⟩::Γ) ⟨D, e⟩}
   : let1 (let2 a b) r = (let2 a $ let1 b $ r.wk1.wk1) := by
@@ -1084,6 +1075,12 @@ theorem Eqv.let2_pair {Γ : Ctx α ε} {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ Γ
   induction b using Quotient.inductionOn
   induction r using Quotient.inductionOn
   apply Eqv.sound; apply InS.let2_pair
+
+theorem Eqv.let1_pair {Γ : Ctx α ε}
+  {a : Eqv φ Γ ⟨A, e⟩} {b : Eqv φ (Γ) ⟨B, e⟩} {r : Eqv φ (⟨A.prod B, ⊥⟩::Γ) ⟨C, e⟩}
+  : let1 (pair a b) r
+  = (let1 a $ let1 b.wk0 $ let1 (pair (var 1 (by simp)) (var 0 (by simp))) $ r.wk1.wk1) := by
+  rw [<-let2_eta (a := pair a b), let2_pair, let1_let1, let1_let1]
 
 theorem Eqv.let2_bind {Γ : Ctx α ε} {a : Eqv φ Γ ⟨Ty.prod A B, e⟩}
   {r : Eqv φ (⟨B, ⊥⟩::⟨A, ⊥⟩::Γ) ⟨C, e⟩}

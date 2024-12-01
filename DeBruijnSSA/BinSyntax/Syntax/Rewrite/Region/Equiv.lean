@@ -70,10 +70,6 @@ theorem eqv_let1_op {f e r} : @let1 φ (op f e) r ≈ (let1 e $ let1 (op f (var 
 theorem eqv_let1_let1 {a b r} : @let1 φ (a.let1 b) r ≈ (let1 a $ let1 b $ r.vwk1)
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_let1 a b r
 
-theorem eqv_let1_pair {a b r}
-  : @let1 φ (pair a b) r ≈ (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
-  := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_pair a b r
-
 theorem eqv_let1_let2 {a b r} : @let1 φ (a.let2 b) r ≈ (let2 a $ let1 b $ r.vwk1.vwk1)
   := Relation.EqvGen.rel _ _ $ Cong.rel $ Rewrite.let1_let2 a b r
 

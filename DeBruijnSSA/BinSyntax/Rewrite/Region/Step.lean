@@ -178,16 +178,6 @@ theorem TStep.let1_let1 {Γ : Ctx α ε} {L} {a b} {r : Region φ}
     (Region.Wf.let1 da (Region.Wf.let1 db dr.vwk1))
     (Rewrite.let1_let1 a b r)
 
-theorem TStep.let1_pair {Γ L a b} {r : Region φ}
-  (da : a.Wf Γ ⟨A, e⟩) (db : b.Wf Γ ⟨B, e⟩) (dr : r.Wf (⟨A.prod B, ⊥⟩::Γ) L)
-  : TStep Γ L (let1 (pair a b) r)
-    (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
-  := TStep.rewrite
-    (dr.let1 (da.pair db))
-    (Region.Wf.let1 da (Region.Wf.let1 db.wk0
-      (Region.Wf.let1 (Term.Wf.pair (by simp) (Term.Wf.var Ctx.Var.shead)) dr.vwk1.vwk1)))
-    (Rewrite.let1_pair a b r)
-
 -- TODO: let1_let2, let1_inl, let1_inr, let1_case, let1_abort
 
 theorem TStep.wf {Γ L} {r r' : Region φ} (h : TStep Γ L r r') : r.Wf Γ L ∧ r'.Wf Γ L

@@ -20,9 +20,6 @@ inductive RewriteD : Region φ → Region φ → Type _
     RewriteD (let1 (op f a) r) (let1 a $ let1 (op f (var 0)) $ r.vwk1)
   | let1_let1 (a b r) :
     RewriteD (let1 (Term.let1 a b) r) (let1 a $ let1 b $ r.vwk1)
-  | let1_pair (a b r) :
-    RewriteD (let1 (pair a b) r)
-    (let1 a $ let1 b.wk0 $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
   | let1_let2 (a b r) :
     RewriteD (let1 (Term.let2 a b) r) (let2 a $ let1 b $ r.vwk1.vwk1)
   | let1_inl (e r) :
@@ -151,9 +148,6 @@ inductive Rewrite : Region φ → Region φ → Prop
     Rewrite (let1 (op f a) r) (let1 a $ let1 (op f (var 0)) $ r.vwk1)
   | let1_let1 (a b r) :
     Rewrite (let1 (Term.let1 a b) r) (let1 a $ let1 b $ r.vwk1)
-  | let1_pair (a b r) :
-    Rewrite (let1 (pair a b) r)
-    (let1 a $ let1 (b.wk Nat.succ) $ let1 (pair (var 1) (var 0)) $ r.vwk1.vwk1)
   | let1_let2 (a b r) :
     Rewrite (let1 (Term.let2 a b) r) (let2 a $ let1 b $ r.vwk1.vwk1)
   | let1_inl (e r) :
@@ -274,9 +268,6 @@ def RewriteD.vsubst {r r' : Region φ} (σ : Term.Subst φ) (p : RewriteD r r')
   | let1_let1 a b r =>
     convert (let1_let1 (a.subst σ) (b.subst σ.lift) (r.vsubst σ.lift)) using 1
     simp [Term.subst, Region.vsubst_lift₂_vwk1]
-  | let1_pair a b r =>
-    convert (let1_pair (a.subst σ) (b.subst σ) (r.vsubst σ.lift)) using 1
-    simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.wk0_subst]
   | let1_let2 a b r =>
     convert (let1_let2 (a.subst σ) (b.subst (σ.liftn 2)) (r.vsubst σ.lift)) using 1
     simp [Term.subst, Region.vsubst_lift₂_vwk1, Term.Subst.liftn_two]
@@ -314,9 +305,6 @@ def RewriteD.lsubst {r r' : Region φ} (σ : Subst φ) (p : RewriteD r r')
     simp [vwk1_lsubst_vlift]
   | let1_let1 a b r =>
     convert (let1_let1 a b (r.lsubst σ.vlift)) using 1
-    simp [vwk1_lsubst_vlift]
-  | let1_pair a b r =>
-    convert (let1_pair a b (r.lsubst σ.vlift)) using 1
     simp [vwk1_lsubst_vlift]
   | let1_let2 a b r =>
     convert (let1_let2 a b (r.lsubst σ.vlift)) using 1
