@@ -92,13 +92,15 @@ theorem Wf.Cong.wk_res {P : Ctx α ε → Ty α × ε → Term φ → Term φ �
   | pair_left _ hb Ia =>
     cases V' with
     | mk V' e' =>
-    cases hV.1 with
+    have h : Ty.LE _ _ := hV.1
+    cases h with
     | prod hl hr =>
     exact pair_left (Ia ⟨hl, hV.2⟩) (hb.wk_res ⟨hr, hV.2⟩)
   | pair_right ha _ Ia =>
     cases V' with
     | mk V' e' =>
-    cases hV.1 with
+    have h : Ty.LE _ _ := hV.1
+    cases h with
     | prod hl hr =>
     exact pair_right (ha.wk_res ⟨hl, hV.2⟩) (Ia ⟨hr, hV.2⟩)
   | let2_bound _ hb Ia => exact let2_bound (Ia ⟨le_refl _, hV.2⟩) (hb.wk_res hV)
@@ -106,13 +108,15 @@ theorem Wf.Cong.wk_res {P : Ctx α ε → Ty α × ε → Term φ → Term φ �
   | inl _ Ia =>
     cases V' with
     | mk V' e' =>
-    cases hV.1 with
+    have h : Ty.LE _ _ := hV.1
+    cases h with
     | coprod hl hr =>
     exact inl (Ia ⟨hl, hV.2⟩)
   | inr _ Ia =>
     cases V' with
     | mk V' e' =>
-    cases hV.1 with
+    have h : Ty.LE _ _ := hV.1
+    cases h with
     | coprod hl hr =>
     exact inr (Ia ⟨hr, hV.2⟩)
   | case_disc _ hb hc Ia => exact case_disc (Ia ⟨le_refl _, hV.2⟩) (hb.wk_res hV) (hc.wk_res hV)

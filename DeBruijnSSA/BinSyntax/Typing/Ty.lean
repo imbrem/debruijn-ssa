@@ -197,7 +197,7 @@ theorem Ty.LE.eq [d : DiscreteOrder α] {A B : Ty α} : LE A B → A = B
 instance [DiscreteOrder α] : DiscreteOrder (Ty α) where
   le_eq _ _ := Ty.LE.eq
 
-theorem Ty.IsInitial.mono {A B : Ty α} (h : A ≤ B) (hi : IsInitial A) : IsInitial B
+theorem Ty.IsInitial.mono {A B : Ty α} (h : Ty.LE A B) (hi : IsInitial A) : IsInitial B
   := by induction h with
   | prod _ _ Il Ir => cases hi with
     | prod_left hl => exact prod_left (Il hl)
@@ -205,7 +205,7 @@ theorem Ty.IsInitial.mono {A B : Ty α} (h : A ≤ B) (hi : IsInitial A) : IsIni
   | coprod _ _ Il Ir => cases hi with | coprod hl hr => exact coprod (Il hl) (Ir hr)
   | _ => cases hi <;> constructor
 
-theorem Ty.IsInitial.anti {A B : Ty α} (h : A ≤ B) (hi : IsInitial B) : IsInitial A
+theorem Ty.IsInitial.anti {A B : Ty α} (h : Ty.LE A B) (hi : IsInitial B) : IsInitial A
   := by induction h with
   | prod _ _ Il Ir => cases hi with
     | prod_left hl => exact prod_left (Il hl)

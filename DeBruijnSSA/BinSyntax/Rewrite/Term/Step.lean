@@ -52,11 +52,11 @@ theorem TStep.wk_res {Γ : Ctx α ε} {L L'} (h : L ≤ L') {r r'}
   | initial di d d' => initial di (d.wk_res h) (d'.wk_res h)
   | terminal de de' => by
     cases L'
-    cases h with
-    | intro l r =>
-      simp only at *
-      cases l
-      exact terminal de de'
+    have l : Ty.LE _ _ := h.1
+    have r := h.2
+    simp only at *
+    cases l
+    exact terminal de de'
 
 theorem TStep.let1_beta_drop {Γ : Ctx α ε} {a b : Term φ} (ha : a.Wf Γ ⟨A, ⊥⟩) (hb : b.Wf Γ V)
   : TStep Γ V (let1 a b.wk0) b
