@@ -513,7 +513,7 @@ theorem mem_wk {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.Wkn Δ ρ) (hV : V
   ⟨V', hV', hn' ▸ hV⟩
 
 -- theorem EWkn.id_len_le : Γ.EWkn Δ _root_.id → Δ.length ≤ Γ.length := by
---   apply List.NEWkn.id_len_le
+--   apply List.IsWk.id_len_le
 
 theorem Var.wk_res (h : V ≤ V') (hΓ : Γ.Var n V) : Γ.Var n V' where
   length := hΓ.length
@@ -537,7 +537,7 @@ end Basic
 section EWkn
 
 def EWkn (Γ Δ : Ctx α ε) (ρ : ℕ → ℕ) : Prop -- TODO: fin argument as defeq?
-  := List.NEWkn Γ Δ ρ
+  := List.IsWk Γ Δ ρ
 
 theorem EWkn.wkn [PartialOrder α] [PartialOrder ε]
   {Γ Δ : Ctx α ε} {ρ : ℕ → ℕ} (h : Γ.EWkn Δ ρ) : Γ.Wkn Δ ρ := Wkn_iff.mpr h.toNWkn
@@ -549,17 +549,17 @@ theorem EWkn.var_inv [PartialOrder α] [PartialOrder ε] {Γ Δ : Ctx α ε} {ρ
   (hi : i < Δ.length) (hv : Γ.Var (ρ i) V) : Δ.Var i V := ⟨hi, have ⟨_, he⟩ := h i hi; he ▸ hv.get⟩
 
 @[simp]
-theorem EWkn.id {Γ : Ctx α ε} : Γ.EWkn Γ id := List.NEWkn.id _
+theorem EWkn.id {Γ : Ctx α ε} : Γ.EWkn Γ id := List.IsWk.id _
 
 theorem EWkn.lift {Γ Δ : Ctx α ε} {V : Ty α × ε} (h : Γ.EWkn Δ ρ)
   : EWkn (V::Γ) (V::Δ) (Nat.liftWk ρ)
-  := List.NEWkn.lift h
+  := List.IsWk.lift h
 
 theorem EWkn.lift_tail {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
-  : EWkn Γ Δ ρ := List.NEWkn.lift_tail h
+  : EWkn Γ Δ ρ := List.IsWk.lift_tail h
 
 theorem EWkn.lift_head {left right : Ty α × ε} (h : EWkn (left::Γ) (right::Δ) (Nat.liftWk ρ))
-  : left = right := List.NEWkn.lift_head h
+  : left = right := List.IsWk.lift_head h
 
 @[simp]
 theorem EWkn.lift_iff {left right : Ty α × ε} {Γ Δ}
@@ -582,20 +582,20 @@ theorem EWkn.lift_id_iff {left right : Ty α × ε} {Γ Δ}
     := ⟨λh => ⟨h.lift_id_head, h.lift_id_tail⟩, λ⟨h, h'⟩ => h ▸ h'.lift_id⟩
 
 theorem EWkn.step {Γ Δ : Ctx α ε} {head : Ty α × ε} (h : Γ.EWkn Δ ρ)
-  : EWkn (head::Γ) Δ (Nat.stepWk ρ) := List.NEWkn.step _ h
+  : EWkn (head::Γ) Δ (Nat.stepWk ρ) := List.IsWk.step _ h
 
 theorem EWkn.step_tail {head : Ty α × ε} (h : EWkn (head::Γ) Δ (Nat.stepWk ρ))
-  : EWkn Γ Δ ρ := List.NEWkn.step_tail h
+  : EWkn Γ Δ ρ := List.IsWk.step_tail h
 
 @[simp]
 theorem EWkn.step_iff {head : Ty α × ε} {Γ Δ}
   : EWkn (head::Γ) Δ (Nat.stepWk ρ) ↔ EWkn Γ Δ ρ
-  := List.NEWkn.step_iff _ _ _ _
+  := List.IsWk.step_iff _ _ _ _
 
 @[simp]
 theorem EWkn.succ_comp_iff {head : Ty α × ε} {Γ Δ}
   : EWkn (head::Γ) Δ (Nat.succ ∘ ρ) ↔ EWkn Γ Δ ρ
-  := List.NEWkn.step_iff _ _ _ _
+  := List.IsWk.step_iff _ _ _ _
 
 @[simp]
 theorem EWkn.succ {head} {Γ : Ctx α ε}
@@ -624,7 +624,7 @@ theorem EWkn.liftn_id₂ {Γ Δ : Ctx α ε} {left right : Ty α × ε} (h : Γ.
 
 theorem EWkn.liftn_append (Ξ) (h : Γ.EWkn Δ ρ)
   : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk Ξ.length ρ)
-  := List.NEWkn.liftn_append _ h
+  := List.IsWk.liftn_append _ h
 
 theorem EWkn.liftn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
   : EWkn (Ξ ++ Γ) (Ξ ++ Δ) (Nat.liftnWk n ρ)
@@ -648,7 +648,7 @@ theorem EWkn.liftn_append_cons_id {Γ Δ : Ctx α ε} (A Ξ) (h : Γ.EWkn Δ _ro
 
 theorem EWkn.stepn_append (Ξ) (h : Γ.EWkn Δ ρ)
   : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk Ξ.length ρ)
-  := List.NEWkn.stepn_append _ h
+  := List.IsWk.stepn_append _ h
 
 theorem EWkn.stepn_append' {Ξ} (hn : n = Ξ.length) (h : Γ.EWkn Δ ρ)
   : EWkn (Ξ ++ Γ) Δ (Nat.stepnWk n ρ)
